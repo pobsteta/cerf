@@ -37,6 +37,11 @@ dans la case. Une case non cochée veut dire non.
 `essai.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai.zip) et
 `essai-cp437.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai-cp437.zip).
 
+**Le plugin** `cerf-prototype.zip`, à installer par URL dans QField
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-prototype.zip), et le
+projet `cerf-essai.zip`
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-essai.zip), même release.
+
 **Le projet d'essai** est `cerf-essai` (`cerf_id` 936eb144-5447-4094-a579-fac12a9f0595) ou,
 au choix de Pascal, le projet modèle `cerf.qgz`
 (https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-projet-modele.zip,
@@ -165,7 +170,7 @@ par l'orchestrateur.
 ## Question 5 — Un Shapefile se lit-il dans le zip ?
 
 À faire sur la **copie** de `essai.zip` (question 2), donc avant l'effacement de la
-question 3 ; sinon recopier le zip.
+question 3 ; sinon recopier le zip avec « A. Copier hors projet ».
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
@@ -183,9 +188,10 @@ décompression (aucune API QML prouvée) ; la décision reste à Pascal.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Avec « G. Trouver le .qml du zip », chercher `sous-dossier/shape_essai.qml` **dans** la copie du zip (même nom que la couche de la question 5). | Le prototype annonce qu'il l'a trouvé, sans message d'erreur. | ☐ |
-| 2 | Lire la taille et le début du texte affichés. | 635 octets (taille annoncée par le zip) ; le début du texte affiche « EN ATTENTE » (le prototype n'a pas de décompresseur) ; s'il est affiché, il commence par `<!DOCTYPE qgis>`. | ☐ |
-| 3 | Lire la couleur du symbole affichée. | « EN ATTENTE » (pas de décompresseur) ; si le texte est lu, `255,0,0,255` (rouge). | ☐ |
+| 1 | Si la copie de `essai.zip` n'est pas la copie en cours, la refaire avec « A. Copier hors projet ». Puis **lister la copie** avec « C. Lister la copie » (ou « I. Essai à risque : lister un gros zip » par le chemin de secours) : « G » refuse tant que la copie en cours n'a pas été listée (« Lister d'abord la copie »). | La liste de 9 entrées s'affiche. | ☐ |
+| 2 | Avec « G. Trouver le .qml du zip », chercher `sous-dossier/shape_essai.qml` **dans** la copie du zip (même nom que la couche de la question 5). | Le prototype annonce qu'il l'a trouvé, sans message d'erreur ; il affiche la taille et le début du texte. | ☐ |
+| 3 | Lire la taille et le début du texte affichés. | 635 octets (taille annoncée par le zip) ; le début du texte affiche « EN ATTENTE » (le prototype n'a pas de décompresseur) ; s'il est affiché, il commence par `<!DOCTYPE qgis>`. | ☐ |
+| 4 | Lire la couleur du symbole affichée. | « EN ATTENTE » (pas de décompresseur) ; si le texte est lu, `255,0,0,255` (rouge). | ☐ |
 
 **Si non** : la surcharge d'un style par un `.qml` posé dans le zip (spec § 5) n'est pas
 possible telle quelle ; la décision reste à Pascal.
@@ -197,12 +203,16 @@ possible telle quelle ; la décision reste à Pascal.
 Avant ce geste, `lourd.zip` est sur le téléphone, hors du dossier projet (voir « Avant de
 commencer »).
 
+**Cette question se fait en tout dernier, après les questions 8 et 9** : « I » peut fermer
+QField, et chaque « A » des questions 8 et 9 remplace la copie en cours. Si QField s'est fermé,
+le rouvrir et refaire le geste 1 avant le geste 3.
+
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Toucher « A. Copier hors projet » et choisir `lourd.zip`. | La copie est annoncée faite ; sa taille affichée est de 199996542 octets. | ☐ |
-| 2 | Toucher « I. Essai à risque : lister un gros zip » (deux touchers ; « C. Lister la copie » refuse un gros zip). **QField peut se fermer** : faire ce geste après le geste 3 et après les questions 8 et 9. | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
-| 3 | Toucher « H. Ouvrir le GeoTIFF du zip » : ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : 14142 x 14142 pixels, EPSG:2154. **Noter le temps :** ______ s. | ☐ |
-| 4 | Toucher « D. Effacer la copie » pour la copie de `lourd.zip` (comme à la question 3). | Effacement annoncé ; la place est rendue. | ☐ |
+| 1 | Toucher « A. Copier hors projet » et choisir `lourd.zip`, puis **vérifier que la ligne « Copie visée » nomme `lourd.zip`** (et non `essai-cp437.zip`, copie en cours des questions 8 et 9). | La copie est annoncée faite ; sa taille affichée est de 199996542 octets ; « Copie visée » nomme `lourd.zip`. | ☐ |
+| 2 | Toucher « I. Essai à risque : lister un gros zip » **deux fois** (« C. Lister la copie » refuse un gros zip) ; avant le second toucher, relire « Copie visée » : `lourd.zip`. **QField peut se fermer.** | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
+| 3 | Toucher « H. Ouvrir le GeoTIFF du zip » : ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : système EPSG:2154, **emprise de 70710 m × 70710 m** (14142 pixels de 5 m), coin bas-gauche et temps d'ouverture affichés. Le prototype n'affiche **pas** la taille en pixels (« non lisible depuis QML ») : l'emprise la remplace (`prototype/PLAN.md` § 4 et § 10 bis), à noter dans « Vu autrement ». **Noter le temps :** ______ s. | ☐ |
+| 4 | **Après I**, toucher « D. Effacer la copie » pour la copie de `lourd.zip` (comme à la question 3). | Effacement annoncé ; la place est rendue. | ☐ |
 
 **Si non** au geste 3, ou temps jugé trop long par Pascal : l'ADR 0003 prévoit de décompresser
 les seuls GeoTIFF (valeur sacrifiée : vitesse sur les gros rasters). **Aucun seuil de temps n'est

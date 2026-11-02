@@ -37,7 +37,7 @@ test('correspondance gestes / boutons (PLAN.md § 10 bis)', () => {
   avec(3, 1, 'D'); avec(3, 2, 'C');
   avec(4, 1, 'E');
   avec(5, 1, 'F');
-  avec(6, 1, 'G');
+  avec(6, 1, 'C'); avec(6, 2, 'G');
   avec(7, 1, 'A'); avec(7, 2, 'I'); avec(7, 3, 'H'); avec(7, 4, 'D');
   avec(8, 1, 'A'); avec(8, 1, 'C'); avec(8, 2, 'A'); avec(8, 2, 'C');
   avec(9, 1, 'A'); avec(9, 1, 'C');
@@ -56,8 +56,44 @@ test('bouton G : « EN ATTENTE », pas de décompresseur ; 635 octets gardés', 
 
 test('bouton I : deux touchers, QField peut se fermer', () => {
   const g = geste(7, 2);
-  assert.match(g, /deux touchers/);
+  assert.match(g, /deux fois/);
   assert.match(g, /QField peut se fermer/);
+});
+
+test('enchaînement Q6 : un C (ou I en secours) liste la copie avant G', () => {
+  const g1 = geste(6, 1);
+  assert.ok(g1.includes(`« ${BOUTONS.A} »`) && g1.includes(`« ${BOUTONS.C} »`) && g1.includes(`« ${BOUTONS.I} »`));
+  assert.match(g1, /Lister d'abord la copie/);
+  const ordre = gestes(questions()[5]).map((g) => g[1]);
+  assert.ok(ordre.findIndex((x) => x.includes(`« ${BOUTONS.C} »`)) < ordre.findIndex((x) => x.includes(`« ${BOUTONS.G} »`)));
+});
+
+test('Q5 : « recopier le zip » nomme le bouton A', () => {
+  assert.match(questions()[4].replace(/\s+/g, ' '), /sinon recopier le zip avec « A\. Copier hors projet »/);
+});
+
+test('enchaînement Q7 : A sur lourd.zip, « Copie visée » nomme lourd.zip, I deux fois, puis D ; question en tout dernier', () => {
+  const q7 = questions()[6];
+  const s = q7.replace(/\s+/g, ' ');
+  assert.match(s, /en tout dernier, après les questions 8 et 9/);
+  const g1 = geste(7, 1);
+  assert.ok(g1.includes(`« ${BOUTONS.A} »`) && g1.includes('`lourd.zip`'));
+  assert.match(g1, /ligne « Copie visée » nomme `lourd\.zip`/);
+  assert.match(g1, /essai-cp437\.zip/);
+  assert.match(geste(7, 2), /« Copie visée »/);
+  const ordre = gestes(q7).map((g) => g[1]);
+  const iA = ordre.findIndex((x) => x.includes(`« ${BOUTONS.A} »`));
+  const iI = ordre.findIndex((x) => x.includes(`« ${BOUTONS.I} »`));
+  const iD = ordre.findIndex((x) => x.includes(`« ${BOUTONS.D} »`));
+  assert.ok(iA >= 0 && iA < iI && iI < iD, 'ordre A, I, D attendu');
+  assert.match(geste(7, 4), /Après I/);
+});
+
+test('H : l\'emprise remplace la taille en pixels, citée au plan', () => {
+  const g = gestes(questions()[6]).find((x) => x[0] === '3')[2];
+  assert.ok(g.includes('70710 m × 70710 m'));
+  assert.match(g, /pas\*\* la taille en pixels/);
+  assert.match(g, /PLAN\.md` § 4 et § 10 bis/);
 });
 
 test('question 1 reformulée (décision de Pascal du 2 novembre 2026)', () => {
@@ -81,7 +117,7 @@ test('chemin de secours : C « taille de la copie inconnue » -> I pour les ques
 
 test('avant de commencer : URLs de la release prototype-1, avant le mode avion', () => {
   const base = 'https://github.com/pobsteta/cerf/releases/download/prototype-1/';
-  for (const f of ['essai.zip', 'essai-cp437.zip', 'cerf-projet-modele.zip']) assert.ok(t.includes(base + f), f);
+  for (const f of ['essai.zip', 'essai-cp437.zip', 'cerf-projet-modele.zip', 'cerf-prototype.zip', 'cerf-essai.zip']) assert.ok(t.includes(base + f), f);
   assert.ok(t.indexOf(base + 'essai.zip') < t.indexOf('Passer le téléphone en **mode avion**'));
   assert.match(t, /Avant le mode avion/);
 });

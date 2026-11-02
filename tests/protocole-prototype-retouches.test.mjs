@@ -118,7 +118,8 @@ test('ajout : valeurs exactes attendues par question 5 à 9', () => {
   assert.ok(q[5].corps.includes('255,0,0,255'));
   assert.ok(q[6].corps.includes('199996542 octets'));
   assert.ok(q[6].corps.includes('199996426 octets'));
-  assert.ok(q[6].corps.includes('14142 x 14142'));
+  // H n'affiche pas la taille en pixels : l'emprise (14142 pixels de 5 m) la remplace (PLAN.md § 4, § 10 bis)
+  assert.ok(q[6].corps.includes('70710 m × 70710 m') && q[6].corps.includes('14142 pixels de 5 m'));
   assert.match(q[6].corps, /Noter le temps/);
   assert.match(q[6].corps, /ADR 0003/);
   assert.match(q[6].corps, /décompresser/);

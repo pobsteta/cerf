@@ -1,0 +1,37 @@
+# Publie le prototype n° 1 (mission 004) en release GitHub quand on pousse une étiquette
+# prototype-*. Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
+# versés au dépôt) ; leur sha256 est écrit dans les notes de la release.
+name: Release du prototype
+on:
+  push:
+    tags: ['prototype-*']
+permissions:
+  contents: write
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests
+        run: node --test
+      - name: Zips
+        run: node prototype/empaqueter.mjs dist
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Prototype n° 1 de Cerf (mission 004), plugin QField jetable, à installer par URL."
+            echo
+            echo "Ne pas renommer cerf-prototype.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Protocole d'essai : tests/recette/prototype-1.md."
+            echo
+            echo '```'
+            sha256sum dist/*.zip
+            echo '```'
+          } > notes.md
+          gh release create "$GITHUB_REF_NAME" dist/cerf-prototype.zip dist/cerf-essai.zip \
+            --title "Prototype n° 1 ($GITHUB_REF_NAME)" --notes-file notes.md --prerelease

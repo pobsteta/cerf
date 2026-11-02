@@ -63,7 +63,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Terrain
 
-- **Échantillon que Pascal vérifiera :** Pascal ouvre `cerf.qgz` dans QGIS puis dans QField : deux fonds, EPSG:2154.
+- **Échantillon que Pascal vérifiera :** Pascal ouvre `cerf.qgz` dans QGIS puis dans QField : deux fonds, EPSG:2154 ; le groupe « Fonds de carte » (coché, déplié, Plan IGN v2 coché puis BD ORTHO décochée), demandé par Pascal le 2 novembre 2026 après l'ouverture dans QField.
 
 ## Qui veille, qui tranche
 

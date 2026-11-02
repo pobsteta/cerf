@@ -27,6 +27,11 @@ jobs:
         run: |
           node prototype/empaqueter.mjs dist
           cp tests/recette/essai/essai.zip tests/recette/essai/essai-cp437.zip dist/
+          # Projet modèle de la mission 006 (branche mission/006-projet-modele), zippé pour
+          # l'import par URL de QField.
+          git fetch --depth=1 origin mission/006-projet-modele
+          git show FETCH_HEAD:cerf.qgz > dist/cerf.qgz
+          (cd dist && zip -X cerf-projet-modele.zip cerf.qgz && rm cerf.qgz)
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,9 +47,9 @@ jobs:
             echo '```'
           } > notes.md
           if gh release view prototype-1 >/dev/null 2>&1; then
-            gh release upload prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip --clobber
+            gh release upload prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip --clobber
             gh release edit prototype-1 --notes-file notes.md
           else
-            gh release create prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip \
+            gh release create prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip \
               --target "$GITHUB_SHA" --title "Prototype n° 1" --notes-file notes.md --prerelease
           fi

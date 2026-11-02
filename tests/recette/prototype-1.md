@@ -188,7 +188,7 @@ décompression (aucune API QML prouvée) ; la décision reste à Pascal.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Si la copie de `essai.zip` n'est pas la copie en cours, la refaire avec « A. Copier hors projet ». Puis **lister la copie** avec « C. Lister la copie » (ou « I. Essai à risque : lister un gros zip » par le chemin de secours) : « G » refuse tant que la copie en cours n'a pas été listée (« Lister d'abord la copie »). | La liste de 9 entrées s'affiche. | ☐ |
+| 1 | Si la copie de `essai.zip` a été effacée (question 3) ou n'est pas la copie en cours, la refaire avec « A. Copier hors projet » (l'en-tête peut nommer encore `essai.zip` après l'effacement, alors que C répond « zip absent »). Puis **lister la copie** avec « C. Lister la copie » (ou « I. Essai à risque : lister un gros zip » par le chemin de secours) : « G » refuse tant que la copie en cours n'a pas été listée (« Lister d'abord la copie »). | La liste de 9 entrées s'affiche. | ☐ |
 | 2 | Avec « G. Trouver le .qml du zip », chercher `sous-dossier/shape_essai.qml` **dans** la copie du zip (même nom que la couche de la question 5). | Le prototype annonce qu'il l'a trouvé, sans message d'erreur ; il affiche la taille et le début du texte. | ☐ |
 | 3 | Lire la taille et le début du texte affichés. | 635 octets (taille annoncée par le zip) ; le début du texte affiche « EN ATTENTE » (le prototype n'a pas de décompresseur) ; s'il est affiché, il commence par `<!DOCTYPE qgis>`. | ☐ |
 | 4 | Lire la couleur du symbole affichée. | « EN ATTENTE » (pas de décompresseur) ; si le texte est lu, `255,0,0,255` (rouge). | ☐ |
@@ -209,9 +209,9 @@ le rouvrir et refaire le geste 1 avant le geste 3.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Toucher « A. Copier hors projet » et choisir `lourd.zip`, puis **vérifier que la ligne « Copie visée » nomme `lourd.zip`** (et non `essai-cp437.zip`, copie en cours des questions 8 et 9). | La copie est annoncée faite ; sa taille affichée est de 199996542 octets ; « Copie visée » nomme `lourd.zip`. | ☐ |
-| 2 | Toucher « I. Essai à risque : lister un gros zip » **deux fois** (« C. Lister la copie » refuse un gros zip) ; avant le second toucher, relire « Copie visée » : `lourd.zip`. **QField peut se fermer.** | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
-| 3 | Toucher « H. Ouvrir le GeoTIFF du zip » : ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : système EPSG:2154, **emprise de 70710 m × 70710 m** (14142 pixels de 5 m), coin bas-gauche et temps d'ouverture affichés. Le prototype n'affiche **pas** la taille en pixels (« non lisible depuis QML ») : l'emprise la remplace (`prototype/PLAN.md` § 4 et § 10 bis), à noter dans « Vu autrement ». **Noter le temps :** ______ s. | ☐ |
+| 1 | Toucher « A. Copier hors projet » et choisir `lourd.zip`, puis **vérifier que « Chemin de la copie » (ou l'en-tête « Copie en cours ») nomme `lourd.zip`** (et non `essai-cp437.zip`, copie en cours des questions 8 et 9). | La copie est annoncée faite ; sa taille affichée est de 199996542 octets ; « Chemin de la copie » nomme `lourd.zip`. | ☐ |
+| 2 | Toucher « I. Essai à risque : lister un gros zip » **deux fois** (« C. Lister la copie » refuse un gros zip) ; avant le second toucher, vérifier que la ligne « Copie visée » (affichée au premier toucher de I) nomme `lourd.zip`. **QField peut se fermer.** | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
+| 3 | Toucher « H. Ouvrir le GeoTIFF du zip » : ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : système EPSG:2154, **emprise de 70710 m × 70710 m** (14142 pixels de 5 m), coin bas-gauche et temps d'ouverture affichés. Le prototype n'affiche **pas** la taille en pixels (« non lisible depuis QML ») : l'emprise la remplace (`prototype/PLAN.md` § 4), à noter dans « Vu autrement ». **Noter le temps :** ______ s. | ☐ |
 | 4 | **Après I**, toucher « D. Effacer la copie » pour la copie de `lourd.zip` (comme à la question 3). | Effacement annoncé ; la place est rendue. | ☐ |
 
 **Si non** au geste 3, ou temps jugé trop long par Pascal : l'ADR 0003 prévoit de décompresser

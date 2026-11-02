@@ -64,6 +64,8 @@ test('enchaînement Q6 : un C (ou I en secours) liste la copie avant G', () => {
   const g1 = geste(6, 1);
   assert.ok(g1.includes(`« ${BOUTONS.A} »`) && g1.includes(`« ${BOUTONS.C} »`) && g1.includes(`« ${BOUTONS.I} »`));
   assert.match(g1, /Lister d'abord la copie/);
+  assert.match(g1, /a été effacée \(question 3\)/);
+  assert.match(g1, /zip absent/);
   const ordre = gestes(questions()[5]).map((g) => g[1]);
   assert.ok(ordre.findIndex((x) => x.includes(`« ${BOUTONS.C} »`)) < ordre.findIndex((x) => x.includes(`« ${BOUTONS.G} »`)));
 });
@@ -78,9 +80,10 @@ test('enchaînement Q7 : A sur lourd.zip, « Copie visée » nomme lourd.zip, I 
   assert.match(s, /en tout dernier, après les questions 8 et 9/);
   const g1 = geste(7, 1);
   assert.ok(g1.includes(`« ${BOUTONS.A} »`) && g1.includes('`lourd.zip`'));
-  assert.match(g1, /ligne « Copie visée » nomme `lourd\.zip`/);
+  assert.match(g1, /« Chemin de la copie » \(ou l'en-tête « Copie en cours »\) nomme `lourd\.zip`/);
+  assert.doesNotMatch(g1, /Copie visée/);
   assert.match(g1, /essai-cp437\.zip/);
-  assert.match(geste(7, 2), /« Copie visée »/);
+  assert.match(geste(7, 2), /avant le second toucher, vérifier que la ligne « Copie visée » \(affichée au premier toucher de I\) nomme `lourd\.zip`/);
   const ordre = gestes(q7).map((g) => g[1]);
   const iA = ordre.findIndex((x) => x.includes(`« ${BOUTONS.A} »`));
   const iI = ordre.findIndex((x) => x.includes(`« ${BOUTONS.I} »`));
@@ -93,7 +96,8 @@ test('H : l\'emprise remplace la taille en pixels, citée au plan', () => {
   const g = gestes(questions()[6]).find((x) => x[0] === '3')[2];
   assert.ok(g.includes('70710 m × 70710 m'));
   assert.match(g, /pas\*\* la taille en pixels/);
-  assert.match(g, /PLAN\.md` § 4 et § 10 bis/);
+  assert.match(g, /PLAN\.md` § 4\)/);
+  assert.doesNotMatch(g, /10 bis/);
 });
 
 test('question 1 reformulée (décision de Pascal du 2 novembre 2026)', () => {

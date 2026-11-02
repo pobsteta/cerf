@@ -5,23 +5,30 @@ Mission 002, spec § 4. Lit un contour GeoJSON en WGS84 (EPSG:4326, ordre lon/la
 RFC 7946), reprojette avec PROJ (pyproj) chaque sommet et des points intermédiaires
 sur chaque arête (densification), et rend l'emprise brute et l'emprise élargie.
 
-Usage : python3 -I outils/emprise.py CONTOUR.geojson [--marge 10000]
+Usage : python3 -I outils/emprise.py [CONTOUR.geojson] [--marge 10000]
+        (sans argument : le contour versé docs/referentiels/sources/metropole.geojson)
         python3 -I outils/emprise.py --telecharger CONTOUR.geojson   (réseau)
 
-Le contour n'est pas versionné : son empreinte SHA-256 est vérifiée (EMPREINTE_ATTENDUE).
+Le contour est versé au dépôt (docs/referentiels/sources/, avec sa source et sa licence) ;
+son empreinte SHA-256 est vérifiée (EMPREINTE_ATTENDUE) : si elle diffère, le script
+sort en erreur (code 2) sans rien calculer.
+Dépendance : pyproj, version fixée dans outils/requirements.txt.
 Licence du script : GPL-3.0-or-later (ADR 0006).
 """
 import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 import urllib.request
 
 import pyproj
 
 URL_CONTOUR = ("https://raw.githubusercontent.com/gregoiredavid/france-geojson/"
-               "master/metropole.geojson")
+               "5d34ee6d0140c29f785fdb047d9329f1aab58833/metropole.geojson")  # commit épinglé
+CONTOUR_PAR_DEFAUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
+                                  "docs", "referentiels", "sources", "metropole.geojson")
 EMPREINTE_ATTENDUE = "d1f4aec3fbc274d4af3f5930302a342d3efe0ea1daf410fbeef535346167bf0c"
 MARGE_M = 10_000
 PAS_DENSIFICATION_M = 1_000  # un point intermédiaire environ tous les 1 km sur chaque arête
@@ -135,7 +142,7 @@ def point_l93(lon, lat):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("contour")
+    p.add_argument("contour", nargs="?", default=CONTOUR_PAR_DEFAUT)
     p.add_argument("--marge", type=int, default=MARGE_M)
     p.add_argument("--telecharger", action="store_true")
     a = p.parse_args(argv)
@@ -143,7 +150,9 @@ def main(argv=None):
         urllib.request.urlretrieve(URL_CONTOUR, a.contour)
     h = sha256(a.contour)
     if h != EMPREINTE_ATTENDUE:
-        print("ATTENTION : empreinte différente de celle attendue : " + h, file=sys.stderr)
+        print("ERREUR : empreinte du contour différente de celle attendue (" +
+              EMPREINTE_ATTENDUE + ") : " + h, file=sys.stderr)
+        return 2
     r = calculer(a.contour, a.marge)
     with open(a.contour, encoding="utf-8") as f:
         donnees = json.load(f)

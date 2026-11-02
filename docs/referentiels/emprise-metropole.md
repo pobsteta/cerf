@@ -1,7 +1,7 @@
 # Emprise de la terre ferme de France métropolitaine en Lambert 93
 
 > Mission 002 (spec § 4 et § 8, point 4 ; ADR 0004). Calcul du 2 novembre 2026.
-> Valeurs lisibles par machine : `emprise-metropole.json`. Script : `outils/emprise.py`.
+> Valeurs lisibles par machine : `emprise-metropole.json`. Script : `outils/emprise.py`. Contour : `sources/`.
 > **Statut : valeur mesurée, à geler avant la fusion de la mission 012.**
 
 ## Résultat
@@ -16,13 +16,14 @@ arrondis vers l'extérieur au mètre.
 
 ### Écart avec la valeur provisoire de la spec § 4
 
-Spec : X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000.
+Valeur provisoire d'origine : X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000.
 
-- X min, X max, Y max : la spec est plus large de 101 m, 564 m et 520 m (sans conséquence).
-- **Y min : la spec (6 039 000) est plus étroite de 2 445 m que la valeur mesurée
-  (6 036 555).** Au sud de la Corse, un point à moins de 10 km de la côte mais à plus de
-  7,5 km au sud du point le plus au sud serait refusé par la valeur de la spec. Les ADR et la
-  spec ne sont pas modifiées par cette mission : **décision à Pascal** (mettre à jour la spec § 4).
+- X min, X max, Y max : la valeur d'origine était plus large de 101 m, 564 m et 520 m.
+- **Y min : elle était plus étroite de 2 445 m** (6 039 000 contre 6 036 555) : un point à
+  moins de 10 km de la côte mais à plus de 7,5 km au sud du point le plus au sud de la Corse
+  aurait été refusé.
+- **Décision de Pascal (2 novembre 2026) :** la spec § 4 retient désormais l'emprise élargie
+  mesurée ci-dessus.
 
 ## Méthode
 
@@ -31,16 +32,18 @@ Spec : X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000.
    Visvalingam pondéré à 25 %, coordonnées à 5 décimales), WGS84, ordre lon/lat. Une
    entité, MultiPolygon : 169 anneaux, 31 558 sommets (comptés par le script).
    SHA-256 : `d1f4aec3fbc274d4af3f5930302a342d3efe0ea1daf410fbeef535346167bf0c`.
-   Le fichier n'est pas versionné ici ; le script le télécharge (`--telecharger`) et vérifie l'empreinte.
+   Le fichier est versé : `sources/metropole.geojson`, avec sa source, son commit épinglé et sa
+   licence dans `sources/SOURCES.md`. Le script vérifie l'empreinte à chaque calcul et sort en
+   erreur si elle diffère.
 2. Reprojection EPSG:4326 → EPSG:2154 avec PROJ 9.8.1 (pyproj 3.8.0, `always_xy=True`),
    de chaque sommet **et** de points intermédiaires environ tous les 1 km sur chaque arête
    (densification en lon/lat, puis reprojection), pour que les bords soient pris en compte.
 3. Rectangle brut = min / max des x et y reprojetés ; arrondi vers l'extérieur.
 4. Rectangle élargi = brut ± 10 000 m (marge de la spec § 4), calculée à part.
 
-Relance : `python3 -I outils/emprise.py CONTOUR.geojson` redonne le JSON à l'identique
-(vérifié par comparaison `cmp` le 2 novembre 2026 et par `tests/emprise.test.mjs` avec
-`CERF_CONTOUR=CONTOUR.geojson`).
+Relance : `python3 -I outils/emprise.py` (contour versé par défaut) redonne le JSON à
+l'identique ; vérifié par `tests/emprise.test.mjs`, dont le test de relance n'est plus ignoré.
+Dépendance fixée : `outils/requirements.txt` (`pyproj==3.8.0`).
 
 ## Points témoins (lon, lat WGS84 → x, y Lambert 93)
 
@@ -60,9 +63,8 @@ dans l'intervalle X et l'intervalle Y de la France, un rectangle ne les écarte 
 bien hors du **contour** (lancer de rayon). Le contrôle de vraisemblance par rectangle
 (ADR 0004, « une comparaison de rectangles ») laisse donc passer une couche située dans
 ces zones : c'est la valeur sacrifiée déjà écrite (exhaustivité), mais ici elle concerne
-des dizaines de kilomètres, pas « quelques dizaines de mètres ». **Question à Pascal :**
-accepter, ou compléter le rectangle (par exemple par un contour simplifié ou plusieurs
-rectangles) ? Non tranché ici.
+des dizaines de kilomètres, pas « quelques dizaines de mètres ». **Tranché par Pascal le
+2 novembre 2026 : limite acceptée** (ADR 0004, valeur sacrifiée « précision géographique »).
 
 Sources des points témoins (tous consultés le 2 novembre 2026, branche `master`, sans numéro de version) :
 - Cinq communes : centre de l'emprise de la commune, d'après
@@ -90,15 +92,16 @@ Sources des points témoins (tous consultés le 2 novembre 2026, branche `master
 ## Limites dites
 
 - **Contour simplifié** (25 %, `keep-shapes`) : les extrémités réelles de la côte peuvent
-  différer de quelques dizaines à centaines de mètres ; non mesuré, **aucune seconde source
-  n'a été comparée** (les tracés bruts de 143 Mo n'ont pas été téléchargés). La marge de
-  10 km absorbe cet écart ; le rectangle brut n'est pas à utiliser seul.
+  différer. Écart mesuré par le relecteur : à la pointe de Pern, environ 870 m à l'ouest du
+  X min brut. Le taux de simplification de 25 % est une **déduction** (non revérifié sur les
+  tracés bruts de 143 Mo, jamais téléchargés). Aucune autre seconde source n'a été comparée.
+  La marge de 10 km absorbe cet écart ; le rectangle brut n'est pas à utiliser seul.
 - Édition 2018 des tracés : la côte bouge peu ; non vérifié sur une édition plus récente.
 - Les villes de la liste sont des points d'essai, pas des positions officielles ; la
   vérification des cinq villes par Pascal reste à faire.
-- Licence : « Licence ouverte » d'Admin Express, d'après le README ; le contour n'est pas
-  recopié dans le dépôt, seul le résultat chiffré l'est.
+- Licence : « Licence ouverte » d'Admin Express, d'après le README ; le contour est
+  versé dans le dépôt avec sa source (`sources/SOURCES.md`).
 - Un contour GeoJSON ne couvre pas les îles très au large non listées dans le fichier ;
   l'inclusion des Lavezzi, des Glénan, etc. n'a pas été contrôlée une à une.
 - Conforme à ADR 0005 : tests en `node --test` ; le calcul lui-même est en Python (outil
-  de bureau, pas du plugin) et son test de relance est ignoré sans `CERF_CONTOUR`.
+  de bureau, pas du plugin) et son test de relance utilise le contour versé.

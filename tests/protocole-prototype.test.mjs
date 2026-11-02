@@ -15,7 +15,7 @@ const ESSAI = join(ici, 'recette', 'essai');
 const ZIP = join(ESSAI, 'essai.zip');
 const MODULE = join(ESSAI, 'module-essai.mjs');
 
-// Contenu exact attendu du zip d'essai, 8 entrées.
+// Contenu exact attendu du zip d'essai, 9 entrées.
 const ENTREES = [
   'points_essai.geojson',
   'sous-dossier/notes.txt',
@@ -23,6 +23,7 @@ const ENTREES = [
   'sous-dossier/shape_essai.dbf',
   'sous-dossier/shape_essai.prj',
   'sous-dossier/shape_essai.qmd',
+  'sous-dossier/shape_essai.qml',
   'sous-dossier/shape_essai.shp',
   'sous-dossier/shape_essai.shx',
 ];
@@ -46,7 +47,7 @@ function lireZip(chemin) {
 
 const texte = () => readFileSync(PROTOCOLE, 'utf8');
 function questions() {
-  const parts = texte().split(/^## (?=Question [1-4] )/m).slice(1);
+  const parts = texte().split(/^## /m).filter((p) => /^Question [1-9] /.test(p));
   return parts.map((p) => ({ titre: p.split('\n')[0], corps: p }));
 }
 // Ligne de geste : | n | geste | résultat attendu | ☐ |  (4 cellules, dernière = case « vu »)
@@ -58,13 +59,18 @@ test('le protocole existe', () => {
   assert.ok(existsSync(PROTOCOLE), 'tests/recette/prototype-1.md absent');
 });
 
-test('quatre questions exactement, dans l\'ordre de la fiche : lister, copier, effacer, module .mjs', () => {
+test('neuf questions exactement, dans l\'ordre : lister, copier, effacer, module .mjs, Shapefile, .qml, GeoTIFF, Android 11, CP437', () => {
   const q = questions();
-  assert.equal(q.length, 4);
+  assert.equal(q.length, 9);
   assert.match(q[0].titre, /^Question 1 .*list/i);
   assert.match(q[1].titre, /^Question 2 .*copi/i);
   assert.match(q[2].titre, /^Question 3 .*effac/i);
   assert.match(q[3].titre, /^Question 4 .*\.mjs/i);
+  assert.match(q[4].titre, /^Question 5 .*Shapefile/i);
+  assert.match(q[5].titre, /^Question 6 .*\.qml/i);
+  assert.match(q[6].titre, /^Question 7 .*GeoTIFF.*200 Mo/i);
+  assert.match(q[7].titre, /^Question 8 .*Android 11/i);
+  assert.match(q[8].titre, /^Question 9 .*CP437/i);
 });
 
 test('chaque question a au moins un geste ; chaque geste a un résultat attendu et une case « vu » vide', () => {
@@ -90,6 +96,10 @@ test('chaque question dit « Si non » et renvoie à la bonne ligne de la spec �
   assert.match(q[2].corps, /Si non/);
   assert.match(q[2].corps, /§ 9,? n° 2/);
   assert.match(q[3].corps, /Si non/);
+  for (let i = 4; i < 9; i++) assert.match(q[i].corps, /Si non/, `${q[i].titre} : « Si non » absent`);
+  assert.match(q[6].corps, /ADR 0003/);
+  assert.match(q[6].corps, /décompresser/);
+  assert.match(q[8].corps, /QGIS ou 7-Zip/);
 });
 
 test('copie : le dossier cible est celui de la spec § 3.3, hors du dossier projet', () => {
@@ -115,16 +125,17 @@ test('le protocole nomme chaque entrée du zip d\'essai et le zip lui-même', ()
   const t = texte();
   assert.ok(t.includes('essai.zip'));
   for (const e of ENTREES) assert.ok(t.includes(e), `entrée non nommée dans le protocole : ${e}`);
-  assert.match(t, /8 entrées/);
+  assert.match(t, /\*\*9\*\*/);
+  assert.doesNotMatch(t, /8 entrées/);
 });
 
 test('le protocole ne contient ni clé, ni jeton, ni mot de passe', () => {
   assert.doesNotMatch(texte(), /apikey|api_key|token|password|mot de passe\s*:/i);
 });
 
-test('zip d\'essai : existe, ≤ 2048 octets, 8 entrées exactement', () => {
+test('zip d\'essai : existe, ≤ 4096 octets, 9 entrées exactement', () => {
   assert.ok(existsSync(ZIP));
-  assert.ok(statSync(ZIP).size <= 2048, `taille ${statSync(ZIP).size}`);
+  assert.ok(statSync(ZIP).size <= 4096, `taille ${statSync(ZIP).size}`);
   assert.deepEqual(lireZip(ZIP).sort(), ENTREES);
 });
 

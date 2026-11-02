@@ -10,6 +10,23 @@
 
 **Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
 
+## Aller-retour 1/3 (2 novembre 2026)
+
+Rendu relu « prêt » ; Pascal a tranché : bornes de la spec § 4 remplacées par l'emprise
+élargie mesurée (fait par l'orchestrateur) ; limite Jersey/Genève acceptée (ADR 0004) ;
+**le contour est versé au dépôt**. À faire dans la branche `mission/002-emprise-metropole` :
+
+1. Verser `metropole.geojson` (empreinte SHA-256 vérifiée) dans `docs/referentiels/sources/`
+   avec sa source et sa licence (IGN Admin Express COG 2018, Licence ouverte, via
+   `gregoiredavid/france-geojson`, commit épinglé) ; le test de relance l'utilise par défaut
+   et n'est plus ignoré.
+2. `outils/emprise.py` sort en erreur si l'empreinte du contour diffère.
+3. `emprise-metropole.md` : remplacer « non mesuré » par l'écart mesuré par le relecteur
+   (pointe de Pern, environ 870 m à l'ouest du X min brut) ; écrire le taux de
+   simplification de 25 % comme une déduction.
+4. Fixer la version de pyproj (`outils/requirements.txt`).
+5. Écrire ta redite dans la rubrique « Redite par l'agent » de cette fiche.
+
 ## Les trois questions (règle de staffing)
 
 | Question | Réponse | Conséquence |

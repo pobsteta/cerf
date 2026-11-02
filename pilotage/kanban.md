@@ -125,3 +125,5 @@ l'inscrit avec ce qu'elle nous apprend._
 - bilan du AAAA-MM-JJ · livraison · pour qui · ce qu'elle apporte de plus que la précédente
 - bilan du AAAA-MM-JJ · mauvaise nouvelle : … · pour qui · ce qu'elle nous apprend
 ```
+
+- cycle 1 · mauvaise nouvelle : deux missions sur trois (001, 002) sans moyens, faute d'avoir vérifié les outils des agents et le réseau à la porte n° 2 · pour Pascal · elle nous apprend qu'à la porte n° 2, la troisième question se vérifie par un essai (outils de l'agent, domaine joignable)

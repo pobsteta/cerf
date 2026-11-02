@@ -42,12 +42,16 @@ Shapefile sans `.prj`. Options : refus sur système absent ; demander le systèm
 
 - **Exhaustivité** : une erreur faible (mauvais datum, quelques dizaines de mètres) passe
   le contrôle ; acceptée, le critère n° 3 de la spec la cherche.
+- **Précision géographique** : un rectangle contient forcément des terres hors de France
+  (Jersey, Genève, une partie de la Belgique, de la Suisse, de l'Italie…) ; une couche
+  placée là passe le contrôle. Acceptée par Pascal le 2 novembre 2026 : le contrôle vise
+  les erreurs grossières (Lambert 93 lu en degrés, axes inversés), pas la frontière.
 
 ## Sources
 
 - [RFC 7946](https://www.rfc-editor.org/rfc/rfc7946) (non lu, contenu confirmé par
   [macwright.com](https://macwright.com/2016/11/07/the-geojson-ietf-standard)) ;
-  emprise de la terre ferme : calcul approché, à vérifier avec PROJ ;
+  emprise de la terre ferme : mesurée par la mission 002 (`docs/referentiels/emprise-metropole.md`) ;
   [GDAL, pilote GeoJSON](https://github.com/OSGeo/gdal/blob/master/doc/source/drivers/vector/geojson.rst).
 
 ## Question de contrôle

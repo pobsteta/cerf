@@ -122,8 +122,9 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 4. **Couche vide** → avertissement, chargée quand même, **sans** contrôle d'emprise.
 5. **Vraisemblance** : l'emprise de la couche, reprojetée en EPSG:2154 (bords densifiés),
    doit être **contenue** dans l'emprise de la terre ferme de France métropolitaine en
-   Lambert 93, élargie de 10 km (X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000 ; calcul
-   approché, **à vérifier par l'`acquereur` avec PROJ**). Sinon refus : « Coordonnées
+   Lambert 93, élargie de 10 km : **X 89 101 → 1 252 436, Y 6 036 555 → 7 120 480** (mesuré avec
+   PROJ 9.8.1 par la mission 002, `docs/referentiels/emprise-metropole.json` ; retenu par
+   Pascal le 2 novembre 2026). Limite acceptée : Jersey et Genève sont dans le rectangle. Sinon refus : « Coordonnées
    incohérentes : système mal déclaré ? ». **Toute erreur de reprojection vaut refus.**
    Couvre le GeoJSON en Lambert 93 lu en WGS84 et l'inversion des axes.
 

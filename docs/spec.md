@@ -98,16 +98,23 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 Ordre de priorité : `.qml` de même nom que la couche dans le zip → règle par nom → règle
 par champs → style par défaut de QGIS.
 
-| Règle | Motif (expression régulière, sans casse ni accents) | Géométrie | Symbole | Étiquette |
-|---|---|---|---|---|
-| UG | `^ug([_\- ].*)?$` | polygone | contour `#0000FF`, épaisseur à fournir, opacité 100 % | champ à fournir (« CODE UG »), taille 10 (unité à fournir) |
-| Parcelles | `^parcel+es?([_\- ].*)?$` | polygone | contour `#FF8C00`, opacité 100 % | champ à fournir (« CODE Parc »), taille 15 |
-| FRT | `^frt([_\- ].*)?$` | polygone | contour `#008B8B`, opacité 100 % | champ à fournir (« CODE FRT »), taille 10 |
-| ProdBois / Relevés | toute couche ponctuelle ayant les champs `essence` **et** `diametre` | point | noir, taille à fournir | `"essence" \|\| '\n' \|\| "diametre"` |
+Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
+des accents.
 
-**Il n'existe pas de référence des styles** (Pascal, 2 novembre 2026) : la seule source est
-le mail de JFC. Ce qu'il ne dit pas est à trancher par Pascal ; les motifs de noms
-ci-dessus sont une proposition de Claude, à valider par Pascal. Les champs de code
+| Règle | Motif | Géométrie | Symbole | Étiquette |
+|---|---|---|---|---|
+| UG | `^ug([_\- ].*)?$` | polygone | contour seul `#0000FF`, 0,6 mm, opacité 100 %, sans remplissage | champ du code UG, police taille **10 pt**, couleur `#0000FF` |
+| Parcelles | `^parcelles?([_\- ].*)?$` | polygone | contour seul `#FF8C00`, 1 mm, opacité 100 %, sans remplissage | champ du code parcelle, police taille **15 pt**, couleur `#FF8C00` |
+| FRT | `^frt([_\- ].*)?$` | polygone | contour seul `#008B8B`, 0,6 mm, opacité 100 %, sans remplissage | champ du code FRT, police taille **10 pt**, couleur `#008B8B` |
+| ProdBois / Relevés | toute couche ponctuelle ayant les champs `essence` **et** `diametre` | point | cercle noir plein, 2 mm | `"essence" \|\| '\n' \|\| "diametre"`, police taille 8 pt, noire, liseré blanc |
+
+Source : **les couleurs et les tailles de police sont celles du mail de JFC**, à
+respecter telles quelles (Pascal, 2 novembre 2026) ; il n'existe pas d'autre référence des
+styles. La couleur de chaque couche vaut pour le contour **et** pour l'étiquette. Le
+contour seul, les épaisseurs, le symbole et l'étiquette des points, les motifs de noms ont
+été proposés par Claude et retenus par Pascal le 2 novembre 2026. **Famille de police** :
+celle que nomme le mail de JFC ; le mail n'est pas dans le dépôt, à y verser
+(`docs/sources/`) ; à défaut, la police par défaut de QField. Les noms des champs de code
 restent à lire dans les fichiers de JFC.
 
 ## 6. Critères d'acceptation

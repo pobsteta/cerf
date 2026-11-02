@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire les tests qui vérifient que cerf.qgz est en EPSG:2154, porte la variable cerf_id et déclare les deux fonds XYZ attendus, avant que le projet modèle soit écrit.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire, avant que `cerf.qgz` existe, des tests qui échouent tant qu'il manque et qui, une fois produit, vérifient qu'il est en EPSG:2154, porte une variable de projet `cerf_id` (UUID) et déclare exactement les deux fonds XYZ du référentiel 001 (gabarits, zoom 0 à 19, « © IGN », sans clé), pour que la mission 006 ait une cible mesurable.
 
 ## Les trois questions (règle de staffing)
 

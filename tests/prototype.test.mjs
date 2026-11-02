@@ -227,7 +227,25 @@ test('Q7 (décision de Pascal) : le listage d’un gros zip est réservé à l�
   assert.equal(Zip.SEUIL_LECTURE_OCTETS, 10_000_000);
   assert.equal(Zip.lectureSure(2108), true);
   assert.equal(Zip.lectureSure(199996542), false);
-  assert.equal(Zip.lectureSure(-1), true, 'taille inconnue : la lecture est tentée');
+  // Relecture 1/3 : une taille inconnue ne doit pas ouvrir la lecture en mémoire par C.
+  assert.equal(Zip.lectureSure(-1), false, 'taille inconnue : lecture refusée, renvoi au bouton I');
+  assert.equal(Zip.lectureSure(undefined), false);
+  assert.equal(Zip.lectureSure(NaN), false);
+  assert.equal(Zip.lectureSure(0), true);
+  assert.equal(Zip.lectureSure(Zip.SEUIL_LECTURE_OCTETS), true);
+  assert.equal(Zip.lectureSure(Zip.SEUIL_LECTURE_OCTETS + 1), false);
+});
+
+test('Q7 : le refus de C dit pourquoi (taille inconnue ou trop grosse) et renvoie au bouton I', () => {
+  const inconnue = Zip.messageLectureRefusee(-1);
+  assert.match(inconnue, /taille de la copie inconnue/);
+  assert.match(inconnue, /I\. Essai à risque/);
+  const grosse = Zip.messageLectureRefusee(199996542);
+  assert.match(grosse, /199996542 octets/);
+  assert.match(grosse, /10000000 octets/);
+  assert.match(grosse, /I\. Essai à risque/);
+  const cerf = readFileSync(join(PROTO, 'Cerf.qml'), 'utf8');
+  assert.ok(cerf.includes('Zip.messageLectureRefusee(taille)'), 'Cerf.qml affiche le message du module');
 });
 
 // ---------------------------------------------------------------- Question 5 : point du terrain

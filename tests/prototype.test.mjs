@@ -101,6 +101,10 @@ test('Q1 : un zip tronqué donne une erreur au message clair', () => {
   assert.throws(() => Zip.listerZip(coupe), (e) => /tronqué|abîmé/.test(e.message));
 });
 
+test('Q1 : un ArrayBuffer vide (lecture refusée par QField) donne 0 octet, sans erreur', () => {
+  assert.equal(Zip.octetsDe(new ArrayBuffer(0)).length, 0);
+});
+
 test('Q1 : un type d’octets inattendu (texte) est refusé avec son type', () => {
   assert.throws(() => Zip.listerZip('PK'), (e) => /string/.test(e.message));
 });
@@ -195,6 +199,7 @@ test('Q2 : « hors du dossier projet » vrai et faux, dont le piège du dossier 
   assert.equal(Zip.estHorsDossier('/d/Imported Projects/cerf-essai-2/essai.zip', projet), true, 'dossier voisin au nom préfixe');
   assert.equal(Zip.estHorsDossier(`${projet}/../autre/essai.zip`, projet), true, 'remontée par ..');
   assert.equal(Zip.estHorsDossier(`${projet}//./cerf-essai/essai.zip`, projet), false, 'chemin non normalisé');
+  assert.equal(Zip.estHorsDossier('/x/essai.zip', ''), true, 'aucun projet ouvert');
 });
 
 test('Q2 : le prototype dit s’il lit la copie hors projet ou la copie dans le projet', () => {

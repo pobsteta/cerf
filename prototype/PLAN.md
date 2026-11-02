@@ -270,6 +270,33 @@ protocole.
 5. **Le décompresseur « deflate »** (question 6, non bloquante) coûte une centaine de
    lignes de code et leurs tests. Le garder, ou laisser la question 6 sans réponse ?
 
+## 10 bis. Réalisation : écarts au plan (2 novembre 2026, après l'accord de Pascal)
+
+Les décisions de Pascal sont dans `pilotage/missions/004-prototype-1.md`, rubrique
+« Décisions de Pascal sur le plan ». Ce qui change par rapport aux § 5 et 6 ci-dessus :
+
+1. **Pas de décompresseur** (décision n° 5) : le bouton G s'appelle
+   **« G. Trouver le .qml du zip »** ; il trouve l'entrée et sa taille annoncée par le zip
+   (635 octets), puis affiche « EN ATTENTE » pour le début du texte et la couleur. Il ne lit
+   le texte que d'une entrée rangée sans compression.
+2. **Essai à risque, en dernier** (décision n° 3) : bouton
+   **« I. Essai à risque : lister un gros zip »**, en bas de l'écran, en rouge, à toucher
+   deux fois. Le bouton C refuse de lire en mémoire une copie de plus de 10 000 000 octets
+   et renvoie à I (garde du prototype, pas une valeur du produit).
+3. **`main.qml` n'importe pas les `.mjs` lui-même.** Il crée `Cerf.qml` (qui importe
+   `cerf-zip.mjs`) et `EssaiModule.qml` (qui importe `module-essai.mjs`) par
+   `Qt.createComponent` et affiche `errorString()` en cas d'échec : un `.mjs` refusé par
+   QField donne un message lisible (question 4) au lieu d'un plugin absent. `main.qml`
+   garde un bouton « E. Module .mjs » de secours.
+4. **`empaqueter.mjs`** écrit dans `prototype/dist/` (ignoré par `.gitignore`, décision
+   n° 1) `cerf-prototype.zip` et `cerf-essai.zip`.
+5. **Table CP437** : la page de l'Unicode Consortium a été refusée par le réseau (403) ;
+   source : codec `cp437` de Python 3.13.18, généré depuis `CP437.TXT`, contrôlé identique
+   à `iconv` de la glibc 2.39.
+6. **Un défaut trouvé hors QField** (Qt 6.12 par PySide6, API de QField simulée) : un
+   `QByteArray` vide arrive en `ArrayBuffer` vide, et `new Uint8Array()` sur ce tampon lève
+   « Type error » dans le moteur de Qt. `octetsDe` le traite à part ; test Node ajouté.
+
 ## 10. Question de contrôle
 
 Qui fait quoi d'ici quand, et comment saura-t-on que ça marche ? — Le `dev` écrit les tests

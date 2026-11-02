@@ -1,7 +1,7 @@
 # ADR 0002 — Fonds IGN en XYZ, fond embarqué en repli
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — principe tranché par Pascal le 2 novembre 2026 (arbitrage 2)
+- **Statut :** proposée — XYZ choisi par Pascal (arbitrage 2) ; critique reportée ; à accepter avec la spec (porte n° 1)
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -34,6 +34,15 @@ Gabarit d'URL proposé, à vérifier par l'`acquereur` :
 | **N**ovateur | Idées écoutées ? | WMTS, XYZ, embarqué, vectoriel. | — | — |
 | **C**oût | Dépense inutile ? | Pas de fond embarqué par défaut. | — | oui |
 | **É**cologique | Réutilisation ? | Données ouvertes IGN, sans clé. | — | oui |
+
+## Arbitrages de Pascal après critique (2 novembre 2026)
+
+- Pas de fond embarqué en tranche 1 ; la recette essaie le fond hors ligne la veille
+  **et à J+2** ; échec à J+2 → on prépare le fond embarqué (spec § 9, n° 5).
+- Coût nommé : QGIS fait expirer une tuile au bout de 24 h quand le serveur ne fixe pas
+  d'expiration ; le fond peut donc manquer dès J+1. La taille du cache de QField est
+  inconnue.
+- Zoom maximal fixé à la limite de la Géoplateforme ; attribution « © IGN ».
 
 ## Valeurs sacrifiées
 

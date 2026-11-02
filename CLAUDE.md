@@ -39,7 +39,7 @@ chaque PR vers `main`) → `/imperatrice:bilan`.
 
 ## Règles métier du projet
 
-Le détail est dans `docs/brief.md` (et bientôt `docs/spec.md`) : ici, l'essentiel que
+Le détail est dans `docs/brief.md` et `docs/spec.md` : ici, l'essentiel que
 les agents doivent garder en tête.
 
 - **Système de coordonnées du projet** : Lambert 93, EPSG:2154 (métropole, Corse
@@ -49,8 +49,9 @@ les agents doivent garder en tête.
   (RFC 7946), un Shapefile sans `.prj` peut recevoir un système en silence.
 - **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile complet (`.shp`,
   `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF, lus tels quels dans le zip (`/vsizip/`).
-- **Plugin** : plugin QField d'application ; registre des couches à clé propre au projet
-  Cerf ; copies hors du dossier projet.
+- **Plugin** : plugin QField d'application, GPL-3.0-or-later, code écrit pour Cerf (rien
+  de recopié) ; un seul `cerf.qgz` par appareil ; registre à clé `cerf_id` ; copies hors
+  du dossier projet si QField le permet (prototype n° 1, voir `docs/spec.md` § 9).
 - **Styles du manuel** (source : mail de JFC, tableau dans `docs/brief.md`) : UG, Parcelles,
   FRT et exports ProdBois / Relevés, appliqués par règle sur le nom de la couche ; un `.qml`
   posé à côté d'une couche dans le zip surcharge la règle.

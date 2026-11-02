@@ -1,7 +1,7 @@
 # ADR 0004 — Contrôle de vraisemblance des coordonnées
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — principe tranché par Pascal le 2 novembre 2026 (arbitrage 3) ; seuils à valider
+- **Statut :** proposée — principe tranché par Pascal (arbitrage 3) ; pas de chargement forcé (spec § 9, n° 7) ; emprise à vérifier avec PROJ ; à accepter avec la spec (porte n° 1)
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -29,6 +29,14 @@ Shapefile sans `.prj`. Options : refus sur système absent ; demander le systèm
 | **N**ovateur | Idées écoutées ? | Quatre options. | — | — |
 | **C**oût | Dépense inutile ? | — | — | — |
 | **É**cologique | Réutilisation ? | Emprise paramétrable pour d'autres territoires. | — | — |
+
+## Arbitrages de Pascal après critique (2 novembre 2026)
+
+- Ordre des contrôles corrigé (spec § 4) : `.prj`, lecture, système invalide, couche
+  vide (sans contrôle d'emprise), emprise ; toute erreur de reprojection vaut refus.
+- **Pas de chargement forcé.** Valeur sacrifiée ajoutée : l'**autonomie de l'agent**, qui
+  ne peut pas passer outre un refus sur le terrain, sans réseau ; coût : un faux refus
+  bloque la couche jusqu'au retour au bureau. Pascal l'accepte : la sûreté passe avant.
 
 ## Valeurs sacrifiées
 

@@ -1,7 +1,7 @@
 # ADR 0006 — Licence de Cerf
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — à trancher par Pascal après lecture de la licence de qfield-layer-loader (arbitrage 5)
+- **Statut :** acceptée par Pascal le 2 novembre 2026 : GPL-3.0-or-later
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -30,6 +30,12 @@ appartient à l'ONF, la licence doit figurer dans la liste du décret n° 2017-6
 | **N**ovateur | Idées écoutées ? | Trois licences. | — | — |
 | **C**oût | Dépense inutile ? | — | — | — |
 | **É**cologique | Réutilisation ? | Copyleft : les dérivés restent ouverts. | — | — |
+
+## Arbitrages de Pascal après critique (2 novembre 2026)
+
+- **GPL-3.0-or-later** ; **le code est à Pascal** (pas de contrainte du décret
+  n° 2017-638) ; **aucune ligne recopiée** de `qfield-layer-loader` ni de
+  `qfield_addLayer`, ce qui lève la question « -only ou -or-later ».
 
 ## Valeurs sacrifiées
 

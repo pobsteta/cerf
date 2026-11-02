@@ -1,7 +1,7 @@
 # ADR 0001 — Projet modèle QGIS et plugin QField d'application
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — Pascal a choisi le plugin d'application le 2 novembre 2026 (arbitrage 1) ; à confirmer après critique du contradicteur
+- **Statut :** proposée — plugin d'application choisi par Pascal (arbitrage 1) ; critique du contradicteur reportée ; à accepter avec la spec (porte n° 1)
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -34,6 +34,13 @@ Le contradicteur penchait pour l'option 2 ; Pascal a retenu l'option 3.
 | **N**ovateur | Toutes les idées écoutées ? | Les quatre options ci-dessus. | — | — |
 | **C**oût | Dépense inutile ? | Pas de serveur, pas de conversion. | API QML peu documentée : temps de prototype. | à trancher par Pascal |
 | **É**cologique | Réutilisation ? | Le plugin sert à toute UT et à tout projet portant `cerf_id`. | — | — |
+
+## Arbitrages de Pascal après critique (2 novembre 2026)
+
+- Code entièrement écrit pour Cerf, rien n'est recopié des deux plugins cités (spec § 9, n° 4).
+- Le bouton n'apparaît que dans un projet portant `cerf_id`.
+- Prototype n° 1 avant toute autre mission : lister un zip, copier hors du dossier projet,
+  effacer un `.zip`, importer un même module `.mjs` dans QML et dans Node.
 
 ## Valeurs sacrifiées
 

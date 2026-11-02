@@ -197,3 +197,14 @@ Sur les huit questions du `contradicteur` (critique au journal du même jour) :
    projet** ;
 7. **protocole des deux minutes** retenu, avec zip piégé ;
 8. commission et affouagistes **retirés** de la tranche 1.
+
+## Arbitrages de Pascal sur la critique de la spec (2 novembre 2026)
+
+Détail dans `docs/spec.md` § 9. Ce qui modifie le brief :
+
+- **arbitrage 6 conditionnel** : si le plugin ne peut pas lister le zip hors du dossier
+  projet, le zip va dans le dossier projet et Cerf n'est pas utilisé avec QFieldCloud ;
+- **un seul projet `cerf.qgz` par appareil**, pour toutes les forêts ;
+- **licence GPL-3.0-or-later**, code à Pascal, rien de recopié ;
+- le geste porte sur un zip, pas sur un dossier ;
+- pas de chargement forcé d'une couche refusée.

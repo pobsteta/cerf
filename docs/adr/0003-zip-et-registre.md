@@ -1,7 +1,7 @@
 # ADR 0003 — Lecture dans le zip et registre des couches
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — clé et emplacement tranchés par Pascal le 2 novembre 2026 (arbitrage 6)
+- **Statut :** proposée — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3) ; à accepter avec la spec (porte n° 1)
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -34,6 +34,17 @@ pour un zip sans projet). Clé du registre : nom du fichier projet (fragile) ou
 | **N**ovateur | Idées écoutées ? | Trois lectures, deux clés. | — | — |
 | **C**oût | Dépense inutile ? | Pas de décompression : pas de double stockage. | GeoTIFF lourd lu lentement dans un zip. | à mesurer (prototype) |
 | **É**cologique | Réutilisation ? | Registre et lecteur réutilisables par d'autres projets. | — | — |
+
+## Arbitrages de Pascal après critique (2 novembre 2026)
+
+- **Un seul `cerf.qgz` par appareil** ; `cerf_id` lu, jamais écrit par le plugin.
+- Si le plugin ne peut pas lister le zip hors du dossier projet : le zip va **dans** le
+  dossier projet, Cerf n'est pas utilisé avec QFieldCloud, et l'on demande à QField
+  d'exposer le listage aux plugins.
+- Si l'effacement d'un `.zip` est impossible : la copie reste, son nom est affiché.
+- Valeurs sacrifiées ajoutées : la **place sur l'appareil** (si l'effacement est
+  impossible) ; la **compatibilité QFieldCloud** (si le zip doit aller dans le dossier
+  projet).
 
 ## Valeurs sacrifiées
 

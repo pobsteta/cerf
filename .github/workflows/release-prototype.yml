@@ -5,7 +5,7 @@ name: Release du prototype
 on:
   push:
     branches: ['mission/004-prototype-1']
-    paths: ['prototype/**', '.github/workflows/release-prototype.yml']
+    paths: ['prototype/**', 'outils/**', '.github/workflows/release-prototype.yml']
 permissions:
   contents: write
 jobs:
@@ -16,6 +16,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dépendances Python des outils (pyproj, mission 002)
+        run: pip install -r outils/requirements.txt
       - name: Tests
         run: node --test
       - name: Zips

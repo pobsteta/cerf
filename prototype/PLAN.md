@@ -281,8 +281,12 @@ Les décisions de Pascal sont dans `pilotage/missions/004-prototype-1.md`, rubri
    le texte que d'une entrée rangée sans compression.
 2. **Essai à risque, en dernier** (décision n° 3) : bouton
    **« I. Essai à risque : lister un gros zip »**, en bas de l'écran, en rouge, à toucher
-   deux fois. Le bouton C refuse de lire en mémoire une copie de plus de 10 000 000 octets
-   et renvoie à I (garde du prototype, pas une valeur du produit).
+   deux fois. Le bouton C ne lit en mémoire qu'une copie de **taille connue** d'au plus
+   10 000 000 octets ; plus grosse, ou de taille inconnue (copie non trouvée par
+   `LocalFilesModel`), il refuse avec un message et renvoie à I (garde du prototype, pas
+   une valeur du produit ; taille inconnue refusée depuis la relecture 1/3). Si C affiche
+   « taille de la copie inconnue » sur `essai.zip` (2108 octets), Pascal peut lister par I
+   sans risque réel, et le note dans « Vu autrement ».
 3. **`main.qml` n'importe pas les `.mjs` lui-même.** Il crée `Cerf.qml` (qui importe
    `cerf-zip.mjs`) et `EssaiModule.qml` (qui importe `module-essai.mjs`) par
    `Qt.createComponent` et affiche `errorString()` en cas d'échec : un `.mjs` refusé par
@@ -296,6 +300,21 @@ Les décisions de Pascal sont dans `pilotage/missions/004-prototype-1.md`, rubri
 6. **Un défaut trouvé hors QField** (Qt 6.12 par PySide6, API de QField simulée) : un
    `QByteArray` vide arrive en `ArrayBuffer` vide, et `new Uint8Array()` sur ce tampon lève
    « Type error » dans le moteur de Qt. `octetsDe` le traite à part ; test Node ajouté.
+7. **Trois appels de l'API de QField absents du tableau du § 4** (relecture 1/3), lus dans
+   QField v4.3.7 (commit `3fb1281`), non essayés sur l'appareil :
+
+   | Usage dans le prototype | Fonction | Source | Prouvé ? |
+   |---|---|---|---|
+   | Dire si QField tient la copie pour « dans le dossier projet » (affiché après A et B, à côté du calcul du module) | `FileUtils.isWithinProjectDirectory(chemin)` | `src/core/utils/qffileutils.h` L76 | lu |
+   | Parent de la fenêtre du prototype | `iface.mainWindow()` (puis `.contentItem`) | `src/core/qfappinterface.h` L208 | lu |
+   | Demande des droits de stockage avant le sélecteur (A et B) | `platformUtilities.requestStoragePermission()` | `src/core/platforms/qfplatformutilities.h` L330 (vide hors Android) ; Android : `qfandroidplatformutilities.cpp` L596-608 | lu |
+
+   **À dire à Pascal :** sous Android, `requestStoragePermission` peut afficher **une
+   demande de permission du système** (lecture et écriture du stockage, position des
+   médias) au premier toucher de A ou de B, **une seule fois** par installation de QField
+   (réglage `QField/storagePermissionChecked`), et seulement si QField ne l'a pas déjà
+   faite. Pascal peut accepter : sans elle, le sélecteur ou la copie peuvent échouer. Il
+   note dans « Vu autrement » si la demande est apparue et sa réponse.
 
 ## 10. Question de contrôle
 

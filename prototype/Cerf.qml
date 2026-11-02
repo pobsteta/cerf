@@ -157,9 +157,7 @@ Item {
     }
     const taille = tailleFichier(copie);
     if (!force && !Zip.lectureSure(taille)) {
-      afficher(titre, ["Lecture NON tentée : la copie fait " + taille + " octets, au-delà de "
-        + Zip.SEUIL_LECTURE_OCTETS + " octets.",
-        "Pour la lire en mémoire, utiliser « " + Zip.BOUTONS.I + " », en dernier."]);
+      afficher(titre, [Zip.messageLectureRefusee(taille), "Chemin : " + copie]);
       return;
     }
     const lieu = Zip.lieuDeLecture(copie, dossierProjet());

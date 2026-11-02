@@ -296,9 +296,18 @@ export function cheminVsizip(zip, entree) {
   return `/vsizip/${zip}/${entree.replace(/^\/+/, '')}`;
 }
 
-// Taille connue (≥ 0) au-dessus du seuil : lecture refusée par C, renvoyée à I.
+// Le bouton C ne lit en mémoire qu'une copie de taille CONNUE, au plus égale au seuil.
+// Taille inconnue (LocalFilesModel n'a pas trouvé la copie) ou trop grosse : refus, et
+// renvoi au bouton I (décision de Pascal n° 3 ; relecture 1/3 du 2 novembre 2026).
 export function lectureSure(taille) {
-  return !(taille >= 0 && taille > SEUIL_LECTURE_OCTETS);
+  return typeof taille === 'number' && taille >= 0 && taille <= SEUIL_LECTURE_OCTETS;
+}
+
+export function messageLectureRefusee(taille) {
+  const raison = typeof taille === 'number' && taille >= 0
+    ? `la copie fait ${taille} octets, au-delà de ${SEUIL_LECTURE_OCTETS} octets`
+    : 'taille de la copie inconnue (non trouvée par LocalFilesModel) : un gros zip ne peut pas être exclu';
+  return `Lecture NON tentée : ${raison}. Pour lire la copie en mémoire, utiliser « ${BOUTONS.I} », en dernier.`;
 }
 
 // --------------------------------------------------------------------------- positions

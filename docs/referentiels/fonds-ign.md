@@ -8,8 +8,9 @@
   Date de lecture par l'acquéreur : 2 novembre 2026. Aucun accès réseau de ma part.
 - **Limites :** les en-têtes viennent d'une seule mesure, via le proxy de la session. La
   ligne `HTTP/1.1 200 Connection Established` et `x-iplb-request-id` sont du proxy, pas de
-  l'IGN ; la réponse IGN commence à `HTTP/2 200`. Non mesuré : une tuile au zoom 19, une
-  tuile hors de France, le comportement de QField face à `Cache-Control`, les CGU elles-mêmes.
+  l'IGN ; la réponse IGN commence à `HTTP/2 200`. Zoom 19, 20, 21 et lecture des 20 limites : mesure du
+  relecteur (2 novembre 2026, 15:41Z), non versée au dépôt. Non mesuré : une tuile hors de France,
+  le comportement de QField face à `Cache-Control`, les CGU elles-mêmes.
 
 ## 1. URL XYZ (état du jour : mesurées en HTTP 200, zoom 15, le 2 novembre 2026)
 
@@ -31,19 +32,22 @@ Le gabarit est identique à celui de l'ADR 0002 (aucun écart). `{x}` = colonne,
 | Plan IGN v2 | `PM_0_19` | 0 | **19** | `getcapabilities.xml` ligne 10, couche `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` : `<TileMatrixSetLink><TileMatrixSet>PM_0_19</TileMatrixSet>`, limites commençant à `<TileMatrix>0</TileMatrix>` |
 | BD ORTHO | `PM_0_19` | 0 | **19** | `getcapabilities.xml` ligne 14, couche `ORTHOIMAGERY.ORTHOPHOTOS` : idem |
 
-Réserve : « 19 » est tiré du nom du jeu `PM_0_19` ; je n'ai pas pu isoler à l'outil la dernière
-entrée `TileMatrixLimits` de chacune des deux couches (lignes de 3 Mo). À recontrôler en ouvrant
-une tuile au zoom 19 (voir « trois points au sol »).
+Confirmation du « 19 » : à la lecture du relecteur, `PM_0_19` a 20 limites de zoom (0 à 19) pour
+chacune des deux couches. Je l'avais déduit du seul nom du jeu (outil limité par les lignes de 3 Mo) ;
+la réserve tombe. Ces lectures et les mesures ci-dessous sont celles du relecteur, non versées au dépôt.
 
-**Interprétation de l'écart `PM` / `PM_0_19`** (remarque de la relecture 019) :
+**Interprétation de l'écart `PM` / `PM_0_19`** (remarque de la relecture 019, complétée par la mesure du relecteur) :
 le GetCapabilities déclare un jeu `PM` (ligne 14, `<TileMatrixSet><ows:Identifier>PM</ows:Identifier>`)
 et de nombreux jeux tronqués `PM_a_b` (dont `PM_0_19`, `PM_0_21`). Chaque couche renvoie à `PM_0_19`,
 qui borne les zooms de 0 à 19. Le serveur accepte aussi `TILEMATRIXSET=PM` (HTTP 200 au zoom 15,
-`mesure-dates.txt`). Conséquence : l'URL de l'ADR est valable, mais **seul le zoom maximal du
-`PM_0_19` est garanti par la couche** ; avec `PM`, rien n'empêche de demander un zoom 20 et plus
-qui n'est pas annoncé. D'où : fixer le zoom max du projet à 19 (spec § 3.4). Non vérifié : que les
-matrices de `PM` et de `PM_0_19` aient la même géométrie (je n'ai comparé que leurs noms). Alternative
-à proposer à Pascal : utiliser `TILEMATRIXSET=PM_0_19` dans l'URL (nom exact du GetCapabilities), non testé en HTTP.
+`mesure-dates.txt`).
+**Mesure du relecteur, 2 novembre 2026, 15:41Z** (curl, même point que la 019, colonne et ligne doublées à chaque niveau ; non versée au dépôt) :
+- zoom 19 : HTTP 200 pour les deux fonds (PNG 15 474 octets, JPEG 11 065 octets), tuiles identiques octet pour octet avec `PM` et avec `PM_0_19` ;
+- zoom 20 et 21 : HTTP 404 « No data found », avec `PM` comme avec `PM_0_19` ;
+- dans le XML, `PM` a 22 niveaux (0 à 21, EPSG:3857), de géométrie identique à `PM_0_19` aux niveaux 0 et 19.
+
+Conséquence : le zoom maximal utile est **19**, quel que soit le jeu demandé (spec § 3.4). Choisir `PM` ou `PM_0_19`
+dans l'URL est une question de forme (question n° 3), sans effet sur les tuiles. Au-delà de 19, le serveur répond 404 : fixer le zoom max à 19 évite les tuiles vides.
 
 ## 3. Cache (en-têtes recopiés)
 
@@ -68,7 +72,7 @@ Je n'ai pas modifié l'ADR : écart signalé à l'orchestrateur.
 | Fournisseur | `IGN` | `getcapabilities.xml` ligne 2, `<ows:ProviderName>IGN` |
 | Frais | `none` | ligne 2, `<ows:Fees>none` |
 | Contraintes d'accès | « Conditions Générales d'Utilisation disponibles ici : https://cartes.gouv.fr/cgu » | ligne 2, `<ows:AccessConstraints>` |
-| Licence nommée (Etalab, Licence ouverte…) | **aucune dans le XML** | recherche de « licence », « attribution », « Etalab », « © » : 1 seule ligne touchée, celle des contraintes d'accès (CGU) |
+| Licence nommée (Etalab, Licence ouverte…) | **aucune dans le XML** | recherche de « licence », « attribution », « Etalab », « © » : 1 seule ligne touchée (la ligne 14). Elle contient « Licences … entrepreneurs de spectacles vivants » et `licence_sv_wmts`, qui appartiennent à une autre couche, sans rapport avec Plan IGN v2 ni BD ORTHO ; les CGU, elles, sont à la ligne 2. La conclusion ne change pas : aucune licence nommée pour nos deux couches |
 | Attribution « © IGN » | **non fournie par le XML** ; vient de l'ADR 0002 et de la spec § 3.4 | — |
 
 Donc : la licence des deux fonds est renvoyée aux **CGU de cartes.gouv.fr/cgu, que je n'ai pas lues**
@@ -92,20 +96,24 @@ et « Plan IGN HD » (ligne 10). Hors périmètre ; la 019 et l'ADR ne les deman
 1. **Licence/attribution.** Les CGU (cartes.gouv.fr/cgu) valent pour ces fonds : acceptez-vous « © IGN » après lecture, et la
    mention proposée pour `brut/` ?
 2. **Zoom 19 ou plus ?** Les couches annoncent 19. Le contradicteur de l'ADR parle de « limite de la Géoplateforme » : 19 convient-il ?
-3. **`PM` ou `PM_0_19` dans l'URL ?** `PM` marche (mesuré), `PM_0_19` est le nom exact annoncé (non mesuré).
+3. **`PM` ou `PM_0_19` dans l'URL ?** Question de forme seulement : les deux donnent les mêmes tuiles et les mêmes 404 au-delà du zoom 19 (mesure du relecteur, 2 novembre 2026, 15:41Z, non versée au dépôt). `PM` garde le gabarit de l'ADR ; `PM_0_19` est le nom exact annoncé par les couches.
 4. **Hypothèse de l'ADR** (« expiration à 24 h ») contredite par le serveur (21 jours) : l'ADR est-il à amender, par vous ?
 
 ## 7. Trois points au sol (à vérifier sur le terrain)
 
-1. **Zoom 19** : ouvrir, dans un navigateur, la même position (colonne et ligne doublées à chaque zoom depuis 15) à z=19 pour les deux fonds ; vérifier une image réelle, non vide ; puis z=20 pour voir ce que `PM` répond.
+1. **Deux tuiles dans le navigateur** (échantillon de Pascal, zoom 15, URL de `brut/mesure-dates.txt` lignes 2 et 3) :
+   - Plan IGN v2 : `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=15&TILEROW=11336&TILECOL=16629&FORMAT=image/png`
+   - BD ORTHO : `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=15&TILEROW=11336&TILECOL=16629&FORMAT=image/jpeg`
+   
+   Puis, en option, le zoom 19 (colonne et ligne doublées à chaque niveau depuis 15, soit ×16) : le relecteur y a obtenu un 200 (§ 2) ; à revoir à l'œil.
 2. **Fond à J+2** : ouvrir la zone la veille puis à J+2 hors ligne ; comparer avec le `max-age` de 21 jours annoncé (cache du client réel).
 3. **Zone sans orthophoto fraîche ou en bordure (Corse, forêt de l'UT)** : l'URL de tuile n'est mesurée qu'en un seul point ; ouvrir une tuile sur l'UT de Pascal (Plan IGN et BD ORTHO), et regarder les dates de prise de vue (PDF cité dans l'abstract, ligne 14).
 
 ## 8. Liste de contrôle
 
-1. Sources et emplacements : **passée** (fichier, ligne, élément XML, date), sauf le « 19 » tiré du nom de jeu (réserve dite § 2).
+1. Sources et emplacements : **passée** (fichier, ligne, élément XML, date ; le zoom 19 est confirmé par la mesure du relecteur, § 2).
 2. Décomptes complets : **passée** (2 fonds, 2 tuiles, 3 pièces d'en-têtes, 1 GetCapabilities ; pas de total de couches annoncé).
-3. Bornes recopiées de la pièce ; limites dites (proxy, zoom 19 non mesuré, CGU non lues) : **passée**.
+3. Bornes recopiées de la pièce ; limites dites (proxy, mesures du relecteur non versées au dépôt, CGU non lues) : **passée**.
 4. État du jour sur chaque élément : **passée** (2 novembre 2026).
 5. Questions de Pascal posées : **passée**.
 - Non cochés : `.claude/test-command` **non lancé** (l'acquéreur n'a pas d'outil d'exécution) ; test « coller dans QGIS » à faire par Pascal.

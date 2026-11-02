@@ -6,7 +6,7 @@
 > colonne ; on change ce numéro chaque fois qu'elle change de colonne.
 > **Une carte qui ne bouge pas est souvent la mauvaise nouvelle à dire tout de suite.**
 
-**Dernier cycle :** 0 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
+**Dernier cycle :** 1 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
 rien lancé. Une carte est immobile quand dernier cycle − N ≥ 2.)_
 
 _Modèle de carte :_
@@ -27,18 +27,14 @@ _Modèle de carte :_
 
 ## Validé
 
-- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 0
+- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 0 · **bloquée au cycle 1** (voir journal)
   - Homme : `acquereur` (sonnet)
   - Mission : Référentiel des fonds IGN — cycle prévu 1
   - Moyens : `docs/spec.md` § 3.4, ADR 0002, https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetCapabilities
-- [002-emprise-metropole](missions/002-emprise-metropole.md) · depuis le cycle 0
+- [002-emprise-metropole](missions/002-emprise-metropole.md) · depuis le cycle 0 · **bloquée au cycle 1** (voir journal)
   - Homme : `acquereur` (sonnet)
   - Mission : Emprise de la France métropolitaine en Lambert 93 — cycle prévu 1
   - Moyens : `docs/spec.md` § 4, ADR 0004
-- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 0
-  - Homme : `testeur` (sonnet)
-  - Mission : Protocole d'essai du prototype n° 1 — cycle prévu 1
-  - Moyens : `docs/spec.md`, ADR 0003, ADR 0005, `pilotage/journal.md` (critique du 2 novembre)
 - [004-prototype-1](missions/004-prototype-1.md) · depuis le cycle 0
   - Homme : `dev` (opus)
   - Mission : Prototype n° 1 : ce que QField permet à un plugin — cycle prévu 2
@@ -99,6 +95,11 @@ _Modèle de carte :_
 ## Planifié
 
 ## Terminé
+
+- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 1 · relu « prêt », intégré à la PR n° 1
+  - Homme : `testeur` (sonnet)
+  - Mission : Protocole d'essai du prototype n° 1 — cycle prévu 1
+  - Moyens : `docs/spec.md`, ADR 0003, ADR 0005, `pilotage/journal.md` (critique du 2 novembre)
 
 ## Abandonné
 

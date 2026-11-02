@@ -38,6 +38,14 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
   l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
 - **Sources autorisées :** ADR 0001, 0003, 0005 ; `docs/spec.md` § 3.3 et § 9 ; code de QField (`qffileutils`, `qfplatformutilities`, `LayerUtils`) ; ne rien recopier de `qfield-layer-loader` ni de `qfield_addLayer` (ADR 0006).
 
+## Exigences venues du protocole 003 (relecteur, 2 novembre 2026)
+
+Pour que Pascal puisse suivre `tests/recette/prototype-1.md`, le prototype affiche :
+le chemin et la taille de la copie du zip, l'identifiant `cerf_id` lu, un message « zip
+absent » après l'effacement, le résultat de `somme(2, 3)` et la valeur de `SIGNATURE` du
+module `tests/recette/essai/module-essai.mjs` ; il dit s'il liste la copie ou l'original.
+Les noms de ses boutons sont reportés dans le protocole à la fin de la mission.
+
 ## Valeur provisoire (chiffre, réglage)
 
 - aucune.

@@ -27,6 +27,18 @@ Rendu relu « prêt » par le `relecteur` ; Pascal demande les retouches et l'aj
    d'essai passe en Lambert 93 (EPSG:2154), écrit d'après une source nommée. Le GeoTIFF
    de 200 Mo n'est pas versé au dépôt : un script le fabrique.
 
+## Décisions de Pascal sur l'aller-retour 1/3 (2 novembre 2026)
+
+1. Le prototype est jugé réussi sur les **questions 1 à 4** (lister, copier, effacer,
+   module `.mjs`) ; les questions 5 à 9 sont notées sans bloquer.
+2. Le temps d'ouverture du GeoTIFF de 200 Mo est **mesuré et noté** ; la valeur maximale
+   sera fixée après l'essai.
+3. Tolérance de **1 m** sur la position du point d'essai : gardée.
+4. Zip d'essai de 2 108 octets et plafond du test à 4 096 octets : pris acte.
+
+À reporter dans `tests/recette/prototype-1.md` (rubrique « Questions à Pascal ») avant la
+fusion de la PR de la mission 003.
+
 ## Les trois questions (règle de staffing)
 
 | Question | Réponse | Conséquence |

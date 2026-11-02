@@ -102,19 +102,21 @@ function analyser(buf) {
 }
 // Source lue comme une chaîne de requête : aucun ordre imposé, paramètres inconnus tolérés
 // (QgsDataSourceUri::encodedUri range par ordre alphabétique et ajoute les « http-header:… » à la fin).
-const PARAMS_CONNUS = /^(type|url|zmin|zmax|tilePixelRatio|interpretation|username|password|authcfg|crs|http-header:.*)$/;
 const decoder = (t) => t.replace(/(%[0-9A-Fa-f]{2})+/g, (m) => { try { return decodeURIComponent(m); } catch { return m; } });
+// QGIS encode les « & » de l'URL (%26) : une URL non encodée n'est pas reconnue (ses « &SERVICE=… » sont
+// des paramètres inconnus, ignorés) et le gabarit exact n'est alors pas trouvé : la source est refusée.
+// Une clé connue répétée est un défaut (QGIS lirait vraisemblablement la dernière valeur) : champ « doublons ».
+const CLES = ['type', 'url', 'zmin', 'zmax'];
 const lireSource = (s) => {
-  const p = {}; let dernier = null;
+  const vus = {};
   for (const seg of s.split('&')) {
-    const i = seg.indexOf('='); const k = i < 0 ? seg : seg.slice(0, i);
-    if (i >= 0 && PARAMS_CONNUS.test(k) && !(k in p)) { p[k] = seg.slice(i + 1); dernier = k; }
-    else if (dernier === 'url') p.url += '&' + seg; // URL non encodée : ses « & » ne sont pas des séparateurs
+    const i = seg.indexOf('='); if (i < 0) continue;
+    const k = seg.slice(0, i); if (CLES.includes(k)) (vus[k] ??= []).push(seg.slice(i + 1));
   }
-  if (p.type === undefined || p.url === undefined) return null;
-  let url = p.url; try { url = decodeURIComponent(url); } catch { /* url non encodée */ }
+  if (vus.type === undefined || vus.url === undefined) return null;
+  let url = vus.url[0]; try { url = decodeURIComponent(url); } catch { /* url non encodée */ }
   const n = (v) => (v !== undefined && /^\d+$/.test(v) ? Number(v) : undefined);
-  return { type: p.type, url, zmin: n(p.zmin), zmax: n(p.zmax) };
+  return { type: vus.type[0], url, zmin: n(vus.zmin?.[0]), zmax: n(vus.zmax?.[0]), doublons: CLES.filter((k) => vus[k]?.length > 1) };
 };
 
 // --- Vérifications : chacune renvoie une liste de défauts (vide = conforme) -----------------------------
@@ -132,6 +134,7 @@ const verifs = {
     if (p.couches.length !== 2) d.push(`${p.couches.length} couche(s), attendu 2`);
     for (const c of p.couches) {
       const s = lireSource(c.source);
+      for (const k of s?.doublons ?? []) d.push(`couche « ${c.nom} » : paramètre ${k} en double`);
       if (c.fournisseur !== 'wms' || !s || s.type !== 'xyz') d.push(`couche « ${c.nom} » : source « ${c.source.slice(0, 60)} », attendu type=xyz (fournisseur wms)`);
     }
     return d;
@@ -184,6 +187,10 @@ test('garde-fou : projet conforme, « tilePixelRatio=1 » avant type et « &http
   const o = { c0: { source: `tilePixelRatio=1&type=xyz&url=${enc(FONDS[0])}&zmax=19&zmin=0&http-header:referer=` } };
   assert.deepEqual(defauts(qgz(projet(o))), []);
 });
+test('garde-fou : projet conforme, paramètre inconnu (styleUrl=) placé après url', () => {
+  const o = { c0: { source: `type=xyz&url=${enc(FONDS[0])}&styleUrl=&zmax=19&zmin=0` } };
+  assert.deepEqual(defauts(qgz(projet(o))), []);
+});
 test('garde-fou : projet conforme, ordre alphabétique de QGIS (interpretation, tilePixelRatio, type, url, zmax, zmin)', () => {
   const o = { c0: { source: `interpretation=&tilePixelRatio=0&type=xyz&url=${enc(FONDS[0])}&zmax=19&zmin=0` } };
   assert.deepEqual(defauts(qgz(projet(o))), []);
@@ -204,6 +211,9 @@ const fautes = {
   'un seul fond': [{ fonds: [FONDS[0]] }, 'exactement deux couches'],
   'une troisième couche': [{ fonds: [...FONDS, { nom: 'SCAN 25', url: GABARIT('GEOGRAPHICALGRIDSYSTEMS.MAPS', 'image/jpeg') }] }, 'exactement deux couches'],
   "clé encodée dans l'URL (%26key%3DSECRET)": [{ c0: { url: FONDS[0].url + '&key=SECRET', source: `type=xyz&url=${encode(FONDS[0].url)}%26key%3DSECRET&zmax=19&zmin=0` } }, 'aucune clé'],
+  'type=wmts caché en fin de source': [{ c0: { source: `type=xyz&url=${encode(FONDS[0].url)}&zmax=19&zmin=0&type=wmts` } }, 'paramètre type en double'],
+  'url en double après zmin': [{ c0: { source: `type=xyz&url=${encode(FONDS[0].url)}&zmax=19&zmin=0&url=${encode(FONDS[1].url)}` } }, 'paramètre url en double'],
+  'zmax=20 en double': [{ c0: { source: `type=xyz&url=${encode(FONDS[0].url)}&zmax=19&zmin=0&zmax=20` } }, 'paramètre zmax en double'],
   "clé dans l'URL": [{ c0: { url: FONDS[0].url + '&apikey=SECRET' } }, 'aucune clé'],
 };
 for (const [nom, [opts, attendu]] of Object.entries(fautes)) {

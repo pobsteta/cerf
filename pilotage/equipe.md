@@ -10,7 +10,7 @@
 ## Plafond humain
 
 - **PR ouvertes en même temps, au plus :** 3
-- **Rythme de relecture de Pascal :** à fixer par Pascal
+- **Rythme de relecture de Pascal :** pas de rythme fixe (Pascal, 2 novembre 2026) ; le plafond de 3 PR ouvertes reste la seule limite
 
 ## Le vivier (catalogue, pas une équipe)
 

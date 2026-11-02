@@ -148,7 +148,7 @@
   exacte de `qfield-layer-loader`** (arbitrage 5) ; GPL-3.0-or-later pressentie, comme
   Groma et Surculus ; **maintenu par Pascal sur GitHub**
   (nom du dépôt : à trancher par Pascal).
-- **Successeur** : à désigner par Pascal, avant la porte n° 2.
+- **Successeur** : **Jeff Cerf**, désigné par Pascal le 2 novembre 2026.
 
 ## Comment saura-t-on que ça marche ?
 

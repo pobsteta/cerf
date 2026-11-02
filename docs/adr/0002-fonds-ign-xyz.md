@@ -44,6 +44,20 @@ Gabarit d'URL proposé, à vérifier par l'`acquereur` :
   inconnue.
 - Zoom maximal fixé à la limite de la Géoplateforme ; attribution « © IGN ».
 
+## Amendement du 2 novembre 2026 (mission 001, décidé par Pascal)
+
+- **Cache** : le serveur fixe une expiration, `cache-control: private, max-age=1814400`,
+  soit **21 jours** (mesure de la mission 019, `docs/referentiels/brut/`). L'hypothèse
+  « expiration à 24 h, fond manquant dès J+1 » ne vaut que si QField ignore cet en-tête :
+  l'essai à J+2 de la recette le dira.
+- **Zoom maximal : 19** pour les deux fonds (jeu de matrices `PM_0_19` ; au-delà, le
+  serveur répond 404, mesuré par le relecteur de la mission 001).
+- **Jeu de matrices dans l'URL** : `PM` est gardé (gabarit ci-dessus) ; il donne au
+  zoom 19 les mêmes tuiles, octet pour octet, que `PM_0_19`.
+- **Attribution** : « © IGN » retenue par Pascal ; licence renvoyée par le GetCapabilities
+  aux CGU de cartes.gouv.fr. Les pièces de `docs/referentiels/brut/` portent la mention
+  « Source : IGN, Géoplateforme (data.geopf.fr), mesurée le 2 novembre 2026 ».
+
 ## Valeurs sacrifiées
 
 - **Netteté** : tuiles Web Mercator reprojetées en Lambert 93, à juger sur tablette.

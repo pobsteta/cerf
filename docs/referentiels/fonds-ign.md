@@ -91,7 +91,15 @@ Le GetCapabilities déclare aussi : `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2.L93` (« 
 ligne 10), `HR.ORTHOIMAGERY.ORTHOPHOTOS`, `THR.ORTHOIMAGERY.ORTHOPHOTOS` (lignes 10 et 14), « Plan IGN J+1 »
 et « Plan IGN HD » (ligne 10). Hors périmètre ; la 019 et l'ADR ne les demandent pas. Je ne les ai pas mesurées.
 
-## 6. Questions pour Pascal (posées, non tranchées)
+## 6. Questions pour Pascal (tranchées le 2 novembre 2026)
+
+> **Tranchées par Pascal le 2 novembre 2026** (ajout de l'orchestrateur) : « © IGN »
+> retenu, mention de source dans `docs/referentiels/brut/README.md` ; zoom maximal 19 ;
+> jeu de matrices `PM` gardé ; ADR 0002 amendé (cache de 21 jours). Voir l'« Amendement
+> du 2 novembre 2026 » de l'ADR 0002. Les §§ 3 et 4 ci-dessus, qui parlent d'un écart non
+> reporté et d'une mention seulement proposée, sont à lire avec cet amendement.
+
+Questions telles que posées par l'`acquereur` :
 
 1. **Licence/attribution.** Les CGU (cartes.gouv.fr/cgu) valent pour ces fonds : acceptez-vous « © IGN » après lecture, et la
    mention proposée pour `brut/` ?

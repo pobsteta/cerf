@@ -68,3 +68,5 @@
 2026-11-02 · testeur · 005 · aller-retour 1/3 : source XYZ lue sans ordre, paramètres inconnus tolérés, clé encodée détectée ; 21 garde-fous ; rouge inchangé ; 1319d28.
 2026-11-02 · relecteur · 005 · aller-retour 1/3 à reprendre : une clé connue en double (type, url, zmax) est masquée par la règle « première valeur gagne ». Aller-retour 2/3 renvoyé au testeur.
 2026-11-02 · dev · 004 · plan du prototype n° 1 rendu sans code (prototype/PLAN.md, 2b57196) ; d'après le code de QField 4.3.7, un zip ne se lit que dans le dossier projet (repli § 9 n° 1 probable) ; rmFile efface un .zip là où deleteFiles refuse ; l'import .mjs reste à prouver ; cinq questions à Pascal avant le code.
+2026-11-02 · testeur · 005 · aller-retour 2/3 : clés de source en double refusées, paramètres inconnus ignorés, URL non encodée refusée ; 25 garde-fous ; rouge inchangé ; 3ec0e07.
+2026-11-02 · relecteur · 005 · aller-retour 2/3 prêt : refus des doublons et de l'URL non encodée conformes au code de QGIS (encodedUri, QMultiMap : la dernière valeur gagne) ; 83 tests, 73 verts, 10 rouges annoncés jusqu'à 006. PR #7 ouverte en brouillon (rouge justifié jusqu'à 006).

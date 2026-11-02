@@ -29,8 +29,9 @@
 
 | Mission | Agent | Modèle | Temps de la main | Les 3 questions | Cycle |
 |---|---|---|---|---|---|
-| [001 Référentiel des fonds IGN](missions/001-fonds-ign.md) | `acquereur` | sonnet | appuyer | oui/oui/oui | 1 |
-| [002 Emprise de la France métropolitaine en Lambert 93](missions/002-emprise-metropole.md) | `acquereur` | sonnet | appuyer | oui/oui/oui | 1 |
+| [019 Mesure des fonds IGN](missions/019-mesure-fonds-ign.md) | `dev` | sonnet | appuyer | oui/oui/oui | 2 |
+| [001 Référentiel des fonds IGN](missions/001-fonds-ign.md) | `acquereur` | sonnet | appuyer | oui/oui/oui (après 019) | 3 |
+| [002 Emprise de la France métropolitaine en Lambert 93](missions/002-emprise-metropole.md) | `dev` | sonnet | appuyer | oui/oui/oui | 2 |
 | [003 Protocole d'essai du prototype n° 1](missions/003-protocole-prototype.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 1 |
 | [004 Prototype n° 1 : ce que QField permet à un plugin](missions/004-prototype-1.md) | `dev` | opus | tenir | oui/partiel/partiel | 2 |
 | [005 Tests du projet modèle](missions/005-tests-projet-modele.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 2 |

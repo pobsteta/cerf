@@ -1,7 +1,7 @@
 # Mission 001 — Référentiel des fonds IGN
 
 > Fiche rédigée par Claude (orchestrateur) le 2 novembre 2026 avec `/imperatrice:mission`.
-> **Statut : validée par Pascal le 2 novembre 2026 (porte n° 2).** Une mission = une phrase = une
+> **Statut : validée par Pascal le 2 novembre 2026 (porte n° 2) ; scindée le même jour (mesure → 019).** Une mission = une phrase = une
 > branche = une PR.
 
 ## Mission
@@ -16,7 +16,7 @@
 |---|---|---|
 | Peut-il redire la mission en une phrase, avec son but ? | oui | confier |
 | Sait-il comment faire ? (sources, conventions nommées ci-dessous) | oui — GetCapabilities de data.geopf.fr, ADR 0002, spec § 3.4 | confier |
-| A-t-il les moyens ? (outils, données d'essai, tests) | oui — réseau vers data.geopf.fr à confirmer en première tâche ; sinon l'agent le dit et s'arrête | confier |
+| A-t-il les moyens ? (outils, données d'essai, tests) | oui, après la mission 019 — l'`acquereur` n'a ni Bash ni accès web à data.geopf.fr : il lit les pièces de `docs/referentiels/brut/` | confier après 019 |
 
 **Temps de la main :** appuyer — référentiel public, sans décision d'architecture.
 
@@ -32,7 +32,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Harnais
 
-- **Peut :** lire GetCapabilities et les en-têtes HTTP, écrire `docs/referentiels/fonds-ign.md`.
+- **Peut :** lire les pièces de `docs/referentiels/brut/` (mission 019), écrire `docs/referentiels/fonds-ign.md`.
 - **Ne doit pas :** sortir du périmètre, inventer une donnée ou un code, toucher à `main`,
   modifier `docs/brief.md`, `docs/spec.md` ou une ADR (il signale l'écart à
   l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
@@ -44,7 +44,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Dépend de / rouge attendu jusqu'à
 
-- aucune.
+- 019 (pièces mesurées) ; ordre de fusion 019 → 001.
 
 ## Tests
 

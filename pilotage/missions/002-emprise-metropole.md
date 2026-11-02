@@ -1,7 +1,7 @@
 # Mission 002 — Emprise de la France métropolitaine en Lambert 93
 
 > Fiche rédigée par Claude (orchestrateur) le 2 novembre 2026 avec `/imperatrice:mission`.
-> **Statut : validée par Pascal le 2 novembre 2026 (porte n° 2).** Une mission = une phrase = une
+> **Statut : validée par Pascal le 2 novembre 2026 (porte n° 2) ; réattribuée au `dev` le même jour.** Une mission = une phrase = une
 > branche = une PR.
 
 ## Mission
@@ -15,8 +15,8 @@
 | Question | Réponse | Conséquence |
 |---|---|---|
 | Peut-il redire la mission en une phrase, avec son but ? | oui | confier |
-| Sait-il comment faire ? (sources, conventions nommées ci-dessous) | oui — pyproj (installable), contour de la France d'une source publique nommée (ADMIN EXPRESS de l'IGN ou Natural Earth), spec § 4, ADR 0004 | confier |
-| A-t-il les moyens ? (outils, données d'essai, tests) | oui — pyproj s'installe depuis PyPI ; à défaut de contour téléchargeable, les points extrêmes publiés | confier |
+| Sait-il comment faire ? (sources, conventions nommées ci-dessous) | oui — pyproj (PyPI joignable), contour public sur GitHub (`gregoiredavid/france-geojson`, joignable ; origine des données à sourcer), spec § 4, ADR 0004 | confier |
+| A-t-il les moyens ? (outils, données d'essai, tests) | oui — Bash, pyproj installable, contour joignable (vérifié le 2 novembre 2026) | confier |
 
 **Temps de la main :** appuyer — un calcul sourcé, vérifiable.
 
@@ -26,7 +26,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## L'Homme
 
-- **Agent :** `acquereur`
+- **Agent :** `dev` (réattribuée par Pascal le 2 novembre 2026 : l'`acquereur` n'a pas Bash)
 - **Modèle :** sonnet
 - **Ce qui ne lui est pas demandé :** changer la règle du contrôle, coder le contrôle.
 
@@ -48,7 +48,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Tests
 
-- **Comment saura-t-on que c'est juste :** le script se relance et redonne les mêmes valeurs ; Ouessant, Dunkerque, Menton, Bonifacio et Strasbourg sont dedans ; Jersey et Genève hors du rectangle sans marge (contrôle de sens). Commande : `.claude/test-command`.
+- **Comment saura-t-on que c'est juste :** rendre **deux** rectangles : l'emprise brute et l'emprise élargie de 10 km (la valeur provisoire de la spec inclut déjà la marge) ; le script se relance et redonne les mêmes valeurs ; Ouessant, Dunkerque, Menton, Bonifacio et Strasbourg sont dedans ; Jersey et Genève hors du rectangle sans marge (contrôle de sens). Commande : `.claude/test-command`.
 
 ## Terrain
 

@@ -27,12 +27,22 @@ _Modèle de carte :_
 
 ## Validé
 
-- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 0 · **bloquée au cycle 1** (voir journal)
+- [019-mesure-fonds-ign](missions/019-mesure-fonds-ign.md) · depuis le cycle 1
+  - Homme : `dev` (sonnet)
+  - Mission : Mesure des fonds IGN — cycle prévu 2
+  - Moyens : Bash, curl, data.geopf.fr ouvert
+- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 1 · aller-retour 1/3 (retouches et ajout de périmètre)
+  - Homme : `testeur` (sonnet)
+  - Mission : Protocole d'essai du prototype n° 1 — cycle prévu 1
+  - Moyens : `docs/spec.md`, ADR 0003, ADR 0005, `pilotage/journal.md` (critique du 2 novembre)
+
+
+- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 1 · après 019
   - Homme : `acquereur` (sonnet)
   - Mission : Référentiel des fonds IGN — cycle prévu 1
   - Moyens : `docs/spec.md` § 3.4, ADR 0002, https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetCapabilities
-- [002-emprise-metropole](missions/002-emprise-metropole.md) · depuis le cycle 0 · **bloquée au cycle 1** (voir journal)
-  - Homme : `acquereur` (sonnet)
+- [002-emprise-metropole](missions/002-emprise-metropole.md) · depuis le cycle 1 · réattribuée au `dev`
+  - Homme : `dev` (sonnet)
   - Mission : Emprise de la France métropolitaine en Lambert 93 — cycle prévu 1
   - Moyens : `docs/spec.md` § 4, ADR 0004
 - [004-prototype-1](missions/004-prototype-1.md) · depuis le cycle 0
@@ -95,11 +105,6 @@ _Modèle de carte :_
 ## Planifié
 
 ## Terminé
-
-- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 1 · relu « prêt », intégré à la PR n° 1
-  - Homme : `testeur` (sonnet)
-  - Mission : Protocole d'essai du prototype n° 1 — cycle prévu 1
-  - Moyens : `docs/spec.md`, ADR 0003, ADR 0005, `pilotage/journal.md` (critique du 2 novembre)
 
 ## Abandonné
 

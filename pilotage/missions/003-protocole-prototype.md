@@ -10,6 +10,23 @@
 
 **Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
 
+## Aller-retour 1/3 (2 novembre 2026)
+
+Rendu relu « prêt » par le `relecteur` ; Pascal demande les retouches et l'ajout suivants :
+
+1. `tests/recette/prototype-1.md` l. 28 contre l. 86 : dire clairement si `module-essai.mjs`
+   est copié sur le téléphone ou embarqué par le prototype.
+2. l. 89 : sortir du tableau du Samsung le geste « lancer `node --test` sur le poste » (il
+   relève de `.claude/test-command`, lancé par l'orchestrateur).
+3. l. 59 et l. 73 : dire où Pascal lit `cerf_id` (« l'identifiant affiché par le
+   prototype ») et ce que « relister la copie » vise.
+4. **Ajout de périmètre décidé par Pascal** : ajouter au protocole les points « À
+   prototyper » de l'ADR 0003 : Shapefile et `.qml` lus dans le zip, GeoTIFF de 200 Mo
+   (rangé sans compression), sélecteur de fichiers sous Android 11 et plus, noms
+   accentués d'un zip fait par l'explorateur Windows (CP437). Le `.prj` du Shapefile
+   d'essai passe en Lambert 93 (EPSG:2154), écrit d'après une source nommée. Le GeoTIFF
+   de 200 Mo n'est pas versé au dépôt : un script le fabrique.
+
 ## Les trois questions (règle de staffing)
 
 | Question | Réponse | Conséquence |

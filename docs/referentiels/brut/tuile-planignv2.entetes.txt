@@ -1,0 +1,18 @@
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200 
+date: Mon, 02 Nov 2026 15:13:55 GMT
+content-type: image/png
+content-length: 41112
+www-authenticate: Key realm="kong"
+cache-control: private, max-age=1814400
+content-disposition: filename="image.png"
+access-control-allow-origin: *
+strict-transport-security: max-age=31536000; includeSubDomains
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Disposition,Content-Length,X-Community
+access-control-max-age: 1728000
+x-iplb-request-id: A04F6A80:C000_91EFC1E7:01BB_6AE8A8B3_554271FD:3DA25E
+x-iplb-instance: 61218
+

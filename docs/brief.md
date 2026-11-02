@@ -1,4 +1,4 @@
-# [NOM À TRANCHER PAR PASCAL] — brief
+# Cerf — brief
 
 > Rédigé par Claude avec `/imperatrice:brief` le 2 novembre 2026, à partir du mail de
 > JFC et des réponses de Pascal (tours 1 à 3). Chaque ligne vient d'une réponse de
@@ -29,7 +29,7 @@
      triées DE, Réserve), sans être utilisateurs de l'outil.
 - **Coût complet aujourd'hui** : inconnu.
 
-## Ce que fait [NOM]
+## Ce que fait Cerf
 
 - **En une phrase** : un projet QField modèle, prêt pour toute UT, avec les fonds IGN
   en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches
@@ -127,4 +127,4 @@ Pascal Obstétar.
 - l'export brut `Serre_EA2026_p5_13_30.geojson` de ProdBois (schéma des champs,
   système de coordonnées réel) ;
 - la réponse de JFC sur la licence SCAN 25 de l'ONF ;
-- le nom du projet, la licence ouverte choisie, le dépôt GitHub.
+- ~~le nom du projet~~ (Cerf, tranché par Pascal le 2 novembre 2026), la licence ouverte choisie, le dépôt GitHub (`pobsteta/cerf` existe : à confirmer par Pascal).

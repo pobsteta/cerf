@@ -44,6 +44,9 @@ jobs:
             echo
             echo '```'
             sha256sum dist/*.zip
+            echo
+            echo "cerf.qgz contenu dans cerf-projet-modele.zip, pris sur mission/006-projet-modele :"
+            (cd dist && unzip -p cerf-projet-modele.zip cerf.qgz | sha256sum | sed 's/-$/cerf.qgz/')
             echo '```'
           } > notes.md
           if gh release view prototype-1 >/dev/null 2>&1; then

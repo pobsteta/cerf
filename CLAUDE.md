@@ -1,6 +1,6 @@
 # Cerf — consignes de l'orchestrateur
 
-Cerf est un projet QField modèle, prêt pour toute UT, avec les fonds IGN en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches vecteur ou raster dont il a besoin, affichées aux couleurs du manuel (voir `docs/brief.md`). Il est développé par une équipe
+Cerf est un projet QField modèle, prêt pour toute UT de métropole, avec les fonds IGN en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches vecteur ou raster dont il a besoin, affichées aux couleurs du manuel (voir `docs/brief.md`). Il est développé par une équipe
 d'agents IA selon **la méthode de l'Impératrice** de Pascal Obstétar, apportée par le
 plugin `imperatrice` (méthode : skill `imperatrice:methode`).
 
@@ -42,20 +42,27 @@ chaque PR vers `main`) → `/imperatrice:bilan`.
 Le détail est dans `docs/brief.md` (et bientôt `docs/spec.md`) : ici, l'essentiel que
 les agents doivent garder en tête.
 
-- **Système de coordonnées du projet** : Lambert 93, EPSG:2154. Toute couche déclarant
-  un autre système est reprojetée à la volée ; une couche **sans** système déclaré est
-  refusée avec un message clair, jamais chargée de travers.
-- **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile, GeoTIFF, chargés
-  tels quels (pas de conversion).
+- **Système de coordonnées du projet** : Lambert 93, EPSG:2154 (métropole, Corse
+  comprise, en tranche 1). Toute couche est reprojetée à la volée ; puis un **contrôle de
+  vraisemblance** vérifie que son emprise tombe en France métropolitaine, sinon elle est
+  refusée avec un message clair. Attention : un GeoJSON est toujours lu en WGS84
+  (RFC 7946), un Shapefile sans `.prj` peut recevoir un système en silence.
+- **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile complet (`.shp`,
+  `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF, lus tels quels dans le zip (`/vsizip/`).
+- **Plugin** : plugin QField d'application ; registre des couches à clé propre au projet
+  Cerf ; copies hors du dossier projet.
 - **Styles du manuel** (source : mail de JFC, tableau dans `docs/brief.md`) : UG, Parcelles,
   FRT et exports ProdBois / Relevés, appliqués par règle sur le nom de la couche ; un `.qml`
   posé à côté d'une couche dans le zip surcharge la règle.
-- **Fonds de carte** : flux WMTS ouverts de la Géoplateforme IGN (Plan IGN v2, BD ORTHO).
-  SCAN 25 seulement si l'ONF confirme licence et clé (JFC).
+- **Fonds de carte** : Géoplateforme IGN (Plan IGN v2, BD ORTHO) déclarés en **XYZ**, pas en
+  WMTS (hors ligne, QField ne met pas GetCapabilities en cache). SCAN 25 seulement si
+  l'ONF confirme licence et clé (JFC) ; **aucune clé dans le dépôt**.
 - **Terrain** : Android, gants, soleil, **sans réseau pour l'import**. Les couches importées
   sont en lecture seule et reviennent à la réouverture du projet.
 - **Cas de test de référence** : le zip `Serre_EA2026` de JFC (GeoJSON ProdBois trié BF1,
-  UG, Parcelles, FRT en Shapefile), importé hors ligne en moins de deux minutes.
+  UG, Parcelles, FRT en Shapefile), importé hors ligne en 2 minutes au plus (médiane de
+  3 essais), à moins de 5 m du fond IGN, et un zip piégé qui doit donner des messages
+  clairs (protocole dans `docs/brief.md`).
 
 ## Règles techniques communes
 

@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire, à partir de la spec et des ADR, le protocole que Pascal suivra sur son smartphone Samsung pour dire si le prototype n° 1 sait lister, copier, effacer un zip et charger un module .mjs, afin que le prototype soit jugé sur un critère fixé d'avance.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Reporter dans `tests/recette/prototype-1.md` les quatre décisions de Pascal du 2 novembre 2026 (critère sur les questions 1 à 4, temps du GeoTIFF noté, tolérance de 1 m gardée, zip de 2108 octets et plafond de 4096 acceptés) à la place des questions qui lui étaient posées, avec des tests adaptés sans être affaiblis.
 
 ## Aller-retour 1/3 (2 novembre 2026)
 
@@ -36,8 +36,8 @@ Rendu relu « prêt » par le `relecteur` ; Pascal demande les retouches et l'aj
 3. Tolérance de **1 m** sur la position du point d'essai : gardée.
 4. Zip d'essai de 2 108 octets et plafond du test à 4 096 octets : pris acte.
 
-À reporter dans `tests/recette/prototype-1.md` (rubrique « Questions à Pascal ») avant la
-fusion de la PR de la mission 003.
+Reporté dans `tests/recette/prototype-1.md`, rubrique « Décisions de Pascal (2 novembre
+2026) » (commit 3f73e1c, relu « prêt »).
 
 ## Les trois questions (règle de staffing)
 

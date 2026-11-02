@@ -100,12 +100,21 @@ function analyser(buf) {
     })),
   };
 }
+// Source lue comme une chaîne de requête : aucun ordre imposé, paramètres inconnus tolérés
+// (QgsDataSourceUri::encodedUri range par ordre alphabétique et ajoute les « http-header:… » à la fin).
+const PARAMS_CONNUS = /^(type|url|zmin|zmax|tilePixelRatio|interpretation|username|password|authcfg|crs|http-header:.*)$/;
+const decoder = (t) => t.replace(/(%[0-9A-Fa-f]{2})+/g, (m) => { try { return decodeURIComponent(m); } catch { return m; } });
 const lireSource = (s) => {
-  const m = s.match(/^type=([^&]*)&url=(.*?)((?:&zmax=\d+)?(?:&zmin=\d+)?)$/);
-  if (!m) return null;
-  const z = (k) => { const v = m[3].match(new RegExp(`&${k}=(\\d+)`))?.[1]; return v === undefined ? undefined : Number(v); };
-  let url = m[2]; try { url = decodeURIComponent(url); } catch { /* url non encodée */ }
-  return { type: m[1], url, zmin: z('zmin'), zmax: z('zmax') };
+  const p = {}; let dernier = null;
+  for (const seg of s.split('&')) {
+    const i = seg.indexOf('='); const k = i < 0 ? seg : seg.slice(0, i);
+    if (i >= 0 && PARAMS_CONNUS.test(k) && !(k in p)) { p[k] = seg.slice(i + 1); dernier = k; }
+    else if (dernier === 'url') p.url += '&' + seg; // URL non encodée : ses « & » ne sont pas des séparateurs
+  }
+  if (p.type === undefined || p.url === undefined) return null;
+  let url = p.url; try { url = decodeURIComponent(url); } catch { /* url non encodée */ }
+  const n = (v) => (v !== undefined && /^\d+$/.test(v) ? Number(v) : undefined);
+  return { type: p.type, url, zmin: n(p.zmin), zmax: n(p.zmax) };
 };
 
 // --- Vérifications : chacune renvoie une liste de défauts (vide = conforme) -----------------------------
@@ -140,7 +149,7 @@ const verifs = {
   }),
   'attribution « © IGN » sur chaque fond': (p) => p.couches.filter((c) => !c.brut.includes(ATTRIBUTION)).map((c) => `« ${c.nom} » : « ${ATTRIBUTION} » absent de la couche`),
   "les deux fonds sont dans l'arbre des couches": (p) => p.couches.filter((c) => !p.arbre.includes(c.id)).map((c) => `« ${c.nom} » (${c.id}) absent du layer-tree`),
-  "aucune clé d'API dans le projet": (p) => (/(apikey|api_key|[?&;]key=|[?&;]token=)/i.test(dexml(p.xml)) ? ['une clé ou un jeton apparaît dans le projet'] : []),
+  "aucune clé d'API dans le projet": (p) => (/(apikey|api_key|[?&;]key=|[?&;]token=)/i.test(decoder(dexml(p.xml))) ? ['une clé ou un jeton apparaît dans le projet'] : []),
 };
 const defauts = (buf) => { const p = analyser(buf); return Object.entries(verifs).flatMap(([n, f]) => f(p).map((d) => `${n} : ${d}`)); };
 
@@ -166,6 +175,19 @@ const qgz = (xml) => ecrireZip({ 'cerf.qgs': xml });
 test('garde-fou : un projet conforme (fixture) ne donne aucun défaut', () => {
   assert.deepEqual(defauts(qgz(projet())), []);
 });
+const enc = (f) => encode(f.url);
+test('garde-fou : projet conforme, « http-header:referer=& » en tête de source', () => {
+  const o = { c0: { source: `http-header:referer=&type=xyz&url=${enc(FONDS[0])}&zmax=19&zmin=0` } };
+  assert.deepEqual(defauts(qgz(projet(o))), []);
+});
+test('garde-fou : projet conforme, « tilePixelRatio=1 » avant type et « &http-header:referer= » à la fin', () => {
+  const o = { c0: { source: `tilePixelRatio=1&type=xyz&url=${enc(FONDS[0])}&zmax=19&zmin=0&http-header:referer=` } };
+  assert.deepEqual(defauts(qgz(projet(o))), []);
+});
+test('garde-fou : projet conforme, ordre alphabétique de QGIS (interpretation, tilePixelRatio, type, url, zmax, zmin)', () => {
+  const o = { c0: { source: `interpretation=&tilePixelRatio=0&type=xyz&url=${enc(FONDS[0])}&zmax=19&zmin=0` } };
+  assert.deepEqual(defauts(qgz(projet(o))), []);
+});
 const fautes = {
   'CRS projet EPSG:4326': [{ authid: 'EPSG:4326', srid: 4326 }, 'CRS du projet'],
   'CRS carte EPSG:3857': [{ canvas: 'EPSG:3857' }, 'CRS de la carte'],
@@ -181,6 +203,7 @@ const fautes = {
   'attribution absente': [{ c0: { rights: '' } }, 'attribution'],
   'un seul fond': [{ fonds: [FONDS[0]] }, 'exactement deux couches'],
   'une troisième couche': [{ fonds: [...FONDS, { nom: 'SCAN 25', url: GABARIT('GEOGRAPHICALGRIDSYSTEMS.MAPS', 'image/jpeg') }] }, 'exactement deux couches'],
+  "clé encodée dans l'URL (%26key%3DSECRET)": [{ c0: { url: FONDS[0].url + '&key=SECRET', source: `type=xyz&url=${encode(FONDS[0].url)}%26key%3DSECRET&zmax=19&zmin=0` } }, 'aucune clé'],
   "clé dans l'URL": [{ c0: { url: FONDS[0].url + '&apikey=SECRET' } }, 'aucune clé'],
 };
 for (const [nom, [opts, attendu]] of Object.entries(fautes)) {

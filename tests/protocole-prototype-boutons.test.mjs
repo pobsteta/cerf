@@ -1,0 +1,102 @@
+// Mission 003, report demandé par Pascal et la relecture de la mission 004 (2 novembre 2026) :
+// noms des boutons, question 1 reformulée, chemin de secours, « Avant de commencer ».
+// Les noms de boutons sont comparés à ceux de prototype/cerf-zip.mjs (BOUTONS, source de
+// Cerf.qml) : référence de noms seulement ; aucune logique du prototype n'est lue ni essayée.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const ici = dirname(fileURLToPath(import.meta.url));
+const t = readFileSync(join(ici, 'recette', 'prototype-1.md'), 'utf8');
+const BOUTONS = {
+  A: 'A. Copier hors projet', B: 'B. Copier dans le projet', C: 'C. Lister la copie',
+  D: 'D. Effacer la copie', E: 'E. Module .mjs', F: 'F. Ouvrir les couches du zip',
+  G: 'G. Trouver le .qml du zip', H: 'H. Ouvrir le GeoTIFF du zip',
+  I: 'I. Essai à risque : lister un gros zip',
+};
+const questions = () => t.split(/^## /m).filter((p) => /^Question [1-9] /.test(p));
+const gestes = (c) => c.split('\n').filter((l) => /^\|\s*\d+\s*\|/.test(l)).map((l) => l.split('|').slice(1, -1).map((x) => x.trim()));
+const geste = (q, n) => gestes(questions()[q - 1]).find((g) => g[0] === String(n))[1];
+const avec = (q, n, L) => assert.ok(geste(q, n).includes(`« ${BOUTONS[L]} »`), `Q${q} geste ${n} : « ${BOUTONS[L]} » attendu, trouvé : ${geste(q, n)}`);
+
+test('les noms de boutons du protocole sont ceux de prototype/cerf-zip.mjs (Cerf.qml)', () => {
+  const src = readFileSync(join(ici, '..', 'prototype', 'cerf-zip.mjs'), 'utf8');
+  for (const nom of Object.values(BOUTONS)) assert.ok(src.includes(`'${nom}'`), nom);
+});
+
+test('plus de « bouton du prototype » : chaque geste nomme son bouton', () => {
+  assert.doesNotMatch(t, /bouton du prototype/i);
+  assert.doesNotMatch(t, /bouton (de copie|de listage|d'effacement)/i);
+});
+
+test('correspondance gestes / boutons (PLAN.md § 10 bis)', () => {
+  avec(1, 1, 'A'); avec(1, 2, 'C'); avec(1, 3, 'B'); avec(1, 3, 'C');
+  avec(2, 1, 'A'); avec(2, 4, 'C');
+  avec(3, 1, 'D'); avec(3, 2, 'C');
+  avec(4, 1, 'E');
+  avec(5, 1, 'F');
+  avec(6, 1, 'G');
+  avec(7, 1, 'A'); avec(7, 2, 'I'); avec(7, 3, 'H'); avec(7, 4, 'D');
+  avec(8, 1, 'A'); avec(8, 1, 'C'); avec(8, 2, 'A'); avec(8, 2, 'C');
+  avec(9, 1, 'A'); avec(9, 1, 'C');
+});
+
+test('chaque bouton A à I est nommé dans le protocole, avec son nom exact', () => {
+  for (const nom of Object.values(BOUTONS)) assert.ok(t.includes(`« ${nom} »`), nom);
+});
+
+test('bouton G : « EN ATTENTE », pas de décompresseur ; 635 octets gardés', () => {
+  const q6 = questions()[5];
+  assert.ok(q6.includes('EN ATTENTE'));
+  assert.match(q6, /pas de décompresseur/);
+  assert.ok(q6.includes('635 octets'));
+});
+
+test('bouton I : deux touchers, QField peut se fermer', () => {
+  const g = geste(7, 2);
+  assert.match(g, /deux touchers/);
+  assert.match(g, /QField peut se fermer/);
+});
+
+test('question 1 reformulée (décision de Pascal du 2 novembre 2026)', () => {
+  const q1 = questions()[0].replace(/\s+/g, ' ');
+  assert.match(q1, /Question reformulée \(décision de Pascal du 2 novembre 2026\)/);
+  assert.match(q1, /Sous Android 11 et plus, le plugin ne voit jamais le fichier d'origine, seulement la copie faite par le sélecteur/);
+  assert.match(q1, /listage de la copie\*\* : hors du dossier projet par « A\. Copier hors projet », puis dans le dossier projet par « B\. Copier dans le projet »/);
+});
+
+test('chemin de secours : C « taille de la copie inconnue » -> I pour les questions 1, 2, 3, 8 et 9', () => {
+  const m = t.match(/\*\*Chemin de secours\.\*\*([\s\S]*?)\n\n/);
+  assert.ok(m, 'chemin de secours absent');
+  const s = m[1].replace(/\s+/g, ' ');
+  assert.ok(s.includes('« taille de la copie inconnue »'));
+  assert.ok(s.includes('les questions 1, 2, 3, 8 et 9'));
+  assert.ok(s.includes(`« ${BOUTONS.I} »`));
+  assert.ok(s.includes(`« ${BOUTONS.C} »`));
+  assert.ok(s.includes('Avant de confirmer le second toucher'));
+  assert.ok(s.includes('ligne « Copie visée » nomme le petit zip, jamais `lourd.zip`'));
+});
+
+test('avant de commencer : URLs de la release prototype-1, avant le mode avion', () => {
+  const base = 'https://github.com/pobsteta/cerf/releases/download/prototype-1/';
+  for (const f of ['essai.zip', 'essai-cp437.zip', 'cerf-projet-modele.zip']) assert.ok(t.includes(base + f), f);
+  assert.ok(t.indexOf(base + 'essai.zip') < t.indexOf('Passer le téléphone en **mode avion**'));
+  assert.match(t, /Avant le mode avion/);
+});
+
+test("avant de commencer : projet d'essai et cerf_id exacts (cerf-essai ou cerf.qgz)", () => {
+  assert.match(t, /`cerf-essai` \(`cerf_id` 936eb144-5447-4094-a579-fac12a9f0595\)/);
+  assert.match(t, /`cerf\.qgz`[\s\S]{0,200}`cerf_id` ebad8ff8-577e-48bc-9489-6bab871230c2/);
+  assert.match(t, /au choix de Pascal/);
+  const qgs = readFileSync(join(ici, '..', 'prototype', 'essai-projet', 'cerf-essai.qgs'), 'utf8');
+  assert.ok(qgs.includes('936eb144-5447-4094-a579-fac12a9f0595'));
+});
+
+test('avant de commencer : permission de stockage au premier toucher de A ou B, à accepter et noter', () => {
+  const s = t.replace(/\s+/g, ' ');
+  assert.match(s, /permission de stockage/);
+  assert.match(s, /premier toucher de « A\. Copier hors projet » ou de « B\. Copier dans le projet »/);
+  assert.match(s, /l'accepter, et l'écrire dans « Vu autrement »/);
+});

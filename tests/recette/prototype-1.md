@@ -3,9 +3,9 @@
 > Rédigé par le `testeur` le 2 novembre 2026, à partir de `docs/spec.md` (§ 3.1, § 3.3, § 5,
 > § 6, § 8 n° 5, § 9), de l'ADR 0003 et de l'ADR 0005. Mission 003, aller-retour 1/3.
 > **Statut : proposé, pas encore suivi.**
-> Le prototype (mission 004) n'existe pas encore : les noms de ses boutons ne sont pas connus
-> et ne sont pas inventés ici ; un geste dit « bouton du prototype » désigne celui que la
-> mission 004 aura nommé. Ce que le protocole attend que le prototype **affiche** (liste,
+> Le prototype (mission 004) est écrit : les gestes nomment ses boutons tels qu'ils figurent
+> dans `prototype/Cerf.qml` (A à I), correspondance au § 10 bis de `prototype/PLAN.md`.
+> Ce que le protocole attend que le prototype **affiche** (liste,
 > chemin, taille, `cerf_id`, temps…) est une exigence pour la mission 004 : si le prototype
 > n'affiche pas la valeur, le geste n'est pas coché et Pascal le dit dans « Vu autrement ».
 
@@ -31,6 +31,20 @@ dans la case. Une case non cochée veut dire non.
 | Version de QField | |
 | Prototype installé (version ou commit) | |
 | `cerf_id` du projet d'essai (voir ci-dessous) | |
+| Projet d'essai choisi par Pascal (`cerf-essai` ou `cerf.qgz`) | |
+
+**Avant le mode avion : télécharger les zips d'essai** depuis la release `prototype-1` :
+`essai.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai.zip) et
+`essai-cp437.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai-cp437.zip).
+
+**Le projet d'essai** est `cerf-essai` (`cerf_id` 936eb144-5447-4094-a579-fac12a9f0595) ou,
+au choix de Pascal, le projet modèle `cerf.qgz`
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-projet-modele.zip,
+`cerf_id` ebad8ff8-577e-48bc-9489-6bab871230c2).
+
+**Permission de stockage.** Au premier toucher de « A. Copier hors projet » ou de « B. Copier
+dans le projet », le prototype peut demander une permission de stockage d'Android : l'accepter,
+et l'écrire dans « Vu autrement ».
 
 **Fichiers à copier sur le téléphone** (par câble ou par le moyen habituel de Pascal,
 **avant** de passer en mode avion), tous **hors du dossier projet** :
@@ -70,20 +84,30 @@ GeoJSON est en WGS84 (`crs` CRS84), longitude 2,35 puis latitude 48,85. Le Shape
 
 **Où Pascal lit `cerf_id`.** `cerf_id` est la variable de projet de `cerf.qgz` (spec § 3.3) :
 Pascal la lit sur le poste, dans QGIS, onglet Variables des propriétés du projet. Le projet
-d'essai que la mission 004 fournit doit en porter une. **Le prototype affiche la valeur
+d'essai (`cerf-essai` ou `cerf.qgz`) en porte une. **Le prototype affiche la valeur
 qu'il lit** ; les chemins du protocole contiennent cette valeur. Pascal compare la valeur
 affichée à celle de QGIS et la note dans le tableau ci-dessus.
 
 - Passer le téléphone en **mode avion** : tout le protocole se fait sans réseau.
-- Ouvrir `cerf.qgz` (ou le projet d'essai que la mission 004 aura prévu).
+- Ouvrir le projet d'essai choisi par Pascal : `cerf-essai` ou `cerf.qgz` (voir plus haut).
+
+**Chemin de secours.** Si « C. Lister la copie » affiche « taille de la copie inconnue », les
+questions 1, 2, 3, 8 et 9 listent par « I. Essai à risque : lister un gros zip » au lieu de C.
+Avant de confirmer le second toucher de I, Pascal vérifie que la ligne « Copie visée » nomme le
+petit zip, jamais `lourd.zip`. Il note ce passage par I dans « Vu autrement ».
 
 ## Question 1 — Le plugin peut-il lister le contenu d'un zip ?
 
+**Question reformulée (décision de Pascal du 2 novembre 2026).** Sous Android 11 et plus, le
+plugin ne voit jamais le fichier d'origine, seulement la copie faite par le sélecteur de
+fichiers. La question porte donc sur le **listage de la copie** : hors du dossier projet par
+« A. Copier hors projet », puis dans le dossier projet par « B. Copier dans le projet ».
+
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Toucher le bouton du prototype, choisir `essai.zip` dans le sélecteur de fichiers d'Android, le zip étant **hors du dossier projet** (par exemple Téléchargements). | Le sélecteur s'ouvre et le choix est accepté, sans message d'erreur. | ☐ |
-| 2 | Lire la liste affichée par le prototype. | Exactement 9 entrées, avec les noms de la liste ci-dessus, sous-dossier compris. | ☐ |
-| 3 | Refaire le geste 1 avec une copie de `essai.zip` posée **dans** le dossier du projet. | La même liste de 9 entrées s'affiche. | ☐ |
+| 1 | Toucher « A. Copier hors projet », choisir `essai.zip` dans le sélecteur de fichiers d'Android, le zip étant **hors du dossier projet** (par exemple Téléchargements). | Le sélecteur s'ouvre et le choix est accepté, sans message d'erreur. | ☐ |
+| 2 | Toucher « C. Lister la copie », puis lire la liste affichée par le prototype. | Exactement 9 entrées, avec les noms de la liste ci-dessus, sous-dossier compris. | ☐ |
+| 3 | Toucher « B. Copier dans le projet », choisir de nouveau `essai.zip` (la copie est faite **dans** le dossier du projet), puis « C. Lister la copie ». | La même liste de 9 entrées s'affiche. | ☐ |
 
 **Si non** au geste 2 (zip hors du dossier projet non listé) : le zip sera posé dans le
 dossier projet, sans QFieldCloud, et l'on demandera à QField d'exposer le listage d'un zip
@@ -95,10 +119,10 @@ aux plugins (spec § 9, n° 1). Le geste 3 dit si ce repli marche.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Toucher le bouton de copie du prototype pour `essai.zip` (celui du geste 1 de la question 1). | Le prototype annonce la copie faite, sans message d'erreur. | ☐ |
+| 1 | Toucher « A. Copier hors projet » pour `essai.zip` (celui du geste 1 de la question 1). | Le prototype annonce la copie faite, sans message d'erreur. | ☐ |
 | 2 | Lire le chemin de la copie affiché par le prototype, et la valeur de `cerf_id` qu'il affiche (voir « Où Pascal lit `cerf_id` »). | Le chemin est `Imported Datasets/cerf/<cerf_id>/essai.zip`, sous le dossier de l'application, **hors du dossier projet**, et `<cerf_id>` est la valeur notée plus haut. | ☐ |
 | 3 | Lire la taille de la copie affichée par le prototype. | 2108 octets, la même que `essai.zip` d'origine. | ☐ |
-| 4 | Avec le bouton de listage du prototype, **lister la copie** (le fichier du chemin lu au geste 2, pas l'original). | Les mêmes 9 entrées s'affichent, et le prototype dit qu'il les lit dans la copie. | ☐ |
+| 4 | Avec « C. Lister la copie », **lister la copie** (le fichier du chemin lu au geste 2, pas l'original). | Les mêmes 9 entrées s'affichent, et le prototype dit qu'il les lit dans la copie. | ☐ |
 
 **Si non** : la copie hors du dossier projet est impossible ; le zip est posé dans le dossier
 projet, sans QFieldCloud (spec § 9, n° 1, ADR 0003).
@@ -109,8 +133,8 @@ projet, sans QFieldCloud (spec § 9, n° 1, ADR 0003).
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Avec le bouton d'effacement du prototype, effacer la **copie** de `essai.zip` faite à la question 2 (jamais l'original). | Le prototype annonce l'effacement fait, sans message d'erreur. | ☐ |
-| 2 | **Lister la copie** de nouveau (même geste que le geste 4 de la question 2). | Le prototype dit « zip absent » ou ne trouve plus le fichier ; aucune entrée n'est listée. | ☐ |
+| 1 | Avec « D. Effacer la copie », effacer la **copie** de `essai.zip` faite à la question 2 (jamais l'original). | Le prototype annonce l'effacement fait, sans message d'erreur. | ☐ |
+| 2 | **Lister la copie** de nouveau avec « C. Lister la copie » (même geste que le geste 4 de la question 2). | Le prototype dit « zip absent » ou ne trouve plus le fichier ; aucune entrée n'est listée. | ☐ |
 | 3 | Dans le gestionnaire de fichiers d'Android, regarder l'original de `essai.zip`. | L'original est toujours là, intact. | ☐ |
 
 **Si non** au geste 1 ou 2 (effacement d'un `.zip` refusé, comme le fait `FileUtils.deleteFiles`
@@ -125,7 +149,7 @@ valeur sacrifiée : la place.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Toucher le bouton du prototype qui appelle le module embarqué. | Aucune erreur de chargement n'est affichée. | ☐ |
+| 1 | Toucher « E. Module .mjs », qui appelle le module embarqué. | Aucune erreur de chargement n'est affichée. | ☐ |
 | 2 | Lire le résultat de `somme(2, 3)` affiché par le prototype. | `5`. | ☐ |
 | 3 | Lire la valeur de `SIGNATURE` affichée par le prototype. | `cerf-prototype-1`. | ☐ |
 
@@ -145,7 +169,7 @@ question 3 ; sinon recopier le zip.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Avec le bouton du prototype, ouvrir `sous-dossier/shape_essai.shp` **dans** le zip (lecture par `/vsizip/`, sans décompresser). | La couche s'ouvre, sans message d'erreur. | ☐ |
+| 1 | Avec « F. Ouvrir les couches du zip », ouvrir `sous-dossier/shape_essai.shp` **dans** le zip (lecture par `/vsizip/`, sans décompresser). | La couche s'ouvre, sans message d'erreur. | ☐ |
 | 2 | Lire le nombre d'objets affiché par le prototype. | 1. | ☐ |
 | 3 | Lire le système de coordonnées affiché. | EPSG:2154 (Lambert 93). | ☐ |
 | 4 | Lire la position du point affichée, en mètres. | X = 652301,56 et Y = 6861302,73, à 1 m près. | ☐ |
@@ -159,9 +183,9 @@ décompression (aucune API QML prouvée) ; la décision reste à Pascal.
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Avec le bouton du prototype, lire `sous-dossier/shape_essai.qml` **dans** la copie du zip (même nom que la couche de la question 5). | Le prototype annonce qu'il l'a trouvé et lu, sans message d'erreur. | ☐ |
-| 2 | Lire la taille et le début du texte affichés. | 635 octets ; le texte commence par `<!DOCTYPE qgis>`. | ☐ |
-| 3 | Chercher la couleur du symbole dans le texte lu. | `255,0,0,255` (rouge). | ☐ |
+| 1 | Avec « G. Trouver le .qml du zip », chercher `sous-dossier/shape_essai.qml` **dans** la copie du zip (même nom que la couche de la question 5). | Le prototype annonce qu'il l'a trouvé, sans message d'erreur. | ☐ |
+| 2 | Lire la taille et le début du texte affichés. | 635 octets (taille annoncée par le zip) ; le début du texte affiche « EN ATTENTE » (le prototype n'a pas de décompresseur) ; s'il est affiché, il commence par `<!DOCTYPE qgis>`. | ☐ |
+| 3 | Lire la couleur du symbole affichée. | « EN ATTENTE » (pas de décompresseur) ; si le texte est lu, `255,0,0,255` (rouge). | ☐ |
 
 **Si non** : la surcharge d'un style par un `.qml` posé dans le zip (spec § 5) n'est pas
 possible telle quelle ; la décision reste à Pascal.
@@ -175,10 +199,10 @@ commencer »).
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Choisir `lourd.zip` et le copier avec le bouton de copie du prototype. | La copie est annoncée faite ; sa taille affichée est de 199996542 octets. | ☐ |
-| 2 | Lister la copie. | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
-| 3 | Ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : 14142 x 14142 pixels, EPSG:2154. **Noter le temps :** ______ s. | ☐ |
-| 4 | Effacer la copie de `lourd.zip` (comme à la question 3). | Effacement annoncé ; la place est rendue. | ☐ |
+| 1 | Toucher « A. Copier hors projet » et choisir `lourd.zip`. | La copie est annoncée faite ; sa taille affichée est de 199996542 octets. | ☐ |
+| 2 | Toucher « I. Essai à risque : lister un gros zip » (deux touchers ; « C. Lister la copie » refuse un gros zip). **QField peut se fermer** : faire ce geste après le geste 3 et après les questions 8 et 9. | 1 entrée, `lourd.tif`, de 199996426 octets. | ☐ |
+| 3 | Toucher « H. Ouvrir le GeoTIFF du zip » : ouvrir `lourd.tif` **dans** le zip (lecture par `/vsizip/`) et chronométrer, du toucher au résultat affiché. | La couche s'ouvre : 14142 x 14142 pixels, EPSG:2154. **Noter le temps :** ______ s. | ☐ |
+| 4 | Toucher « D. Effacer la copie » pour la copie de `lourd.zip` (comme à la question 3). | Effacement annoncé ; la place est rendue. | ☐ |
 
 **Si non** au geste 3, ou temps jugé trop long par Pascal : l'ADR 0003 prévoit de décompresser
 les seuls GeoTIFF (valeur sacrifiée : vitesse sur les gros rasters). **Aucun seuil de temps n'est
@@ -195,8 +219,8 @@ Le choix d'un **dossier** n'est pas essayé : la spec § 3.1 ne le retient pas e
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Avec le bouton du prototype, ouvrir le sélecteur de fichiers d'Android et choisir `essai.zip` dans **Téléchargements**. | Le fichier est accepté ; le prototype le liste (9 entrées), sans message d'erreur. | ☐ |
-| 2 | Poser `essai.zip` dans **Documents**, puis le choisir depuis ce dossier. | Le fichier est accepté ; le prototype le liste (9 entrées), sans message d'erreur. | ☐ |
+| 1 | Avec « A. Copier hors projet », ouvrir le sélecteur de fichiers d'Android et choisir `essai.zip` dans **Téléchargements**, puis « C. Lister la copie ». | Le fichier est accepté ; le prototype le liste (9 entrées), sans message d'erreur. | ☐ |
+| 2 | Poser `essai.zip` dans **Documents**, le choisir depuis ce dossier avec « A. Copier hors projet », puis « C. Lister la copie ». | Le fichier est accepté ; le prototype le liste (9 entrées), sans message d'erreur. | ☐ |
 
 **Si non** : le choix d'un fichier est à reprendre ; la décision reste à Pascal (spec § 3.1,
 ADR 0003).
@@ -207,7 +231,7 @@ ADR 0003).
 
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
-| 1 | Choisir `essai-cp437.zip` et le lister avec le prototype. | Le zip est lu, sans message d'erreur ; exactement 1 entrée. | ☐ |
+| 1 | Toucher « A. Copier hors projet », choisir `essai-cp437.zip`, puis « C. Lister la copie ». | Le zip est lu, sans message d'erreur ; exactement 1 entrée. | ☐ |
 | 2 | Lire le nom de l'entrée affichée. | `forêt/parcelle_é.txt`, avec ses deux accents, sans caractère étrange. | ☐ |
 
 **Si non** au geste 2 : la notice conseillera un zip fait par QGIS ou 7-Zip (spec § 3.1).

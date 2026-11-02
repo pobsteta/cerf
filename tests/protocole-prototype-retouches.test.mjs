@@ -87,7 +87,7 @@ test('retouche 3 : où Pascal lit cerf_id, et ce que « lister la copie » vise'
   const q = questions();
   assert.match(q[1].corps, /valeur de `cerf_id` qu'il affiche/);
   assert.match(q[1].corps, /lister la copie\*\* \(le fichier du chemin lu au geste 2, pas l'original\)/);
-  assert.match(q[2].corps, /\*\*Lister la copie\*\* de nouveau \(même geste que le geste 4 de la question 2\)/);
+  assert.match(q[2].corps, /\*\*Lister la copie\*\* de nouveau avec « C\. Lister la copie » \(même geste que le geste 4 de la question 2\)/);
   assert.doesNotMatch(t, /Relister la copie/);
   assert.doesNotMatch(t, /relister la copie/i);
 });

@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Établir les URL XYZ exactes de Plan IGN v2 et BD ORTHO sur data.geopf.fr (zoom maximal, en-têtes de cache, licence et attribution), pour que le projet modèle affiche un fond juste et sache combien de temps il tient hors ligne.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Je lis les pièces mesurées par la mission 019 (`docs/referentiels/brut/`) et j'en tire, pour Plan IGN v2 et BD ORTHO, l'URL XYZ, le zoom maximal, la durée de cache, la licence et l'attribution, afin que Pascal décide des fonds du projet modèle (URL, zoom max, « © IGN », et si le fond tient hors ligne jusqu'à J+2 ou s'il faut préparer le fond embarqué) sur des valeurs sourcées et non supposées.
 
 ## Transmis par la relecture de la mission 019 (2 novembre 2026)
 

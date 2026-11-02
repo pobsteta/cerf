@@ -45,6 +45,9 @@ le chemin et la taille de la copie du zip, l'identifiant `cerf_id` lu, un messag
 absent » après l'effacement, le résultat de `somme(2, 3)` et la valeur de `SIGNATURE` du
 module `tests/recette/essai/module-essai.mjs` ; il dit s'il liste la copie ou l'original.
 Les noms de ses boutons sont reportés dans le protocole à la fin de la mission.
+Après l'aller-retour 1/3 de la mission 003 (questions 5 à 9 du protocole), il affiche
+aussi, pour chaque couche lue dans un zip : son système de coordonnées, la position du
+point d'essai, et pour le GeoTIFF sa taille en pixels et le temps d'ouverture.
 
 ## Valeur provisoire (chiffre, réglage)
 

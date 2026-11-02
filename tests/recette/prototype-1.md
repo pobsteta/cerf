@@ -182,8 +182,8 @@ commencer »).
 
 **Si non** au geste 3, ou temps jugé trop long par Pascal : l'ADR 0003 prévoit de décompresser
 les seuls GeoTIFF (valeur sacrifiée : vitesse sur les gros rasters). **Aucun seuil de temps n'est
-fixé par la spec** (§ 6 n° 7 : « temps d'affichage mesuré et noté ») : voir les questions à
-Pascal en fin de document.
+fixé par la spec** (§ 6 n° 7 : « temps d'affichage mesuré et noté ») : le temps est noté, et
+son maximum sera fixé après l'essai (voir « Décisions de Pascal »).
 
 **Vu autrement :**
 
@@ -236,14 +236,18 @@ Windows et l'écrire dans « Vu autrement ».
 
 Chaque « non » applique la ligne « Si non » de sa question ; la décision reste à Pascal.
 
-## Questions à Pascal
+## Décisions de Pascal (2 novembre 2026)
 
-1. Quelles lignes jugent le prototype réussi : les quatre premières seules (le critère de la
-   fiche avant l'ajout), ou les neuf ?
-2. Quel temps maximal pour l'ouverture du GeoTIFF de 200 Mo (question 7, geste 3) ? La spec
-   n'en fixe aucun.
-3. La tolérance de 1 m sur la position du point (question 5, geste 4) est un choix du
-   testeur : la garde-t-on ?
+Décisions prises par Pascal le 2 novembre 2026 sur l'aller-retour 1/3 (source : la fiche
+`pilotage/missions/003-protocole-prototype.md`). Elles remplacent les anciennes « Questions à
+Pascal ».
+
+1. **Critère de réussite.** Le prototype est jugé sur les **questions 1 à 4** (lister, copier,
+   effacer, module `.mjs`). Les questions 5 à 9 sont **notées sans bloquer**.
+2. **Temps du GeoTIFF de 200 Mo** (question 7, geste 3) : **mesuré et noté**. Le temps
+   maximal sera fixé **après l'essai**, par Pascal ; il n'est pas fixé à ce jour.
+3. **Tolérance de 1 m** sur la position du point d'essai (question 5, geste 4) : **gardée**.
+4. **Zip d'essai** de 2108 octets et **plafond du test à 4096 octets** : acceptés (pris acte).
 
 ## Sources des valeurs
 

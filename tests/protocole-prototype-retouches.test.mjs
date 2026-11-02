@@ -131,16 +131,23 @@ test('ajout : valeurs exactes attendues par question 5 à 9', () => {
   assert.ok(t.includes('essai-cp437.zip') && t.includes('0x88') && t.includes('0x82'));
 });
 
-test('protocole : neuf lignes dans la réponse de Pascal ; les questions à Pascal sont posées, pas tranchées', () => {
+test('protocole : neuf lignes dans la réponse de Pascal ; les décisions de Pascal du 2 novembre 2026 sont reportées, datées', () => {
   const t = texte();
-  const rep = t.split('## Réponse de Pascal')[1].split('## Questions à Pascal')[0];
+  const rep = t.split('## Réponse de Pascal')[1].split('## Décisions de Pascal')[0];
   const lignes = rep.split('\n').filter((l) => /^\| [1-9]\. /.test(l));
   assert.equal(lignes.length, 9);
   for (const l of lignes) assert.match(l, /☐ \| ☐ \|$/);
-  const qp = t.split('## Questions à Pascal')[1].split('## Sources')[0];
-  assert.match(qp, /quatre premières/);
-  assert.match(qp, /temps maximal/i);
-  assert.match(qp, /1 m/);
+  assert.doesNotMatch(t, /## Questions à Pascal/);
+  assert.match(t, /## Décisions de Pascal \(2 novembre 2026\)/);
+  const qp = t.split('## Décisions de Pascal')[1].split('## Sources')[0];
+  assert.match(qp, /questions 1 à 4/);
+  assert.match(qp, /questions 5 à 9[^.]*notées sans bloquer/);
+  assert.match(qp, /temps[^.]*mesuré et noté/i);
+  assert.match(qp, /temps\s+maximal[^.]*après l'essai/i);
+  assert.match(qp, /Tolérance de 1 m[^.]*gardée/);
+  assert.match(qp, /2108 octets/);
+  assert.match(qp, /4096 octets/);
+  assert.doesNotMatch(qp, /\?/);
   assert.doesNotMatch(t, /jugé réussi si les quatre/);
   assert.doesNotMatch(t, /## Hors de ce protocole/);
 });

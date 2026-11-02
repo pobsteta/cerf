@@ -29,6 +29,7 @@ export const FONDS = [
   { nom: 'Plan IGN v2', url: gabarit('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'), visible: true },
   { nom: 'BD ORTHO', url: gabarit('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), visible: false },
 ];
+export const GROUPE_FONDS = 'Fonds de carte';
 const ZMIN = 0, ZMAX = 19, ATTRIBUTION = '© IGN';
 
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -83,9 +84,17 @@ function maplayer(f) {
 export function ecrireQgs(cerfId = CERF_ID_PAR_DEFAUT) {
   if (!UUID.test(cerfId) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(cerfId)) throw new Error(`cerf_id « ${cerfId} » : UUID valide et non nul attendu`);
   const e = EXTENT;
-  const arbre = FONDS.map((f) => `    <layer-tree-layer id="${idCouche(f)}" name="${xml(f.nom)}" source="${xml(source(f))}" providerKey="wms" expanded="1" checked="${f.visible ? 'Qt::Checked' : 'Qt::Unchecked'}" legend_exp="" patch_size="-1,-1" legend_split_behavior="0">
+  const feuilles = FONDS.map((f) => `      <layer-tree-layer id="${idCouche(f)}" name="${xml(f.nom)}" source="${xml(source(f))}" providerKey="wms" expanded="1" checked="${f.visible ? 'Qt::Checked' : 'Qt::Unchecked'}" legend_exp="" patch_size="-1,-1" legend_split_behavior="0">
+        <customproperties><Option/></customproperties>
+      </layer-tree-layer>`).join('\n');
+  // Groupe de l'arbre des couches, comme QGIS 3.x l'écrit ; custom-order = ordre de rendu (désactivé : suit l'arbre).
+  const arbre = `    <layer-tree-group name="${xml(GROUPE_FONDS)}" checked="Qt::Checked" expanded="1">
       <customproperties><Option/></customproperties>
-    </layer-tree-layer>`).join('\n');
+${feuilles}
+    </layer-tree-group>
+    <custom-order enabled="0">
+${FONDS.map((f) => `      <item>${idCouche(f)}</item>`).join('\n')}
+    </custom-order>`;
   return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis projectname="Cerf" version="${VERSION_QGIS}" saveUser="cerf" saveUserFull="Cerf">
   <homePath path=""/>

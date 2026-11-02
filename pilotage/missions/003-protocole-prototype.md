@@ -36,8 +36,8 @@ Rendu relu « prêt » par le `relecteur` ; Pascal demande les retouches et l'aj
 3. Tolérance de **1 m** sur la position du point d'essai : gardée.
 4. Zip d'essai de 2 108 octets et plafond du test à 4 096 octets : pris acte.
 
-À reporter dans `tests/recette/prototype-1.md` (rubrique « Questions à Pascal ») avant la
-fusion de la PR de la mission 003.
+Reporté dans `tests/recette/prototype-1.md`, rubrique « Décisions de Pascal (2 novembre
+2026) » (commit 3f73e1c, relu « prêt »).
 
 ## Les trois questions (règle de staffing)
 

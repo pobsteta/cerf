@@ -71,7 +71,9 @@
   À préciser dans l'annexe de la convention : l'unité de « taille », contour ou
   remplissage pour UG, Parcelles et FRT, le symbole « noir », les noms des champs
   d'étiquette, le motif de reconnaissance des noms (`PARCELLE.shp`,
-  `parcelles_serre.gpkg`…) ; la référence du manuel ONF est à demander à JFC.
+  `parcelles_serre.gpkg`…). **Il n'existe pas de référence des styles** (Pascal,
+  2 novembre 2026) : le mail de JFC est la seule source ; le reste est à trancher par
+  Pascal.
 
   Un fichier `.qml` posé à côté d'une couche dans le zip **surcharge** la règle, pour
   les cas particuliers. Conséquence : le GeoJSON de ProdBois et les Shapefile « des
@@ -149,7 +151,8 @@
 ## Comment saura-t-on que ça marche ?
 
 - **Signe concret**, protocole retenu (arbitrage 7) :
-  - sur [modèle de tablette, à demander à JFC], QField [version, à demander à JFC], en
+  - sur **smartphone Samsung** (Pascal, 2 novembre 2026 ; modèle et version de QField
+    notés le jour de la recette), en
     mode avion, projet fermé, zip `Serre_EA2026` (GeoJSON ProdBois trié BF1, UG,
     Parcelles, FRT en Shapefile ; taille à noter) déjà copié sur la tablette ;
   - du toucher sur le bouton du plugin à l'affichage des 4 couches aux couleurs du
@@ -168,10 +171,10 @@ Pascal Obstétar.
 
 ## À fournir avant la spec
 
-- **bloquant** : l'export brut `Serre_EA2026_p5_13_30.geojson` de ProdBois (schéma des
-  champs, système de coordonnées réel) : la règle de coordonnées en dépend ;
-- de JFC : le modèle de tablette et la version de QField du parc, la référence du manuel
-  des styles, un ordre de grandeur du coût actuel, la mesure des 700 Mo refaite avec
+- l'export brut `Serre_EA2026_p5_13_30.geojson` de ProdBois, pour le schéma des champs.
+  Son système est connu : **WGS84** (Pascal, 2 novembre 2026), ce qui est conforme à
+  RFC 7946 et passe le contrôle de vraisemblance ;
+- de JFC : un ordre de grandeur du coût actuel, la mesure des 700 Mo refaite avec
   son niveau de zoom ;
 - la lecture de la licence de `qfield-layer-loader` ;
 - la réponse de JFC sur la licence SCAN 25 de l'ONF ;

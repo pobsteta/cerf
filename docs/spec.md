@@ -9,18 +9,18 @@
 
 | # | Geste | Ce que fait Cerf | Réseau |
 |---|---|---|---|
-| 0 | Une fois par tablette : installer le plugin par son URL. | QField installe le plugin d'application (ADR 0001). | oui |
-| 1 | Au bureau ou la veille : copier le zip sur la tablette ; ouvrir le projet modèle sur la zone du jour. | Les tuiles XYZ consultées sont mises en cache (ADR 0002). | oui |
+| 0 | Une fois par appareil : installer le plugin par son URL. | QField installe le plugin d'application (ADR 0001). | oui |
+| 1 | Au bureau ou la veille : copier le zip sur la appareil ; ouvrir le projet modèle sur la zone du jour. | Les tuiles XYZ consultées sont mises en cache (ADR 0002). | oui |
 | 2 | Sur le terrain : ouvrir le projet modèle `cerf.qgz`. | Le plugin reconnaît un projet Cerf (identifiant de projet, § 3.3) et recharge les couches de son registre. | non |
 | 3 | Toucher le bouton « Ajouter un zip ». | Ouvre le sélecteur de fichiers Android. | non |
 | 4 | Choisir le zip. | Copie le zip hors du dossier projet (§ 3.3), en liste le contenu. | non |
 | 5 | Cocher les couches à charger (toutes cochées par défaut). | Pour chaque couche : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre. Un message par couche refusée. | non |
 | 6 | Regarder la carte. | Couches aux couleurs du manuel, étiquettes essence/diamètre sur ProdBois. | non |
 | 7 | Retirer une couche (appui sur la couche, « Retirer »). | Retire la couche de la carte et du registre ; la copie du zip est supprimée quand plus aucune couche ne s'en sert. | non |
-| 8 | Fermer, rouvrir le projet, ou redémarrer la tablette. | Étape 2 : tout revient. | non |
+| 8 | Fermer, rouvrir le projet, ou redémarrer la appareil. | Étape 2 : tout revient. | non |
 
 Contraintes de geste : gants et soleil. Boutons d'au moins 9 mm de côté, textes
-contrastés, pas de geste fin (valeur à confirmer sur tablette par l'`afficheur`).
+contrastés, pas de geste fin (valeur à confirmer sur appareil par l'`afficheur`).
 
 ## 2. Livrables
 
@@ -29,7 +29,7 @@ contrastés, pas de geste fin (valeur à confirmer sur tablette par l'`afficheur
 2. Le plugin QField d'application, en zip installable par URL (ADR 0001).
 3. `docs/convention-zip.md` : une page, plus l'annexe des styles (§ 5).
 4. `docs/notice-jfc.md` : trois pages ; préparer le zip depuis QGIS (ProdBois, Relevés,
-   Canopée), le copier sur la tablette.
+   Canopée), le copier sur la appareil.
 5. Deux zips de recette : `Serre_EA2026` (à fournir par JFC) et `piege` (§ 6).
 
 ## 3. Données manipulées
@@ -47,7 +47,7 @@ contrastés, pas de geste fin (valeur à confirmer sur tablette par l'`afficheur
 
 | Source | Format attendu | Champs connus | État |
 |---|---|---|---|
-| Export ProdBois | GeoJSON | `essence`, `diametre` (supposés) | **à fournir** : `Serre_EA2026_p5_13_30.geojson` brut (schéma, système réel) — **bloquant** pour § 4 |
+| Export ProdBois | GeoJSON, **en WGS84** (Pascal, 2 novembre 2026), conforme à RFC 7946 | `essence`, `diametre` (supposés) | schéma des champs : **à fournir** (`Serre_EA2026_p5_13_30.geojson` brut) |
 | Relevés | à fournir | à fournir | à fournir |
 | UG, Parcelles, FRT | Shapefile (cas de test) ou GeoPackage | champ du code : à fournir | à fournir |
 | Canopée | Shapefile | à fournir | à fournir |
@@ -66,7 +66,7 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Fichier disparu** : à l'ouverture, une entrée dont le zip n'existe plus est retirée
   du registre et signalée par un message unique (« 2 couches n'ont pas pu être
   rechargées : zip absent »).
-- **QField désinstallé ou tablette perdue** : registre et copies disparaissent. Accepté :
+- **QField désinstallé ou appareil perdue** : registre et copies disparaissent. Accepté :
   les couches sont en lecture seule, le zip d'origine reste chez JFC.
 
 ### 3.4 Fonds de carte (ADR 0002)
@@ -105,9 +105,10 @@ par champs → style par défaut de QGIS.
 | FRT | `^frt([_\- ].*)?$` | polygone | contour `#008B8B`, opacité 100 % | champ à fournir (« CODE FRT »), taille 10 |
 | ProdBois / Relevés | toute couche ponctuelle ayant les champs `essence` **et** `diametre` | point | noir, taille à fournir | `"essence" \|\| '\n' \|\| "diametre"` |
 
-« Contour seul ou remplissage », les unités et les champs de code sont **à fournir par
-JFC**, avec la référence du manuel ONF. Les motifs ci-dessus sont une proposition de
-Claude, à valider par Pascal.
+**Il n'existe pas de référence des styles** (Pascal, 2 novembre 2026) : la seule source est
+le mail de JFC. Ce qu'il ne dit pas est à trancher par Pascal ; les motifs de noms
+ci-dessus sont une proposition de Claude, à valider par Pascal. Les champs de code
+restent à lire dans les fichiers de JFC.
 
 ## 6. Critères d'acceptation
 
@@ -115,12 +116,12 @@ Protocole retenu par Pascal (brief, arbitrage 7). Chacun est un test de recette 
 marqués (auto) ont aussi un test automatique.
 
 1. Mode avion, projet fermé, zip `Serre_EA2026` déjà copié : du bouton à l'affichage des
-   4 couches stylées, **≤ 2 min, médiane de 3 essais**, sur [tablette et version de
-   QField : à fournir par JFC].
+   4 couches stylées, **≤ 2 min, médiane de 3 essais**, sur **smartphone Samsung** (Pascal,
+   2 novembre 2026 ; modèle et version de QField à noter le jour de la recette).
 2. Couleurs et étiquettes du § 5 présentes sans aucun réglage. (auto, sur la règle)
 3. Superposition au fond IGN **à moins de 5 m** d'un repère connu (repère à fournir par
    JFC).
-4. Après **redémarrage de la tablette**, les 4 couches reviennent. (auto, sur le registre)
+4. Après **redémarrage de la appareil**, les 4 couches reviennent. (auto, sur le registre)
 5. Fond IGN visible hors ligne sur une zone parcourue la veille.
 6. Zip `piege` : GeoJSON en Lambert 93 sans système, Shapefile sans `.prj`, nom non
    reconnu → trois messages clairs, aucune couche chargée de travers ; la couche au

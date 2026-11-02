@@ -1,7 +1,7 @@
 # ADR 0005 — Stack de tests
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — à trancher par Pascal
+- **Statut :** acceptée par Pascal le 2 novembre 2026
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -33,7 +33,7 @@ la logique pure (aucune dépendance) ; tests dans QGIS par PyQGIS (autre langage
 
 - **Couverture** : l'interface et l'API QField ne sont couvertes que par la recette.
 
-Commande proposée pour `.claude/test-command` : `node --test tests/`.
+Commande retenue, dans `.claude/test-command` : `node --test tests/`.
 
 ## Question de contrôle
 

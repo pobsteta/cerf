@@ -86,3 +86,5 @@
 2026-11-02 · relecteur · 003 · 02ab723 à reprendre : noms des boutons exacts, mais Q6 sans C avant G (G refuse), Q7 où I vise la mauvaise copie (faux oui possible), taille en pixels attendue en Q7 jamais affichée par H (emprise en mètres, déjà au plan validé). Aller-retour 1/3 renvoyé au testeur.
 2026-11-02 · testeur · 003 · aller-retour 1/3 sur le protocole : Q6 C avant G, Q7 en dernier (A sur lourd.zip, I deux fois, H, D), emprise 70710 m au lieu des pixels, liens du plugin et du projet d'essai ; 100/100 ; 195b2c8.
 2026-11-02 · relecteur · 003 · 195b2c8 à reprendre : Q7 geste 1 demande la ligne « Copie visée », qui n'apparaît qu'au premier toucher de I ; mineurs : Q6 après effacement, citation du plan. Aller-retour 2/3 renvoyé au testeur.
+2026-11-02 · testeur · 003 · aller-retour 2/3 sur le protocole : Q7 geste 1 sur « Chemin de la copie », Q6 couvre la copie effacée, H cite le § 4 ; 100/100 ; d5745b7.
+2026-11-02 · relecteur · 003 · d5745b7 prêt pour Pascal : libellés conformes à Cerf.qml, 100/100, contre-épreuve à 3 échecs, aucun test affaibli. Protocole poussé sur la branche du prototype (PR #9) et remis à Pascal.

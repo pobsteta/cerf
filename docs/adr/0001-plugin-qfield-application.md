@@ -1,7 +1,7 @@
 # ADR 0001 — Projet modèle QGIS et plugin QField d'application
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — plugin d'application choisi par Pascal (arbitrage 1) ; critique du contradicteur reportée ; à accepter avec la spec (porte n° 1)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — plugin d'application choisi par Pascal (arbitrage 1) ; critique du contradicteur reportée
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 

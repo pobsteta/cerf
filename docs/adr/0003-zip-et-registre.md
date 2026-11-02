@@ -1,7 +1,7 @@
 # ADR 0003 — Lecture dans le zip et registre des couches
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3) ; à accepter avec la spec (porte n° 1)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3)
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 

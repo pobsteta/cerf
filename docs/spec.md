@@ -2,8 +2,8 @@
 
 > Rédigée par Claude (orchestrateur) le 2 novembre 2026 à partir de `docs/brief.md`
 > (arbitrages de Pascal du même jour). Critiquée par le `contradicteur` le même jour ;
-> arbitrages de Pascal reportés (§ 9). **Statut : proposée, à valider par Pascal (porte
-> n° 1).** Ce qui manque s'écrit « à fournir ». Les décisions structurantes sont dans
+> arbitrages de Pascal reportés (§ 9). **Statut : validée par Pascal le 2 novembre 2026
+> (porte n° 1).** Ce qui manque s'écrit « à fournir ». Les décisions structurantes sont dans
 > `docs/adr/`.
 
 ## 1. Parcours de l'agent sur le terrain

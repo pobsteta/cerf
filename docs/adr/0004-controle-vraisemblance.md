@@ -1,7 +1,7 @@
 # ADR 0004 — Contrôle de vraisemblance des coordonnées
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — principe tranché par Pascal (arbitrage 3) ; pas de chargement forcé (spec § 9, n° 7) ; emprise à vérifier avec PROJ ; à accepter avec la spec (porte n° 1)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — principe tranché par Pascal (arbitrage 3) ; pas de chargement forcé (spec § 9, n° 7) ; emprise à vérifier avec PROJ
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 

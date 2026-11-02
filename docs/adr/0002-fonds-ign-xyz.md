@@ -1,7 +1,7 @@
 # ADR 0002 — Fonds IGN en XYZ, fond embarqué en repli
 
 - **Date :** 2026-11-02
-- **Statut :** proposée — XYZ choisi par Pascal (arbitrage 2) ; critique reportée ; à accepter avec la spec (porte n° 1)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — XYZ choisi par Pascal (arbitrage 2) ; critique reportée
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 

@@ -208,3 +208,7 @@ Détail dans `docs/spec.md` § 9. Ce qui modifie le brief :
 - **licence GPL-3.0-or-later**, code à Pascal, rien de recopié ;
 - le geste porte sur un zip, pas sur un dossier ;
 - pas de chargement forcé d'une couche refusée.
+
+## Validation
+
+Brief et spec **validés par Pascal le 2 novembre 2026** (porte n° 1).

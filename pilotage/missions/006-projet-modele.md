@@ -1,7 +1,7 @@
 # Mission 006 — Projet modèle cerf.qgz
 
 > Fiche rédigée par Claude (orchestrateur) le 2 novembre 2026 avec `/imperatrice:mission`.
-> **Statut : proposée, à valider par Pascal (porte n° 2).** Une mission = une phrase = une
+> **Statut : validée par Pascal le 2 novembre 2026 (porte n° 2).** Une mission = une phrase = une
 > branche = une PR.
 
 ## Mission

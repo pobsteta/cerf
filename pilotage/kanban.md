@@ -20,6 +20,13 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
+  - Homme : `archiviste` (sonnet)
+  - Mission : Notice de JFC — cycle prévu en attente
+  - Moyens : convention 017, fichiers bruts de JFC
+
+## Validé
+
 - [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 0
   - Homme : `acquereur` (sonnet)
   - Mission : Référentiel des fonds IGN — cycle prévu 1
@@ -88,12 +95,6 @@ _Modèle de carte :_
   - Homme : `archiviste` (sonnet)
   - Mission : Convention du zip — cycle prévu 5
   - Moyens : `docs/spec.md` § 3.1, § 4, § 5
-- [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0
-  - Homme : `archiviste` (sonnet)
-  - Mission : Notice de JFC — cycle prévu en attente
-  - Moyens : convention 017, fichiers bruts de JFC
-
-## Validé
 
 ## Planifié
 

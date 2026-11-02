@@ -52,7 +52,8 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
   - Shapefile : **obligatoires** `.shp`, `.shx`, `.dbf`, `.prj` ; **conseillé** `.cpg` ;
   - GeoTIFF (`.tif`, `.tiff`), **rangé dans le zip sans compression** (`zip -0`) ou en
     SOZip, pour une lecture rapide (§ 9, n° 6).
-- Les `.qml` servent aux styles (§ 5). Les fichiers annexes (`.tfw`, `.aux.xml`, `.sbn`,
+- Les `.qml` servent aux styles (§ 5). Les `.qmd` (métadonnées QGIS, livrées par ProdBois)
+  ne sont pas des styles : ignorés en silence. Les fichiers annexes (`.tfw`, `.aux.xml`, `.sbn`,
   `.sbx`, `.qix`) sont lus avec leur couche, sans message. Tout autre fichier est ignoré
   en silence.
 - Lu sans décompression, par `/vsizip/` (ADR 0003). Une couche illisible ne fait pas
@@ -64,7 +65,7 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
 
 | Source | Format attendu | Champs connus | État |
 |---|---|---|---|
-| Export ProdBois | GeoJSON, **en WGS84** (Pascal, 2 novembre 2026) | `essence`, `diametre` (supposés) | schéma des champs : **à fournir** (`Serre_EA2026_p5_13_30.geojson` brut) |
+| Export ProdBois | GeoJSON 2008 **avec membre `crs` = `urn:ogc:def:crs:OGC:1.3:CRS84`** (WGS84, longitude puis latitude), points ; un fichier par tri, suffixe `_DE` (tiges désignées) ou `_Res` (réserve), accompagné d'un `.qmd` de QGIS (métadonnées, système EPSG:4326, pas de style) | `idTige`, `idFicheBois`, `idFoncFb`, `typeTige` (« Réservée »…), **`essence`** (code, ex. `ALT`), **`diametre`** (entier, cm), `color`, `typeReserve`, `chargesExploit`, `destination`, `qualiteArbre`, `qualiteBois`, `hautBois`, `nomLot`, `nbTige`, `caracBio`, `observation`, `idLR`, `nomCli`, `devolution` | **reçu** le 2 novembre 2026 : `Serre_EA2026_p5_13_30_Res.geojson` (5 points) et les `.qmd` de `_Res` et `_DE` ; le GeoJSON `_DE` reste **à fournir** |
 | Relevés | à fournir | à fournir | à fournir |
 | UG, Parcelles, FRT | Shapefile (cas de test) ou GeoPackage | champ du code : à fournir | à fournir |
 | Canopée | Shapefile | à fournir | à fournir |

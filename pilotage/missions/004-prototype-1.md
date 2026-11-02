@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire un plugin QField minimal qui tente de lister un zip, de le copier hors du dossier projet, d'effacer un .zip et d'importer un module .mjs testé aussi sous Node, pour trancher les points non prouvés des ADR 0003 et 0005 avant de bâtir dessus.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Construire un plugin QField jetable qui essaie, sur le Samsung de Pascal et hors réseau, de lister un zip, de le copier dans `Imported Datasets/cerf/<cerf_id>/`, de l'effacer et de charger un module `.mjs` aussi testé sous Node, pour que les « oui » ou « non » vus sur l'appareil décident des replis de la spec § 9 (n° 1 et 2) et confirment ou non l'ADR 0005 avant qu'on bâtisse le vrai plugin. _(dev, 2 novembre 2026 ; plan dans `prototype/PLAN.md`, code après accord de Pascal.)_
 
 ## Les trois questions (règle de staffing)
 

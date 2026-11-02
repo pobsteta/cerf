@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Calculer avec PROJ l'emprise de la terre ferme de France métropolitaine, Corse comprise, en Lambert 93, pour fixer le rectangle du contrôle de vraisemblance (spec § 4).
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Fixer, avec PROJ, le rectangle Lambert 93 de la terre ferme métropolitaine (Corse comprise), brut puis élargi de 10 km, à partir d'un contour sourcé, versé au dépôt et vérifié par empreinte, pour que le contrôle de vraisemblance de la spec § 4 s'appuie sur une valeur mesurée et rejouable.
 
 ## Aller-retour 1/3 (2 novembre 2026)
 

@@ -1,0 +1,72 @@
+{
+  "anneaux": 169,
+  "brute": {
+    "xmax": 1242436,
+    "xmin": 99101,
+    "ymax": 7110480,
+    "ymin": 6046555
+  },
+  "crs": "RGF93 v1 / Lambert-93",
+  "elargie": {
+    "xmax": 1252436,
+    "xmin": 89101,
+    "ymax": 7120480,
+    "ymin": 6036555
+  },
+  "marge_m": 10000,
+  "proj": "9.8.1",
+  "pyproj": "3.8.0",
+  "sha256_contour": "d1f4aec3fbc274d4af3f5930302a342d3efe0ea1daf410fbeef535346167bf0c",
+  "sommets": 31558,
+  "villes": {
+    "Bonifacio": {
+      "dans_brute": true,
+      "dans_contour": true,
+      "dans_elargie": true,
+      "x": 1218236,
+      "y": 6055860
+    },
+    "Dunkerque": {
+      "dans_brute": true,
+      "dans_contour": true,
+      "dans_elargie": true,
+      "x": 653805,
+      "y": 7102710
+    },
+    "Genève": {
+      "dans_brute": true,
+      "dans_contour": false,
+      "dans_elargie": true,
+      "x": 942025,
+      "y": 6572608
+    },
+    "Jersey": {
+      "dans_brute": true,
+      "dans_contour": false,
+      "dans_elargie": true,
+      "x": 326828,
+      "y": 6914280
+    },
+    "Menton": {
+      "dans_brute": true,
+      "dans_contour": true,
+      "dans_elargie": true,
+      "x": 1061953,
+      "y": 6309962
+    },
+    "Ouessant": {
+      "dans_brute": true,
+      "dans_contour": true,
+      "dans_elargie": true,
+      "x": 103123,
+      "y": 6848252
+    },
+    "Strasbourg": {
+      "dans_brute": true,
+      "dans_contour": true,
+      "dans_elargie": true,
+      "x": 1051113,
+      "y": 6840462
+    }
+  }
+}

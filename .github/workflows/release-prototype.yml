@@ -1,10 +1,11 @@
-# Publie le prototype n° 1 (mission 004) en release GitHub quand on pousse une étiquette
-# prototype-*. Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
+# Publie le prototype n° 1 (mission 004) en release GitHub « prototype-1 » à chaque push
+# sur la branche du prototype (l'étiquette est créée par la release). Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
 # versés au dépôt) ; leur sha256 est écrit dans les notes de la release.
 name: Release du prototype
 on:
   push:
-    tags: ['prototype-*']
+    branches: ['mission/004-prototype-1']
+    paths: ['prototype/**', '.github/workflows/release-prototype.yml']
 permissions:
   contents: write
 jobs:
@@ -33,5 +34,10 @@ jobs:
             sha256sum dist/*.zip
             echo '```'
           } > notes.md
-          gh release create "$GITHUB_REF_NAME" dist/cerf-prototype.zip dist/cerf-essai.zip \
-            --title "Prototype n° 1 ($GITHUB_REF_NAME)" --notes-file notes.md --prerelease
+          if gh release view prototype-1 >/dev/null 2>&1; then
+            gh release upload prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip --clobber
+            gh release edit prototype-1 --notes-file notes.md
+          else
+            gh release create prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip \
+              --target "$GITHUB_SHA" --title "Prototype n° 1" --notes-file notes.md --prerelease
+          fi

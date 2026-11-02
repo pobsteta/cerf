@@ -10,6 +10,19 @@
 
 **Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
 
+## Transmis par la relecture de la mission 019 (2 novembre 2026)
+
+- Dans le GetCapabilities, les deux couches renvoient au jeu de matrices `PM_0_19`
+  (zooms 0 à 19), alors que le gabarit de l'ADR 0002 demande `TILEMATRIXSET=PM` ; le
+  serveur accepte `PM` (HTTP 200). À interpréter.
+- La première ligne des fichiers `*.entetes.txt` (`HTTP/1.1 200 Connection Established`)
+  et l'en-tête `x-iplb-request-id` viennent du proxy de la session : la réponse de l'IGN
+  commence à `HTTP/2 200`.
+- `cache-control: private, max-age=1814400` (21 jours) sur les deux tuiles, pas
+  d'`expires`.
+- Licence et attribution : à lire dans le XML ; dire aussi si les pièces versées dans
+  `brut/` demandent une mention de source et de licence.
+
 ## Les trois questions (règle de staffing)
 
 | Question | Réponse | Conséquence |

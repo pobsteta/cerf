@@ -85,13 +85,16 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
    manquant, système de coordonnées inconnu ». `.cpg` absent → chargement avec
    avertissement « accents peut-être mal lus ».
 2. **Lecture** : la source ne s'ouvre pas → refus « illisible ».
-3. **Vraisemblance** : l'emprise de la couche, reprojetée en EPSG:2154, doit être
-   **contenue** dans l'emprise de la France métropolitaine en Lambert 93, élargie de
-   10 km (X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000 ; d'après le domaine de
-   validité d'EPSG:2154, [epsg.io/2154](https://epsg.io/2154), à vérifier par
-   l'`acquereur`). Sinon refus : « Coordonnées incohérentes : système mal déclaré ? ».
+3. **Système invalide** (GeoTIFF sans géoréférencement, `.prj` illisible) → refus
+   « système de coordonnées inconnu ».
+4. **Couche vide** → avertissement, chargée quand même, **sans** contrôle d'emprise.
+5. **Vraisemblance** : l'emprise de la couche, reprojetée en EPSG:2154 (bords densifiés),
+   doit être **contenue** dans l'emprise de la terre ferme de France métropolitaine en
+   Lambert 93, élargie de 10 km (X 89 000 → 1 253 000, Y 6 039 000 → 7 121 000 ; calcul
+   approché du contradicteur, **à vérifier par l'`acquereur` avec PROJ** ; ce n'est pas le
+   domaine de validité EPSG, plus large car il couvre la mer). Sinon refus : « Coordonnées
+   incohérentes : système mal déclaré ? ». **Toute erreur de reprojection vaut refus.**
    Couvre le GeoJSON en Lambert 93 lu en WGS84 et l'inversion des axes.
-4. **Couche vide** → avertissement, chargée quand même.
 
 ## 5. Styles (annexe de la convention du zip)
 

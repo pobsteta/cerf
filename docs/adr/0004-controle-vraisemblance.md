@@ -13,8 +13,9 @@ l'emprise de la France métropolitaine en Lambert 93 élargie de 10 km ; un Shap
 
 ## Contexte
 
-La règle initiale « sans système déclaré, refusé » est inopérante : un GeoJSON n'en déclare
-jamais (RFC 7946 : WGS84 implicite), et QGIS peut attribuer un système en silence à un
+La règle initiale « sans système déclaré, refusé » est inopérante : un GeoJSON conforme à RFC 7946
+n'en déclare pas (WGS84 implicite) ; un GeoJSON « 2008 », que GDAL et QGIS écrivent par
+défaut, peut porter un membre `crs`, mais rien ne garantit qu'il soit présent, et QGIS peut attribuer un système en silence à un
 Shapefile sans `.prj`. Options : refus sur système absent ; demander le système à l'agent
 (geste fin, gants) ; deviner le système d'après les valeurs ; **contrôle d'emprise**.
 
@@ -38,7 +39,8 @@ Shapefile sans `.prj`. Options : refus sur système absent ; demander le systèm
 
 - [RFC 7946](https://www.rfc-editor.org/rfc/rfc7946) (non lu, contenu confirmé par
   [macwright.com](https://macwright.com/2016/11/07/the-geojson-ietf-standard)) ;
-  [epsg.io/2154](https://epsg.io/2154) (emprise, à vérifier).
+  emprise de la terre ferme : calcul approché, à vérifier avec PROJ ;
+  [GDAL, pilote GeoJSON](https://github.com/OSGeo/gdal/blob/master/doc/source/drivers/vector/geojson.rst).
 
 ## Question de contrôle
 

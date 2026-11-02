@@ -8,7 +8,8 @@
 ## La décision en une phrase
 
 La logique du plugin (règles de style par nom et par champs, contrôle d'emprise,
-registre, lecture de la liste d'un zip) est écrite en **modules JavaScript sans QML**,
+registre, lecture de la liste d'un zip) est écrite en **modules ECMAScript `.mjs`, sans `.pragma` ni `.import`**, importés à la
+fois par QML et par Node 20 ou plus,
 testés avec `node --test` ; l'interface QML et le chargement réel des couches sont
 vérifiés par la recette sur tablette (spec § 6).
 
@@ -22,7 +23,7 @@ la logique pure (aucune dépendance) ; tests dans QGIS par PyQGIS (autre langage
 
 | Lettre | Question | Réponse | Ce que ça coûte | Prêts à payer ? |
 |---|---|---|---|---|
-| **F**rugale | Plus simple ? | Node seul, sans paquet. | — | à trancher par Pascal |
+| **F**rugale | Plus simple ? | Node seul, sans paquet. | Node 20 ou plus sur le poste de dev. | à trancher par Pascal |
 | **R**esponsable | Qui fait quoi ? | `testeur` écrit les tests de logique ; JFC fait la recette. | — | — |
 | **A**nticiper | Imprévu ? | Ce qui touche l'API QField n'est pas testé automatiquement. | Recette manuelle obligatoire. | à trancher par Pascal |
 | **N**ovateur | Idées écoutées ? | Trois options. | — | — |
@@ -33,7 +34,8 @@ la logique pure (aucune dépendance) ; tests dans QGIS par PyQGIS (autre langage
 
 - **Couverture** : l'interface et l'API QField ne sont couvertes que par la recette.
 
-Commande retenue, dans `.claude/test-command` : `node --test tests/`.
+Tests nommés `tests/*.test.mjs`. Commande retenue, dans `.claude/test-command` :
+`node --test`. Le premier test charge aussi le même module dans QField (prototype n° 1).
 
 ## Question de contrôle
 

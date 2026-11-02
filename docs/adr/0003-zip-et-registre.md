@@ -15,9 +15,11 @@ de chaque ouverture de projet.
 ## Contexte
 
 QField n'écrit pas le fichier projet : les couches ajoutées doivent être rechargées par le
-plugin. `qfield_addLayer` le fait déjà (registre dans `Settings`, `onLoadProjectEnded`,
-`LayerUtils.loadVectorLayer`, `ProjectUtils.addMapLayer`) ; `qfield-layer-loader` lit
-déjà les zips par `/vsizip/`. Options : décompresser (aucune API QML prouvée) ;
+plugin. `qfield_addLayer` montre l'idée (registre dans `Settings`, `onLoadProjectEnded`,
+`LayerUtils.loadVectorLayer`, `ProjectUtils.addMapLayer`), mais **n'a aucune licence** :
+idée reprise, code réécrit. `qfield-layer-loader` ne préfixe `/vsizip/` que pour un zip
+distant et ne liste pas les zips. **Aucune fonction QML connue ne liste un zip ;
+`FileUtils.deleteFiles` refuse un `.zip`** (contradicteur, d'après le code de QField). Options : décompresser (aucune API QML prouvée) ;
 **`/vsizip/`** ; laisser QField importer le zip comme dossier (comportement non vérifié
 pour un zip sans projet). Clé du registre : nom du fichier projet (fragile) ou
 **identifiant propre** (retenu).

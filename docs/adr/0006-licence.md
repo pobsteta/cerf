@@ -14,7 +14,11 @@ Cerf est publié sous **GPL-3.0-or-later**, comme Groma et Surculus, si les lice
 ## Contexte
 
 GPL-2.0-only est incompatible avec GPL-3.0 : recopier du code GPL-2.0-only interdit la
-GPL-3.0. Options : GPL-3.0-or-later ; GPL-2.0-or-later ; licence permissive (MIT, EUPL).
+GPL-3.0. Options : GPL-3.0-or-later ; GPL-2.0-or-later ; licence permissive (MIT) ; EUPL-1.2 (copyleft, non permissive) ; CeCILL 2.1. Si le code
+appartient à l'ONF, la licence doit figurer dans la liste du décret n° 2017-638.
+`qfield_addLayer` n'a **aucune** licence : rien n'en est recopié. Le `LICENSE` de
+`qfield-layer-loader` est le texte brut de la GPL v2, sans mention « only » ni
+« or later » (§ 9 discutable).
 
 ## Le crible FRANCE
 

@@ -28,7 +28,7 @@ Le contradicteur penchait pour l'option 2 ; Pascal a retenu l'option 3.
 
 | Lettre | Question | Réponse | Ce que ça coûte | Prêts à payer ? |
 |---|---|---|---|---|
-| **F**rugale | La plus simple qui tienne ? | Un plugin, un projet modèle ; mécanismes repris de `qfield-layer-loader` et `qfield_addLayer`. | Deux livrables à versionner séparément. | à trancher par Pascal |
+| **F**rugale | La plus simple qui tienne ? | Un plugin, un projet modèle ; idées reprises de `qfield-layer-loader` et `qfield_addLayer`, code réécrit (`qfield_addLayer` n'a aucune licence). | Deux livrables à versionner séparément. | à trancher par Pascal |
 | **R**esponsable | Qui fait quoi ? | Pascal maintient ; chaque agent installe le plugin une fois. | Une installation et des mises à jour par tablette. | à trancher par Pascal |
 | **A**nticiper | Si l'imprévu arrive ? | Le plugin agit partout : garde `cerf_id` obligatoire. Dépend de l'API QML de QField (3.8 ou plus). | Un projet modèle plus ancien que le plugin, ou l'inverse. | à trancher par Pascal |
 | **N**ovateur | Toutes les idées écoutées ? | Les quatre options ci-dessus. | — | — |
@@ -39,7 +39,9 @@ Le contradicteur penchait pour l'option 2 ; Pascal a retenu l'option 3.
 
 - **Simplicité de livraison** : deux pièces au lieu d'une ; accepté par Pascal pour que le
   plugin serve tous les projets Cerf d'une tablette sans recopie.
-- **Fiabilité** : API QML jeune ; accepté, mécanismes déjà éprouvés par deux plugins.
+- **Fiabilité** : API QML jeune ; les trois mécanismes critiques (lister un zip, copier
+  hors du dossier projet, effacer un `.zip`) ne sont **pas** prouvés : prototype n° 1.
+- **Indépendance** : un seul mainteneur pour les mises à jour sur chaque appareil.
 
 ## Sources
 

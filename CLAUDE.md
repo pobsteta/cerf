@@ -45,7 +45,7 @@ les agents doivent garder en tête.
 - **Système de coordonnées du projet** : Lambert 93, EPSG:2154 (métropole, Corse
   comprise, en tranche 1). Toute couche est reprojetée à la volée ; puis un **contrôle de
   vraisemblance** vérifie que son emprise tombe en France métropolitaine, sinon elle est
-  refusée avec un message clair. Attention : un GeoJSON est toujours lu en WGS84
+  refusée avec un message clair. Attention : un GeoJSON sans membre `crs` est lu en WGS84
   (RFC 7946), un Shapefile sans `.prj` peut recevoir un système en silence.
 - **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile complet (`.shp`,
   `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF, lus tels quels dans le zip (`/vsizip/`).

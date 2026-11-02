@@ -95,8 +95,9 @@
   déclaré, refusé » est **remplacée par un contrôle de vraisemblance** (arbitrage 3) :
   après reprojection, l'emprise de la couche doit tomber dans l'emprise de la France
   métropolitaine, sinon la couche est refusée avec un message clair (« coordonnées
-  incohérentes : système mal déclaré ? »). Raison : un GeoJSON ne déclare jamais de
-  système (RFC 7946 : WGS84 implicite), un Shapefile sans `.prj` peut recevoir un
+  incohérentes : système mal déclaré ? »). Raison : un GeoJSON conforme à RFC 7946 ne
+  déclare pas de système (WGS84 implicite), et le membre `crs` du GeoJSON « 2008 » n'est
+  pas toujours présent, un Shapefile sans `.prj` peut recevoir un
   système en silence ; le contrôle couvre aussi l'inversion des axes. Le plugin vérifie
   en plus la présence du `.prj` d'un Shapefile dans le zip.
 
@@ -132,8 +133,9 @@
      projet** (que QFieldCloud peut purger). Reste à écrire dans la spec : le
      comportement si un fichier a disparu ; la perte du registre si QField est
      désinstallé (acceptable pour des couches en lecture seule) ;
-  2. **pas de décompression** : GDAL lit dans le zip (`/vsizip/`), comme le fait déjà
-     [`qfield-layer-loader`](https://github.com/mbernasocchi/qfield-layer-loader/blob/main/main.qml).
+  2. **pas de décompression** : GDAL lit dans le zip (`/vsizip/`) ; [`qfield-layer-loader`](https://github.com/mbernasocchi/qfield-layer-loader/blob/main/main.qml)
+     ne s'en sert que pour un zip distant, sans le lister (correction du contradicteur,
+     2 novembre 2026).
      **À prototyper en premier** : lister le contenu du zip, lire un Shapefile dans le
      zip, trouver un `.qml` dans le zip, lire un GeoTIFF de 200 Mo, choisir un fichier
      sous Android 11 et plus (le choix d'un dossier n'est pas acquis).

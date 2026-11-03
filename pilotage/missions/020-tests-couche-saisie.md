@@ -68,7 +68,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Terrain
 
-- **Échantillon que Pascal vérifiera :** —.
+- **Échantillon que Pascal vérifiera :** spec § 6 n° 10 — mode avion, trois points saisis, redémarrage, puis `saisie.gpkg` ouvert dans QGIS sur le PC (Pascal, 3 novembre 2026).
 
 ## Qui veille, qui tranche
 
@@ -80,3 +80,15 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 ## Comment saura-t-on que ça marche ?
 
 La mission 021 a une cible mesurable et ne peut pas s'auto-évaluer.
+
+## Décisions de Pascal du 3 novembre 2026 (après la relecture de b05143c)
+
+- **Tests de la mission 005** : le testeur les corrige (harnais étendu à
+  `tests/projet-modele.test.mjs`) pour que « exactement deux couches », « zoom 0 à 19 » et
+  « © IGN » portent sur les couches du groupe « Fonds de carte » (toujours exactement deux
+  fonds XYZ), et non sur toutes les couches du projet.
+- **Champs facultatifs** : `essence`, `diametre`, `remarque` sans NOT NULL (le test reste
+  tel quel ; règle écrite en spec § 3.5).
+- **`diametre >= 0`** : contrainte QGIS sur le champ dans `cerf.qgz`, à tester ici ; la 021
+  la pose.
+- **Échantillon de terrain** : spec § 6 n° 10.

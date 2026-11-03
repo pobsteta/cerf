@@ -276,23 +276,24 @@ const verifsQgs = {
     if (vrai(dd[0].applyOnUpdate)) d.push('applyOnUpdate = 1 : la date serait réécrite à chaque modification (la spec : « modifiable »)');
     return d;
   },
-  'contrainte QGIS sur diametre : "diametre" >= 0 (vide admis), appliquée': (p) => {
+  'contrainte QGIS sur diametre : "diametre" IS NULL OR "diametre" >= 0 (vide admis), bloquante (force forte)': (p) => {
     const c = saisie(p); if (!c) return absente();
     const bloc = (nom) => c.brut.match(new RegExp(`<${nom}>([\\s\\S]*?)</${nom}>`))?.[1] ?? '';
     // Le « > » de « >= » peut être brut ou encodé (&gt;) dans la valeur d'un attribut : le motif saute les valeurs entre guillemets.
     const lignes = (b) => [...b.matchAll(/<constraint\b(?:"[^"]*"|[^>"])*>/g)].map((m) => attrs(m[0]));
     const exprs = lignes(bloc('constraintExpressions')).filter((a) => a.field === 'diametre');
     if (exprs.length === 0) return ["aucune contrainte d'expression sur le champ diametre (<constraintExpressions>) : rouge attendu jusqu'à la mission 021"];
-    // TOLÉRANCE : espaces, casse, guillemets autour du nom de champ et parenthèses libres ; le vide est admis (champ facultatif,
-    // spec § 3.5) : « "diametre" IS NULL OR "diametre" >= 0 » (dans les deux ordres) vaut « "diametre" >= 0 ». « > 0 » est refusé.
-    const norm = (e) => (e ?? '').toLowerCase().replace(/"/g, '').replace(/[()\s]+/g, '');
-    const ok = ['diametre>=0', '0<=diametre', 'diametreisnullordiametre>=0', 'diametre>=0ordiametreisnull'];
+    // TOLÉRANCE : espaces, casse, guillemets autour du nom de champ, parenthèses, ordre des deux termes de OR, « 0 <= diametre »
+    // et « &gt; » encodé. EXIGÉ : le vide admis. Dans QGIS, « "diametre" >= 0 » seul est faux sur un diamètre vide (comparaison avec
+    // NULL = inconnu, lu comme faux) et bloquerait un champ facultatif (spec § 3.5) : « >= 0 » seul et « > 0 » sont refusés.
+    const norm = (e) => (e ?? '').toLowerCase().replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/"/g, '').replace(/[()\s]+/g, '');
+    const ok = ['diametreisnullordiametre>=0', 'diametreisnullor0<=diametre', 'diametre>=0ordiametreisnull', '0<=diametreordiametreisnull'];
     const bonnes = exprs.filter((a) => ok.includes(norm(a.exp)));
-    if (bonnes.length === 0) return [`expression(s) de contrainte sur diametre : ${JSON.stringify(exprs.map((a) => a.exp))}, attendu l'équivalent de "diametre" >= 0 (« > 0 » refusé)`];
-    // La contrainte doit être appliquée : <constraints> la déclare de type expression (bit 4) et de force non nulle (1 forte, 2 douce).
+    if (bonnes.length === 0) return [`expression(s) de contrainte sur diametre : ${JSON.stringify(exprs.map((a) => a.exp))}, attendu "diametre" IS NULL OR "diametre" >= 0 (vide admis ; « >= 0 » seul et « > 0 » refusés)`];
+    // La contrainte doit être bloquante : <constraints> la déclare de type expression (bit 4) et de force forte (exp_strength 1, ou absent = 1).
     const forces = lignes(bloc('constraints')).filter((a) => a.field === 'diametre'
-      && (a.constraints === undefined || (Number(a.constraints) & 4) === 4) && (a.exp_strength === undefined || a.exp_strength !== '0'));
-    return forces.length ? [] : ['contrainte déclarée mais non appliquée : <constraints> ne la porte pas sur diametre (constraints sans le bit 4, ou exp_strength="0")'];
+      && (a.constraints === undefined || (Number(a.constraints) & 4) === 4) && (a.exp_strength === undefined || a.exp_strength === '1'));
+    return forces.length ? [] : ['contrainte déclarée mais non appliquée : <constraints> ne la porte pas sur diametre (constraints sans le bit 4, ou exp_strength différent de 1 : force douce ou nulle, la contrainte doit être bloquante)'];
   },
   'symbole : un cercle noir plein de 2 mm': (p) => {
     const c = saisie(p); if (!c) return absente();
@@ -392,11 +393,11 @@ const etiquette = (o) => (o.sansEtiquette ? '' : `<labeling type="simple"><setti
 // Contrainte sur diametre, écrite comme QGIS 3.x : <constraints> (type, force) puis <constraintExpressions> (expression, message).
 function contraintes(o) {
   if (o.sansContrainte) return o.contraintesBrutes ?? '';
-  const champ = o.champContrainte ?? 'diametre', exp = o.contrainte ?? '"diametre" >= 0';
+  const champ = o.champContrainte ?? 'diametre', exp = o.contrainte ?? '"diametre" IS NULL OR "diametre" >= 0';
   const force = o.contrainteForce ?? 'constraints="4" unique_strength="0" notnull_strength="0" exp_strength="1"';
   return `<constraints><constraint field="fid" constraints="3" unique_strength="1" notnull_strength="1" exp_strength="0"/>` +
     `<constraint field="${champ}" ${force}/></constraints>` +
-    `<constraintExpressions><constraint field="fid" exp="" desc=""/><constraint field="${champ}" exp="${echapper(exp)}" desc="${o.contrainteDesc ?? 'Le diamètre doit être positif ou nul'}"/></constraintExpressions>`;
+    `<constraintExpressions><constraint field="fid" exp="" desc=""/><constraint field="${champ}" exp="${o.encoderSup ? echapper(exp).replace(/>/g, '&gt;') : echapper(exp)}" desc="${o.contrainteDesc ?? 'Le diamètre doit être positif ou nul'}"/></constraintExpressions>`;
 }
 function coucheSaisie(o = {}) {
   const defaut = o.sansDefaut ? '' : `<default field="date" expression="${o.defaut ?? 'now()'}" applyOnUpdate="${o.applyOnUpdate ?? 0}"/>`;
@@ -477,11 +478,13 @@ const variantesAdmises = {
   'défaut NOW( ) avec espaces et casse': { defaut: ' NOW( ) ' },
   'couleurs en hexadécimal et sans suffixe rgb:': { couleur: '#000000', couleurTexte: '0,0,0,255', couleurLisere: '#ffffff' },
   'étiquette avec un vrai saut de ligne entre apostrophes': { expression: `"essence" || '\n' || "diametre"` },
-  'contrainte sans espaces, sans guillemets, en majuscules': { contrainte: 'DIAMETRE>=0' },
-  'contrainte avec espaces superflus et parenthèses': { contrainte: '  ( "diametre"   >=   0 ) ' },
+  'contrainte sans espaces superflus, sans guillemets, en majuscules': { contrainte: 'DIAMETRE IS NULL OR DIAMETRE>=0' },
+  'contrainte avec espaces superflus et parenthèses': { contrainte: '  ( "diametre"   IS   NULL )  or  ( "diametre"   >=   0 ) ' },
+  'contrainte « 0 <= diametre »': { contrainte: '"diametre" IS NULL OR 0 <= "diametre"' },
+  'contrainte avec « > » encodé (&gt;) dans la valeur': { contrainte: '"diametre" IS NULL OR "diametre" >= 0', encoderSup: true },
+  'contrainte, force forte absente (vaut 1)': { contrainteForce: 'constraints="4" unique_strength="0" notnull_strength="0"' },
   'contrainte admettant le vide (IS NULL OR)': { contrainte: '"diametre" IS NULL OR "diametre" >= 0' },
   'contrainte admettant le vide (OR IS NULL)': { contrainte: '("diametre" >= 0) OR ("diametre" IS NULL)' },
-  'contrainte de force douce (exp_strength=2)': { contrainteForce: 'constraints="4" unique_strength="0" notnull_strength="0" exp_strength="2"' },
   'étiquette sans espaces autour de ||': { expression: `"essence"||'\\n'||"diametre"` },
 };
 for (const [nom, o] of Object.entries(variantesAdmises)) test(`garde-fou projet : accepte ${nom}`, () => assert.deepEqual(defautsQgs(projetFixture(o)), []));
@@ -516,6 +519,12 @@ const fautesQgs = {
   'défaut de date réappliqué à chaque modification': [{ applyOnUpdate: 1 }, 'applyOnUpdate'],
   'contrainte absente': [{ sansContrainte: true }, 'aucune contrainte'],
   'contrainte sur un autre champ (essence)': [{ champContrainte: 'essence' }, 'aucune contrainte'],
+  'contrainte >= 0 seule (un diamètre vide serait refusé)': [{ contrainte: '"diametre" >= 0' }, 'IS NULL'],
+  'contrainte 0 <= diametre seule': [{ contrainte: '0 <= "diametre"' }, 'IS NULL'],
+  'contrainte IS NULL seule': [{ contrainte: '"diametre" IS NULL' }, 'IS NULL'],
+  'contrainte IS NULL OR > 0': [{ contrainte: '"diametre" IS NULL OR "diametre" > 0' }, 'attendu'],
+  'contrainte IS NULL OR >= 0 de force douce (exp_strength=2)': [{ contrainteForce: 'constraints="4" unique_strength="0" notnull_strength="0" exp_strength="2"' }, 'bloquante'],
+  'contrainte >= 0 seule de force douce': [{ contrainte: '"diametre" >= 0', contrainteForce: 'constraints="4" exp_strength="2"' }, 'IS NULL'],
   'contrainte > 0 au lieu de >= 0': [{ contrainte: '"diametre" > 0' }, 'attendu'],
   'contrainte <= 0 (sens inversé)': [{ contrainte: '"diametre" <= 0' }, 'attendu'],
   'contrainte >= 1': [{ contrainte: '"diametre" >= 1' }, 'attendu'],

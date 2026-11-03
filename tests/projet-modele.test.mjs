@@ -158,6 +158,11 @@ const verifs = {
   }),
   'attribution « © IGN » sur chaque fond': (p) => p.fonds.filter((c) => !c.brut.includes(ATTRIBUTION)).map((c) => `« ${c.nom} » : « ${ATTRIBUTION} » absent de la couche`),
   "les deux fonds sont dans l'arbre des couches": (p) => p.couches.filter((c) => !p.arbre.includes(c.id)).map((c) => `« ${c.nom} » (${c.id}) absent du layer-tree`),
+  'aucune couche raster ou wms hors du groupe « Fonds de carte » (seules les vectorielles y sont admises)': (p) => {
+    const dans = new Set(p.fonds.map((c) => c.id));
+    return p.couches.filter((c) => !dans.has(c.id) && (/<maplayer\b[^>]*\btype="raster"/.test(c.brut) || /^(wms|wmts|gdal|xyz)$/i.test(c.fournisseur ?? '')))
+      .map((c) => `couche « ${c.nom} » (${c.id}) : raster ou wms hors du groupe « Fonds de carte »`);
+  },
   "aucune clé d'API dans le projet": (p) => (/(apikey|api_key|[?&;]key=|[?&;]token=)/i.test(decoder(dexml(p.xml))) ? ['une clé ou un jeton apparaît dans le projet'] : []),
 };
 const defauts = (buf) => { const p = analyser(buf); return Object.entries(verifs).flatMap(([n, f]) => f(p).map((d) => `${n} : ${d}`)); };
@@ -176,9 +181,9 @@ function projet(o = {}) {
   const noms = o.sansId ? '' : `<value>${o.nomVar ?? 'cerf_id'}</value>`;
   const vals = o.sansId ? '' : `<value>${o.valeur ?? UUID_ESSAI}</value>`;
   return `<!DOCTYPE qgis><qgis version="3.34"><projectCrs><spatialrefsys><srid>${o.srid ?? 2154}</srid><authid>${o.authid ?? 'EPSG:2154'}</authid></spatialrefsys></projectCrs>` +
-    `<layer-tree-group>${o.saisie ? '<layer-tree-layer id="saisie_0" name="Saisie terrain"/>' : ''}<layer-tree-group name="${o.nomGroupe ?? 'Fonds de carte'}">${fonds.map((f, i) => `<layer-tree-layer id="fond_${i}" name="${f.nom}"/>`).join('')}</layer-tree-group></layer-tree-group>` +
+    `<layer-tree-group>${o.horsGroupe ? '<layer-tree-layer id="hors_0" name="Fond égaré"/>' : ''}${o.saisie ? '<layer-tree-layer id="saisie_0" name="Saisie terrain"/>' : ''}<layer-tree-group name="${o.nomGroupe ?? 'Fonds de carte'}">${fonds.map((f, i) => `<layer-tree-layer id="fond_${i}" name="${f.nom}"/>`).join('')}</layer-tree-group></layer-tree-group>` +
     `<mapcanvas name="theMapCanvas"><destinationsrs><spatialrefsys><srid>2154</srid><authid>${o.canvas ?? 'EPSG:2154'}</authid></spatialrefsys></destinationsrs></mapcanvas>` +
-    `<projectlayers>${fonds.map((f, i) => couche(i, f, i === 0 ? o.c0 : undefined)).join('')}${o.saisie ? COUCHE_SAISIE : ''}</projectlayers>` +
+    `<projectlayers>${fonds.map((f, i) => couche(i, f, i === 0 ? o.c0 : undefined)).join('')}${o.saisie ? COUCHE_SAISIE : ''}${o.horsGroupe ? couche('hors', { nom: 'Fond égaré', url: FONDS[0].url }).replace('<id>fond_hors</id>', '<id>hors_0</id>') : ''}</projectlayers>` +
     `<properties><Variables><variableNames type="QStringList">${noms}</variableNames><variableValues type="QStringList">${vals}</variableValues></Variables></properties></qgis>`;
 }
 const qgz = (xml) => ecrireZip({ 'cerf.qgs': xml });
@@ -189,6 +194,11 @@ test('garde-fou : un projet conforme (fixture) ne donne aucun défaut', () => {
 });
 test('garde-fou : une couche vectorielle hors du groupe « Fonds de carte » ne fait échouer aucun contrôle', () => {
   assert.deepEqual(defauts(qgz(projet({ saisie: true }))), []);
+});
+test('garde-fou : une couche raster (GeoTIFF, fournisseur gdal) à la racine est refusée', () => {
+  const xml = projet().replace('</projectlayers>', '<maplayer type="raster"><id>tif_0</id><layername>MNT</layername><provider encoding="">gdal</provider><datasource>./mnt.tif</datasource></maplayer></projectlayers>')
+    .replace('<layer-tree-group name=', '<layer-tree-layer id="tif_0" name="MNT"/><layer-tree-group name=');
+  assert.ok(defauts(qgz(xml)).some((x) => x.includes('hors du groupe')));
 });
 test('garde-fou : la couche vectorielle hors du groupe ne compte pas parmi les deux fonds (le groupe garde exactement deux fonds)', () => {
   const p = analyser(qgz(projet({ saisie: true })));
@@ -230,6 +240,7 @@ const fautes = {
   'format PNG au lieu de JPEG sur la BD ORTHO': [{ fonds: [FONDS[0], { ...FONDS[1], url: FONDS[1].url.replace('image/jpeg', 'image/png') }] }, 'gabarit XYZ exact'],
   'couche WMTS au lieu de XYZ': [{ c0: { source: 'contextualWMSLegend=0&crs=EPSG:3857&format=image/png&layers=X&tileMatrixSet=PM&url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26REQUEST%3DGetCapabilities' } }, 'attendu type=xyz'],
   'groupe « Fonds de carte » absent (groupe mal nommé)': [{ nomGroupe: 'Fonds' }, 'exactement deux fonds'],
+  'fond wms placé à la racine, hors du groupe': [{ horsGroupe: true }, 'hors du groupe'],
   'attribution absente': [{ c0: { rights: '' } }, 'attribution'],
   'un seul fond': [{ fonds: [FONDS[0]] }, 'exactement deux fonds'],
   'une troisième couche': [{ fonds: [...FONDS, { nom: 'SCAN 25', url: GABARIT('GEOGRAPHICALGRIDSYSTEMS.MAPS', 'image/jpeg') }] }, 'exactement deux fonds'],

@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Produire cerf.qgz, vide de données métier, en Lambert 93, avec les fonds XYZ du référentiel et la variable cerf_id, pour que l'agent ait un projet prêt à ouvrir sur son appareil.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire, par le script `outils/projet-modele.mjs`, un `cerf.qgz` à la racine du dépôt (Lambert 93, exactement deux couches XYZ Plan IGN v2 et BD ORTHO avec gabarit PM, zoom 0 à 19 et « © IGN », variable de projet `cerf_id` en UUID), pour que l'agent ouvre un projet prêt sur son appareil et que les 10 tests de la mission 005 passent au vert sans être modifiés.
 
 ## Les trois questions (règle de staffing)
 
@@ -38,6 +38,17 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
   l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
 - **Sources autorisées :** référentiel 001, ADR 0002, spec § 2 et § 3.3.
 
+## Décisions de Pascal du 2 novembre 2026
+
+- `cerf.qgz` à la racine du dépôt.
+- Écrit par le script `outils/projet-modele.mjs` (QGIS n'est pas dans le conteneur) ; **la vérification de
+  Pascal dans QGIS conditionne la fusion** : il ouvre le projet, l'enregistre, et les tests doivent repasser
+  sur la version enregistrée par QGIS.
+- « © IGN » dans l'attribution de chaque couche (élément d'attribution de la couche QGIS, pas seulement les métadonnées).
+- Exactement deux couches en tranche 1.
+- `.qgs` écrit comme QGIS 3.x l'écrit : URL de la source encodée, variable `cerf_id` (UUID) au niveau du projet ;
+  script déterministe sauf l'UUID (argument `--cerf-id`, ou valeur par défaut fixée dans le script).
+
 ## Valeur provisoire (chiffre, réglage)
 
 - aucune.
@@ -52,7 +63,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Terrain
 
-- **Échantillon que Pascal vérifiera :** Pascal ouvre `cerf.qgz` dans QGIS puis dans QField : deux fonds, EPSG:2154.
+- **Échantillon que Pascal vérifiera :** Pascal ouvre `cerf.qgz` dans QGIS puis dans QField : deux fonds, EPSG:2154 ; le groupe « Fonds de carte » (coché, déplié, Plan IGN v2 coché puis BD ORTHO décochée), demandé par Pascal le 2 novembre 2026 après l'ouverture dans QField.
 
 ## Qui veille, qui tranche
 

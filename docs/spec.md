@@ -223,3 +223,20 @@ embarqué (sauf échec à J+2).
 7. Pas de chargement forcé d'une couche refusée (valeur sacrifiée : l'autonomie de
    l'agent).
 8. Demander à JFC si `concat("essence", '\n', "diametre")` lui convient.
+
+## 10. Résultat du prototype n° 1 (Pascal, Samsung, 3 novembre 2026)
+
+Essai de la mission 004 suivant `tests/recette/prototype-1.md` (branche
+`mission/004-prototype-1`) : **oui aux questions 1 à 4**, et aux autres.
+
+- **Q1 lister** : la copie faite **hors du dossier projet** (bouton A) est listée,
+  9 entrées sur 9. Le code de QField 4.3.7 laissait prévoir un refus : écart noté au
+  journal. → le repli de la spec § 9 n° 1 **ne s'applique pas** ; l'arbitrage 6 du brief
+  tient (copies hors du dossier projet).
+- **Q2 copier** : oui.
+- **Q3 effacer** : `FileUtils.deleteFiles` refuse le `.zip`, `platformUtilities.rmFile`
+  l'efface, « zip absent ». → le repli § 9 n° 2 **ne s'applique pas**, mais l'effacement
+  dépend de `rmFile`, fonction sans contrôle que QField annonce vouloir déplacer : ADR à
+  trancher par Pascal.
+- **Q4 module `.mjs`** : chargé dans QField (5 et `cerf-prototype-1`). → ADR 0005
+  confirmée.

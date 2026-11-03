@@ -127,8 +127,8 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
   | Champ | Type | Saisie | Remarque |
   |---|---|---|---|
   | `fid` | entier, clé | automatique | clé du GeoPackage |
-  | `essence` | texte | libre | proposition : texte libre en tranche 1 (pas de liste de valeurs sans référentiel ONF) |
-  | `diametre` | entier (cm) | libre, ≥ 0 | proposition : centimètres entiers |
+  | `essence` | texte | libre | texte libre en tranche 1 (pas de liste de valeurs sans référentiel ONF ; Pascal, 3 novembre 2026) |
+  | `diametre` | entier (cm) | libre, ≥ 0 | centimètres entiers (Pascal, 3 novembre 2026) |
   | `remarque` | texte | libre, facultatif | |
   | `date` | date et heure | **automatique** à la création (`now()`), modifiable | |
 

@@ -1,7 +1,7 @@
 # Mission 021 — Couche de saisie dans le projet modèle
 
 > Fiche rédigée par Claude (orchestrateur) le 3 novembre 2026, après l'amendement de Pascal
-> (voie 1). **Statut : proposée, à valider par Pascal (porte n° 2).** Une mission = une
+> (voie 1). **Statut : validée par Pascal le 3 novembre 2026 (porte n° 2).** Une mission = une
 > phrase = une branche = une PR.
 
 ## Mission
@@ -50,7 +50,7 @@ sur l'appareil (zip séparé, consigne de la notice, ou autre : à proposer à P
 
 ## Valeur provisoire (chiffre, réglage)
 
-- `essence` en texte libre, `diametre` en centimètres entiers (spec § 3.5).
+- `essence` en texte libre, `diametre` en centimètres entiers (spec § 3.5, confirmés par Pascal le 3 novembre 2026).
 
 ## Dépend de / rouge attendu jusqu'à
 

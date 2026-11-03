@@ -1,8 +1,7 @@
 # Mission 020 — Tests de la couche de saisie
 
 > Fiche rédigée par Claude (orchestrateur) le 3 novembre 2026, après l'amendement de Pascal
-> (voie 1 : couche de saisie dans le projet modèle). **Statut : proposée, à valider par
-> Pascal (porte n° 2).** Une mission = une phrase = une branche = une PR.
+> (voie 1 : couche de saisie dans le projet modèle). **Statut : validée par Pascal le 3 novembre 2026 (porte n° 2).** Une mission = une phrase = une branche = une PR.
 
 ## Mission
 
@@ -55,8 +54,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Valeur provisoire (chiffre, réglage)
 
-- `essence` en texte libre, `diametre` en centimètres entiers (propositions de la spec
-  § 3.5, à confirmer par Pascal).
+- `essence` en texte libre, `diametre` en centimètres entiers (spec § 3.5, confirmés par Pascal le 3 novembre 2026).
 
 ## Dépend de / rouge attendu jusqu'à
 

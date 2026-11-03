@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 // Mission 006 : écrit le projet modèle cerf.qgz (QGIS n'est pas dans le conteneur, d'où ce script).
 //
-// Usage :  node outils/projet-modele.mjs [--cerf-id <UUID>] [--sortie <chemin.qgz>]
+// Mission 021 : écrit aussi saisie.gpkg (couche « Saisie terrain », vide) et déclare la couche dans cerf.qgz.
+//
+// Usage :  node outils/projet-modele.mjs [--cerf-id <UUID>] [--sortie <chemin.qgz>] [--gpkg <chemin.gpkg>]
 //   --cerf-id  UUID de la variable de projet cerf_id (spec § 3.3). Par défaut : CERF_ID_PAR_DEFAUT ci-dessous,
 //              tiré une fois le 2 novembre 2026 puis figé : un seul cerf.qgz par appareil, pas de
 //              consigne de changer cerf_id (spec § 3.3). Seul cet UUID peut varier d'une exécution à l'autre.
 //   --sortie   chemin du .qgz (par défaut : cerf.qgz à la racine du dépôt).
+//   --gpkg     chemin du saisie.gpkg (par défaut : saisie.gpkg à la racine du dépôt). Le script n'écrit que dans
+//              le dépôt : il ne touche jamais un saisie.gpkg d'appareil (voir outils/zips-projet-modele.mjs).
 // Le script est déterministe : même UUID => mêmes octets (horodatage du zip fixé, identifiants de couche dérivés du nom).
 //
 // Valeurs : docs/referentiels/fonds-ign.md § 1 (gabarits XYZ) et § 2 (zoom 0 à 19) ; ADR 0002 amendée
@@ -13,7 +17,8 @@
 // Le .qgs est écrit comme QGIS 3.x l'écrit, de mémoire du format (le code source de QGIS n'a pas pu être
 // consulté depuis le conteneur) : la vérification de Pascal dans QGIS conditionne la fusion.
 import { createHash } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
@@ -81,6 +86,151 @@ function maplayer(f) {
     </maplayer>`;
 }
 
+// ---------- Mission 021 : la couche « Saisie terrain » (spec § 3.5 et § 5) ----------
+export const NOM_SAISIE = 'Saisie terrain';
+export const TABLE_SAISIE = 'saisie_terrain';
+export const SOURCE_SAISIE = `./saisie.gpkg|layername=${TABLE_SAISIE}`; // relatif au dossier du projet : QField le déplace
+const idSaisie = () => idCouche({ nom: NOM_SAISIE });
+const CONTRAINTE_DIAMETRE = '"diametre" IS NULL OR "diametre" >= 0'; // le vide est admis : champ facultatif
+const ETIQUETTE_SAISIE = `"essence" || '\\n' || "diametre"`; // « \n » littéral (caractère \ puis n), comme dans la spec § 5
+
+function maplayerSaisie() {
+  const champ = (nom, type, editable) => ({ nom, type, editable });
+  const champs = [champ('fid', 'qlonglong', 0), champ('essence', 'QString', 1), champ('diametre', 'int', 1), champ('remarque', 'QString', 1), champ('date', 'QDateTime', 1)];
+  const widget = {
+    fid: '<editWidget type="TextEdit"><config><Option/></config></editWidget>',
+    essence: '<editWidget type="TextEdit"><config><Option/></config></editWidget>',
+    diametre: '<editWidget type="TextEdit"><config><Option/></config></editWidget>',
+    remarque: '<editWidget type="TextEdit"><config><Option type="Map"><Option name="IsMultiline" value="true" type="bool"/></Option></config></editWidget>',
+    date: '<editWidget type="DateTime"><config><Option type="Map"><Option name="allow_null" value="true" type="bool"/><Option name="calendar_popup" value="true" type="bool"/><Option name="display_format" value="yyyy-MM-dd HH:mm:ss" type="QString"/><Option name="field_format" value="yyyy-MM-dd HH:mm:ss" type="QString"/><Option name="field_iso_format" value="false" type="bool"/></Option></config></editWidget>',
+  };
+  const e = EXTENT;
+  const noir = '0,0,0,255,rgb:0,0,0,1', blanc = '255,255,255,255,rgb:1,1,1,1';
+  return `    <maplayer autoRefreshMode="Disabled" autoRefreshTime="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" hasScaleBasedVisibilityFlag="0" maxScale="0" minScale="100000000" geometry="Point" readOnly="0" labelsEnabled="1" simplifyDrawingHints="0" simplifyAlgorithm="0" simplifyLocal="1" simplifyMaxScale="1" simplifyDrawingTol="1" styleCategories="AllStyleCategories" type="vector">
+      <extent><xmin>${e.xmin}</xmin><ymin>${e.ymin}</ymin><xmax>${e.xmax}</xmax><ymax>${e.ymax}</ymax></extent>
+      <id>${idSaisie()}</id>
+      <datasource>${xml(SOURCE_SAISIE)}</datasource>
+      <keywordList><value></value></keywordList>
+      <layername>${xml(NOM_SAISIE)}</layername>
+      <srs>${SRS_2154}</srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title>${xml(NOM_SAISIE)}</title>
+        <abstract></abstract>
+        <links/>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>${SRS_2154}</crs>
+        <extent/>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>0</Removable>
+        <Searchable>1</Searchable>
+        <Private>0</Private>
+      </flags>
+      <map-layer-style-manager current="default"><map-layer-style name="default"/></map-layer-style-manager>
+      <renderer-v2 type="singleSymbol" symbollevels="0" forceraster="0" enableorderby="0" referencescale="-1">
+        <symbols>
+          <symbol type="marker" name="0" alpha="1" clip_to_extent="1" force_rhr="0">
+            <data_defined_properties><Option type="Map"><Option name="name" value="" type="QString"/><Option name="properties"/><Option name="type" value="collection" type="QString"/></Option></data_defined_properties>
+            <layer class="SimpleMarker" enabled="1" locked="0" pass="0">
+              <Option type="Map">
+                <Option name="angle" value="0" type="QString"/>
+                <Option name="cap_style" value="square" type="QString"/>
+                <Option name="color" value="${noir}" type="QString"/>
+                <Option name="horizontal_anchor_point" value="1" type="QString"/>
+                <Option name="joinstyle" value="bevel" type="QString"/>
+                <Option name="name" value="circle" type="QString"/>
+                <Option name="offset" value="0,0" type="QString"/>
+                <Option name="offset_unit" value="MM" type="QString"/>
+                <Option name="outline_color" value="${noir}" type="QString"/>
+                <Option name="outline_style" value="solid" type="QString"/>
+                <Option name="outline_width" value="0" type="QString"/>
+                <Option name="outline_width_unit" value="MM" type="QString"/>
+                <Option name="scale_method" value="diameter" type="QString"/>
+                <Option name="size" value="2" type="QString"/>
+                <Option name="size_unit" value="MM" type="QString"/>
+                <Option name="vertical_anchor_point" value="1" type="QString"/>
+              </Option>
+            </layer>
+          </symbol>
+        </symbols>
+      </renderer-v2>
+      <labeling type="simple">
+        <settings calloutType="simple">
+          <text-style fontSize="8" fontSizeUnit="Point" textColor="${noir}" fieldName="${xml(ETIQUETTE_SAISIE)}" isExpression="1" fontFamily="Sans Serif" textOpacity="1" namedStyle="Regular">
+            <text-buffer bufferDraw="1" bufferSize="1" bufferSizeUnits="MM" bufferColor="${blanc}" bufferOpacity="1" bufferJoinStyle="128" bufferNoFill="1"/>
+          </text-style>
+          <placement placement="6" dist="1" distUnits="MM" quadOrientation="0"/>
+          <rendering scaleVisibility="0" obstacle="1" drawLabels="1" displayAll="0"/>
+        </settings>
+      </labeling>
+      <customproperties><Option/></customproperties>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <fieldConfiguration>
+${champs.map((c) => `        <field configurationFlags="NoFlag" name="${c.nom}">
+          <editWidget type="${/type="(\w+)"/.exec(widget[c.nom])[1]}">${widget[c.nom].replace(/^<editWidget[^>]*>/, '').replace(/<\/editWidget>$/, '')}</editWidget>
+        </field>`).join('\n')}
+      </fieldConfiguration>
+      <editable>
+${champs.map((c) => `        <field name="${c.nom}" editable="${c.editable}"/>`).join('\n')}
+      </editable>
+      <constraints>
+        <constraint field="fid" constraints="3" unique_strength="1" notnull_strength="1" exp_strength="0"/>
+        <constraint field="essence" constraints="0" unique_strength="0" notnull_strength="0" exp_strength="0"/>
+        <constraint field="diametre" constraints="4" unique_strength="0" notnull_strength="0" exp_strength="1"/>
+        <constraint field="remarque" constraints="0" unique_strength="0" notnull_strength="0" exp_strength="0"/>
+        <constraint field="date" constraints="0" unique_strength="0" notnull_strength="0" exp_strength="0"/>
+      </constraints>
+      <defaults>
+        <default field="fid" expression="" applyOnUpdate="0"/>
+        <default field="essence" expression="" applyOnUpdate="0"/>
+        <default field="diametre" expression="" applyOnUpdate="0"/>
+        <default field="remarque" expression="" applyOnUpdate="0"/>
+        <default field="date" expression="now()" applyOnUpdate="0"/>
+      </defaults>
+      <constraintExpressions>
+        <constraint field="fid" exp="" desc=""/>
+        <constraint field="essence" exp="" desc=""/>
+        <constraint field="diametre" exp="${xml(CONTRAINTE_DIAMETRE)}" desc="Le diamètre doit être positif ou nul (en cm)"/>
+        <constraint field="remarque" exp="" desc=""/>
+        <constraint field="date" exp="" desc=""/>
+      </constraintExpressions>
+    </maplayer>`;
+}
+
+// saisie.gpkg : GeoPackage (OGC 12-128, 1.3) vide, écrit avec node:sqlite. Contenu logique identique à chaque
+// exécution (aucune date du jour, aucun UUID) ; les octets peuvent varier d'une version de SQLite à l'autre.
+// R-tree omis (ses déclencheurs appellent ST_*, absentes de node:sqlite) : GeoPackage valide sans lui.
+const WKT_4326 = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]';
+const WKT_2154 = 'PROJCS["RGF93 v1 / Lambert-93",GEOGCS["RGF93 v1",DATUM["RGF93_v1",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6171"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4171"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","2154"]]';
+export const DATE_GPKG = '2026-11-03T00:00:00.000Z';
+export function ecrireGpkg(chemin) {
+  rmSync(chemin, { force: true });
+  const db = new DatabaseSync(chemin);
+  try {
+    db.exec(`PRAGMA page_size = 4096; PRAGMA journal_mode = DELETE; PRAGMA application_id = 1196444487; PRAGMA user_version = 10300;
+CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT NOT NULL, srs_id INTEGER PRIMARY KEY, organization TEXT NOT NULL, organization_coordsys_id INTEGER NOT NULL, definition TEXT NOT NULL, description TEXT);
+CREATE TABLE gpkg_contents (table_name TEXT NOT NULL PRIMARY KEY, data_type TEXT NOT NULL, identifier TEXT UNIQUE, description TEXT DEFAULT '', last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')), min_x DOUBLE, min_y DOUBLE, max_x DOUBLE, max_y DOUBLE, srs_id INTEGER, CONSTRAINT fk_gc_r_srs_id FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id));
+CREATE TABLE gpkg_geometry_columns (table_name TEXT NOT NULL, column_name TEXT NOT NULL, geometry_type_name TEXT NOT NULL, srs_id INTEGER NOT NULL, z TINYINT NOT NULL, m TINYINT NOT NULL, CONSTRAINT pk_geom_cols PRIMARY KEY (table_name, column_name), CONSTRAINT uk_gc_table_name UNIQUE (table_name), CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name), CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id));
+CREATE TABLE ${TABLE_SAISIE} (fid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, geom POINT, essence TEXT, diametre INTEGER, remarque TEXT, date DATETIME);`);
+    const srs = db.prepare('INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)');
+    srs.run('Undefined Cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined Cartesian coordinate reference system');
+    srs.run('Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system');
+    srs.run('WGS 84 geodetic', 4326, 'EPSG', 4326, WKT_4326, 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid');
+    srs.run('RGF93 v1 / Lambert-93', 2154, 'EPSG', 2154, WKT_2154, 'Lambert-93, France métropolitaine (Corse comprise)');
+    db.prepare('INSERT INTO gpkg_contents (table_name, data_type, identifier, description, last_change, min_x, min_y, max_x, max_y, srs_id) VALUES (?,?,?,?,?,NULL,NULL,NULL,NULL,?)')
+      .run(TABLE_SAISIE, 'features', TABLE_SAISIE, '', DATE_GPKG, 2154);
+    db.prepare('INSERT INTO gpkg_geometry_columns VALUES (?,?,?,?,0,0)').run(TABLE_SAISIE, 'geom', 'POINT', 2154);
+  } finally { db.close(); }
+}
+
 export function ecrireQgs(cerfId = CERF_ID_PAR_DEFAUT) {
   if (!UUID.test(cerfId) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(cerfId)) throw new Error(`cerf_id « ${cerfId} » : UUID valide et non nul attendu`);
   const e = EXTENT;
@@ -88,11 +238,16 @@ export function ecrireQgs(cerfId = CERF_ID_PAR_DEFAUT) {
         <customproperties><Option/></customproperties>
       </layer-tree-layer>`).join('\n');
   // Groupe de l'arbre des couches, comme QGIS 3.x l'écrit ; custom-order = ordre de rendu (désactivé : suit l'arbre).
-  const arbre = `    <layer-tree-group name="${xml(GROUPE_FONDS)}" checked="Qt::Checked" expanded="1">
+  const feuilleSaisie = `    <layer-tree-layer id="${idSaisie()}" name="${xml(NOM_SAISIE)}" source="${xml(SOURCE_SAISIE)}" providerKey="ogr" expanded="1" checked="Qt::Checked" legend_exp="" patch_size="-1,-1" legend_split_behavior="0">
+      <customproperties><Option/></customproperties>
+    </layer-tree-layer>
+`;
+  const arbre = feuilleSaisie + `    <layer-tree-group name="${xml(GROUPE_FONDS)}" checked="Qt::Checked" expanded="1">
       <customproperties><Option/></customproperties>
 ${feuilles}
     </layer-tree-group>
     <custom-order enabled="0">
+      <item>${idSaisie()}</item>
 ${FONDS.map((f) => `      <item>${idCouche(f)}</item>`).join('\n')}
     </custom-order>`;
   return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
@@ -118,9 +273,11 @@ ${arbre}
   <projectModels/>
   <legend updateDrawingOrder="true"/>
   <projectlayers>
+${maplayerSaisie()}
 ${FONDS.map(maplayer).join('\n')}
   </projectlayers>
   <layerorder>
+    <layer id="${idSaisie()}"/>
 ${FONDS.map((f) => `    <layer id="${idCouche(f)}"/>`).join('\n')}
   </layerorder>
   <properties>
@@ -162,6 +319,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = process.argv.slice(2), val = (opt) => { const i = a.indexOf(opt); return i >= 0 ? a[i + 1] : undefined; };
   const sortie = val('--sortie') ?? fileURLToPath(new URL('../cerf.qgz', import.meta.url));
   const cerfId = val('--cerf-id') ?? CERF_ID_PAR_DEFAUT;
+  const gpkg = val('--gpkg') ?? fileURLToPath(new URL('../saisie.gpkg', import.meta.url));
   writeFileSync(sortie, ecrireQgz(ecrireQgs(cerfId)));
   console.log(`${sortie} écrit (cerf_id = ${cerfId})`);
+  ecrireGpkg(gpkg);
+  console.log(`${gpkg} écrit (vide, table ${TABLE_SAISIE})`);
 }

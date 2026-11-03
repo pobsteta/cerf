@@ -227,3 +227,48 @@ points ; essai du zip de mise à jour sur un appareil déjà rempli.
 l'accord de Pascal sur les questions 1 à 3 ; Pascal ouvre le projet dans QGIS, enregistre, puis essaie les huit
 points du § 5 sur le Samsung avant la fusion ; on saura que ça marche quand trois points saisis en mode avion
 reviennent après redémarrage et s'ouvrent en Lambert 93 sur le PC, et qu'une mise à jour du projet ne les efface pas.
+
+---
+
+## Réalisation : écarts au plan (3 novembre 2026, par le `dev`)
+
+Décisions de Pascal appliquées : deux zips (option A), `saisie.gpkg` versé à la racine, workflow à part, couche non
+retirable, R-tree omis, `TEXT` sans longueur, notice laissée à la mission 018.
+
+**Écarts et précisions, un par un :**
+
+1. **Test de la 006 modifié (un seul, à relire).** `tests/outil-projet-modele.test.mjs`, test « arbre : un groupe
+   Fonds de carte… », affirmait « exactement 2 `layer-tree-layer` dans l'arbre » et « `layerorder` = ids des fonds ». Ces
+   deux affirmations sont incompatibles par construction avec la fiche 021 (la couche de saisie est à la racine, au-dessus
+   du groupe, et dans l'ordre de dessin). Je l'ai corrigé au minimum : 3 feuilles, la première étant « Saisie terrain »,
+   et l'ordre = `[saisie, ...fonds]`. Aucun test des missions 005 et 020 n'est touché. Si Pascal préfère que le testeur
+   le reprenne, on revient à la version précédente de ce seul fichier.
+2. **Non retirable** : écrit par `<flags><Removable>0</Removable>…</flags>` dans la `maplayer` (format QGIS ≥ 3.4). Aucun
+   test de la 020 ne le vérifie : je l'ai ajouté à `tests/outil-saisie-gpkg.test.mjs`. À confirmer dans QGIS (propriétés de
+   la couche) puis dans QField (la couche ne doit pas pouvoir être supprimée).
+3. **Widgets** : `TextEdit` pour `essence`, `diametre`, `remarque` (multiligne) ; `DateTime` pour `date`. Pas de `Range` sur
+   `diametre` : il ne sait pas porter un champ vide ; la contrainte `>= 0` suffit.
+4. **`last_change`, `description` des SRS** : figés ; WKT1 de 2154 et de 4326 écrits de mémoire (celui que GDAL écrit). Seul
+   QGIS le confirmera.
+5. **Tests ajoutés** : `tests/outil-saisie-gpkg.test.mjs` (6) et `tests/zips-projet-modele.test.mjs` (8) ; suite entière :
+   378 tests, 0 échec.
+6. **Workflow** : `release-projet-modele.yml`. Étiquette d'essai `projet-modele-essai` (préversion, écrasée) ; sur `main`,
+   étiquette `projet-modele-<AAAAMMJJ>-<sha7>` (pas de numéro de version à maintenir). Il rejoue `node --test` avant de publier.
+   **Point à trancher par Pascal** : `release-plugin.yml` publie encore, lui aussi, un `cerf-projet-modele.zip` (cerf.qgz seul)
+   dans ses releases, et la dernière release créée devient « latest » : l'URL `…/releases/latest/download/cerf-projet-modele.zip`
+   pointe donc sur l'une ou l'autre selon la dernière publication. Les deux contiennent le même `cerf.qgz` seul, donc
+   sans danger pour les saisies, mais le zip de première installation n'existe que dans les releases du projet modèle.
+   Je n'ai pas touché `release-plugin.yml` (hors harnais) : à retirer de ce workflow, dans une mission à part.
+
+**Ce que seuls QGIS sur PC et le Samsung prouveront :** voir le tableau des risques du § 5 (GDAL lit-il le GeoPackage sans
+R-tree ; contrainte bloquante dans QField ; `now()` rempli seul et fuseau ; widgets au doigt ; copie à chaud / WAL ;
+étiquette avec champ vide ; non-retirable ; redémarrage ; mise à jour sans perte avec le zip de mise à jour).
+
+## Trois phrases pour la notice de JFC (à reprendre par la mission 018)
+
+1. **Première installation d'un appareil** : copier le contenu de `cerf-projet-modele-premiere-installation.zip`
+   (`cerf.qgz` et `saisie.gpkg`) dans le dossier du projet, une seule fois.
+2. **Mise à jour** : n'utiliser que `cerf-projet-modele.zip` (`cerf.qgz` seul) ; ne jamais recopier `saisie.gpkg` sur un
+   appareil qui a déjà servi, car cela efface les points saisis.
+3. **Rapporter les points au bureau** : fermer le projet dans QField, puis copier `saisie.gpkg` (le fichier seul, sans
+   le renommer) sur le PC ; il s'ouvre dans QGIS en Lambert 93.

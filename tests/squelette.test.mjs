@@ -563,11 +563,96 @@ test('ADR 0007 : peutEffacer n\'admet que le contenu de Imported Datasets/cerf/<
     `${APP}/Imported Projects/cerf.qgz`,                // le projet lui-même
     COPIES,                                             // le dossier lui-même
     `${COPIES}/`,
+    `${COPIES}/..`,                                     // remontée sans barre finale
+    `${COPIES}/sous/..`,
     '',
     'essai.zip',                                        // chemin relatif
   ];
   for (const c of refus) assert.equal(m.peutEffacer(c, COPIES), false, c);
 });
+
+test('ADR 0007 : peutEffacer ne se fie pas à son 2e argument (dossierCopies vide, racine, relatif, hors forme)', async () => {
+  const m = await M();
+  const mauvais = [
+    '', '/', 'relatif/dossier', 'Imported Datasets/cerf/' + ID,
+    `${APP}/Imported Datasets/cerf`,                    // sans <cerf_id>
+    `${APP}/Imported Datasets/cerf/pas-un-uuid`,        // <cerf_id> hors référentiel
+    `${APP}/Imported Datasets/cerf/${ID}/sous`,         // trop profond
+    `${APP}/Imported Datasets`,
+    `${APP}/Autre/cerf/${ID}`,                          // pas sous Imported Datasets/cerf
+    `${APP}/Imported Datasets/cerf/${ID}/..`,
+  ];
+  for (const d of mauvais) {
+    assert.equal(m.peutEffacer(`${d}/essai.zip`, d), false, `dossier accepté à tort : « ${d} »`);
+    assert.equal(m.peutEffacer('/essai.zip', d), false, `dossier accepté à tort : « ${d} »`);
+    assert.equal(m.peutEffacer(`${COPIES}/essai.zip`, d), false, `dossier accepté à tort : « ${d} »`);
+  }
+});
+
+test('ADR 0007 : effacerCopie avec un dossierCopies hors forme -> rmFile jamais appelé', async () => {
+  const m = await M();
+  for (const d of ['', '/', 'rel', `${APP}/Imported Datasets/cerf`]) {
+    const tel = fausseTelephonie();
+    const r = await attendre(m.effacerCopie(tel, `${d}/essai.zip`, d));
+    assert.deepEqual(tel.appels, [], d);
+    assert.equal(r.efface, false);
+  }
+});
+
+test('ADR 0007 : registre trafiqué (zip « ../x.zip », « a/b.zip ») -> rmFile jamais appelé ; l\'entrée est retirée, sans effacement', async () => {
+  const m = await M();
+  // Choix le plus prudent : aucun fichier n'est touché, mais l'agent peut retirer l'entrée douteuse.
+  for (const zip of ['../x.zip', 'a/b.zip', '/etc/x.zip', '..']) {
+    const reglages = faussesReglages({
+      [`cerf/${ID}`]: JSON.stringify([{ zip, couche: 'c', chemin_vsi: `${zip}/c.geojson`, style: 'defaut', ajoutee_le: '2026-11-03T10:00:00.000Z' }]),
+    });
+    const tel = fausseTelephonie();
+    const r = await attendre(m.retirerCouche({
+      cerfId: ID, dossierApp: APP, zip, couche: 'c', reglages,
+      retirerDeLaCarte: () => {}, platformUtilities: tel,
+    }));
+    assert.deepEqual(tel.appels, [], zip);
+    assert.equal(r.efface, false, zip);
+    assert.deepEqual(m.lireRegistre(reglages, ID), [], zip);
+  }
+});
+
+test('ADR 0007 : cerfId du contexte hors référentiel -> rmFile jamais appelé, registre laissé intact', async () => {
+  const m = await M();
+  for (const id of ['../..', 'pas-un-uuid', '', 'a/b']) {
+    const brut = JSON.stringify([{ zip: 'essai.zip', couche: 'c', chemin_vsi: 'essai.zip/c.geojson', style: 'defaut', ajoutee_le: '2026-11-03T10:00:00.000Z' }]);
+    const reglages = faussesReglages({ [`cerf/${id}`]: brut });
+    const tel = fausseTelephonie();
+    const r = await attendre(m.retirerCouche({
+      cerfId: id, dossierApp: APP, zip: 'essai.zip', couche: 'c', reglages,
+      retirerDeLaCarte: () => {}, platformUtilities: tel,
+    }));
+    assert.deepEqual(tel.appels, [], id);
+    assert.equal(r.efface, false, id);
+    assert.equal(reglages.magasin.get(`cerf/${id}`), brut, `registre modifié pour cerfId « ${id} »`);
+    assert.deepEqual(reglages.ecritures, [], id);
+  }
+});
+
+// ---- inscrire (export exigé) -------------------------------------------------------------------
+test('inscrire : écrit du JSON sous cerf/<cerf_id> ; une entrée de même (zip, couche) est remplacée, les autres gardées', async () => {
+  const m = await M();
+  const reglages = faussesReglages();
+  const base = { style: 'defaut', ajoutee_le: '2026-11-03T10:00:00.000Z' };
+  m.inscrire(reglages, ID, { zip: 'a.zip', couche: 'x', chemin_vsi: 'a.zip/x.geojson', ...base });
+  m.inscrire(reglages, ID, { zip: 'a.zip', couche: 'y', chemin_vsi: 'a.zip/y.geojson', ...base });
+  m.inscrire(reglages, ID, { zip: 'a.zip', couche: 'x', chemin_vsi: 'a.zip/x.geojson', style: 'defaut', ajoutee_le: '2026-11-05T00:00:00.000Z' });
+  assert.equal(typeof reglages.magasin.get(`cerf/${ID}`), 'string');
+  const liste = m.lireRegistre(reglages, ID);
+  assert.equal(liste.length, 2);
+  assert.deepEqual(liste.map((x) => x.couche).sort(), ['x', 'y']);
+  assert.equal(liste.find((x) => x.couche === 'x').ajoutee_le, '2026-11-05T00:00:00.000Z');
+  assert.deepEqual(m.lireRegistre(reglages, ID_AUTRE), []);
+});
+
+// REPORTÉ à une mission ultérieure (spec § 3.1) : un `.json` qui est du GeoJSON compte comme couche.
+// Le reconnaître exige de lire le contenu (membre "type": "FeatureCollection"), donc un contrat
+// d'API différent de couchesDuZip(noms) ; hors squelette (008 : « couches GeoJSON » = `.geojson`).
 
 test('ADR 0007 : effacerCopie hors du dossier des copies -> rmFile jamais appelé', async () => {
   const m = await M();

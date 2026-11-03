@@ -1,7 +1,8 @@
 // Mission 008 : décision « publier ou ignorer » du workflow release-plugin.yml.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -32,7 +33,7 @@ test('branche de mission : toujours publier (préversion), quels que soient les 
   assert.equal(push(['tests/a.mjs'], 'mission/008-squelette-plugin').action, 'publier');
 });
 test('fichiersChanges : avant nul (40 zéros), vide ou git en échec -> null ; sinon la liste', () => {
-  const git = () => 'plugin/a\ntests/b\n';
+  const git = () => 'plugin/a\0tests/b\0';
   assert.equal(fichiersChanges('0'.repeat(40), 'abc', git), null);
   assert.equal(fichiersChanges('', 'abc', git), null);
   assert.equal(fichiersChanges('abc', 'def', () => { throw new Error('x'); }), null);
@@ -48,4 +49,66 @@ test('workflow : appelle la décision et conditionne les étapes sur sa sortie',
   assert.match(wf, /node outils\/decider-release\.mjs/);
   assert.match(wf, /steps\.decision\.outputs\.action == 'publier'/);
   assert.match(wf, /GITHUB_STEP_SUMMARY/);
+});
+
+// Vrai git, petit dépôt temporaire.
+function depot() {
+  const d = mkdtempSync(join(tmpdir(), 'cerf-decider-'));
+  const g = (...a) => execFileSync('git', ['-C', d, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  g('init', '-q');
+  g('config', 'user.name', 'Essai');
+  g('config', 'user.email', 'essai@example.org');
+  g('config', 'commit.gpgsign', 'false');
+  const ecrire = (f, c) => { mkdirSync(dirname(join(d, f)), { recursive: true }); writeFileSync(join(d, f), c); };
+  const valider = (m) => { g('add', '-A'); g('commit', '-q', '-m', m); return g('rev-parse', 'HEAD'); };
+  return { d, g, ecrire, valider };
+}
+function essai(prepare, modifie) {
+  const r = depot();
+  try {
+    prepare(r);
+    const avant = r.valider('base');
+    modifie(r);
+    const sha = r.valider('changement');
+    const gitDansDepot = (args) => execFileSync('git', ['-C', r.d, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const fichiers = fichiersChanges(avant, sha, gitDansDepot);
+    return { fichiers, action: push(fichiers).action };
+  } finally {
+    rmSync(r.d, { recursive: true, force: true });
+  }
+}
+const base = ({ ecrire }) => { ecrire('plugin/a.qml', 'x\n'.repeat(20)); ecrire('plugin/écran.qml', 'y\n'.repeat(20)); ecrire('docs/n.md', 'z'); };
+
+test('vrai git : renommage de plugin/ vers docs/ -> publier', () => {
+  const r = essai(base, ({ g }) => g('mv', 'plugin/a.qml', 'docs/a.qml'));
+  assert.ok(r.fichiers.includes('plugin/a.qml'));
+  assert.equal(r.action, 'publier');
+});
+test('vrai git : suppression sous plugin/ -> publier', () => {
+  const r = essai(base, ({ g }) => g('rm', '-q', 'plugin/a.qml'));
+  assert.equal(r.action, 'publier');
+});
+test('vrai git : nom accentué modifié sous plugin/ -> publier', () => {
+  const r = essai(base, ({ ecrire }) => ecrire('plugin/écran.qml', 'autre\n'));
+  assert.deepEqual(r.fichiers, ['plugin/écran.qml']);
+  assert.equal(r.action, 'publier');
+});
+test('vrai git : changement seulement hors de plugin/ -> ignorer', () => {
+  const r = essai(base, ({ ecrire }) => ecrire('docs/n.md', 'autre'));
+  assert.equal(r.action, 'ignorer');
+});
+test('vrai git : commit précédent absent de l\'historique -> publier, sans message brut de git', () => {
+  const r = depot();
+  try {
+    r.ecrire('plugin/a.qml', 'x');
+    const sha = r.valider('base');
+    const gitDansDepot = (args) => execFileSync('git', ['-C', r.d, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const fichiers = fichiersChanges('1'.repeat(40), sha, gitDansDepot);
+    assert.equal(fichiers, null);
+    const d = push(fichiers);
+    assert.equal(d.action, 'publier');
+    assert.doesNotMatch(d.raison, /fatal|bad object/);
+  } finally {
+    rmSync(r.d, { recursive: true, force: true });
+  }
 });

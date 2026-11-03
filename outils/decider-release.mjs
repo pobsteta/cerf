@@ -20,16 +20,19 @@ export const pluginChange = (fichiers) => fichiers.some((f) => f.startsWith('plu
 export function decider({ evenement, branche, fichiers }) {
   if (branche !== 'main') return { action: 'publier', raison: `branche ${branche} : préversion plugin-essai` };
   if (evenement === 'workflow_dispatch') return { action: 'publier', raison: 'lancement manuel sur main : release publiée (choix de Pascal)' };
-  if (fichiers === null) return { action: 'publier', raison: 'fichiers changés inconnus (premier push ou historique absent) : release tentée' };
+  if (fichiers === null) return { action: 'publier', raison: 'liste des fichiers changés indisponible (premier push ou commit précédent absent de l\'historique) : release tentée' };
   if (pluginChange(fichiers)) return { action: 'publier', raison: 'plugin/ a changé : release plugin-v<version>' };
   return { action: 'ignorer', raison: 'plugin/ inchangé : pas de release' };
 }
 
 // Fichiers changés entre `avant` et `sha` ; null si `avant` est nul ou si git échoue.
-export function fichiersChanges(avant, sha, git = (args) => execFileSync('git', args, { encoding: 'utf8' })) {
+// --no-renames : un fichier déplacé hors de plugin/ compte (l'ancien chemin est vu) ;
+// -z : chemins séparés par \0, jamais entre guillemets (noms accentués).
+// stdio sans héritage de la sortie d'erreur : le message brut de git ne remonte pas au résumé.
+export function fichiersChanges(avant, sha, git = (args) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })) {
   if (!avant || AVANT_NUL.test(avant)) return null;
   try {
-    return git(['diff', '--name-only', avant, sha]).split('\n').filter(Boolean);
+    return git(['diff', '--name-only', '--no-renames', '-z', avant, sha]).split('\0').filter(Boolean);
   } catch {
     return null;
   }

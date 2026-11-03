@@ -416,7 +416,8 @@ Les décisions de Pascal sont dans `pilotage/missions/008-squelette-plugin.md`, 
     le job reste vert et le résumé dit « plugin/ inchangé : pas de release ». Si `plugin/` a
     changé et que l'étiquette existe déjà, la publication reste refusée (il faut monter la
     version). `workflow_dispatch` sur `main` publie (choix manuel) ; la branche de mission est
-    inchangée (préversion `plugin-essai`). Dans le doute (premier push, `before` nul, diff
+    inchangée (préversion `plugin-essai`). Le diff est fait avec `--no-renames -z` : un fichier
+    déplacé hors de `plugin/` et un nom accentué sont vus (testé avec le vrai git). Dans le doute (premier push, `before` nul, diff
     impossible), on publie : l'étiquette existante fera refuser, on ne rate pas une release
     en silence. Rappel : la décision du point 2 (copie refusée effacée) a été **confirmée par
     Pascal le 3 novembre**.

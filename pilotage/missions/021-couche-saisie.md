@@ -37,6 +37,8 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
   adapter le workflow qui publie `cerf-projet-modele.zip` pour y joindre `saisie.gpkg`.
 - **Ne doit pas :** sortir du périmètre, inventer une donnée ou un code, toucher à `main`,
   modifier `docs/brief.md`, `docs/spec.md`, une ADR ou les tests des missions 005 et 020
+  (les tests de la 005 sont corrigés par le testeur de la 020, décision de Pascal du
+  3 novembre 2026)
   (il signale l'écart à l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
 - **Sources autorisées :** spec § 2, § 3.5, § 5, § 6 n° 10 ; mission 006 ; norme
   GeoPackage (OGC 12-128).
@@ -50,7 +52,7 @@ sur l'appareil (zip séparé, consigne de la notice, ou autre : à proposer à P
 
 ## Valeur provisoire (chiffre, réglage)
 
-- `essence` en texte libre, `diametre` en centimètres entiers (spec § 3.5, confirmés par Pascal le 3 novembre 2026).
+- `essence` en texte libre, `diametre` en centimètres entiers (spec § 3.5, confirmés par Pascal le 3 novembre 2026) ; champs facultatifs ; contrainte QGIS `diametre >= 0`.
 
 ## Dépend de / rouge attendu jusqu'à
 

@@ -166,7 +166,7 @@ test('importerZip : message de bilan (singulier, pluriel, refus) et date par dé
 test('importerZip : zip sans GeoJSON -> message qui le dit', async () => {
   const m = await M();
   const r = m.importerZip(ctxImport({ ctx: { octets: zipDe('lisez-moi.txt') } }).ctx);
-  assert.match(r.message, /aucune couche GeoJSON/);
+  assert.match(r.message, /Aucune couche GeoJSON dans x\.zip/);
 });
 
 // ============================================================================ registre
@@ -272,12 +272,12 @@ test('forme : cerf-logique.mjs sans import, sans ?. ni ?? ni TextDecoder (moteur
   assert.ok(!/TextDecoder/.test(src), 'pas de TextDecoder');
 });
 
-test('forme : le QML appelle les fonctions de QField du plan (§ 5), et rien de qfield-layer-loader', async () => {
+test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile passe par platformUtilities, donné à la logique', async () => {
   const qml = lire('main.qml') + lire('Cerf.qml') + lire('Panneau.qml');
   for (const appel of ['iface.addItemToPluginsToolbar', 'onLoadProjectEnded', 'ExpressionContextUtils.projectVariables',
     'settings.setValue', 'settings.sync', 'platformUtilities.getFile', 'FileUtils.readFileContent', 'FileUtils.fileExists',
     'LayerUtils.loadVectorLayer', 'ProjectUtils.addMapLayer', 'ProjectUtils.removeMapLayer', 'setCustomProperty',
-    'platformUtilities.rmFile', 'Qfield.version', 'LocalFilesModel']) {
+    'platformUtilities: platformUtilities', 'Qfield.version', 'LocalFilesModel']) {
     assert.ok(qml.includes(appel), `appel absent : ${appel}`);
   }
 });
@@ -304,4 +304,26 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   assert.match(wf, /plugin-essai/);
   assert.match(wf, /plugin-v\$version/);
   assert.match(wf, /mission\/008-squelette-plugin/);
+});
+
+// ============================================================================ aides du pont QML (Cerf.qml)
+test('zipDeLaSource : retrouve le nom du zip d\'une source /vsizip/ du dossier des copies, sinon chaîne vide', async () => {
+  const m = await M();
+  assert.equal(m.zipDeLaSource(`/vsizip/${COPIES}/essai.zip/sous/a.geojson`, COPIES), 'essai.zip');
+  assert.equal(m.zipDeLaSource(`/vsizip/${COPIES}/essai.zip/a.geojson`, COPIES), 'essai.zip');
+  assert.equal(m.zipDeLaSource(`/vsizip/${COPIES}-voisin/essai.zip/a.geojson`, COPIES), '');
+  assert.equal(m.zipDeLaSource(`/autre/${COPIES}/essai.zip/a.geojson`, COPIES), '');
+  assert.equal(m.zipDeLaSource(`/vsizip/${COPIES}/essai.zip`, COPIES), '');
+});
+
+test('zipUtilise : vrai tant qu\'une entrée du registre vient de ce zip (la copie ne doit pas être effacée)', async () => {
+  const m = await M();
+  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
+  assert.equal(m.zipUtilise(reglages, ID, 'z.zip'), true);
+  assert.equal(m.zipUtilise(reglages, ID, 'y.zip'), false);
+});
+
+test('version : la constante VERSION du module est celle de metadata.txt', async () => {
+  const m = await M();
+  assert.match(lire('metadata.txt'), new RegExp(`^version=${m.VERSION.replace(/\./g, '\\.')}$`, 'm'));
 });

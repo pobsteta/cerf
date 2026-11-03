@@ -342,3 +342,40 @@ poussée ; l'orchestrateur fait publier la préversion `cerf.zip` ; Pascal suit 
 son Samsung en mode avion ; on saura que ça marche quand les 46 tests de la 007 seront
 verts sans modification et que `points_essai` sera revenue, en lecture seule, après le
 redémarrage du téléphone.
+
+## 12. Réalisation : écarts au plan (3 novembre 2026, après l'accord de Pascal)
+
+Les décisions de Pascal sont dans `pilotage/missions/008-squelette-plugin.md`, rubrique
+« Décisions de Pascal sur le plan ». Ce qui change ou se précise par rapport aux § 3 à 5 :
+
+1. **Taille avant lecture (décision n° 6)** : la taille de la copie est lue par
+   `LocalFilesModel` (motif du prototype, `src/gui/qflocalfilesmodel.cpp` L338-340). Une
+   taille **inconnue** est refusée comme une taille au-delà de 10 Mo (« taille de la copie
+   inconnue, zip non lu ») : tenir plutôt que lire en aveugle un zip qui peut faire 200 Mo.
+   Si l'essai montre ce message sur `essai.zip`, c'est `LocalFilesModel` qui ne trouve pas la
+   copie : on s'arrête et l'on remonte.
+2. **Copie inutile effacée** : une copie refusée (pas un `.zip`, au-delà du plafond, aucune
+   couche chargée) est effacée par `effacerCopie` (garde de l'ADR 0007) si aucune entrée du
+   registre ne vient d'un zip de ce nom ; sinon elle reste.
+3. **Pas de double chargement** : `chargerCouche` (dans `Cerf.qml`) rend la couche déjà
+   présente dans le projet sous la même marque `(zip, couche)` au lieu d'en charger une
+   seconde (risque n° 7).
+4. **Exports en plus du contrat** (aides du pont, testées) : `VERSION`,
+   `PLAFOND_LISTAGE_OCTETS`, `STYLE_DEFAUT`, `listageSur`, `messageListageRefuse`,
+   `messageLectureRefusee`, `octetsDe`, `estUuid`, `estNomDeZip`, `nomDeFichier`,
+   `dossierDe`, `zipDeLaSource`, `zipUtilise`. `demarrerProjet` rend aussi `illisibles`,
+   `douteuses` et `cerfId` ; `importerZip` rend aussi `message`.
+5. **`Cerf.qml` est un `Item` invisible** (et non un `QtObject`) : il porte un
+   `LocalFilesModel` et un `Connections`.
+6. **`metadata.txt` sans virgule** : QField le lit avec `QSettings` en format INI
+   (`qfpluginmodel.cpp` L377), où une virgule hors guillemets fait d'une valeur une liste.
+7. **Essai hors QField** : `main.qml`, `Cerf.qml`, `Panneau.qml` et le module chargés dans le
+   moteur QML de Qt 6.12 (PySide6 6.12.0, plateforme `offscreen`), API de QField simulée
+   (`org.qfield` factice, `iface`, `settings`, `platformUtilities`, `qgisProject`) : projet
+   Cerf, ajout de `essai.zip`, panneau, « redémarrage » (nouveau moteur, mêmes réglages),
+   second signal d'ouverture, retrait, projet sans `cerf_id` : 19 contrôles sur 19, aucun
+   avertissement QML venant du plugin. Le harnais est resté hors du dépôt (scratchpad de la
+   session). **Il ne prouve rien sur QField.**
+8. Ce que la mission ne règle pas, laissé à la mission 014 (registre complet) : quand un zip
+   est réimporté sous le même nom **sans** une couche qu'il contenait, l'entrée de cette
+   couche reste au registre et sera signalée « illisible » à l'ouverture suivante.

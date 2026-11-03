@@ -21,8 +21,9 @@
 //   estProjetCerf(variables) -> boolean              variables = { cerf_id: '…' } (objet rendu par QField)
 //   lireCerfId(variables) -> string | null
 //   cleRegistre(cerfId) -> 'cerf/<cerf_id>'
-//   dossierCopies(dossierApp, cerfId) -> '<app>/Imported Datasets/cerf/<cerf_id>'
-//   cheminCopie(dossierApp, cerfId, nomZip) -> '<dossierCopies>/<nomZip>'
+//   dossierCopies(dossierProjet) -> '<dossier du projet>/cerf-imports'   (repli du 3 nov. 2026, spec § 3.3 ; le cerf_id n'y entre plus)
+//   cheminCopie(dossierProjet, nomZip) -> '<dossierCopies>/<nomZip>'
+//   (dossierProjet : chemin absolu donné par QField ; dans les contextes, la propriété s'appelle dossierProjet)
 //   nomsDuZip(octets) -> string[]                    noms des entrées, dans l'ordre du zip
 //   couchesDuZip(noms) -> [{ couche, entree }]       couches GeoJSON seulement (squelette)
 //   lireRegistre(reglages, cerfId) -> entrée[]
@@ -63,8 +64,8 @@ async function M() {
 const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
 const ID_AUTRE = '936eb144-5447-4094-a579-fac12a9f0595';
 // Dossier de l'application : chemin FICTIF d'Android, sans valeur métier (jamais lu sur l'appareil).
-const APP = '/storage/emulated/0/Android/data/ch.opengis.qfield/files';
-const COPIES = `${APP}/Imported Datasets/cerf/${ID}`;
+const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
+const COPIES = `${PROJET}/cerf-imports`;
 
 // essai.zip : les 9 entrées du protocole (tests/recette/essai/essai.zip, `unzip -l`, 9 files).
 const NOMS_ESSAI = [
@@ -124,7 +125,7 @@ function ctxImport(extra = {}) {
   return {
     couches, reglages,
     ctx: {
-      cerfId: ID, dossierApp: APP, nomZip: 'essai.zip', octets: octetsEssai,
+      cerfId: ID, dossierProjet: PROJET, nomZip: 'essai.zip', octets: octetsEssai,
       reglages, chargerCouche: (s, n) => couches.charger(s, n),
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
@@ -162,7 +163,7 @@ test('critère 9 : projet sans cerf_id -> bouton caché, aucune écriture, aucun
   const reglages = faussesReglages({ [`cerf/${ID}`]: '[{"zip":"essai.zip"}]' });
   const couches = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: {}, reglages, dossierApp: APP, existe: () => true,
+    variables: {}, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.equal(r.actif, false);
@@ -175,7 +176,7 @@ test('projet Cerf, registre vide : actif, bouton visible, rien à recharger', as
   const m = await M();
   const couches = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: faussesReglages(), dossierApp: APP, existe: () => true,
+    variables: { cerf_id: ID }, reglages: faussesReglages(), dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.equal(r.actif, true);
@@ -192,10 +193,21 @@ test('clé du registre = cerf/<cerf_id> ; deux projets, deux clés', async () =>
   assert.notEqual(m.cleRegistre(ID), m.cleRegistre(ID_AUTRE));
 });
 
-test('copies : <application>/Imported Datasets/cerf/<cerf_id>/<zip>', async () => {
+test('copies : <dossier du projet>/cerf-imports/<zip> (repli du 3 nov. 2026, spec § 3.3)', async () => {
   const m = await M();
-  assert.equal(m.dossierCopies(APP, ID), COPIES);
-  assert.equal(m.cheminCopie(APP, ID, 'essai.zip'), `${COPIES}/essai.zip`);
+  assert.equal(m.dossierCopies(PROJET), COPIES);
+  assert.equal(m.cheminCopie(PROJET, 'essai.zip'), `${COPIES}/essai.zip`);
+  assert.ok(!COPIES.includes(ID) && !m.dossierCopies(PROJET).includes('Imported Datasets'), 'ni cerf_id ni Imported Datasets dans le chemin');
+});
+
+test('copies : un dossier de projet vide, \'/\' ou relatif ne donne pas de dossier de copies', async () => {
+  const m = await M();
+  for (const p of ['', '/', 'relatif/projet', 'Imported Projects/Serre']) {
+    let rendu;
+    try { rendu = m.dossierCopies(p); } catch { rendu = null; }
+    assert.ok(rendu === null || rendu === '' || rendu === undefined || rendu === false,
+      `dossier de projet « ${p} » accepté : ${rendu}`);
+  }
 });
 
 // ============================================================================================
@@ -379,7 +391,7 @@ test('critère 4 (logique) : après « redémarrage » (nouveaux objets, mêmes 
   const reglagesRelus = faussesReglages(Object.fromEntries(reglages.magasin));
   const couches2 = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: reglagesRelus, dossierApp: APP, existe: () => true,
+    variables: { cerf_id: ID }, reglages: reglagesRelus, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches2.charger(s, n),
   }));
   assert.equal(r.actif, true);
@@ -395,7 +407,7 @@ test('« existe » est interrogé avec le chemin de la copie du zip (pas de la c
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const vus = [];
   await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: (c) => { vus.push(c); return true; },
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => { vus.push(c); return true; },
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
   }));
   assert.deepEqual([...new Set(vus)], [`${COPIES}/essai.zip`]);
@@ -408,7 +420,7 @@ test('zip absent à l\'ouverture : l\'entrée reste au registre, un message uniq
   const avant = reglages.magasin.get(`cerf/${ID}`);
   const couches = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => false,
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => false,
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.deepEqual(couches.appels, []);
@@ -421,7 +433,7 @@ test('zip absent pour une seule couche : « 1 couche n\'a pas pu être rechargé
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => false,
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => false,
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
   }));
   assert.equal(r.message, "1 couche n'a pas pu être rechargée : zip absent");
@@ -435,7 +447,7 @@ test('un zip absent ne bloque pas les couches d\'un autre zip présent', async (
   await attendre(m.importerZip(ctxImport({ reglages, couches: c0, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
   const couches = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: (c) => c.endsWith('/essai.zip'),
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => c.endsWith('/essai.zip'),
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.deepEqual(couches.appels.map((a) => a.nom), ['points_essai']);
@@ -450,7 +462,7 @@ test('couche du registre qui ne se charge plus : message, entrée conservée, au
   await attendre(m.importerZip(ctxImport({ reglages, couches: c0, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
   const couches = faussesCouches({ echecs: [`/vsizip/${COPIES}/deux.zip/a.geojson`] });
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => true,
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.equal(couches.appels.length, 2);
@@ -489,7 +501,7 @@ test('critère 8 (logique) : couche retirée, puis « redémarrage » : elle ne 
   m.retirer(reglages, ID, { zip: 'deux.zip', couche: 'a' });
   const couches = faussesCouches();
   await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: faussesReglages(Object.fromEntries(reglages.magasin)), dossierApp: APP,
+    variables: { cerf_id: ID }, reglages: faussesReglages(Object.fromEntries(reglages.magasin)), dossierProjet: PROJET,
     existe: () => true, chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.deepEqual(couches.appels.map((a) => a.nom), ['b']);
@@ -502,7 +514,7 @@ test('retirerCouche : retire de la carte et du registre ; la copie reste tant qu
   const tel = fausseTelephonie();
   const retirees = [];
   const r = await attendre(m.retirerCouche({
-    cerfId: ID, dossierApp: APP, zip: 'deux.zip', couche: 'a', reglages,
+    cerfId: ID, dossierProjet: PROJET, zip: 'deux.zip', couche: 'a', reglages,
     retirerDeLaCarte: (nom) => retirees.push(nom), platformUtilities: tel,
   }));
   assert.deepEqual(retirees, ['a']);
@@ -517,7 +529,7 @@ test('ADR 0007 : la dernière couche retirée -> la copie est effacée par rmFil
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const tel = fausseTelephonie();
   const r = await attendre(m.retirerCouche({
-    cerfId: ID, dossierApp: APP, zip: 'essai.zip', couche: 'points_essai', reglages,
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: tel,
   }));
   assert.deepEqual(tel.appels, [`${COPIES}/essai.zip`]);
@@ -531,7 +543,7 @@ test('§ 9 n° 2 : rmFile échoue -> la copie reste, son nom est affiché, le re
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const tel = fausseTelephonie({ rend: false });
   const r = await attendre(m.retirerCouche({
-    cerfId: ID, dossierApp: APP, zip: 'essai.zip', couche: 'points_essai', reglages,
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: tel,
   }));
   assert.equal(r.efface, false);
@@ -544,7 +556,7 @@ test('§ 9 n° 2 : platformUtilities.rmFile absent (QField l\'a déplacé) -> m�
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const r = await attendre(m.retirerCouche({
-    cerfId: ID, dossierApp: APP, zip: 'essai.zip', couche: 'points_essai', reglages,
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: {},
   }));
   assert.equal(r.efface, false);
@@ -552,35 +564,45 @@ test('§ 9 n° 2 : platformUtilities.rmFile absent (QField l\'a déplacé) -> m�
 });
 
 // ---- Garde de chemin avant rmFile (ADR 0007, rubrique « Responsable ») -------------------------
-test('ADR 0007 : peutEffacer n\'admet que le contenu de Imported Datasets/cerf/<cerf_id>/', async () => {
+test('ADR 0007 : peutEffacer n\'admet que le contenu de <dossier du projet>/cerf-imports/', async () => {
   const m = await M();
   assert.equal(m.peutEffacer(`${COPIES}/essai.zip`, COPIES), true);
   assert.equal(m.peutEffacer(`${COPIES}/sous/essai.zip`, COPIES), true);
   const refus = [
-    `${COPIES}/../${ID_AUTRE}/essai.zip`,              // remontée de dossier
-    `${COPIES}-voisin/essai.zip`,                       // dossier voisin au nom préfixe
-    `${APP}/Imported Datasets/cerf/${ID_AUTRE}/essai.zip`, // registre d'un autre projet
-    `${APP}/Imported Projects/cerf.qgz`,                // le projet lui-même
+    `${COPIES}/../autre/essai.zip`,                     // remontée de dossier
+    `${COPIES}/../essai.zip`,
+    `${PROJET}/cerf-imports-autre/essai.zip`,           // dossier voisin au nom préfixe
+    `${COPIES}-autre/essai.zip`,
+    `${PROJET}/cerf.qgz`,                               // le projet lui-même
+    `${PROJET}/essai.zip`,                              // dans le projet, hors cerf-imports
     COPIES,                                             // le dossier lui-même
     `${COPIES}/`,
     `${COPIES}/..`,                                     // remontée sans barre finale
     `${COPIES}/sous/..`,
+    `${COPIES}//essai.zip`,                             // segment vide
+    `${COPIES}/./essai.zip`,                            // segment point
     '',
     'essai.zip',                                        // chemin relatif
+    'cerf-imports/essai.zip',
   ];
   for (const c of refus) assert.equal(m.peutEffacer(c, COPIES), false, c);
 });
 
-test('ADR 0007 : peutEffacer ne se fie pas à son 2e argument (dossierCopies vide, racine, relatif, hors forme)', async () => {
+test('ADR 0007 : peutEffacer ne se fie pas à son 2e argument (dossier vide, racine, relatif, hors forme)', async () => {
   const m = await M();
   const mauvais = [
-    '', '/', 'relatif/dossier', 'Imported Datasets/cerf/' + ID,
-    `${APP}/Imported Datasets/cerf`,                    // sans <cerf_id>
-    `${APP}/Imported Datasets/cerf/pas-un-uuid`,        // <cerf_id> hors référentiel
-    `${APP}/Imported Datasets/cerf/${ID}/sous`,         // trop profond
-    `${APP}/Imported Datasets`,
-    `${APP}/Autre/cerf/${ID}`,                          // pas sous Imported Datasets/cerf
-    `${APP}/Imported Datasets/cerf/${ID}/..`,
+    '', '/', 'relatif/dossier', 'cerf-imports', '/cerf-imports/', 'cerf-imports/',
+    `${PROJET}`,                                        // le projet, pas son sous-dossier
+    `${PROJET}/cerf-imports-autre`,                     // préfixe, pas exactement /cerf-imports
+    `${PROJET}/cerf-imports/sous`,                      // trop profond
+    `${PROJET}/cerf-imports/`,                          // barre finale
+    `${PROJET}/cerf-imports/..`,
+    `${PROJET}/../cerf-imports`,                        // segment ..
+    `${PROJET}/./cerf-imports`,                         // segment .
+    `${PROJET}//cerf-imports`,                          // segment vide
+    `//cerf-imports`,
+    `${PROJET}/Cerf-Imports`,                           // casse
+    `${PROJET}/cerf-imports\\x`,
   ];
   for (const d of mauvais) {
     assert.equal(m.peutEffacer(`${d}/essai.zip`, d), false, `dossier accepté à tort : « ${d} »`);
@@ -591,7 +613,7 @@ test('ADR 0007 : peutEffacer ne se fie pas à son 2e argument (dossierCopies vid
 
 test('ADR 0007 : effacerCopie avec un dossierCopies hors forme -> rmFile jamais appelé', async () => {
   const m = await M();
-  for (const d of ['', '/', 'rel', `${APP}/Imported Datasets/cerf`]) {
+  for (const d of ['', '/', 'rel', PROJET, `${PROJET}/cerf-imports-autre`]) {
     const tel = fausseTelephonie();
     const r = await attendre(m.effacerCopie(tel, `${d}/essai.zip`, d));
     assert.deepEqual(tel.appels, [], d);
@@ -608,7 +630,7 @@ test('ADR 0007 : registre trafiqué (zip « ../x.zip », « a/b.zip ») -> rmFil
     });
     const tel = fausseTelephonie();
     const r = await attendre(m.retirerCouche({
-      cerfId: ID, dossierApp: APP, zip, couche: 'c', reglages,
+      cerfId: ID, dossierProjet: PROJET, zip, couche: 'c', reglages,
       retirerDeLaCarte: () => {}, platformUtilities: tel,
     }));
     assert.deepEqual(tel.appels, [], zip);
@@ -624,7 +646,7 @@ test('ADR 0007 : cerfId du contexte hors référentiel -> rmFile jamais appelé,
     const reglages = faussesReglages({ [`cerf/${id}`]: brut });
     const tel = fausseTelephonie();
     const r = await attendre(m.retirerCouche({
-      cerfId: id, dossierApp: APP, zip: 'essai.zip', couche: 'c', reglages,
+      cerfId: id, dossierProjet: PROJET, zip: 'essai.zip', couche: 'c', reglages,
       retirerDeLaCarte: () => {}, platformUtilities: tel,
     }));
     assert.deepEqual(tel.appels, [], id);
@@ -657,7 +679,7 @@ test('inscrire : écrit du JSON sous cerf/<cerf_id> ; une entrée de même (zip,
 test('ADR 0007 : effacerCopie hors du dossier des copies -> rmFile jamais appelé', async () => {
   const m = await M();
   const tel = fausseTelephonie();
-  const r = await attendre(m.effacerCopie(tel, `${COPIES}/../${ID_AUTRE}/essai.zip`, COPIES));
+  const r = await attendre(m.effacerCopie(tel, `${COPIES}/../autre/essai.zip`, COPIES));
   assert.deepEqual(tel.appels, []);
   assert.equal(r.efface, false);
 });

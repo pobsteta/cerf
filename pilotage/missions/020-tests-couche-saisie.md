@@ -92,3 +92,6 @@ La mission 021 a une cible mesurable et ne peut pas s'auto-évaluer.
 - **`diametre >= 0`** : contrainte QGIS sur le champ dans `cerf.qgz`, à tester ici ; la 021
   la pose.
 - **Échantillon de terrain** : spec § 6 n° 10.
+- **Force de la contrainte** (après la relecture de e78e8e2) : bloquante, vide admis :
+  `"diametre" IS NULL OR "diametre" >= 0` en force forte ; `>= 0` seul et la force douce
+  sont refusés. Recette § 6 n° 10 : ajouter aussi un point sans diamètre.

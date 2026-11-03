@@ -135,8 +135,10 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Champs facultatifs** : `essence`, `diametre` et `remarque` peuvent rester vides (pas de
   NOT NULL) : avec des gants, l'agent pose d'abord le point et remplit ensuite (Pascal,
   3 novembre 2026).
-- **Contrainte** : `diametre >= 0`, posée comme contrainte QGIS sur le champ dans
-  `cerf.qgz`, pour que QField signale une saisie fausse (Pascal, 3 novembre 2026).
+- **Contrainte** : `"diametre" IS NULL OR "diametre" >= 0`, posée comme contrainte QGIS
+  **bloquante** (force forte) sur le champ dans `cerf.qgz` : QField refuse un diamètre
+  négatif mais laisse poser un point sans diamètre (Pascal, 3 novembre 2026 ; dans QGIS,
+  `"diametre" >= 0` seul juge un diamètre vide faux).
 - **Style** : celui de la règle ProdBois / Relevés (§ 5), puisque la couche a `essence`
   et `diametre` ; enregistré dans `cerf.qgz`, pas appliqué par le plugin.
 - **Retour au bureau** : copie de `saisie.gpkg` (câble USB ou partage de QField) ; pas de

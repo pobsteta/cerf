@@ -27,14 +27,14 @@ _Modèle de carte :_
 
 ## Validé
 
-- [007-tests-squelette](missions/007-tests-squelette.md) · depuis le cycle 0
+- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5
   - Homme : `testeur` (sonnet)
-  - Mission : Tests du squelette du plugin — cycle prévu 3
-  - Moyens : `docs/spec.md` § 1, § 3.3, § 6 
-- [008-squelette-plugin](missions/008-squelette-plugin.md) · depuis le cycle 0
+  - Mission : Tests de la couche de saisie du projet modèle
+  - Moyens : `docs/spec.md` § 3.5, § 5, § 6 n° 10
+- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5
   - Homme : `dev` (opus)
-  - Mission : Squelette du plugin : un parcours complet, minimal — cycle prévu 3
-  - Moyens : ADR 0001, 0003, 0005, 0006 
+  - Mission : Couche « Saisie terrain » et saisie.gpkg dans le projet modèle
+  - Moyens : `outils/projet-modele.mjs`, `node:sqlite`, spec § 3.5
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -76,6 +76,14 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [007-tests-squelette](missions/007-tests-squelette.md) · depuis le cycle 5 · fusionnée avec la 008 (PR #12, #13), 3 novembre 2026
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests du squelette du plugin — cycle prévu 3
+  - Moyens : `docs/spec.md` § 1, § 3.3, § 6 
+- [008-squelette-plugin](missions/008-squelette-plugin.md) · depuis le cycle 5 · fusionnée (PR #13), Cerf 0.1.1, 3 novembre 2026
+  - Homme : `dev` (opus)
+  - Mission : Squelette du plugin : un parcours complet, minimal — cycle prévu 3
+  - Moyens : ADR 0001, 0003, 0005, 0006 
 - [006-projet-modele](missions/006-projet-modele.md) · depuis le cycle 4 · PR #8 fusionnée ; ouvert dans QField
   - Homme : `dev` (sonnet)
   - Mission : Projet modèle cerf.qgz — cycle prévu 2

@@ -98,3 +98,10 @@ Plan : `outils/PLAN-021.md` (e3bdb88).
 5. Retenus par défaut (propositions du plan, sans objection) : R-tree omis (à rajouter si
    QGIS s'en plaint) ; `essence` et `remarque` en `TEXT` sans longueur, `diametre` sans
    plafond ; la notice reste à la mission 018 (le dev livre trois phrases à reprendre).
+6. **Après la relecture de 5febe1c (3 novembre 2026)** : la release du projet modèle ne doit
+   jamais devenir « latest » (`--latest=false`), pour garder
+   `releases/latest/download/cerf.zip` (URL stable du plugin, mission 008). **URL stable du
+   projet modèle : étiquette fixe `projet-modele`**, écrasée à chaque version sur `main`
+   (`…/releases/download/projet-modele/cerf-projet-modele.zip` et
+   `…-premiere-installation.zip`). Test de la mission 006 adapté par le dev (arbre à trois
+   feuilles, « Saisie terrain » en tête) : accepté par Pascal.

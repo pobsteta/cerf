@@ -7,7 +7,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire les tests qui vérifient que le projet modèle porte la couche ponctuelle modifiable « Saisie terrain » (saisie.gpkg, EPSG:2154, champs essence, diametre, remarque, date), avant qu'elle soit produite, pour que l'agent puisse ajouter des points sur le terrain.
 
-**Redite par l'agent :** _à remplir par l'agent avant de commencer._
+**Redite par l'agent :** J'écris, sans lire le code de la 021, les tests qui diront si le projet modèle porte la couche modifiable « Saisie terrain » (saisie.gpkg vide, champs facultatifs, `diametre >= 0`, défaut de date, style ProdBois), et je restreins les tests de la 005 au groupe « Fonds de carte » pour qu'ils restent justes une fois la couche ajoutée.
 
 ## Les trois questions (règle de staffing)
 

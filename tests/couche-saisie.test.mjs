@@ -276,6 +276,24 @@ const verifsQgs = {
     if (vrai(dd[0].applyOnUpdate)) d.push('applyOnUpdate = 1 : la date serait réécrite à chaque modification (la spec : « modifiable »)');
     return d;
   },
+  'contrainte QGIS sur diametre : "diametre" >= 0 (vide admis), appliquée': (p) => {
+    const c = saisie(p); if (!c) return absente();
+    const bloc = (nom) => c.brut.match(new RegExp(`<${nom}>([\\s\\S]*?)</${nom}>`))?.[1] ?? '';
+    // Le « > » de « >= » peut être brut ou encodé (&gt;) dans la valeur d'un attribut : le motif saute les valeurs entre guillemets.
+    const lignes = (b) => [...b.matchAll(/<constraint\b(?:"[^"]*"|[^>"])*>/g)].map((m) => attrs(m[0]));
+    const exprs = lignes(bloc('constraintExpressions')).filter((a) => a.field === 'diametre');
+    if (exprs.length === 0) return ["aucune contrainte d'expression sur le champ diametre (<constraintExpressions>) : rouge attendu jusqu'à la mission 021"];
+    // TOLÉRANCE : espaces, casse, guillemets autour du nom de champ et parenthèses libres ; le vide est admis (champ facultatif,
+    // spec § 3.5) : « "diametre" IS NULL OR "diametre" >= 0 » (dans les deux ordres) vaut « "diametre" >= 0 ». « > 0 » est refusé.
+    const norm = (e) => (e ?? '').toLowerCase().replace(/"/g, '').replace(/[()\s]+/g, '');
+    const ok = ['diametre>=0', '0<=diametre', 'diametreisnullordiametre>=0', 'diametre>=0ordiametreisnull'];
+    const bonnes = exprs.filter((a) => ok.includes(norm(a.exp)));
+    if (bonnes.length === 0) return [`expression(s) de contrainte sur diametre : ${JSON.stringify(exprs.map((a) => a.exp))}, attendu l'équivalent de "diametre" >= 0 (« > 0 » refusé)`];
+    // La contrainte doit être appliquée : <constraints> la déclare de type expression (bit 4) et de force non nulle (1 forte, 2 douce).
+    const forces = lignes(bloc('constraints')).filter((a) => a.field === 'diametre'
+      && (a.constraints === undefined || (Number(a.constraints) & 4) === 4) && (a.exp_strength === undefined || a.exp_strength !== '0'));
+    return forces.length ? [] : ['contrainte déclarée mais non appliquée : <constraints> ne la porte pas sur diametre (constraints sans le bit 4, ou exp_strength="0")'];
+  },
   'symbole : un cercle noir plein de 2 mm': (p) => {
     const c = saisie(p); if (!c) return absente();
     // Seul le rendu de la couche compte : le fond d'étiquette et le symbole de sélection ont aussi des symboles marker.
@@ -371,6 +389,15 @@ const echapper = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace
 const etiquette = (o) => (o.sansEtiquette ? '' : `<labeling type="simple"><settings calloutType="simple"><text-style fontSize="${o.police ?? 8}" fontSizeUnit="${o.unitePolice ?? 'Point'}" textColor="${o.couleurTexte ?? '0,0,0,255,rgb:0,0,0,1'}" ` +
   `fieldName="${echapper(o.expression ?? ETIQUETTE)}" isExpression="1" fontFamily="Sans Serif">` +
   (o.sansLisere ? '' : `<text-buffer bufferDraw="1" bufferColor="${o.couleurLisere ?? '255,255,255,255,rgb:1,1,1,1'}" bufferSize="1" bufferSizeUnits="MM"/>`) + `</text-style></settings></labeling>`);
+// Contrainte sur diametre, écrite comme QGIS 3.x : <constraints> (type, force) puis <constraintExpressions> (expression, message).
+function contraintes(o) {
+  if (o.sansContrainte) return o.contraintesBrutes ?? '';
+  const champ = o.champContrainte ?? 'diametre', exp = o.contrainte ?? '"diametre" >= 0';
+  const force = o.contrainteForce ?? 'constraints="4" unique_strength="0" notnull_strength="0" exp_strength="1"';
+  return `<constraints><constraint field="fid" constraints="3" unique_strength="1" notnull_strength="1" exp_strength="0"/>` +
+    `<constraint field="${champ}" ${force}/></constraints>` +
+    `<constraintExpressions><constraint field="fid" exp="" desc=""/><constraint field="${champ}" exp="${echapper(exp)}" desc="${o.contrainteDesc ?? 'Le diamètre doit être positif ou nul'}"/></constraintExpressions>`;
+}
 function coucheSaisie(o = {}) {
   const defaut = o.sansDefaut ? '' : `<default field="date" expression="${o.defaut ?? 'now()'}" applyOnUpdate="${o.applyOnUpdate ?? 0}"/>`;
   return `<maplayer type="vector" geometry="${o.geometry ?? 'Point'}" labelsEnabled="${o.etiquettesActives ?? 1}" ${o.attrCouche ?? ''}>` +
@@ -378,7 +405,7 @@ function coucheSaisie(o = {}) {
     `<srs><spatialrefsys><authid>${o.srs ?? 'EPSG:2154'}</authid></spatialrefsys></srs><provider encoding="UTF-8">${o.fournisseur ?? 'ogr'}</provider>` +
     symbole(o) + etiquette(o) + (o.parasites ? PARASITES : '') +
     `<editable><field name="fid" editable="0"/><field name="essence" editable="${o.essenceEditable ?? 1}"/><field name="diametre" editable="1"/><field name="remarque" editable="1"/><field name="date" editable="${o.dateEditable ?? 1}"/></editable>` +
-    `<defaults><default field="fid" expression="" applyOnUpdate="0"/>${defaut}</defaults>${o.dansCouche ?? ''}</maplayer>`;
+    contraintes(o) + `<defaults><default field="fid" expression="" applyOnUpdate="0"/>${defaut}</defaults>${o.dansCouche ?? ''}</maplayer>`;
 }
 function projetFixture(o = {}) {
   const fonds = o.fonds ?? FONDS_FIXTURE;
@@ -450,6 +477,11 @@ const variantesAdmises = {
   'défaut NOW( ) avec espaces et casse': { defaut: ' NOW( ) ' },
   'couleurs en hexadécimal et sans suffixe rgb:': { couleur: '#000000', couleurTexte: '0,0,0,255', couleurLisere: '#ffffff' },
   'étiquette avec un vrai saut de ligne entre apostrophes': { expression: `"essence" || '\n' || "diametre"` },
+  'contrainte sans espaces, sans guillemets, en majuscules': { contrainte: 'DIAMETRE>=0' },
+  'contrainte avec espaces superflus et parenthèses': { contrainte: '  ( "diametre"   >=   0 ) ' },
+  'contrainte admettant le vide (IS NULL OR)': { contrainte: '"diametre" IS NULL OR "diametre" >= 0' },
+  'contrainte admettant le vide (OR IS NULL)': { contrainte: '("diametre" >= 0) OR ("diametre" IS NULL)' },
+  'contrainte de force douce (exp_strength=2)': { contrainteForce: 'constraints="4" unique_strength="0" notnull_strength="0" exp_strength="2"' },
   'étiquette sans espaces autour de ||': { expression: `"essence"||'\\n'||"diametre"` },
 };
 for (const [nom, o] of Object.entries(variantesAdmises)) test(`garde-fou projet : accepte ${nom}`, () => assert.deepEqual(defautsQgs(projetFixture(o)), []));
@@ -482,6 +514,16 @@ const fautesQgs = {
   'défaut de date = today()': [{ defaut: 'today()' }, 'attendu now()'],
   'défaut de date vide': [{ defaut: '' }, 'attendu now()'],
   'défaut de date réappliqué à chaque modification': [{ applyOnUpdate: 1 }, 'applyOnUpdate'],
+  'contrainte absente': [{ sansContrainte: true }, 'aucune contrainte'],
+  'contrainte sur un autre champ (essence)': [{ champContrainte: 'essence' }, 'aucune contrainte'],
+  'contrainte > 0 au lieu de >= 0': [{ contrainte: '"diametre" > 0' }, 'attendu'],
+  'contrainte <= 0 (sens inversé)': [{ contrainte: '"diametre" <= 0' }, 'attendu'],
+  'contrainte >= 1': [{ contrainte: '"diametre" >= 1' }, 'attendu'],
+  'contrainte sur un autre champ dans le texte (essence >= 0)': [{ contrainte: '"essence" >= 0' }, 'attendu'],
+  'contrainte à expression vide': [{ contrainte: '' }, 'attendu'],
+  'contrainte déclarée sans être appliquée (exp_strength=0)': [{ contrainteForce: 'constraints="4" exp_strength="0"' }, 'non appliquée'],
+  'contrainte de type NOT NULL seulement (bit 4 absent)': [{ contrainteForce: 'constraints="1" notnull_strength="1" exp_strength="1"' }, 'non appliquée'],
+  'contrainte dans <constraints> sans expression': [{ sansContrainte: true, contraintesBrutes: '<constraints><constraint field="diametre" constraints="4" exp_strength="1"/></constraints>' }, 'aucune contrainte'],
   'symbole carré': [{ forme: 'square' }, 'attendu circle'],
   'symbole rouge': [{ couleur: '255,0,0,255,rgb:1,0,0,1' }, 'attendu noir'],
   'symbole noir translucide': [{ couleur: '0,0,0,128' }, 'attendu noir'],

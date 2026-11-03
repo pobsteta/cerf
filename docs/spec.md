@@ -29,12 +29,13 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
 ## 2. Livrables
 
 1. `cerf.qgz` : projet modèle vide de données métier, en Lambert 93 (EPSG:2154), avec
-   les deux fonds XYZ (ADR 0002) et la variable de projet `cerf_id` (§ 3.3).
+   les deux fonds XYZ (ADR 0002), la variable de projet `cerf_id` (§ 3.3) et la couche
+   de saisie « Saisie terrain » (§ 3.5), avec son GeoPackage vide `saisie.gpkg`.
 2. Le plugin QField d'application, en zip installable par URL (ADR 0001), sous
    GPL-3.0-or-later (ADR 0006), code entièrement écrit pour Cerf.
 3. `docs/convention-zip.md` : une page, plus l'annexe des styles (§ 5).
 4. `docs/notice-jfc.md` : trois pages ; préparer le zip depuis QGIS (ProdBois, Relevés,
-   Canopée), le copier sur l'appareil.
+   Canopée), le copier sur l'appareil ; récupérer `saisie.gpkg` au retour du terrain.
 5. Trois zips de recette : `Serre_EA2026` (à fournir par JFC), `piege` et `lourd` (§ 6).
 
 ## 3. Données manipulées
@@ -114,6 +115,31 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - Fond embarqué de repli : **pas en tranche 1**, sauf si l'essai à J+2 (critère 5) échoue
   (§ 9, n° 5).
 
+### 3.5 Couche de saisie (amendement du 3 novembre 2026)
+
+- **Fichier** : `saisie.gpkg`, à côté de `cerf.qgz` (même dossier), chemin relatif dans le
+  projet. Une table `saisie_terrain`, géométrie **Point**, **EPSG:2154**, vide à la
+  livraison.
+- **Couche** : nommée « Saisie terrain », **modifiable**, au-dessus du groupe « Fonds de
+  carte ». Les couches importées restent en lecture seule (§ 3.3).
+- **Champs** :
+
+  | Champ | Type | Saisie | Remarque |
+  |---|---|---|---|
+  | `fid` | entier, clé | automatique | clé du GeoPackage |
+  | `essence` | texte | libre | proposition : texte libre en tranche 1 (pas de liste de valeurs sans référentiel ONF) |
+  | `diametre` | entier (cm) | libre, ≥ 0 | proposition : centimètres entiers |
+  | `remarque` | texte | libre, facultatif | |
+  | `date` | date et heure | **automatique** à la création (`now()`), modifiable | |
+
+- **Style** : celui de la règle ProdBois / Relevés (§ 5), puisque la couche a `essence`
+  et `diametre` ; enregistré dans `cerf.qgz`, pas appliqué par le plugin.
+- **Retour au bureau** : copie de `saisie.gpkg` (câble USB ou partage de QField) ; pas de
+  QFieldCloud, pas d'export par le plugin.
+- **Mise à jour du projet modèle** : une nouvelle version de `cerf.qgz` ne doit **pas**
+  écraser un `saisie.gpkg` déjà rempli sur l'appareil ; le zip du projet modèle et la
+  notice le disent (à préciser par la mission qui livre la couche).
+
 ## 4. Contrôles à l'import (ADR 0004)
 
 Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
@@ -189,10 +215,16 @@ marqués « (auto, logique seule) » ont aussi un test automatique sur la logiqu
 8. Retirer une couche : elle ne revient pas à la réouverture. (auto, logique seule)
 9. Projet sans `cerf_id` : le plugin n'affiche pas son bouton et ne fait rien. (auto,
    logique seule)
+10. Mode avion, `cerf.qgz` ouvert : ajouter trois points dans « Saisie terrain » avec
+    essence et diamètre ; ils s'affichent au style ProdBois, `date` est remplie seule ;
+    après redémarrage de l'appareil ils sont toujours là ; `saisie.gpkg` copié sur un PC
+    s'ouvre dans QGIS avec les trois points en Lambert 93. (§ 3.5 ; amendement du
+    3 novembre 2026)
 
 ## 7. Hors périmètre (tranche 1)
 
-Saisie dans les couches importées ; synchronisation QFieldCloud de ces couches ; outil
+Saisie dans les couches importées (la saisie se fait dans « Saisie terrain », § 3.5) ;
+synchronisation QFieldCloud de ces couches ; outil
 bureau pour fabriquer le zip ; import d'un dossier (seul le zip est pris) ; lien direct
 avec ProdBois, Relevés ou Canopée ; outre-mer ; sorties pour la commission et les
 affouagistes ; cadastre, MNH, pentes ; chargement forcé d'une couche refusée ; fond

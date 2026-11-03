@@ -43,7 +43,9 @@
   du plugin, choisit un zip (ou un dossier) sur l'appareil, coche les couches à charger ;
   elles apparaissent stylées selon leur nom (UG, Parcelles, FRT, export ProdBois) ; il
   peut en retirer une ; à la réouverture du projet, elles reviennent toutes seules.
-  Les couches importées sont **en lecture seule**. L'import marche **sans réseau** ;
+  Les couches importées sont **en lecture seule**. Pour ajouter des points, l'agent saisit
+  dans la couche « Saisie terrain » du projet modèle (amendement du 3 novembre 2026).
+  L'import marche **sans réseau** ;
   seuls les fonds IGN ont besoin du réseau ou de tuiles déjà en cache, ce qui reste à
   prouver sur tablette (voir « Fonds de carte »).
 - **Ce qu'il produit** (livrables) :
@@ -103,7 +105,8 @@
 
 ## Ce qu'il ne fait pas (hors périmètre, tranche 1)
 
-- pas de saisie dans les couches importées ;
+- pas de saisie dans les couches importées (la saisie se fait dans la couche « Saisie
+  terrain » du projet modèle) ;
 - pas de synchronisation QFieldCloud de ces couches ;
 - pas d'outil bureau pour fabriquer le zip ;
 - pas de fonds embarqués hors ligne (le cache de tuiles de QField suffit pour
@@ -208,6 +211,21 @@ Détail dans `docs/spec.md` § 9. Ce qui modifie le brief :
 - **licence GPL-3.0-or-later**, code à Pascal, rien de recopié ;
 - le geste porte sur un zip, pas sur un dossier ;
 - pas de chargement forcé d'une couche refusée.
+
+## Amendement de Pascal (3 novembre 2026) : saisie sur le terrain
+
+Après l'essai du squelette 0.1.1 sur le Samsung (import réussi, couche importée non
+modifiable, conforme au brief), Pascal veut pouvoir ajouter des points sur le terrain. Il
+retient la voie 1 :
+
+1. le projet modèle porte une couche **« Saisie terrain »**, **ponctuelle**, vide, prête à
+   remplir, dans un GeoPackage posé à côté de `cerf.qgz` ;
+2. ses champs sont ceux de ProdBois : `essence`, `diametre`, plus `remarque` et `date`
+   (remplie seule) ; ses points prennent donc le style ProdBois / Relevés du manuel ;
+3. les couches importées restent **en lecture seule** ;
+4. les points saisis reviennent au bureau par **copie du fichier `.gpkg`** (câble USB ou
+   partage de QField), sans QFieldCloud et sans bouton d'export ; la notice de JFC
+   l'explique.
 
 ## Validation
 

@@ -20,6 +20,14 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5 · proposée, à valider
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests de la couche de saisie du projet modèle
+  - Moyens : `docs/spec.md` § 3.5, § 5, § 6 n° 10
+- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5 · proposée, à valider
+  - Homme : `dev` (opus)
+  - Mission : Couche « Saisie terrain » et saisie.gpkg dans le projet modèle
+  - Moyens : `outils/projet-modele.mjs`, `node:sqlite`, spec § 3.5
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente

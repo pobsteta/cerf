@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire un plugin QField minimal qui tente de lister un zip, de le copier hors du dossier projet, d'effacer un .zip et d'importer un module .mjs testé aussi sous Node, pour trancher les points non prouvés des ADR 0003 et 0005 avant de bâtir dessus.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Construire un plugin QField jetable qui essaie, sur le Samsung de Pascal et hors réseau, de lister un zip, de le copier dans `Imported Datasets/cerf/<cerf_id>/`, de l'effacer et de charger un module `.mjs` aussi testé sous Node, pour que les « oui » ou « non » vus sur l'appareil décident des replis de la spec § 9 (n° 1 et 2) et confirment ou non l'ADR 0005 avant qu'on bâtisse le vrai plugin. _(dev, 2 novembre 2026 ; plan dans `prototype/PLAN.md`, code après accord de Pascal.)_
 
 ## Les trois questions (règle de staffing)
 
@@ -48,6 +48,21 @@ Les noms de ses boutons sont reportés dans le protocole à la fin de la mission
 Après l'aller-retour 1/3 de la mission 003 (questions 5 à 9 du protocole), il affiche
 aussi, pour chaque couche lue dans un zip : son système de coordonnées, la position du
 point d'essai, et pour le GeoTIFF sa taille en pixels et le temps d'ouverture.
+
+## Décisions de Pascal sur le plan
+
+Plan `prototype/PLAN.md` (commit `2b57196`) **validé par Pascal le 2 novembre 2026**, avec
+ces réponses aux cinq questions du § 9 du plan (transmises par l'orchestrateur) :
+
+1. **Zip du plugin** : mis en ligne en *release* GitHub par l'orchestrateur. Le `dev` le
+   produit par `prototype/empaqueter.mjs`, **sans le verser au dépôt** (ignoré par
+   `.gitignore`).
+2. **Pas de contournement** de la lecture hors du dossier projet (pas de `cerf.qgz` à la
+   racine du dossier de l'application) : le repli de la spec § 9 n° 1 s'applique si
+   l'essai confirme le refus.
+3. **L'essai du zip de 200 Mo est gardé, en dernier**, et affiché comme **essai à risque**.
+4. La question 1 du protocole sera **reformulée par le `testeur`** (pas par le `dev`).
+5. **Pas de décompresseur deflate** : la question 6 affiche « en attente ».
 
 ## Valeur provisoire (chiffre, réglage)
 

@@ -1,0 +1,58 @@
+# Publie le prototype n° 1 (mission 004) en release GitHub « prototype-1 » à chaque push
+# sur la branche du prototype (l'étiquette est créée par la release). Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
+# versés au dépôt) ; leur sha256 est écrit dans les notes de la release.
+name: Release du prototype
+on:
+  push:
+    branches: ['mission/004-prototype-1']
+    paths: ['prototype/**', 'outils/**', 'tests/recette/**', '.github/workflows/release-prototype.yml']
+permissions:
+  contents: write
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dépendances Python des outils (pyproj, mission 002)
+        run: pip install -r outils/requirements.txt
+      - name: Tests
+        run: node --test
+      - name: Zips
+        run: |
+          node prototype/empaqueter.mjs dist
+          cp tests/recette/essai/essai.zip tests/recette/essai/essai-cp437.zip dist/
+          # Projet modèle de la mission 006 (branche mission/006-projet-modele), zippé pour
+          # l'import par URL de QField.
+          git fetch --depth=1 origin mission/006-projet-modele
+          git show FETCH_HEAD:cerf.qgz > dist/cerf.qgz
+          (cd dist && zip -X cerf-projet-modele.zip cerf.qgz && rm cerf.qgz)
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Prototype n° 1 de Cerf (mission 004), plugin QField jetable, à installer par URL."
+            echo
+            echo "Ne pas renommer cerf-prototype.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Protocole d'essai : tests/recette/prototype-1.md."
+            echo
+            echo '```'
+            sha256sum dist/*.zip
+            echo
+            echo "cerf.qgz contenu dans cerf-projet-modele.zip, pris sur mission/006-projet-modele :"
+            (cd dist && unzip -p cerf-projet-modele.zip cerf.qgz | sha256sum | sed 's/-$/cerf.qgz/')
+            echo '```'
+          } > notes.md
+          if gh release view prototype-1 >/dev/null 2>&1; then
+            gh release upload prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip --clobber
+            gh release edit prototype-1 --notes-file notes.md
+          else
+            gh release create prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip \
+              --target "$GITHUB_SHA" --title "Prototype n° 1" --notes-file notes.md --prerelease
+          fi

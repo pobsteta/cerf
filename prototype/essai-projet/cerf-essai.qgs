@@ -1,0 +1,25 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Projet d'essai du prototype n° 1 de Cerf (mission 004) : sans couche, en Lambert 93,
+     portant la variable de projet cerf_id (UUID tiré une fois, le 2 novembre 2026).
+     Écrit à la main : à ouvrir d'abord dans QGIS (Propriétés du projet, onglet Variables). -->
+<qgis projectname="cerf-essai" version="3.40.0-Bratislava">
+  <homePath path=""/>
+  <title>cerf-essai</title>
+  <projectCrs>
+    <spatialrefsys nativeFormat="Wkt">
+      <authid>EPSG:2154</authid>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group/>
+  <properties>
+    <Variables>
+      <variableNames type="QStringList">
+        <value>cerf_id</value>
+      </variableNames>
+      <variableValues type="QStringList">
+        <value>936eb144-5447-4094-a579-fac12a9f0595</value>
+      </variableValues>
+    </Variables>
+  </properties>
+</qgis>

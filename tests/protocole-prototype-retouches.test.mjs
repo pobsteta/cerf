@@ -87,7 +87,7 @@ test('retouche 3 : où Pascal lit cerf_id, et ce que « lister la copie » vise'
   const q = questions();
   assert.match(q[1].corps, /valeur de `cerf_id` qu'il affiche/);
   assert.match(q[1].corps, /lister la copie\*\* \(le fichier du chemin lu au geste 2, pas l'original\)/);
-  assert.match(q[2].corps, /\*\*Lister la copie\*\* de nouveau \(même geste que le geste 4 de la question 2\)/);
+  assert.match(q[2].corps, /\*\*Lister la copie\*\* de nouveau avec « C\. Lister la copie » \(même geste que le geste 4 de la question 2\)/);
   assert.doesNotMatch(t, /Relister la copie/);
   assert.doesNotMatch(t, /relister la copie/i);
 });
@@ -118,7 +118,8 @@ test('ajout : valeurs exactes attendues par question 5 à 9', () => {
   assert.ok(q[5].corps.includes('255,0,0,255'));
   assert.ok(q[6].corps.includes('199996542 octets'));
   assert.ok(q[6].corps.includes('199996426 octets'));
-  assert.ok(q[6].corps.includes('14142 x 14142'));
+  // H n'affiche pas la taille en pixels : l'emprise (14142 pixels de 5 m) la remplace (PLAN.md § 4, § 10 bis)
+  assert.ok(q[6].corps.includes('70710 m × 70710 m') && q[6].corps.includes('14142 pixels de 5 m'));
   assert.match(q[6].corps, /Noter le temps/);
   assert.match(q[6].corps, /ADR 0003/);
   assert.match(q[6].corps, /décompresser/);

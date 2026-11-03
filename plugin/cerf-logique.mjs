@@ -12,7 +12,12 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
+
+// Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
+// 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors
+// du dossier projet (src/core/utils/qffileutils.cpp L620-628), vu à l'essai du squelette.
+export const NOM_DOSSIER_COPIES = 'cerf-imports';
 
 // Décision de Pascal n° 6 (3 novembre 2026) : plafond de listage d'un zip, 10 Mo, soit la
 // valeur du prototype (prototype/cerf-zip.mjs, SEUIL_LECTURE_OCTETS = 10 000 000 octets).
@@ -164,11 +169,14 @@ export function messageListageRefuse(nomZip, taille) {
   return `${nomZip} : ${mo} Mo, au-delà du plafond de 10 Mo pour lister un zip ; zip non lu`;
 }
 
-// Décision n° 3 : lecture hors du dossier projet refusée par QField : le dire, sans repli.
-export function messageLectureRefusee(nomZip, versionQField) {
+// Décision n° 3 : lecture refusée par QField : le dire, avec la version de QField et, s'il est
+// connu, l'avis de QField sur la copie (FileUtils.isWithinProjectDirectory) ; aucun repli de plus.
+export function messageLectureRefusee(nomZip, versionQField, dansLeProjet) {
   const version = versionQField ? String(versionQField) : 'inconnue';
-  return `${nomZip} : lecture refusée par QField (0 octet rendu ; version de QField ${version}). `
-    + 'La copie est hors du dossier projet ; aucune couche chargée.';
+  let lieu = '';
+  if (dansLeProjet === true) lieu = ' Copie dans le dossier du projet selon QField.';
+  if (dansLeProjet === false) lieu = ' Copie hors du dossier du projet selon QField.';
+  return `${nomZip} : lecture refusée par QField (0 octet rendu ; version de QField ${version}).${lieu} Aucune couche chargée.`;
 }
 
 // --------------------------------------------------------------------------- noms et chemins
@@ -238,16 +246,25 @@ export function cleRegistre(cerfId) {
   return 'cerf/' + cerfId;
 }
 
-export function dossierCopies(dossierApp, cerfId) {
-  return sansBarreFinale(dossierApp) + '/Imported Datasets/cerf/' + cerfId;
+// Dossier du projet sain : absolu, autre que la racine, sans segment vide, « . » ou « .. », sans
+// « \ ». Les barres finales sont tolérées (retirées).
+function dossierProjetSain(dossierProjet) {
+  if (typeof dossierProjet !== 'string' || dossierProjet.charAt(0) !== '/') return false;
+  if (dossierProjet.indexOf('\\') >= 0) return false;
+  const d = sansBarreFinale(dossierProjet);
+  return d !== '/' && segmentsSains(d.substring(1));
 }
 
-export function cheminCopie(dossierApp, cerfId, nomZip) {
-  return dossierCopies(dossierApp, cerfId) + '/' + nomZip;
+// '<dossier du projet>/cerf-imports' ; '' si le dossier du projet n'est pas sain.
+export function dossierCopies(dossierProjet) {
+  if (!dossierProjetSain(dossierProjet)) return '';
+  return sansBarreFinale(dossierProjet) + '/' + NOM_DOSSIER_COPIES;
 }
 
-function dossierAppSain(dossierApp) {
-  return typeof dossierApp === 'string' && dossierApp.charAt(0) === '/' && segmentsSains(sansBarreFinale(dossierApp).substring(1));
+// '<dossier du projet>/cerf-imports/<nomZip>' ; '' si le dossier du projet n'est pas sain.
+export function cheminCopie(dossierProjet, nomZip) {
+  const d = dossierCopies(dossierProjet);
+  return d === '' ? '' : d + '/' + nomZip;
 }
 
 // Nom du zip d'une source « /vsizip/<dossierCopies>/<zip>/<entrée> », sinon ''.
@@ -384,7 +401,7 @@ export function importerZip(ctx) {
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
   const nomZip = ctx.nomZip;
   if (!estNomDeZip(nomZip)) return vide(`Fichier refusé : « ${nomZip} » n'est pas un nom de zip simple (.zip).`);
-  if (!dossierAppSain(ctx.dossierApp)) return vide("Dossier de l'application inconnu : rien n'est importé.");
+  if (!dossierProjetSain(ctx.dossierProjet)) return vide("Dossier du projet inconnu : rien n'est importé.");
   let noms;
   try {
     const o = octetsDe(ctx.octets);
@@ -396,7 +413,7 @@ export function importerZip(ctx) {
   const couches = couchesDuZip(noms);
   if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
-  const copie = cheminCopie(ctx.dossierApp, ctx.cerfId, nomZip);
+  const copie = cheminCopie(ctx.dossierProjet, nomZip);
   const chargees = [];
   const refusees = [];
   const vues = {};
@@ -442,8 +459,14 @@ export function demarrerProjet(ctx) {
   if (!ctx) return inactif;
   const cerfId = lireCerfId(ctx.variables);
   if (cerfId === null) return inactif;
+  const dossier = dossierCopies(ctx.dossierProjet);
+  if (dossier === '') {
+    return {
+      actif: true, boutonVisible: true, cerfId, rechargees: [], absentes: [], illisibles: [], douteuses: 0,
+      message: 'Dossier du projet inconnu : aucune couche rechargée.',
+    };
+  }
   const etat = etatRegistre(ctx.reglages, cerfId);
-  const dossier = dossierCopies(ctx.dossierApp, cerfId);
   const saines = [];
   let douteuses = 0;
   for (let i = 0; i < etat.liste.length; i++) {
@@ -487,12 +510,15 @@ export function demarrerProjet(ctx) {
 
 // --------------------------------------------------------------------------- retirer et effacer
 
-// Garde avant rmFile (ADR 0007) : ne se fie à aucun argument.
+// Garde avant rmFile (ADR 0007) : ne se fie à aucun argument. Le dossier doit être absolu, sans
+// segment vide, « . » ou « .. », sans « \ », et finir exactement par « /cerf-imports » sous un
+// dossier de projet autre que la racine ; le chemin doit être dedans, sans segment douteux.
 export function peutEffacer(chemin, dossier) {
   if (typeof chemin !== 'string' || typeof dossier !== 'string') return false;
+  if (dossier.indexOf('\\') >= 0 || chemin.indexOf('\\') >= 0) return false;
   if (dossier.charAt(0) !== '/' || !segmentsSains(dossier.substring(1))) return false;
-  const m = /\/Imported Datasets\/cerf\/([^/]+)$/.exec(dossier);
-  if (!m || !estUuid(m[1])) return false;
+  const suffixe = '/' + NOM_DOSSIER_COPIES;
+  if (dossier.length <= suffixe.length || dossier.substring(dossier.length - suffixe.length) !== suffixe) return false;
   if (chemin.indexOf(dossier + '/') !== 0) return false;
   return segmentsSains(chemin.substring(dossier.length + 1));
 }
@@ -530,9 +556,12 @@ export function retirerCouche(ctx) {
     const n = nombreDeCouchesDuZip(ctx.reglages, ctx.cerfId, zip);
     return { efface: false, message: `${debut} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };
   }
-  if (!estNomDeZip(zip) || !dossierAppSain(ctx.dossierApp)) {
+  if (!estNomDeZip(zip)) {
     return { efface: false, message: `${debut} Nom de zip douteux au registre : aucun fichier effacé.` };
   }
-  const e = effacerCopie(ctx.platformUtilities, cheminCopie(ctx.dossierApp, ctx.cerfId, zip), dossierCopies(ctx.dossierApp, ctx.cerfId));
+  if (!dossierProjetSain(ctx.dossierProjet)) {
+    return { efface: false, message: `${debut} Dossier du projet inconnu : aucun fichier effacé (${zip}).` };
+  }
+  const e = effacerCopie(ctx.platformUtilities, cheminCopie(ctx.dossierProjet, zip), dossierCopies(ctx.dossierProjet));
   return { efface: e.efface, message: `${debut} ${e.message}` };
 }

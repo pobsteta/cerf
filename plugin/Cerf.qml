@@ -39,8 +39,15 @@ Item {
     return Logique.lireCerfId(variables());
   }
 
-  function dossierApp() {
-    return String(platformUtilities.applicationDirectory());
+  // Dossier du projet : qgisProject.homePath (QGIS qgsproject.h L119) ; à défaut (chaîne
+  // vide), le dossier du fichier projet, celui que FileUtils.isWithinProjectDirectory prend
+  // pour référence (qffileutils.cpp L541-556). Les copies vont dans <ce dossier>/cerf-imports
+  // (repli de la spec § 9 n° 1, appliqué par Pascal le 3 novembre 2026).
+  function dossierProjet() {
+    if (!qgisProject) return "";
+    const home = String(qgisProject.homePath || "");
+    if (home !== "") return home;
+    return Logique.dossierDe(String(qgisProject.fileName || ""));
   }
 
   // Registre dans les réglages de QField (QfSettings, contexte « settings ») ; sync après
@@ -67,8 +74,8 @@ Item {
   // chargerCouche(source, nom) du contrat : charge la couche par GDAL, la marque et l'ajoute
   // à la carte si elle est valide ; une couche déjà présente (même marque) est rendue telle
   // quelle (pas de double chargement). La logique pose readOnly ensuite.
-  function chargeur(id) {
-    const dossier = Logique.dossierCopies(dossierApp(), id);
+  function chargeur() {
+    const dossier = Logique.dossierCopies(dossierProjet());
     return function (source, nom) {
       const zip = Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
@@ -129,22 +136,34 @@ Item {
     const r = Logique.demarrerProjet({
       variables: variables(),
       reglages: reglages,
-      dossierApp: dossierApp(),
+      dossierProjet: dossierProjet(),
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
-      chargerCouche: id ? chargeur(id) : function () { return null; }
+      chargerCouche: id ? chargeur() : function () { return null; }
     });
     registreChange();
     return r;
   }
 
-  // Gestes 3 et 4 : sélecteur Android, copie dans Imported Datasets/cerf/<cerf_id>/.
+  // Gestes 3 et 4 : sélecteur Android, copie dans <dossier du projet>/cerf-imports/.
   function ajouterZip() {
     const id = cerfId();
     if (!id) {
       message("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
       return;
     }
-    prefixeEnCours = Logique.dossierCopies(dossierApp(), id) + "/";
+    const dossier = Logique.dossierCopies(dossierProjet());
+    if (dossier === "") {
+      message("Dossier du projet inconnu : rien n'est importé.");
+      return;
+    }
+    // Garde : la copie doit être lisible par le plugin, donc dans le dossier du projet aux
+    // yeux de QField (readFileContent, qffileutils.cpp L620-628), avant même de copier.
+    if (!FileUtils.isWithinProjectDirectory(dossier + "/essai.zip")) {
+      message("QField ne tient pas " + dossier + " pour le dossier du projet : rien n'est copié (version de QField "
+        + (versionQField() || "inconnue") + ").");
+      return;
+    }
+    prefixeEnCours = dossier + "/";
     platformUtilities.requestStoragePermission();
     source = platformUtilities.getFile(prefixeEnCours, "{filename}", "*/*", cerf);
   }
@@ -153,7 +172,12 @@ Item {
   function zipRecu(recu) {
     const id = cerfId();
     if (!id) return;
-    const dossier = Logique.dossierCopies(dossierApp(), id);
+    // Le dossier où la copie a été demandée (et non celui d'un projet ouvert entre-temps).
+    const dossier = Logique.dossierDe(prefixeEnCours + "x");
+    if (dossier !== Logique.dossierCopies(dossierProjet())) {
+      message("Le projet a changé pendant le choix du zip : rien n'est importé.");
+      return;
+    }
     if (!recu) {
       message("Aucun zip choisi.");
       return;
@@ -178,18 +202,18 @@ Item {
     }
     const octets = Logique.octetsDe(FileUtils.readFileContent(chemin));
     if (octets.length === 0 && taille > 0) {
-      message(Logique.messageLectureRefusee(nom, versionQField()));
+      message(Logique.messageLectureRefusee(nom, versionQField(), FileUtils.isWithinProjectDirectory(chemin)));
       return;
     }
     // Zip réimporté sous le même nom : ses couches sont retirées de la carte puis rechargées.
     retirerLeZipDeLaCarte(nom);
     const r = Logique.importerZip({
       cerfId: id,
-      dossierApp: dossierApp(),
+      dossierProjet: dossierProjet(),
       nomZip: nom,
       octets: octets,
       reglages: reglages,
-      chargerCouche: chargeur(id),
+      chargerCouche: chargeur(),
       maintenant: function () { return new Date(); }
     });
     let texte = r.message;
@@ -212,7 +236,7 @@ Item {
   function retirer(zip, couche) {
     const r = Logique.retirerCouche({
       cerfId: cerfId(),
-      dossierApp: dossierApp(),
+      dossierProjet: dossierProjet(),
       zip: zip,
       couche: couche,
       reglages: reglages,

@@ -1,5 +1,10 @@
 # Plan du squelette du plugin (mission 008)
 
+> **Mise à jour du 3 novembre 2026 (version 0.1.1)** : les copies ne vont plus dans
+> `Imported Datasets/cerf/<cerf_id>/` mais dans `<dossier du projet>/cerf-imports/` (repli de
+> la spec § 9 n° 1, appliqué par Pascal). Ce qui suit les §§ 1 à 11 sur ce point est remplacé
+> par le § 12, n° 9.
+
 > Rédigé par le `dev` le 3 novembre 2026. **Plan seul : aucun code n'est écrit avant
 > l'accord de Pascal** (mission tenue). Sources : `docs/spec.md` § 1, § 3.1, § 3.3, § 6,
 > § 10 ; ADR 0001, 0003, 0005, 0006, 0007 ; `prototype/PLAN.md` et le code du prototype
@@ -379,3 +384,28 @@ Les décisions de Pascal sont dans `pilotage/missions/008-squelette-plugin.md`, 
 8. Ce que la mission ne règle pas, laissé à la mission 014 (registre complet) : quand un zip
    est réimporté sous le même nom **sans** une couche qu'il contenait, l'entrée de cette
    couche reste au registre et sera signalée « illisible » à l'ouverture suivante.
+9. **Repli de la spec § 9 n° 1 (aller-retour 1/3, version 0.1.1).** À l'essai de la 0.1.0 sur
+   le Samsung (QField v4.3.7), le plugin a affiché « essai (1).zip : lecture refusée par QField
+   (0 octet rendu ; version de QField v4.3.7) » : le risque n° 1 du § 8 s'est réalisé, comme le
+   prévoyait le code (`qffileutils.cpp` L620-628). Pascal a appliqué le repli arbitré (spec
+   § 3.3 et § 10, ADR 0003 et 0007) : les copies vont dans **`<dossier du projet>/cerf-imports/`**
+   (comme le bouton B du prototype), Cerf n'est pas utilisé avec QFieldCloud. Ce qui change :
+   - `dossierCopies(dossierProjet)` et `cheminCopie(dossierProjet, nomZip)` ; les contextes
+     portent `dossierProjet` au lieu de `dossierApp` ; un dossier de projet vide, `/`, relatif
+     ou à segment douteux ne donne aucun dossier de copies (rien chargé, écrit ni effacé) ;
+   - `peutEffacer` n'admet que le contenu d'un dossier finissant exactement par
+     `/cerf-imports` sous un dossier de projet autre que la racine (ADR 0007) ;
+   - `Cerf.qml` prend le dossier du projet dans `qgisProject.homePath` (QGIS `qgsproject.h`
+     L119 ; dans `cerf.qgz`, `<homePath path=""/>`, donc le dossier du fichier projet), à défaut
+     le dossier de `qgisProject.fileName` ; **avant** d'ouvrir le sélecteur, il vérifie
+     `FileUtils.isWithinProjectDirectory(<cerf-imports>/essai.zip)` (`qffileutils.h` L76) et
+     refuse de copier si QField ne dit pas « oui » ; `platformUtilities.applicationDirectory`
+     n'est plus appelé ;
+   - le message de lecture refusée ne présume plus du lieu : il rapporte l'avis de QField
+     (`isWithinProjectDirectory`) sur la copie ;
+   - le registre garde sa clé `cerf/<cerf_id>` et ses chemins relatifs : il est inchangé.
+   L'essai hors QField simule désormais la règle de QField (`readFileContent` vide hors du
+   dossier projet) : il aurait attrapé l'échec de la 0.1.0. 19 contrôles sur 19 avec la 0.1.1.
+   **Non prouvé** : que `homePath` vaut bien le dossier où QField a importé `cerf.qgz`, et que
+   `getFile` écrit dans `<dossier du projet>/cerf-imports/` (le bouton B du prototype l'a fait,
+   d'après le résultat de la question 1 à reprendre : journal du 3 novembre).

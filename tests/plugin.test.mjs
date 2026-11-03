@@ -30,9 +30,9 @@ async function M() {
 
 // cerf_id de cerf.qgz (le même que tests/squelette.test.mjs).
 const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
-// Chemin FICTIF d'Android, sans valeur métier.
-const APP = '/storage/emulated/0/Android/data/ch.opengis.qfield/files';
-const COPIES = `${APP}/Imported Datasets/cerf/${ID}`;
+// Dossier de projet FICTIF d'Android, sans valeur métier.
+const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
+const COPIES = `${PROJET}/cerf-imports`; // repli du 3 novembre 2026 (spec § 3.3)
 const GJ = '{"type":"FeatureCollection","features":[]}';
 
 const ent = (nom, { utf8 = true, txt = GJ } = {}) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.from(txt, 'utf8'), stocke: false, utf8 });
@@ -63,7 +63,7 @@ function ctxImport(extra = {}) {
   return {
     couches, reglages,
     ctx: {
-      cerfId: ID, dossierApp: APP, nomZip: 'x.zip', octets: zipDe('a.geojson'),
+      cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe('a.geojson'),
       reglages, chargerCouche: (s, n) => couches.charger(s, n),
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
@@ -134,6 +134,40 @@ test('décision 3 : message de lecture refusée, avec le nom du zip et la versio
   assert.match(msg, /4\.3\.7/);
   assert.match(msg, /refus/i);
   assert.match(m.messageLectureRefusee('essai.zip', ''), /inconnue/);
+  assert.ok(!/hors du dossier/.test(msg), 'sans avis de QField, le message ne présume pas du lieu de la copie');
+});
+
+test('repli du 3 novembre : le message de lecture refusée rapporte l\'avis de QField sur la copie (isWithinProjectDirectory)', async () => {
+  const m = await M();
+  assert.match(m.messageLectureRefusee('essai.zip', '4.3.7', true), /dans le dossier du projet selon QField/);
+  assert.match(m.messageLectureRefusee('essai.zip', '4.3.7', false), /hors du dossier du projet selon QField/);
+});
+
+test('repli du 3 novembre : dossier du projet avec barre finale toléré ; cheminCopie vide si le projet est inconnu', async () => {
+  const m = await M();
+  assert.equal(m.NOM_DOSSIER_COPIES, 'cerf-imports');
+  assert.equal(m.dossierCopies(PROJET + '/'), COPIES);
+  assert.equal(m.cheminCopie('', 'essai.zip'), '');
+  assert.equal(m.cheminCopie('relatif', 'essai.zip'), '');
+});
+
+test('repli du 3 novembre : importerZip, demarrerProjet et retirerCouche sans dossier du projet sain -> rien chargé, rien écrit, rien effacé', async () => {
+  const m = await M();
+  for (const p of ['', '/', 'relatif', undefined]) {
+    const { ctx, couches, reglages } = ctxImport({ ctx: { dossierProjet: p } });
+    const r = m.importerZip(ctx);
+    assert.deepEqual(r.chargees, []);
+    assert.deepEqual(couches.appels, []);
+    assert.deepEqual(reglages.ecritures, []);
+    const reg2 = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
+    const d = m.demarrerProjet({ variables: { cerf_id: ID }, reglages: reg2, dossierProjet: p, existe: () => true, chargerCouche: (s, n) => couches.charger(s, n) });
+    assert.match(d.message, /Dossier du projet inconnu/);
+    assert.deepEqual(couches.appels, []);
+    const tel = { appels: [], rmFile(c) { this.appels.push(c); return true; } };
+    const rc = m.retirerCouche({ cerfId: ID, dossierProjet: p, zip: 'z.zip', couche: 'a', reglages: reg2, retirerDeLaCarte: () => {}, platformUtilities: tel });
+    assert.equal(rc.efface, false);
+    assert.deepEqual(tel.appels, []);
+  }
 });
 
 // ============================================================================ décision 4 : doublon de nom
@@ -184,7 +218,7 @@ test('registre illisible (texte non JSON, ou JSON qui n\'est pas une liste) : li
   for (const brut of ['{pas du json', '{"a":1}', '"texte"']) {
     const reglages = faussesReglages({ [`cerf/${ID}`]: brut });
     assert.deepEqual(m.lireRegistre(reglages, ID), []);
-    const r = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => true, chargerCouche: () => null });
+    const r = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true, chargerCouche: () => null });
     assert.match(r.message, /registre illisible/);
     assert.deepEqual(reglages.ecritures, []);
   }
@@ -206,7 +240,7 @@ test('décision 5 : entrées douteuses vues à l\'ouverture retirées aussitôt,
   const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([saine, ...douteuses]) });
   const couches = faussesCouches();
   const r = m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => true,
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),
   });
   assert.deepEqual(couches.appels, [{ source: `/vsizip/${COPIES}/bon.zip/a.geojson`, nom: 'a' }]);
@@ -220,10 +254,10 @@ test('décision 5 : entrées douteuses vues à l\'ouverture retirées aussitôt,
 test('démarrage : couche illisible -> message au singulier et au pluriel', async () => {
   const m = await M();
   const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
-  const un = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => true,
+  const un = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => faussesCouches({ echecs: [`/vsizip/${COPIES}/z.zip/a.geojson`] }).charger(s, n) });
   assert.equal(un.message, "1 couche n'a pas pu être rechargée : illisible (a)");
-  const deux = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierApp: APP, existe: () => true,
+  const deux = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: () => { throw new Error('simulé'); } });
   assert.equal(deux.message, "2 couches n'ont pas pu être rechargées : illisibles (a, b)");
 });
@@ -231,7 +265,7 @@ test('démarrage : couche illisible -> message au singulier et au pluriel', asyn
 test('retirerCouche : message quand la copie sert encore', async () => {
   const m = await M();
   const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
-  const r = m.retirerCouche({ cerfId: ID, dossierApp: APP, zip: 'z.zip', couche: 'a', reglages,
+  const r = m.retirerCouche({ cerfId: ID, dossierProjet: PROJET, zip: 'z.zip', couche: 'a', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: { rmFile: () => true } });
   assert.equal(r.message, 'Couche retirée : a. La copie z.zip sert encore à 1 couche.');
 });
@@ -277,7 +311,8 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   for (const appel of ['iface.addItemToPluginsToolbar', 'onLoadProjectEnded', 'ExpressionContextUtils.projectVariables',
     'settings.setValue', 'settings.sync', 'platformUtilities.getFile', 'FileUtils.readFileContent', 'FileUtils.fileExists',
     'LayerUtils.loadVectorLayer', 'ProjectUtils.addMapLayer', 'ProjectUtils.removeMapLayer', 'setCustomProperty',
-    'platformUtilities: platformUtilities', 'Qfield.version', 'LocalFilesModel']) {
+    'platformUtilities: platformUtilities', 'Qfield.version', 'LocalFilesModel',
+    'qgisProject.homePath', 'FileUtils.isWithinProjectDirectory']) {
     assert.ok(qml.includes(appel), `appel absent : ${appel}`);
   }
 });
@@ -326,4 +361,11 @@ test('zipUtilise : vrai tant qu\'une entrée du registre vient de ce zip (la cop
 test('version : la constante VERSION du module est celle de metadata.txt', async () => {
   const m = await M();
   assert.match(lire('metadata.txt'), new RegExp(`^version=${m.VERSION.replace(/\./g, '\\.')}$`, 'm'));
+});
+
+test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (ni applicationDirectory, ni Imported Datasets)', async () => {
+  const qml = lire('Cerf.qml');
+  assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
+  assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
+  assert.match(lire('metadata.txt'), /^version=0\.1\.1$/m);
 });

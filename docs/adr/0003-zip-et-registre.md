@@ -62,6 +62,13 @@ GeoTIFF de 200 Mo ; sélecteur de fichier sous Android 11 et plus.
   [qfield-layer-loader, main.qml](https://github.com/mbernasocchi/qfield-layer-loader/blob/main/main.qml) (lu) ;
   [GDAL, systèmes de fichiers virtuels](https://gdal.org/en/stable/user/virtual_file_systems.html) (non lu, domaine bloqué).
 
+## Résultat du prototype n° 1 (3 novembre 2026)
+
+Sur le Samsung de Pascal : un zip copié **hors du dossier projet** se liste (9 entrées sur
+9) ; il s'efface par `platformUtilities.rmFile` (`FileUtils.deleteFiles` refuse les
+`.zip`). La décision ci-dessus tient sans repli. Reste ouvert : dépendre de `rmFile`
+(spec § 10), à trancher par Pascal dans une ADR.
+
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?

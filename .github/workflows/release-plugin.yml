@@ -3,7 +3,9 @@
 #  - push sur la branche d'une mission du plugin : préversion « plugin-essai », écrasée à
 #    chaque push, pour l'essai de Pascal sur le Samsung avant fusion ;
 #  - push sur main : release « plugin-v<version> » (version lue dans plugin/metadata.txt),
-#    refusée si l'étiquette existe déjà (oblige à monter la version). URL stable :
+#    publiée seulement si plugin/ a changé dans le push (décision de Pascal, 3 novembre 2026 ;
+#    outils/decider-release.mjs), sinon sortie verte ; refusée si l'étiquette existe déjà
+#    (oblige à monter la version). Lancement manuel sur main : publiée. URL stable :
 #    https://github.com/pobsteta/cerf/releases/latest/download/cerf.zip
 # Les zips sont fabriqués ici (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans
 # les notes de la release. L'étiquette est créée par la release elle-même.
@@ -20,23 +22,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Décision (publier ou non)
+        id: decision
+        env:
+          EVENEMENT: ${{ github.event_name }}
+          AVANT: ${{ github.event.before }}
+        run: |
+          action=$(node outils/decider-release.mjs "$EVENEMENT" "$GITHUB_REF_NAME" "$AVANT" "$GITHUB_SHA" 2>raison.txt)
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+          echo "Décision : $action. $(cat raison.txt)" >> "$GITHUB_STEP_SUMMARY"
+          cat raison.txt
       - uses: actions/setup-python@v5
+        if: steps.decision.outputs.action == 'publier'
         with:
           python-version: '3.12'
       - name: Dépendances Python des outils (pyproj, mission 002)
+        if: steps.decision.outputs.action == 'publier'
         run: pip install -r outils/requirements.txt
       - name: Tests
+        if: steps.decision.outputs.action == 'publier'
         run: node --test
       - name: Zips
+        if: steps.decision.outputs.action == 'publier'
         run: |
           node plugin/empaqueter.mjs dist
           cp tests/recette/essai/essai.zip dist/
           cp cerf.qgz dist/
           (cd dist && zip -X cerf-projet-modele.zip cerf.qgz && rm cerf.qgz)
       - name: Release
+        if: steps.decision.outputs.action == 'publier'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

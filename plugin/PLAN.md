@@ -409,3 +409,14 @@ Les décisions de Pascal sont dans `pilotage/missions/008-squelette-plugin.md`, 
    **Non prouvé** : que `homePath` vaut bien le dossier où QField a importé `cerf.qgz`, et que
    `getFile` écrit dans `<dossier du projet>/cerf-imports/` (le bouton B du prototype l'a fait,
    d'après le résultat de la question 1 à reprendre : journal du 3 novembre).
+10. **Release sur `main` seulement si `plugin/` a changé (décision de Pascal, 3 novembre
+    2026).** Le workflow se déclenche encore sur `tests/**`, `cerf.qgz` et lui-même, mais sur
+    `main` `outils/decider-release.mjs` compare `github.event.before` à `github.sha`
+    (`fetch-depth: 0`) : sans fichier sous `plugin/`, toutes les étapes suivantes sont sautées,
+    le job reste vert et le résumé dit « plugin/ inchangé : pas de release ». Si `plugin/` a
+    changé et que l'étiquette existe déjà, la publication reste refusée (il faut monter la
+    version). `workflow_dispatch` sur `main` publie (choix manuel) ; la branche de mission est
+    inchangée (préversion `plugin-essai`). Dans le doute (premier push, `before` nul, diff
+    impossible), on publie : l'étiquette existante fera refuser, on ne rate pas une release
+    en silence. Rappel : la décision du point 2 (copie refusée effacée) a été **confirmée par
+    Pascal le 3 novembre**.

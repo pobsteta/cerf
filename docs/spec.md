@@ -84,6 +84,10 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Copies** : dans `<dossier de l'application>/Imported Datasets/cerf/<cerf_id>/`, hors
   du dossier projet, **si le prototype n° 1 montre que QField le permet**. Sinon, dans le
   dossier projet (§ 9, n° 1) : Cerf n'est alors pas utilisé avec QFieldCloud.
+- **Nom de zip au registre** : un nom simple, sans `/` ni `..` ; une entrée qui ne
+  l'est pas (registre trafiqué) est retirée du registre sans qu'aucun fichier soit effacé ;
+  un `cerf_id` qui n'est pas un UUID fait refuser le projet, et rien n'est écrit ni effacé
+  (Pascal, 3 novembre 2026, sur proposition des tests de la mission 007).
 - **Zip réimporté sous le même nom** : la nouvelle copie remplace l'ancienne ; les couches
   du registre qui en viennent sont rechargées.
 - **Zip absent à l'ouverture** (carte SD retirée, copie effacée) : l'entrée **reste** au

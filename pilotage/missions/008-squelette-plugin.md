@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire le plugin QField d'application qui, dans un projet Cerf, ajoute un zip, charge ses couches GeoJSON en lecture seule avec le style par défaut, les inscrit au registre et les recharge à l'ouverture, pour avoir un parcours complet avant de l'enrichir.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire le plugin QField d'application `cerf` (module `plugin/cerf-logique.mjs` au contrat validé le 3 novembre 2026, branché sur l'API de QField par `plugin/main.qml` et ses écrans) qui, dans un projet portant `cerf_id`, copie un zip hors du dossier projet, en charge les couches GeoJSON par `/vsizip/` en lecture seule avec le style par défaut, les inscrit au registre après chacune, les recharge à chaque ouverture et permet de les retirer, pour que le parcours complet soit jugé (46 tests de la 007 au vert sans les modifier, couche revenue après redémarrage du Samsung) avant d'être enrichi. (`dev`, 3 novembre 2026 ; plan dans `plugin/PLAN.md`, à valider par Pascal avant tout code.)
 
 ## Les trois questions (règle de staffing)
 

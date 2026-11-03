@@ -88,3 +88,16 @@ La décision 3 ci-dessus (« sans coder le repli de la spec § 9 n° 1 ») est *
 l'essai de Cerf 0.1.0 sur le Samsung (QField v4.3.7, lecture refusée hors du dossier projet),
 Pascal applique le repli. Les copies vont dans `<dossier du projet>/cerf-imports/`, sans
 QFieldCloud (spec § 3.3 et § 10, ADR 0003 et 0007). Réalisé en Cerf 0.1.1 (9db6c0d).
+
+## Décisions de Pascal du 3 novembre 2026 (après l'essai de la 0.1.1)
+
+- **Copie refusée effacée** (pas un zip, au-delà du plafond, aucune couche chargée) si
+  aucune entrée du registre n'en vient : oui, confirmé (déjà fait en 0.1.1, `plugin/PLAN.md`
+  § 12.2).
+- **Release `plugin-v<version>` sur `main` seulement si `plugin/` a changé** dans le push :
+  oui (aller-retour 2/3). Harnais étendu par l'orchestrateur pour cette décision :
+  `outils/decider-release.mjs` et `tests/decider-release.test.mjs`.
+- **À confirmer par Pascal** : la règle ajoutée par le dev « dans le doute (premier push,
+  push forcé, diff impossible), on publie ».
+- Saisie dans les couches importées : non (lecture seule maintenue) ; la saisie passe par la
+  couche « Saisie terrain » du projet modèle (missions 020 et 021).

@@ -24,7 +24,7 @@ d'accepter les `.zip` dans `deleteFiles`.
 | Lettre | Question | Réponse | Ce que ça coûte | Prêts à payer ? |
 |---|---|---|---|---|
 | **F**rugale | Plus simple ? | Un appel. | — | oui |
-| **R**esponsable | Qui fait quoi ? | Le plugin n'efface que dans `Imported Datasets/cerf/<cerf_id>/`, vérifié avant l'appel. | Le contrôle de chemin est à notre charge. | oui |
+| **R**esponsable | Qui fait quoi ? | Le plugin n'efface que dans `<dossier du projet>/cerf-imports/` (depuis le repli du 3 novembre 2026 ; à l'origine `Imported Datasets/cerf/<cerf_id>/`), vérifié avant l'appel. | Le contrôle de chemin est à notre charge. | oui |
 | **A**nticiper | Imprévu ? | Si `rmFile` disparaît ou change : repli § 9 n° 2 (la copie reste, son nom est affiché). | Place sur l'appareil. | oui |
 | **N**ovateur | Idées écoutées ? | Trois options. | — | — |
 | **C**oût | Dépense inutile ? | Aucune. | — | — |

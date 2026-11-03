@@ -81,9 +81,10 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
   JSON : liste de `{ zip, couche, chemin_vsi, style, ajoutee_le }`, **chemins relatifs** au
   dossier des copies. Écrit après chaque couche chargée. Le registre s'accumule d'une forêt
   à l'autre ; l'agent retire ce qui ne sert plus.
-- **Copies** : dans `<dossier de l'application>/Imported Datasets/cerf/<cerf_id>/`, hors
-  du dossier projet, **si le prototype n° 1 montre que QField le permet**. Sinon, dans le
-  dossier projet (§ 9, n° 1) : Cerf n'est alors pas utilisé avec QFieldCloud.
+- **Copies** : dans **`<dossier du projet>/cerf-imports/`** (repli § 9 n° 1, appliqué par
+  Pascal le 3 novembre 2026 : QField 4.3.7 refuse à un plugin de lire un fichier hors du
+  dossier projet, vu à l'essai du squelette). Cerf n'est pas utilisé avec QFieldCloud ;
+  les copies disparaissent si le projet est supprimé de QField.
 - **Nom de zip au registre** : un nom simple, sans `/` ni `..` ; une entrée qui ne
   l'est pas (registre trafiqué) est retirée du registre sans qu'aucun fichier soit effacé ;
   un `cerf_id` qui n'est pas un UUID fait refuser le projet, et rien n'est écrit ni effacé
@@ -244,3 +245,12 @@ Essai de la mission 004 suivant `tests/recette/prototype-1.md` (branche
   trancher par Pascal.
 - **Q4 module `.mjs`** : chargé dans QField (5 et `cerf-prototype-1`). → ADR 0005
   confirmée.
+
+### Correction du 3 novembre 2026 (essai du squelette, mission 008)
+
+Le résultat Q1 ci-dessus est **faux** : à l'essai du squelette (Cerf 0.1.0, QField v4.3.7,
+Samsung de Pascal), la lecture d'une copie hors du dossier projet est **refusée** (0 octet),
+comme le prévoyait le code de QField (`readFileContent`, `qffileutils.cpp` L620-628). La
+copie listée à l'essai du prototype était vraisemblablement celle du bouton B, dans le
+projet. → le repli § 9 n° 1 **s'applique** (validé par Pascal le 3 novembre 2026) ; les
+autres résultats (Q2 à Q4) tiennent.

@@ -37,6 +37,11 @@ la logique pure (aucune dépendance) ; tests dans QGIS par PyQGIS (autre langage
 Tests nommés `tests/*.test.mjs`. Commande retenue, dans `.claude/test-command` :
 `node --test`. Le premier test charge aussi le même module dans QField (prototype n° 1).
 
+## Confirmation par le prototype n° 1 (3 novembre 2026)
+
+Un module `.mjs` sans `.pragma` ni `.import` est chargé par QML dans QField sur le Samsung
+de Pascal (question 4 du protocole) : la même source sert à QField et à `node --test`.
+
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?

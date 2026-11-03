@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire les tests de la logique du squelette (projet Cerf reconnu ou non, une couche GeoJSON du zip inscrite au registre et rechargée), pour que le parcours minimal soit jugé avant d'être écrit.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire, sans lire le plugin, les tests `node --test` de la logique du squelette (reconnaître un projet Cerf par `cerf_id`, inscrire au registre les couches GeoJSON d'un zip copié, les recharger à la réouverture, retirer une couche et effacer la copie par `rmFile`), appels à QField simulés, rouges tant que la mission 008 n'a pas écrit `plugin/`, pour que le parcours minimal soit jugé avant d'être écrit.
 
 ## Les trois questions (règle de staffing)
 

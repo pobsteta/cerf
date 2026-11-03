@@ -10,6 +10,12 @@
 
 **Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
 
+## Ajout décidé par Pascal le 3 novembre 2026
+
+Reconnaître aussi comme couche un `.json` qui est du GeoJSON (spec § 3.1) ; un `.json` qui
+n'en est pas est ignoré en silence. Reporté ici depuis la mission 007, dont les tests ne
+retiennent que les `.geojson`.
+
 ## Les trois questions (règle de staffing)
 
 | Question | Réponse | Conséquence |

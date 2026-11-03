@@ -15,13 +15,17 @@
 // Choix tolérants (non tranchés par la spec) : repérés « TOLÉRANCE » ci-dessous et listés dans le rapport du testeur.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync, mkdirSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
 
-const RACINE = process.env.CERF_RACINE ? new URL(`file://${process.env.CERF_RACINE.replace(/\/?$/, '/')}`) : new URL('../', import.meta.url);
+// Une URL n'est jamais lue par .pathname (encodage en pourcent, « /C:/ » sous Windows) : fileURLToPath partout.
+const racineDepuis = (dossier) => pathToFileURL(resolve(dossier) + sep);
+const cheminGpkg = (racine) => fileURLToPath(new URL('saisie.gpkg', racine));
+const RACINE = process.env.CERF_RACINE ? racineDepuis(process.env.CERF_RACINE) : new URL('../', import.meta.url);
 const CHEMIN_QGZ = new URL('cerf.qgz', RACINE);
 const CHEMIN_GPKG = new URL('saisie.gpkg', RACINE);
 
@@ -274,9 +278,12 @@ const verifsQgs = {
   },
   'symbole : un cercle noir plein de 2 mm': (p) => {
     const c = saisie(p); if (!c) return absente();
-    const marqueurs = [...c.brut.matchAll(/<symbol\b[^>]*>/g)].map((m) => attrs(m[0])).filter((a) => a.type === 'marker');
+    // Seul le rendu de la couche compte : le fond d'étiquette et le symbole de sélection ont aussi des symboles marker.
+    const rendu = c.brut.match(/<renderer-v2\b[\s\S]*?<\/renderer-v2>/)?.[0];
+    if (!rendu) return ['<renderer-v2> absent'];
+    const marqueurs = [...rendu.matchAll(/<symbol\b[^>]*>/g)].map((m) => attrs(m[0])).filter((a) => a.type === 'marker');
     if (marqueurs.length !== 1) return [`${marqueurs.length} symbole(s) de type marker, attendu 1`];
-    const s = c.brut.match(/<layer\b[^>]*class="SimpleMarker"[^>]*>([\s\S]*?)<\/layer>/);
+    const s = rendu.match(/<layer\b[^>]*class="SimpleMarker"[^>]*>([\s\S]*?)<\/layer>/);
     if (!s) return ['aucune couche de symbole SimpleMarker'];
     const o = options(s[1]), d = [];
     if (o.name !== 'circle') d.push(`forme = ${o.name}, attendu circle`);
@@ -357,6 +364,9 @@ const symbole = (o) => `<renderer-v2 type="singleSymbol" symbollevels="0" forcer
   `<layer class="SimpleMarker" enabled="1" locked="0" pass="0"><Option type="Map"><Option name="angle" value="0" type="QString"/><Option name="color" value="${o.couleur ?? '0,0,0,255,rgb:0,0,0,1'}" type="QString"/>` +
   `<Option name="name" value="${o.forme ?? 'circle'}" type="QString"/><Option name="outline_color" value="35,35,35,255,rgb:0.137,0.137,0.137,1" type="QString"/><Option name="size" value="${o.taille ?? '2'}" type="QString"/>` +
   `<Option name="size_unit" value="${o.uniteTaille ?? 'MM'}" type="QString"/></Option></layer></symbol></symbols></renderer-v2>`;
+const PARASITE = (c) => `<symbol type="marker" name="markerSymbol" alpha="1"><layer class="SimpleMarker" enabled="1"><Option type="Map"><Option name="color" value="${c}" type="QString"/><Option name="name" value="square" type="QString"/><Option name="size" value="5" type="QString"/></Option></layer></symbol>`;
+// QGIS 3.x : symbole marker dans le fond d'étiquette, et symbole de sélection hors du rendu
+const PARASITES = `<parasites><background shapeDraw="0">${PARASITE('255,0,0,255')}</background></parasites><selection>${PARASITE('0,255,255,255')}</selection>`;
 const echapper = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&apos;').replace(/</g, '&lt;');
 const etiquette = (o) => (o.sansEtiquette ? '' : `<labeling type="simple"><settings calloutType="simple"><text-style fontSize="${o.police ?? 8}" fontSizeUnit="${o.unitePolice ?? 'Point'}" textColor="${o.couleurTexte ?? '0,0,0,255,rgb:0,0,0,1'}" ` +
   `fieldName="${echapper(o.expression ?? ETIQUETTE)}" isExpression="1" fontFamily="Sans Serif">` +
@@ -366,7 +376,7 @@ function coucheSaisie(o = {}) {
   return `<maplayer type="vector" geometry="${o.geometry ?? 'Point'}" labelsEnabled="${o.etiquettesActives ?? 1}" ${o.attrCouche ?? ''}>` +
     `<id>${ID}</id><datasource>${(o.source ?? './saisie.gpkg|layername=saisie_terrain').replace(/&/g, '&amp;')}</datasource><layername>${o.nom ?? NOM_COUCHE}</layername>` +
     `<srs><spatialrefsys><authid>${o.srs ?? 'EPSG:2154'}</authid></spatialrefsys></srs><provider encoding="UTF-8">${o.fournisseur ?? 'ogr'}</provider>` +
-    symbole(o) + etiquette(o) +
+    symbole(o) + etiquette(o) + (o.parasites ? PARASITES : '') +
     `<editable><field name="fid" editable="0"/><field name="essence" editable="${o.essenceEditable ?? 1}"/><field name="diametre" editable="1"/><field name="remarque" editable="1"/><field name="date" editable="${o.dateEditable ?? 1}"/></editable>` +
     `<defaults><default field="fid" expression="" applyOnUpdate="0"/>${defaut}</defaults>${o.dansCouche ?? ''}</maplayer>`;
 }
@@ -421,11 +431,21 @@ test("garde-fou GeoPackage : un fichier qui n'est pas SQLite est refusé", () =>
   assert.ok(defautsGpkg(f).some((x) => x.includes('SQLite')));
 });
 
+test('garde-fou chemin : un dossier avec espace et accent est lu (fileURLToPath, pas .pathname)', () => {
+  const dossier = join(tmp, 'racine é x'); mkdirSync(dossier);
+  copyFileSync(fabriquerGpkg(), join(dossier, 'saisie.gpkg'));
+  const racine = racineDepuis(dossier);
+  assert.notEqual(new URL('saisie.gpkg', racine).pathname, join(dossier, 'saisie.gpkg'), 'précondition : .pathname est encodé');
+  assert.ok(existsSync(cheminGpkg(racine)));
+  assert.deepEqual(defautsGpkg(cheminGpkg(racine)), []);
+});
+
 // --- Garde-fous projet ------------------------------------------------------------------------------------------------
 test('garde-fou projet : un projet conforme (fixture) ne donne aucun défaut', () => {
   assert.deepEqual(defautsQgs(projetFixture()), []);
 });
 const variantesAdmises = {
+  'symboles marker parasites (fond d\'étiquette, sélection) hors du rendu': { parasites: true },
   'source sans « ./ »': { source: 'saisie.gpkg|layername=saisie_terrain' },
   'défaut NOW( ) avec espaces et casse': { defaut: ' NOW( ) ' },
   'couleurs en hexadécimal et sans suffixe rgb:': { couleur: '#000000', couleurTexte: '0,0,0,255', couleurLisere: '#ffffff' },
@@ -493,7 +513,7 @@ for (const [nom, [o, attendu]] of Object.entries(fautesQgs)) {
 // =====================================================================================================
 function gpkgReel() {
   assert.ok(existsSync(CHEMIN_GPKG), "saisie.gpkg absent à la racine du dépôt (à côté de cerf.qgz) : rouge attendu jusqu'à la mission 021");
-  return CHEMIN_GPKG.pathname;
+  return cheminGpkg(RACINE);
 }
 function qgsReel() {
   assert.ok(existsSync(CHEMIN_QGZ), 'cerf.qgz absent à la racine du dépôt');

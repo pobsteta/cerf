@@ -1,0 +1,7 @@
+[general]
+name=Cerf
+description=Ajoute sur le terrain depuis un zip des couches GeoJSON en lecture seule dans un projet Cerf (cerf_id) et les recharge à chaque ouverture (squelette de la mission 008).
+author=Pascal Obstétar
+version=0.1.1
+icon=icon.svg
+homepage=https://github.com/pobsteta/cerf

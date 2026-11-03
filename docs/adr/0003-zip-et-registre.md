@@ -7,7 +7,7 @@
 
 ## La décision en une phrase
 
-Le plugin copie le zip choisi dans `Imported Datasets/cerf/<cerf_id>/`, hors du dossier
+Le plugin copie le zip choisi dans `<dossier du projet>/cerf-imports/` (repli du 3 novembre 2026, voir en fin d'ADR) — à l'origine `Imported Datasets/cerf/<cerf_id>/`, hors du dossier
 projet, lit les couches **dans** le zip par `/vsizip/` sans le décompresser, et tient un
 registre JSON dans les réglages de QField sous la clé `cerf/<cerf_id>`, rechargé à la fin
 de chaque ouverture de projet.
@@ -68,6 +68,14 @@ Sur le Samsung de Pascal : un zip copié **hors du dossier projet** se liste (9 
 9) ; il s'efface par `platformUtilities.rmFile` (`FileUtils.deleteFiles` refuse les
 `.zip`). La décision ci-dessus tient sans repli. Reste ouvert : dépendre de `rmFile`
 (spec § 10), à trancher par Pascal dans une ADR.
+
+## Repli appliqué (3 novembre 2026)
+
+À l'essai du squelette, QField v4.3.7 refuse à un plugin de lire une copie hors du dossier
+projet. Pascal applique le repli de la spec § 9 n° 1 : copies dans
+`<dossier du projet>/cerf-imports/` ; Cerf n'est pas utilisé avec QFieldCloud. Valeur
+sacrifiée ajoutée : la compatibilité QFieldCloud, et la survie des copies à la suppression
+du projet.
 
 ## Question de contrôle
 

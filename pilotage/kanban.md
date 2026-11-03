@@ -6,7 +6,7 @@
 > colonne ; on change ce numéro chaque fois qu'elle change de colonne.
 > **Une carte qui ne bouge pas est souvent la mauvaise nouvelle à dire tout de suite.**
 
-**Dernier cycle :** 4 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
+**Dernier cycle :** 5 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
 rien lancé. Une carte est immobile quand dernier cycle − N ≥ 2.)_
 
 _Modèle de carte :_
@@ -137,3 +137,4 @@ l'inscrit avec ce qu'elle nous apprend._
 - cycle 2 · mauvaise nouvelle : trois missions prêtes (019, 002, 003) mais aucune fusionnée ; le goulet est la relecture, pas la production · pour Pascal · elle nous apprend « le rythme avant l'ambition » : réduire la voilure et faire relire avant de produire
 - cycle 3 · livraison : les deux URL XYZ vérifiées des fonds IGN (Plan IGN v2, BD ORTHO, zoom maximal 19, `docs/referentiels/fonds-ign.md`), à coller à la main dans QField · pour JFC · premier élément du brief qu'un agent de terrain peut prendre en main : les fonds IGN en flux, sans les 700 Mo de fonds embarqués
 - cycle 4 · livraison : le projet modèle cerf.qgz (fonds IGN en flux dans le groupe « Fonds de carte », Lambert 93, cerf_id), importable par URL dans QField depuis la release prototype-1 · pour JFC · un projet tout prêt, vu ouvert sur le Samsung de Pascal, au lieu de deux URL à coller à la main
+- cycle 5 · livraison : les zips de recette piege et lourd, rejouables par outils/zips-recette.mjs, à ouvrir dans QGIS · pour Pascal · de quoi juger le futur plugin sur les pièges et la charge, là où le cycle 4 livrait le projet

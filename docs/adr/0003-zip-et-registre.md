@@ -30,7 +30,7 @@ pour un zip sans projet). Clé du registre : nom du fichier projet (fragile) ou
 |---|---|---|---|---|
 | **F**rugale | Plus simple ? | Recopier deux mécanismes existants. | — | oui |
 | **R**esponsable | Qui fait quoi ? | Le plugin seul ; la notice dit de changer `cerf_id` quand on copie le projet. | Une consigne de plus. | à trancher par Pascal |
-| **A**nticiper | Imprévu ? | Zip disparu → message, entrée retirée. QField désinstallé → tout perdu, zip d'origine chez JFC. | Ré-import. | oui (lecture seule) |
+| **A**nticiper | Imprévu ? | Zip disparu → message, entrée gardée au registre (spec § 3.3, corrigé le 3 novembre 2026). QField désinstallé → tout perdu, zip d'origine chez JFC. | Ré-import. | oui (lecture seule) |
 | **N**ovateur | Idées écoutées ? | Trois lectures, deux clés. | — | — |
 | **C**oût | Dépense inutile ? | Pas de décompression : pas de double stockage. | GeoTIFF lourd lu lentement dans un zip. | à mesurer (prototype) |
 | **É**cologique | Réutilisation ? | Registre et lecteur réutilisables par d'autres projets. | — | — |

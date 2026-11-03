@@ -97,7 +97,8 @@ QFieldCloud (spec § 3.3 et § 10, ADR 0003 et 0007). Réalisé en Cerf 0.1.1 (9
 - **Release `plugin-v<version>` sur `main` seulement si `plugin/` a changé** dans le push :
   oui (aller-retour 2/3). Harnais étendu par l'orchestrateur pour cette décision :
   `outils/decider-release.mjs` et `tests/decider-release.test.mjs`.
-- **À confirmer par Pascal** : la règle ajoutée par le dev « dans le doute (premier push,
+- **Confirmée par Pascal le 3 novembre 2026** : la règle ajoutée par le dev « dans le doute (premier push,
   push forcé, diff impossible), on publie ».
 - Saisie dans les couches importées : non (lecture seule maintenue) ; la saisie passe par la
   couche « Saisie terrain » du projet modèle (missions 020 et 021).
+- **Essai de la 0.1.1 sur le Samsung** : réussi (Pascal, 3 novembre 2026) ; fusion décidée.

@@ -81,3 +81,10 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 ## Comment saura-t-on que ça marche ?
 
 après redémarrage du Samsung, la couche est toujours là.
+
+## Changement de cap du 3 novembre 2026 (Pascal)
+
+La décision 3 ci-dessus (« sans coder le repli de la spec § 9 n° 1 ») est **remplacée** : après
+l'essai de Cerf 0.1.0 sur le Samsung (QField v4.3.7, lecture refusée hors du dossier projet),
+Pascal applique le repli. Les copies vont dans `<dossier du projet>/cerf-imports/`, sans
+QFieldCloud (spec § 3.3 et § 10, ADR 0003 et 0007). Réalisé en Cerf 0.1.1 (9db6c0d).

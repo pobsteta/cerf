@@ -5,14 +5,21 @@
 # Déclencheurs :
 #  - push sur mission/021-couche-saisie : préversion « projet-modele-essai », écrasée à chaque push,
 #    pour l'essai de Pascal avant fusion ;
-#  - push sur main : release « projet-modele-<date>-<sha court> » (une par changement de cerf.qgz,
-#    saisie.gpkg ou outils/zips-projet-modele.mjs) ; lancement manuel sur main : idem.
+#  - push sur main : release à étiquette FIXE « projet-modele », écrasée à chaque version (suppression
+#    puis recréation, comme « plugin-essai ») ; URLs stables :
+#      https://github.com/pobsteta/cerf/releases/download/projet-modele/cerf-projet-modele.zip
+#      https://github.com/pobsteta/cerf/releases/download/projet-modele/cerf-projet-modele-premiere-installation.zip
+#    la date et le sha du commit sont dans les notes. Lancement manuel sur main : idem.
+#  - Cette release n'est JAMAIS « latest » (--latest=false) : « releases/latest/download/cerf.zip »
+#    (URL stable du plugin, mission 008) doit continuer à désigner la release du plugin.
 # Les zips sont fabriqués ici par outils/zips-projet-modele.mjs (testé) ; leur sha256 est écrit dans les
 # notes. Aucune clé, aucun secret : le jeton du dépôt suffit. Ce workflow ne touche pas au plugin
 # (release-plugin.yml) ni à outils/decider-release.mjs.
 name: Release du projet modèle
 on:
   push:
+    # La branche mission/021-couche-saisie ne sert qu'à l'essai avant fusion : son déclencheur sera
+    # retiré après la fusion de la mission 021.
     branches: ['main', 'mission/021-couche-saisie']
     paths: ['cerf.qgz', 'saisie.gpkg', 'outils/projet-modele.mjs', 'outils/zips-projet-modele.mjs', '.github/workflows/release-projet-modele.yml']
   workflow_dispatch:
@@ -47,6 +54,8 @@ jobs:
           {
             echo "Projet modèle Cerf (cerf.qgz) et couche « Saisie terrain » (saisie.gpkg)."
             echo
+            echo "Version du $(date -u +%Y-%m-%d), commit ${GITHUB_SHA}."
+            echo
             echo "- Première installation sur un appareil : cerf-projet-modele-premiere-installation.zip (cerf.qgz + saisie.gpkg vide)."
             echo "- Mise à jour d'un appareil déjà en service : cerf-projet-modele.zip (cerf.qgz seul). Ne jamais recopier un saisie.gpkg vide par-dessus un saisie.gpkg déjà rempli."
             echo
@@ -55,13 +64,16 @@ jobs:
             echo '```'
           } > notes.md
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            etiquette="projet-modele-$(date -u +%Y%m%d)-${GITHUB_SHA::7}"
-            gh release create "$etiquette" dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
-              --target "$GITHUB_SHA" --title "Projet modèle Cerf $etiquette" --notes-file notes.md
+            # Étiquette fixe : on supprime la release et son étiquette, puis on recrée sur le commit courant.
+            if gh release view projet-modele >/dev/null 2>&1; then
+              gh release delete projet-modele --cleanup-tag --yes
+            fi
+            gh release create projet-modele dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
+              --target "$GITHUB_SHA" --title "Projet modèle Cerf" --notes-file notes.md --latest=false
           elif gh release view projet-modele-essai >/dev/null 2>&1; then
             gh release upload projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip --clobber
-            gh release edit projet-modele-essai --notes-file notes.md
+            gh release edit projet-modele-essai --notes-file notes.md --latest=false
           else
             gh release create projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
-              --target "$GITHUB_SHA" --title "Projet modèle, essai avant fusion" --notes-file notes.md --prerelease
+              --target "$GITHUB_SHA" --title "Projet modèle, essai avant fusion" --notes-file notes.md --prerelease --latest=false
           fi

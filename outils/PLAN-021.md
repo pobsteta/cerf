@@ -252,13 +252,18 @@ retirable, R-tree omis, `TEXT` sans longueur, notice laissée à la mission 018.
    QGIS le confirmera.
 5. **Tests ajoutés** : `tests/outil-saisie-gpkg.test.mjs` (6) et `tests/zips-projet-modele.test.mjs` (8) ; suite entière :
    378 tests, 0 échec.
-6. **Workflow** : `release-projet-modele.yml`. Étiquette d'essai `projet-modele-essai` (préversion, écrasée) ; sur `main`,
-   étiquette `projet-modele-<AAAAMMJJ>-<sha7>` (pas de numéro de version à maintenir). Il rejoue `node --test` avant de publier.
-   **Point à trancher par Pascal** : `release-plugin.yml` publie encore, lui aussi, un `cerf-projet-modele.zip` (cerf.qgz seul)
-   dans ses releases, et la dernière release créée devient « latest » : l'URL `…/releases/latest/download/cerf-projet-modele.zip`
-   pointe donc sur l'une ou l'autre selon la dernière publication. Les deux contiennent le même `cerf.qgz` seul, donc
-   sans danger pour les saisies, mais le zip de première installation n'existe que dans les releases du projet modèle.
-   Je n'ai pas touché `release-plugin.yml` (hors harnais) : à retirer de ce workflow, dans une mission à part.
+6. **Workflow** : `release-projet-modele.yml`. Il rejoue `node --test` avant de publier. Révisé après relecture
+   (décisions de Pascal) : la release du projet modèle n'est **jamais « latest »** (`--latest=false` à la création et à
+   l'édition), pour que `releases/latest/download/cerf.zip` (URL stable du plugin, mission 008) continue de marcher.
+   Sur `main`, **étiquette fixe `projet-modele`**, écrasée à chaque version (release et étiquette supprimées puis recréées,
+   comme `plugin-essai`) ; date et sha du commit dans les notes. URLs stables :
+   `https://github.com/pobsteta/cerf/releases/download/projet-modele/cerf-projet-modele.zip` (mise à jour) et
+   `https://github.com/pobsteta/cerf/releases/download/projet-modele/cerf-projet-modele-premiere-installation.zip`.
+   Sur la branche : préversion `projet-modele-essai`, écrasée, elle aussi `--latest=false`. Le déclencheur de la branche
+   `mission/021-couche-saisie` est gardé jusqu'à la fusion (commentaire dans le workflow : à retirer ensuite).
+   **Reste à faire, mission à part** : `release-plugin.yml` publie encore un `cerf-projet-modele.zip` (cerf.qgz seul) dans
+   ses releases ; il est sans danger pour les saisies, mais fait doublon avec l'URL stable ci-dessus : à retirer de ce
+   workflow (hors harnais ici, je n'y ai pas touché).
 
 **Ce que seuls QGIS sur PC et le Samsung prouveront :** voir le tableau des risques du § 5 (GDAL lit-il le GeoPackage sans
 R-tree ; contrainte bloquante dans QField ; `now()` rempli seul et fuseau ; widgets au doigt ; copie à chaud / WAL ;

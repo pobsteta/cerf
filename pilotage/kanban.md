@@ -6,7 +6,7 @@
 > colonne ; on change ce numéro chaque fois qu'elle change de colonne.
 > **Une carte qui ne bouge pas est souvent la mauvaise nouvelle à dire tout de suite.**
 
-**Dernier cycle :** 3 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
+**Dernier cycle :** 4 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
 rien lancé. Une carte est immobile quand dernier cycle − N ≥ 2.)_
 
 _Modèle de carte :_
@@ -27,18 +27,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [004-prototype-1](missions/004-prototype-1.md) · depuis le cycle 0
-  - Homme : `dev` (opus)
-  - Mission : Prototype n° 1 : ce que QField permet à un plugin — cycle prévu 2
-  - Moyens : ADR 0001, 0003, 0005 
-- [005-tests-projet-modele](missions/005-tests-projet-modele.md) · depuis le cycle 0
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests du projet modèle — cycle prévu 2
-  - Moyens : `docs/spec.md` § 2, § 3.3, § 3.4 
-- [006-projet-modele](missions/006-projet-modele.md) · depuis le cycle 0
-  - Homme : `dev` (sonnet)
-  - Mission : Projet modèle cerf.qgz — cycle prévu 2
-  - Moyens : référentiel 001, ADR 0002, spec § 2 et § 3.3
 - [007-tests-squelette](missions/007-tests-squelette.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du squelette du plugin — cycle prévu 3
@@ -88,12 +76,27 @@ _Modèle de carte :_
 
 ## Terminé
 
-- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 3 · relue « prêt » (aller-retour 1/3), PR #5
+- [006-projet-modele](missions/006-projet-modele.md) · depuis le cycle 4 · PR #8 fusionnée ; ouvert dans QField
+  - Homme : `dev` (sonnet)
+  - Mission : Projet modèle cerf.qgz — cycle prévu 2
+  - Moyens : référentiel 001, ADR 0002, spec § 2 et § 3.3
+
+- [005-tests-projet-modele](missions/005-tests-projet-modele.md) · depuis le cycle 4 · PR #7 fusionnée (avec #8)
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests du projet modèle — cycle prévu 2
+  - Moyens : `docs/spec.md` § 2, § 3.3, § 3.4 
+
+- [004-prototype-1](missions/004-prototype-1.md) · depuis le cycle 4 · PR #9 fusionnée ; essai réussi sur le Samsung
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 1 : ce que QField permet à un plugin — cycle prévu 2
+  - Moyens : ADR 0001, 0003, 0005 
+
+- [001-fonds-ign](missions/001-fonds-ign.md) · depuis le cycle 3 · PR #5 fusionnée
   - Homme : `acquereur` (sonnet)
   - Mission : Référentiel des fonds IGN — cycle prévu 1
   - Moyens : `docs/spec.md` § 3.4, ADR 0002, https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetCapabilities
 
-- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 2 · relue « prêt », PR #4 à relire par Pascal
+- [003-protocole-prototype](missions/003-protocole-prototype.md) · depuis le cycle 2 · PR #4 fusionnée
   - Homme : `testeur` (sonnet)
   - Mission : Protocole d'essai du prototype n° 1 — cycle prévu 1
   - Moyens : `docs/spec.md`, ADR 0003, ADR 0005, `pilotage/journal.md` (critique du 2 novembre)
@@ -133,3 +136,4 @@ l'inscrit avec ce qu'elle nous apprend._
 - cycle 1 · mauvaise nouvelle : deux missions sur trois (001, 002) sans moyens, faute d'avoir vérifié les outils des agents et le réseau à la porte n° 2 · pour Pascal · elle nous apprend qu'à la porte n° 2, la troisième question se vérifie par un essai (outils de l'agent, domaine joignable)
 - cycle 2 · mauvaise nouvelle : trois missions prêtes (019, 002, 003) mais aucune fusionnée ; le goulet est la relecture, pas la production · pour Pascal · elle nous apprend « le rythme avant l'ambition » : réduire la voilure et faire relire avant de produire
 - cycle 3 · livraison : les deux URL XYZ vérifiées des fonds IGN (Plan IGN v2, BD ORTHO, zoom maximal 19, `docs/referentiels/fonds-ign.md`), à coller à la main dans QField · pour JFC · premier élément du brief qu'un agent de terrain peut prendre en main : les fonds IGN en flux, sans les 700 Mo de fonds embarqués
+- cycle 4 · livraison : le projet modèle cerf.qgz (fonds IGN en flux dans le groupe « Fonds de carte », Lambert 93, cerf_id), importable par URL dans QField depuis la release prototype-1 · pour JFC · un projet tout prêt, vu ouvert sur le Samsung de Pascal, au lieu de deux URL à coller à la main

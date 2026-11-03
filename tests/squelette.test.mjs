@@ -23,7 +23,7 @@
 //   cleRegistre(cerfId) -> 'cerf/<cerf_id>'
 //   dossierCopies(dossierApp, cerfId) -> '<app>/Imported Datasets/cerf/<cerf_id>'
 //   cheminCopie(dossierApp, cerfId, nomZip) -> '<dossierCopies>/<nomZip>'
-//   listerZip(octets) -> string[]                    noms des entrées, dans l'ordre du zip
+//   nomsDuZip(octets) -> string[]                    noms des entrées, dans l'ordre du zip
 //   couchesDuZip(noms) -> [{ couche, entree }]       couches GeoJSON seulement (squelette)
 //   lireRegistre(reglages, cerfId) -> entrée[]
 //   inscrire(reglages, cerfId, entrée) -> void       remplace l'entrée de même (zip, couche)
@@ -203,22 +203,22 @@ test('copies : <application>/Imported Datasets/cerf/<cerf_id>/<zip>', async () =
 // ============================================================================================
 test('liste d\'un zip : les 9 entrées de essai.zip, depuis un Buffer et depuis un ArrayBuffer', async () => {
   const m = await M();
-  assert.deepEqual([...await attendre(m.listerZip(octetsEssai))], NOMS_ESSAI);
+  assert.deepEqual([...await attendre(m.nomsDuZip(octetsEssai))], NOMS_ESSAI);
   const ab = octetsEssai.buffer.slice(octetsEssai.byteOffset, octetsEssai.byteOffset + octetsEssai.byteLength);
-  assert.deepEqual([...await attendre(m.listerZip(ab))], NOMS_ESSAI);
+  assert.deepEqual([...await attendre(m.nomsDuZip(ab))], NOMS_ESSAI);
 });
 
 test('liste d\'un zip fait « à la Windows » (CP437) : nom accentué lu correctement (spec § 3.1)', async () => {
   const m = await M();
-  assert.deepEqual([...await attendre(m.listerZip(octetsCp437))], ['forêt/parcelle_é.txt']);
+  assert.deepEqual([...await attendre(m.nomsDuZip(octetsCp437))], ['forêt/parcelle_é.txt']);
 });
 
 test('saisie incomplète : octets qui ne sont pas un zip, ou zip tronqué -> erreur, pas de liste fausse', async () => {
   const m = await M();
   const faux = Buffer.from('ceci n\'est pas un zip');
-  await assert.rejects(async () => { await m.listerZip(faux); }, (err) => err instanceof Error && err.message.length > 0);
+  await assert.rejects(async () => { await m.nomsDuZip(faux); }, (err) => err instanceof Error && err.message.length > 0);
   const tronque = octetsEssai.subarray(0, octetsEssai.length - 10);
-  await assert.rejects(async () => { await m.listerZip(tronque); }, (err) => err instanceof Error && err.message.length > 0);
+  await assert.rejects(async () => { await m.nomsDuZip(tronque); }, (err) => err instanceof Error && err.message.length > 0);
 });
 
 test('couches du zip (squelette) : seul le GeoJSON, nom sans extension, casse ignorée (spec § 3.1)', async () => {
@@ -678,7 +678,7 @@ test('ADR 0005 : plugin/cerf-logique.mjs existe, sans .pragma ni .import, et se 
   const src = readFileSync(MODULE, 'utf8');
   assert.ok(!/^\s*\.pragma\b/m.test(src), '.pragma interdit (ADR 0005)');
   assert.ok(!/^\s*\.import\b/m.test(src), '.import interdit (ADR 0005)');
-  for (const nom of ['estProjetCerf', 'lireCerfId', 'cleRegistre', 'dossierCopies', 'cheminCopie', 'listerZip',
+  for (const nom of ['estProjetCerf', 'lireCerfId', 'cleRegistre', 'dossierCopies', 'cheminCopie', 'nomsDuZip',
     'couchesDuZip', 'lireRegistre', 'inscrire', 'retirer', 'importerZip', 'demarrerProjet', 'retirerCouche',
     'peutEffacer', 'effacerCopie']) {
     assert.equal(typeof m[nom], 'function', `export manquant : ${nom}`);

@@ -20,6 +20,23 @@
 
 **Temps de la main :** tenir — premier code du plugin, il fixe la structure.
 
+## Décisions de Pascal sur le plan
+
+Plan `plugin/PLAN.md` (commit `9216ca0`) **validé par Pascal le 3 novembre 2026**, avec ces
+réponses aux sept questions du § 10 du plan (transmises par l'orchestrateur) :
+
+1. **Harnais étendu** à `tests/plugin.test.mjs` et `.github/workflows/release-plugin.yml`.
+2. **Mise en ligne** : préversion `plugin-essai` sur la branche de la mission,
+   `plugin-v<version>` sur `main`, URL stable `releases/latest/download/cerf.zip`.
+3. **Lecture hors du dossier projet refusée** : détecter et le dire (avec la version de
+   QField), sans coder le repli de la spec § 9 n° 1.
+4. **Même nom de couche dans deux dossiers d'un zip** : la seconde est refusée, avec un
+   message.
+5. **Entrée douteuse du registre vue à l'ouverture** : retirée aussitôt, sans rien effacer,
+   et annoncée dans le message.
+6. **Plafond de 10 Mo** pour le listage d'un zip, avec un message clair au-delà.
+7. **`__MACOSX/` et `._*`** : ignorés en silence.
+
 ## Ma réponse d'abord
 
 _Rempli par Pascal seul, avant de lire le travail de l'agent._

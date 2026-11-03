@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Fabriquer par script les zips `piege` et `lourd` de la spec § 6, pour que les critères 6 et 7 se rejouent à l'identique.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire un script rejouable qui fabrique `piege.zip` (cinq pièges : GeoJSON L93 sans `crs`, Shapefile sans `.prj`, GeoTIFF sans géoréférencement, nom non reconnu, couche vide) et `lourd.zip` (GeoTIFF de 200 Mo stocké sans compression + GeoPackage de deux couches), pour rejouer à l'identique les critères 6 et 7 de la spec § 6.
 
 ## Les trois questions (règle de staffing)
 

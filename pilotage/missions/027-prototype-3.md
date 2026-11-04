@@ -101,3 +101,25 @@ en méthode 8, ancien zip inchangé). À reprendre :
     choisir « Attendre » si Android le propose.
 11. Bouton 0b en échec : « essai raté » partout, capture, s'arrêter ; couvrir « le zip compressé
     n'est pas là » dans la définition d'« essai raté ».
+
+## Résultat de l'essai (Pascal, Samsung, QField 4.3.7, prototype 2.3.0, 4 novembre 2026)
+
+Essai fait pas à pas, en mode avion, avec `essai-styles-z.zip` (8 entrées compressées).
+
+| Réponse | Question | Résultat |
+|---|---|---|
+| 0b | zip compressé copié, non extrait | **oui** (8 entrées compressées) |
+| P3-1 | Shapefile compressé réécrit par `saveVectorLayerAs` | **oui** (« Étang », « Forêt » lus) |
+| P3-2a | copie stylée par le `.qml` écrit par le plugin : couleurs | **oui** (contour vert-bleu) |
+| P3-3a / P3-3b | GeoPackage à deux tables, un fichier et un style par table | **oui / oui** (Parcelles orange, Zones bleues) |
+| P3-4a / P3-4b | GeoJSON compressé réécrit et stylé | **oui / oui** (UG bleu, étiquettes) |
+| P3-5 | annexes effacées après retrait | **oui** (« tout effacé ») |
+| P3-6 | durées : médiane du bouton 12 affichée | **oui** (valeurs à relever) |
+
+À compléter par Pascal : étiquettes de P3-2b et P3-3 ; nombre de fichiers présents et annexes vues
+(P3-5) ; durées du 9b et totaux du 12.
+
+**Conséquence, à trancher par Pascal :** la voie « ouvrir en `/vsizip/`, réécrire par
+`saveVectorLayerAs` dans `cerf-imports/`, écrire le `.qml`, charger » tient sur le Samsung pour
+les Shapefile, GeoPackage et GeoJSON compressés : le décompresseur de la mission 026 n'est plus
+nécessaire pour les vecteurs.

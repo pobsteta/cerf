@@ -48,7 +48,9 @@ les agents doivent garder en tête.
   refusée avec un message clair. Attention : un GeoJSON sans membre `crs` est lu en WGS84
   (RFC 7946), un Shapefile sans `.prj` peut recevoir un système en silence.
 - **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile complet (`.shp`,
-  `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF, lus tels quels dans le zip (`/vsizip/`).
+  `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF ; les couches vecteur sont ouvertes dans le zip, contrôlées, puis réécrites en
+  GeoPackage dans `cerf-imports/` avec leur style à côté ; les GeoTIFF restent lus dans le zip
+  (`/vsizip/`) (ADR 0008).
 - **Plugin** : plugin QField d'application, GPL-3.0-or-later, code écrit pour Cerf (rien
   de recopié) ; un seul `cerf.qgz` par appareil ; registre à clé `cerf_id` ; copies dans
   `<dossier du projet>/cerf-imports/` (QField refuse la lecture hors du projet ; pas de

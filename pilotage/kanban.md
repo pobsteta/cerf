@@ -20,7 +20,7 @@ _Modèle de carte :_
 
 ## Bac à sable
 
-- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · à valider
+- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · en attente du prototype n° 3
   - Homme : `testeur` puis `dev` (opus)
   - Mission : Décompresseur deflate en JavaScript pour les zips de JFC
   - Moyens : RFC 1951, node:zlib comme oracle
@@ -58,6 +58,10 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · lancée (plan)
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
+  - Moyens : prototype n° 2, sources QField
 - [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · validée, lancée (plan)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML

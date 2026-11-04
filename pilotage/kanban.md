@@ -27,14 +27,10 @@ _Modèle de carte :_
 
 ## Validé
 
-- [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · validée par Pascal le 4 novembre, après la 037
-  - Homme : `dev` (sonnet)
-  - Mission : Compter les entités par un itérateur (plugin 0.3.4)
-  - Moyens : prototype n° 2 (createFeatureIterator), Cerf.qml
-- [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
-  - Homme : `dev` (sonnet)
-  - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)
-  - Moyens : prototype n° 2 (reprojection prouvée), Cerf.qml
+- [039-readme](missions/039-readme.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `archiviste` (sonnet)
+  - Mission : README : installer le projet, le plugin, et charger un zip
+  - Moyens : spec, releases, journal
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
@@ -65,6 +61,14 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · fusionnée (PR #35), plugin 0.3.4
+  - Homme : `dev` (sonnet)
+  - Mission : Compter les entités par un itérateur (plugin 0.3.4)
+  - Moyens : prototype n° 2 (createFeatureIterator), Cerf.qml
+- [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · fusionnée (PR #34), plugin 0.3.3
+  - Homme : `dev` (sonnet)
+  - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)
+  - Moyens : prototype n° 2 (reprojection prouvée), Cerf.qml
 - [036-notes-essai-manuel](missions/036-notes-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #32)
   - Homme : `dev` (sonnet)
   - Mission : Notes de la préversion essai-manuel : plugin 0.3.2 ou plus

@@ -45,3 +45,7 @@ l'appareil ne garde pas de fichiers orphelins.
 - Effacement raté au retrait : « `Fichiers restés sur l'appareil : a.gpkg, a.qml.` » (noms
   réellement restés). À porter dans la spec § 9 n° 2 avec la PR de la mission.
 - Annexes : `<couche>.gpkg-wal`, `<couche>.gpkg-shm`, `<couche>.gpkg.aux.xml` (relevé P3-5 non noté).
+- **Réimport (4 novembre, « oui aux deux ») :** même message « `Fichiers restés sur l'appareil : …` »
+  si un fichier d'une couche sortie du registre résiste à l'effacement.
+- **Service `existe` absent :** rien n'est effacé et le message dit
+  « `Effacement non vérifiable : fichiers peut-être restés.` » (au retrait comme au réimport).

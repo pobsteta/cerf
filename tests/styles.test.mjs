@@ -12,7 +12,7 @@
 //     nom        : nom de la couche SANS extension (« Parcelles_serre » pour Parcelles_serre.gpkg)
 //     geometrie  : 'polygone' | 'point' | 'ligne' (les Multi* sont ramenées à leur type par l'appelant)
 //     champs     : tableau de noms RÉELS de champs (peut être absent ou vide). essence et diametre sont reconnus
-//                  sans tenir compte de la casse (ESSENCE, Diametre...).
+//                  sans tenir compte de la casse ni des accents (ESSENCE, Diametre, diamètre, DIAMÈTRE...).
 //     qml        : contenu du .qml de même nom trouvé dans le zip, ou absent/null
 //     regle      : 'UG' | 'Parcelles' | 'FRT' | 'ProdBois' | null (null = style par défaut de QGIS)
 //     source     : 'qml' | 'nom' | 'champs' | 'defaut'      (ordre de priorité du § 5)
@@ -26,7 +26,7 @@
 //   styleDe(regle, { champCode, champEssence, champDiametre }) -> style | null
 //     champCode : nom du champ de code (UG, Parcelles, FRT) ; sans effet pour ProdBois.
 //     champEssence, champDiametre : noms RÉELS des champs (ProdBois seulement), trouvés par l'appelant sans tenir
-//                  compte de la casse ; l'expression est "<champEssence>" || '\n' || "<champDiametre>". Absents :
+//                  compte de la casse ni des accents (le nom réel, accent compris, est conservé) ; l'expression est "<champEssence>" || '\n' || "<champDiametre>". Absents :
 //                  'essence' et 'diametre' (donc l'expression exacte de la spec).
 //     style = { symbole, etiquette } exactement comme les constantes ATTENDU et PRODBOIS ci-dessous.
 //
@@ -189,6 +189,20 @@ test('champs : essence et diametre reconnus sans tenir compte de la casse (ESSEN
   assert.deepEqual(reconnaitre(pts('Releves', ['essences', 'diametres'])), DEFAUT); // pas de correspondance partielle
 });
 
+test('champs : diamètre accentué (diamètre, DIAMÈTRE, Diamètre, éssence) reconnu comme diametre ; correspondance partielle refusée', async () => {
+  const { reconnaitre } = await M();
+  const PB = { regle: 'ProdBois', source: 'champs', avertissement: null };
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diamètre'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['ESSENCE', 'DIAMÈTRE'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['Diamètre', 'Essence', 'x'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['éssence', 'diametre'])), PB); // accent sur essence : même règle, sans coût
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diamètres'])), DEFAUT);
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diamètre_cm'])), DEFAUT);
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diamètr'])), DEFAUT);
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'mondiamètre'])), DEFAUT);
+  assert.deepEqual(reconnaitre(pts('Releves', ['diamètre', 'remarque'])), DEFAUT); // les DEUX restent exigés
+});
+
 test('champs : la règle ProdBois ne vaut que pour une couche ponctuelle', async () => {
   const { reconnaitre } = await M();
   assert.deepEqual(reconnaitre({ nom: 'Releves', geometrie: 'polygone', champs: ['essence', 'diametre'] }), DEFAUT);
@@ -275,6 +289,12 @@ test('style : l\'étiquette ProdBois reste celle du mail de JFC (|| et non conca
   const { styleDe } = await M();
   const e = styleDe('ProdBois', {}).etiquette.expression;
   assert.ok(e.includes('||') && !/concat/i.test(e), e);
+});
+
+test('style ProdBois : l\'étiquette garde le nom réel accentué (diamètre, DIAMÈTRE)', async () => {
+  const { styleDe } = await M();
+  assert.equal(styleDe('ProdBois', { champEssence: 'essence', champDiametre: 'diamètre' }).etiquette.expression, '"essence" || \'\\n\' || "diamètre"');
+  assert.equal(styleDe('ProdBois', { champEssence: 'ESSENCE', champDiametre: 'DIAMÈTRE' }).etiquette.expression, '"ESSENCE" || \'\\n\' || "DIAMÈTRE"');
 });
 
 test('style ProdBois : l\'étiquette utilise le nom réel des champs (ESSENCE, Diametre) ; minuscules = expression exacte de la spec', async () => {

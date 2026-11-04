@@ -275,10 +275,14 @@ function grandGeojson() {
 // Rend { entrees: [{ nom, donnees }], zip, gpkg } : essai-styles-z.zip, TOUTES les entrées
 // compressées (méthode 8), y compris le .gpkg (déjà un fichier SQLite : c'est le cas réel).
 export function fabriquerEssais3() {
-  const q7 = carres(800, 0); const q1 = carres(-800, 0);
+  // Emprises DÉCALÉES de 800 m vers le sud par rapport au prototype n° 2 (qui occupe dy = 0 et
+  // dy = 800) : aucune copie du prototype n° 3 au même endroit qu'une couche du prototype n° 2
+  // (sinon un faux « oui » : la couche d'avant serait prise pour la nouvelle). Zones : 800 m
+  // au sud de Parcelles.
+  const q7 = carres(800, -800); const q1 = carres(-800, -800);
   const gpkg = fabriquerGpkgTables([
-    { nom: 'Parcelles', anneaux: carres(0, 0), codes: ['P1', 'P2'] },
-    { nom: 'Zones', anneaux: carres(0, -800), codes: ['Z1', 'Z2'] },
+    { nom: 'Parcelles', anneaux: carres(0, -800), codes: ['P1', 'P2'] },
+    { nom: 'Zones', anneaux: carres(0, -1600), codes: ['Z1', 'Z2'] },
   ]);
   const f7 = shapefile(q7, ['FRT1', 'FRT2'], NOMS_FRT_Q7);
   const contenus = {

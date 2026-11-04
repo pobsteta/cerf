@@ -107,19 +107,54 @@ test('l\'ancien FRT_q7.dbf (zip stocké) garde son seul champ code_ug, sans acce
   assert.deepEqual(d.lignes.map((l) => l.code_ug), ['FRT1', 'FRT2']);
 });
 
-test('point du terrain : le premier sommet de FRT_q7.shp est en EPSG:2154, X (est) 1 051 763 puis Y (nord) 6 840 312, dans la France métropolitaine', () => {
+test('point du terrain : le premier sommet de FRT_q7.shp est en EPSG:2154, X (est) 1 051 763 puis Y (nord) 6 839 512, dans la France métropolitaine', () => {
   const shp = parNom['FRT_q7.shp'];
   assert.equal(shp.readInt32BE(0), 9994);
   assert.equal(shp.readInt32LE(32), 5, 'type polygone');
   // en-tête : Xmin, Ymin, Xmax, Ymax, en mètres, X (est) d'abord
   const [xmin, ymin, xmax, ymax] = [36, 44, 52, 60].map((o) => shp.readDoubleLE(o));
-  assert.deepEqual([xmin, ymin, xmax, ymax], [1051113 + 800 - 150, 6840462 - 150, 1051113 + 800 + 150, 6840462 + 350 + 150]);
+  assert.deepEqual([xmin, ymin, xmax, ymax], [1051113 + 800 - 150, 6840462 - 800 - 150, 1051113 + 800 + 150, 6840462 - 800 + 350 + 150]);
   assert.ok(L.empriseVraisemblable({ xMinimum: xmin, xMaximum: xmax, yMinimum: ymin, yMaximum: ymax }), 'emprise dans la France métropolitaine (EPSG:2154)');
   // premier sommet du premier anneau (anneau horaire : coin x0, y0)
   const x = shp.readDoubleLE(100 + 8 + 4 + 32 + 4 + 4 + 4);
   const y = shp.readDoubleLE(100 + 8 + 4 + 32 + 4 + 4 + 4 + 8);
   assert.equal(x, 1051763, 'X (est), EPSG:2154');
-  assert.equal(y, 6840312, 'Y (nord), EPSG:2154');
+  assert.equal(y, 6839512, 'Y (nord), EPSG:2154');
+});
+
+test('aucune couche du zip compressé n\'a la même emprise qu\'une couche du prototype n° 2 (pas de faux oui)', async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const cle = (b) => b.map((v) => Math.round(v)).join(',');
+  // emprises du prototype n° 2 : GeoJSON (UG_q1, Parcelles_q3 …) et Shapefile de l'ancien zip
+  const anciennes = new Set();
+  const ancien = F.fabriquerEssais();
+  for (const e of ancien.entrees) {
+    if (/\.geojson$/.test(e.nom)) {
+      for (const f of JSON.parse(e.donnees.toString('utf8')).features) {
+        const c = f.geometry.coordinates[0];
+        anciennes.add(cle([Math.min(...c.map((p) => p[0])), Math.min(...c.map((p) => p[1]))]));
+      }
+    }
+    if (e.nom === 'FRT_q7.shp') anciennes.add(cle([e.donnees.readDoubleLE(36), e.donnees.readDoubleLE(44)]));
+  }
+  const nouvelles = [];
+  const g = JSON.parse(parNom['UG_q1.geojson'].toString('utf8'));
+  for (const f of g.features) { const c = f.geometry.coordinates[0]; nouvelles.push(cle([Math.min(...c.map((p) => p[0])), Math.min(...c.map((p) => p[1]))])); }
+  const shp = parNom['FRT_q7.shp'];
+  nouvelles.push(cle([shp.readDoubleLE(36), shp.readDoubleLE(44)]));
+  const d = mkdtempSync(join(tmpdir(), 'cerf-p3-'));
+  try {
+    for (const [nom, donnees] of [['n.gpkg', parNom[L.NOM_GPKG2]], ['a.gpkg', ancien.gpkg]]) {
+      writeFileSync(join(d, nom), donnees);
+      const db = new DatabaseSync(join(d, nom), { readOnly: true });
+      try {
+        for (const r of db.prepare('SELECT min_x, min_y FROM gpkg_contents').all()) (nom === 'a.gpkg' ? anciennes : { add: (k) => nouvelles.push(k) }).add(cle([r.min_x, r.min_y]));
+      } finally { db.close(); }
+    }
+  } finally { rmSync(d, { recursive: true, force: true }); }
+  assert.ok(nouvelles.length >= 5 && anciennes.size >= 5);
+  for (const k of nouvelles) assert.ok(!anciennes.has(k), 'emprise déjà occupée par le prototype n° 2 : ' + k);
 });
 
 // ---------------------------------------------------------------- GeoPackage à deux tables
@@ -138,7 +173,7 @@ test('essai-gpkg2.gpkg : deux tables Parcelles et Zones (2 entités chacune, EPS
       assert.ok(tables.includes('Parcelles') && tables.includes('Zones'));
       assert.ok(!tables.includes('layer_styles'), 'le style ne doit venir que du .qml du plugin');
       assert.deepEqual(db.prepare('SELECT table_name, srs_id FROM gpkg_contents ORDER BY table_name').all().map((r) => [r.table_name, Number(r.srs_id)]), [['Parcelles', 2154], ['Zones', 2154]]);
-      for (const [t, codes, ymin] of [['Parcelles', ['P1', 'P2'], 6840312], ['Zones', ['Z1', 'Z2'], 6839512]]) {
+      for (const [t, codes, ymin] of [['Parcelles', ['P1', 'P2'], 6839512], ['Zones', ['Z1', 'Z2'], 6838712]]) {
         const lignes = db.prepare(`SELECT code_ug, geom FROM ${t} ORDER BY fid`).all();
         assert.deepEqual(lignes.map((r) => r.code_ug), codes, t);
         const g = Buffer.from(lignes[0].geom);
@@ -314,11 +349,16 @@ test('durées : texte en secondes et millisecondes, médiane, bilan du bouton 12
   assert.equal(L.medianeMs([4, 1, 3, 2]), 2.5);
   assert.equal(L.medianeMs([7]), 7);
   assert.match(L.bilanChrono([10000]).join('\n'), /Encore 2 appui\(s\)/);
-  assert.match(L.bilanChrono([10000, 20000, 30000]).join('\n'), /Médiane des trois derniers : 20 s \(20000 ms\) ; limite du brief 2 min : tenue/);
-  assert.match(L.bilanChrono([10000, 200000, 300000]).join('\n'), /NON tenue/);
+  assert.match(L.bilanChrono([10000, 20000, 30000]).join('\n'), /Médiane des trois derniers : 20 s \(20000 ms\) \(coût fixe par couche/);
+  // aucun verdict sur la règle des 2 minutes (le bouton 12 ne mesure pas Serre_EA2026)
+  for (const t of [[10000, 20000, 30000], [10000, 200000, 300000], [120000, 120000, 120000]]) {
+    const b = L.bilanChrono(t).join('\n');
+    assert.ok(!/tenue/i.test(b) && !/limite du brief/.test(b), b);
+    assert.match(b, /sans verdict sur la règle des 2 minutes/);
+  }
+  assert.equal(L.LIMITE_MS, undefined);
+  assert.equal(L.BOUTONS.B12, '12. Tout enchaîner : coût fixe par couche');
   assert.match(L.bilanChrono([500000, 10000, 20000, 30000]).join('\n'), /Médiane des trois derniers : 20 s/);
-  assert.equal(L.LIMITE_MS, 120000);
-  assert.match(L.bilanChrono([120000, 120000, 120000]).join('\n'), /: tenue/);
 });
 
 test('ligneSonde : taille ou « absent »', () => {
@@ -425,7 +465,7 @@ test('protocole : section « Prototype n° 3 », « essai raté » distinct de �
   assert.match(s, /mode avion/i);
   assert.match(s, /essai-styles-z\.zip/);
   assert.match(s, /\*\*8 entrées, toutes\s+compressées\*\*/);
-  for (const n of ['p3-q1-ecran.png', 'p3-q2-carte.png', 'p3-q3-ecran.png', 'p3-q3-carte.png', 'p3-q4-ecran.png', 'p3-q4-carte.png', 'p3-q5-ecran.png', 'p3-duree-9b.png', 'p3-duree-12.png']) {
+  for (const n of ['p3-q1-ecran.png', 'p3-q2-carte.png', 'p3-q3-ecran.png', 'p3-q3a-carte.png', 'p3-q3b-carte.png', 'p3-q4-ecran.png', 'p3-q4-carte.png', 'p3-q5-ecran.png', 'p3-duree-9b.png', 'p3-duree-12.png']) {
     assert.ok(s.includes(n), n);
     assert.ok(t.split('## Réponses')[1].includes(n), `${n} dans le tableau des réponses`);
   }
@@ -434,5 +474,10 @@ test('protocole : section « Prototype n° 3 », « essai raté » distinct de �
   }
   assert.match(s, /Étang/);
   assert.match(s, /Forêt/);
+  assert.match(s, /décaler|décalées de 800 m vers le sud/);
+  assert.match(s, /décocher/);
+  assert.match(s, /Bouton 0b en échec/);
+  assert.match(s, /coût fixe par couche/);
+  assert.doesNotMatch(s, /limite du brief 2 min : tenue/);
   assert.match(t, /Prototype n° 3 : qui fait quoi d'ici quand, et comment saura-t-on que ça marche \?/);
 });

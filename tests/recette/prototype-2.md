@@ -388,13 +388,23 @@ côté de la copie, avant son chargement. Si oui, la voie évite le décompresse
 ce qui est écrit dans « Résultat attendu » est vu tel quel ; sinon, écrire ce qu'on a vu dans
 « Vu autrement ». « Noté ☐ » : la valeur est écrite, rien de plus. La réponse oui / non s'écrit
 dans le tableau « Réponses » en fin de protocole.
-**« Essai raté » n'est pas « non »** : si la **source ne charge pas** (le bloc dit « ÉCHEC, essai
-raté : la source ne charge pas »), la question n'a pas été posée à QField : répondre « **essai
-raté** » (et non « non »), avec la capture de l'écran. **« Non »** veut dire : la source a chargé,
-et ce qui est attendu n'est pas vu. Un **échec muet** de `saveVectorLayerAs` (le bloc dit
-« ÉCHEC MUET : saveVectorLayerAs a rendu une chaîne vide ») est un **non** à la question 1
-(ou 4), pas un essai raté. Le fond du bloc de résultat devient **rouge pâle** dès qu'une ligne
-commence par « ÉCHEC ».
+**« Essai raté » n'est pas « non »** : la question n'a pas été posée à QField quand **la copie
+n'est pas chargée** : le zip compressé n'est pas là (le bloc dit « ÉCHEC, essai raté : le zip
+compressé n'est pas là »), la source ne charge pas (« ÉCHEC, essai raté : la source ne charge
+pas »), `saveVectorLayerAs` rend une chaîne vide (« ÉCHEC MUET »), ou le bloc dit « écrit : NON ».
+Dans ce cas, répondre « **essai raté** » (et non « non »), avec la capture de l'écran, **pour les
+questions de carte** (P3-2, P3-3, P3-4b). **Si la copie est chargée**, répondre d'après ce qu'on
+voit **sur la carte**, même si une ligne du bloc dit autre chose. Pour les questions de **fichier**
+(P3-1, P3-4a), une chaîne vide, « écrit : NON » ou un fichier sans octet est un **non** (la source a
+chargé, le fichier n'est pas écrit) ; seule une source qui ne charge pas, ou un zip absent, est un
+essai raté. Le fond du bloc de résultat devient **rouge pâle** dès qu'une ligne commence par
+« ÉCHEC ».
+**Bouton 0b en échec** (l'en-tête ne dit pas « présent », ou une ligne « ÉCHEC ») : **« essai
+raté » partout** (P3-1 à P3-6), une capture de l'écran, **et s'arrêter** : ne pas toucher les
+boutons suivants.
+**Boutons 9b et 12 : l'écran se fige** pendant l'écriture. **Attendre** sans rien toucher ; si Android
+propose « Attendre » ou « Fermer l'application », choisir **Attendre**. **Après chaque appui**,
+**redescendre au bas de l'écran** (le résultat s'affiche sous les boutons) avant de lire.
 **Une capture par réponse** (noms ci-dessous, mêmes règles que plus haut : en intérieur, nom Samsung
 écrit dans le tableau « Réponses »). Quand le prototype affiche « ERREUR », « REFUSÉ » ou « ÉCHEC » :
 une capture lisible de l'écran la remplace (défiler si le bloc est long).
@@ -426,18 +436,30 @@ une capture lisible de l'écran la remplace (défiler si le bloc est long).
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 0b | Toucher « 0b. Préparer le zip compressé » et choisir le zip | l'en-tête dit « Zip compressé copié : …/cerf-imports/essai-styles-z.zip (présent) » ; le bloc liste **8 entrées**, « stockées : 0, compressées : 8 » ; « Le zip n'est pas extrait » | ☐ |
+| 0b | Toucher « 0b. Préparer le zip compressé » et choisir le zip (en cas d'échec : « essai raté » partout, capture, s'arrêter) | l'en-tête dit « Zip compressé copié : …/cerf-imports/essai-styles-z.zip (présent) » ; le bloc liste **8 entrées**, « stockées : 0, compressées : 8 » ; « Le zip n'est pas extrait » | ☐ |
 
 Chaque bouton 8 à 12 écrit dans un **dossier neuf** `cerf-imports/q3-<N>/` (N = 1, 2, 3…, à
 chaque appui) : rien n'est écrasé. Le bouton 11 est le seul à effacer, et seulement dans ces
-dossiers. **Chaque bouton ne se touche qu'une fois pour la réponse** ; on peut rejouer, mais la
-réponse est celle du premier appui.
+dossiers. **Chaque bouton (8, 9, 9b, 10, 11) ne se touche qu'une fois pour la réponse** ; on peut
+rejouer, mais la réponse est celle du premier appui. **Le 12 fait exception** : il se touche trois
+fois (P3-6). Le 11 se place **après** les cartes des questions P3-2 à P3-4 (voir P3-5).
+**Ordre des boutons à l'écran** : 0b, 8, 9, 9b, 10, 11, 12. **Ordre conseillé de l'essai** : 8
+(P3-1, P3-2), 10 (P3-3), 9 (P3-4), 11 (P3-5), puis 9b et 12 (durées).
+
+**Une seule couche visible à la fois (faux oui).** Les couches du prototype n° 2 (`UG_q1`,
+`Parcelles_q3`, `FRT_q7`…) peuvent encore être sur la carte, et les copies du prototype n° 3 ont
+des couleurs voisines. Les emprises du zip compressé sont **décalées de 800 m vers le sud** de
+celles du prototype n° 2, mais **avant chaque bouton 8, 9 et 10** (P3-2, P3-3, P3-4) : ouvrir la liste des couches, **décocher
+(ou retirer) toutes les couches précédentes** et ne laisser visible que la couche du moment ; la
+carte doit être **vide à l'endroit regardé** avant le bouton. Seulement ensuite toucher le bouton
+et regarder la carte. Consigne avec des gants : décocher par la case de chaque couche, d'un
+appui large, plutôt que de les retirer une à une ; à défaut, appui long sur la couche puis « masquer ».
 
 ### Question P3-1 : Shapefile compressé réécrit par `saveVectorLayerAs`
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 8. Shapefile : réécrire, styler » | le bloc donne, dans l'ordre : source `/vsizip/…/FRT_q7.shp`, `Source isValid : true`, `Source featureCount : 2` ; `saveVectorLayerAs a rendu : …/q3-<N>/FRT_q7.gpkg` (**pas** « chaîne vide ») ; `FRT_q7.qml écrit par le plugin … IDENTIQUE` ; la copie `isValid : true`, `crs.authid : EPSG:2154` ; **« écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : oui »** (N > 0) ; « Champ « nom » relu dans la copie : Étang ; Forêt » | ☐ |
+| 1 | Toucher « 8. Shapefile : réécrire, styler » | le bloc donne, dans l'ordre : source `/vsizip/…/FRT_q7.shp`, `Source isValid : true`, `Source featureCount : 2` ; `saveVectorLayerAs a rendu : …/q3-<N>/FRT_q7.gpkg` (**pas** « chaîne vide ») ; `FRT_q7.qml écrit par le plugin … IDENTIQUE` ; la copie `isValid : true`, `crs.authid : EPSG:2154` ; « Champ « nom » relu dans la copie : Étang ; Forêt » ; puis **« écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : oui »** (N > 0) ; **aucune ligne « ÉCHEC »**, fond du bloc **non rouge** | ☐ |
 
 Relevé, sans résultat attendu :
 
@@ -448,8 +470,10 @@ Relevé, sans résultat attendu :
 | La ligne « Champ « nom » relu » (accents : écrire les deux mots tels qu'ils s'affichent) | | ☐ |
 
 Si la ligne « Lecture du champ « nom » : ERREUR … » apparaît, la lecture de l'attribut par le
-plugin a échoué (pas la copie) : vérifier les accents autrement, en touchant un carré de la
-carte (fiche de l'entité) et en lisant `nom`, le dire dans « Vu autrement ».
+plugin a échoué (pas la copie) : **ne pas cocher la case 1, réponse « non »**, mais **vérifier les
+accents par la fiche de l'entité** (fermer la fenêtre, toucher un carré de la carte, lire `nom`)
+et l'écrire dans « Vu autrement » (si la fiche montre « Étang » et « Forêt » exacts, le dire : le
+défaut est alors dans la lecture du plugin, pas dans la copie).
 Capture : `p3-q1-ecran.png` (l'écran, défilé si besoin).
 
 **Réponse P3-1** : **oui** si la case 1 est cochée ; **non** si la source a chargé mais que le
@@ -460,34 +484,38 @@ accents déformés) ; **essai raté** si la source ne charge pas.
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Après le bouton 8 : **fermer la fenêtre du plugin**, regarder la carte (zoomer fort si besoin, voir « Centrage » plus haut : carrés de 300 m) ; capture | **2a, couleurs** : deux carrés au **contour vert-bleu, fin, sans remplissage** | ☐ |
+| 1 | **Avant le bouton 8** : décocher toutes les couches précédentes (voir « Une seule couche visible à la fois »), carte vide à l'endroit. Après le bouton 8 : **fermer la fenêtre du plugin**, regarder la carte (zoomer fort si besoin, voir « Centrage » plus haut : carrés de 300 m, **800 m au sud du centre**) ; capture | **2a, couleurs** : deux carrés au **contour vert-bleu, fin, sans remplissage** | ☐ |
 | 2 | Regarder les carrés ; capture | **2b, étiquettes** : `FRT1` et `FRT2` écrits en vert-bleu, petit corps (10 pt) | ☐ |
 
 Capture : `p3-q2-carte.png`.
 
 **Réponse P3-2a** : oui si la case 1 est cochée, sinon non. **Réponse P3-2b** : oui si la case 2 est
-cochée, sinon non. **Essai raté** (et non non) à P3-2a et P3-2b si la réponse P3-1 est « essai
-raté » ou « non » (couche non chargée).
+cochée, sinon non. **Essai raté** (et non non) à P3-2a et P3-2b **seulement si la copie n'est pas
+chargée** (source qui ne charge pas, chaîne vide, « écrit : NON » au bouton 8) ; sinon répondre
+d'après la carte, même si P3-1 est « non ».
 
 ### Question P3-3 : GeoPackage à deux tables, un fichier et un style par table
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 10. GeoPackage à deux tables » | le bloc dit, pour `Parcelles` puis pour `Zones` : source valide, 2 entités, `saveVectorLayerAs` rend `…/q3-<N>/Parcelles.gpkg` puis `…/Zones.gpkg`, `.qml` « IDENTIQUE », « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » | ☐ |
+| 1 | **Avant** : décocher toutes les couches précédentes, carte vide à l'endroit. Toucher « 10. GeoPackage à deux tables » | le bloc dit, pour `Parcelles` puis pour `Zones` : source valide, 2 entités, `saveVectorLayerAs` rend `…/q3-<N>/Parcelles.gpkg` puis `…/Zones.gpkg`, `.qml` « IDENTIQUE », « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » (N > 0) ; aucune ligne « ÉCHEC », fond non rouge | ☐ |
 | 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **3a, Parcelles** : contour **orange**, 1 mm, étiquettes `P1`, `P2` en orange (15 pt) | ☐ |
 | 3 | Même carte (la zone des Zones est 800 m au sud : zoomer dessus) ; capture | **3b, Zones** : contour **bleu**, étiquettes `Z1`, `Z2` en bleu ; **aucun mélange** entre les deux couches | ☐ |
 
-Captures : `p3-q3-ecran.png`, `p3-q3-carte.png`.
+Captures : `p3-q3-ecran.png` (le bloc), et **deux captures de carte** : `p3-q3a-carte.png`
+(Parcelles) et `p3-q3b-carte.png` (Zones), toutes à écrire dans la table « Réponses ».
 
 **Réponse P3-3a** (Parcelles) et **P3-3b** (Zones), chacune : oui si sa case est cochée, sinon
-non ; **essai raté** si la source ne charge pas (le GeoPackage ouvert en `/vsizip/` est
-justement un des risques : un « essai raté » ici est une réponse utile, à écrire en toutes lettres).
+non ; **essai raté** **seulement si la copie de la table n'est pas chargée** (source qui ne charge
+pas, chaîne vide, « écrit : NON ») ; sinon répondre d'après la carte. Le GeoPackage ouvert en
+`/vsizip/` est justement un des risques : un « essai raté » ici est une réponse utile, à écrire en
+toutes lettres.
 
 ### Question P3-4 : GeoJSON compressé
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 9. GeoJSON : réécrire, styler » | comme la case 1 de P3-1 pour `UG_q1.geojson` : fichier `…/q3-<N>/UG_q1.gpkg`, « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » | ☐ |
+| 1 | **Avant** : décocher toutes les couches précédentes, carte vide à l'endroit. Toucher « 9. GeoJSON : réécrire, styler » | comme la case 1 de P3-1 pour `UG_q1.geojson` : fichier `…/q3-<N>/UG_q1.gpkg`, « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » (N > 0) ; aucune ligne « ÉCHEC », fond non rouge | ☐ |
 | 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **4, style** : contour **bleu**, sans remplissage, étiquettes `UG1`, `UG2` en bleu | ☐ |
 
 Captures : `p3-q4-ecran.png`, `p3-q4-carte.png`. Ce GeoJSON porte un membre `crs` (EPSG:2154) : le
@@ -495,13 +523,15 @@ système de la copie doit donc être EPSG:2154 ; un GeoJSON **sans** `crs` serai
 ce n'est pas essayé ici (travail de la mission 012).
 
 **Réponse P3-4a** (fichier écrit) : même règle que P3-1 (**oui** / **non** / **essai raté**).
-**Réponse P3-4b** (style) : oui si la case 2 est cochée, non sinon, essai raté si la source ne charge pas.
+**Réponse P3-4b** (style) : oui si la case 2 est cochée, non sinon ; essai raté **seulement si la
+copie n'est pas chargée** (source qui ne charge pas, chaîne vide, « écrit : NON ») ; sinon répondre
+d'après la carte.
 
 ### Question P3-5 : fichiers annexes, effaçables après retrait de la couche
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 11. Fichiers annexes » (il retire de la carte les couches du dernier essai, puis **sonde** chaque nom attendu : QField n'offre pas de listage) | une ligne par nom : `….gpkg : N octets`, `….qml : N octets`, et `absent` ou une taille pour `….gpkg-wal`, `….gpkg-shm`, `….aux.xml`, `….gpkg.aux.xml` ; puis « Effacement par rmFile » sans « REFUSÉ » ; puis « Après effacement » | ☐ |
+| 1 | Toucher « 11. Fichiers annexes » **une fois par dossier** écrit (il retire de la carte les couches du dernier dossier, puis **sonde** chaque nom attendu : QField n'offre pas de listage) ; **la réponse vient du toucher sur le dossier du 9** | **« Fichiers présents » ≥ 2** (au moins un `.gpkg` et un `.qml` de taille > 0 avant effacement) et des lignes « rmFile » ; une ligne par nom : `….gpkg : N octets`, `….qml : N octets`, et `absent` ou une taille pour `….gpkg-wal`, `….gpkg-shm`, `….aux.xml`, `….gpkg.aux.xml` ; puis « Effacement par rmFile » sans « REFUSÉ » ; puis « Après effacement » | ☐ |
 | 2 | Lire la dernière ligne ; capture | **« Tout effacé : oui »** | ☐ |
 
 Relevé, sans résultat attendu :
@@ -510,26 +540,39 @@ Relevé, sans résultat attendu :
 |---|---|---|
 | Annexes présentes avant effacement (autres que `.gpkg` et `.qml`) : `-wal`, `-shm`, `.aux.xml` | | ☐ |
 
-Capture : `p3-q5-ecran.png`. Faire ce bouton **après** avoir regardé et photographié les cartes
-des questions P3-2 à P3-4 : il retire les couches. Il agit sur **le dernier dossier écrit** : le
-toucher juste après le bouton 8 (ou le 10), pas après le 12 (qui écrit quatre couches d'un coup).
+Capture : `p3-q5-ecran.png`. **Ordre fixé** : boutons 8, 10, 9 (avec leurs cartes regardées et
+photographiées, P3-2 à P3-4), **puis** le 11 : il retire les couches. Il agit sur **le dernier
+dossier écrit**, donc **celui du 9** : l'effacement porte sur ce seul dossier. Le toucher **une fois
+par dossier** si l'on veut vider aussi ceux du 8 et du 10 (dans ce cas, après chacun) ; la réponse
+reste celle du toucher sur le dossier du 9. **Ne pas toucher le 11 après le 9b ni après le 12** (le
+12 écrit quatre couches d'un coup, le 9b n'ajoute rien à la carte).
 
 **Réponse P3-5** : la liste des annexes vues (relevé) **et** « tout effacé : oui » ou « non ».
+**Case 1 non cochable** si « Fichiers présents » est inférieur à 2 : l'écrire.
 **Non** si une ligne « Après effacement » montre encore un fichier (le bloc devient rouge, « ÉCHEC »).
 **Essai raté** si le bouton dit qu'aucune couche n'a été écrite.
 
-### Durées : volume et règle des deux minutes
+### Durées : volume (9b) et coût fixe par couche (12)
+
+> Le bouton 12 enchaîne **quatre petites couches** (2 entités chacune) : il mesure un **coût fixe
+> par couche**, **pas la règle des 2 minutes du brief** (le zip `Serre_EA2026` entier, médiane de
+> trois essais), qui se jugera à la mission d'import. Aucun verdict sur cette règle n'est tiré ici.
 
 | N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 9b. GeoJSON de 2 000 entités » (l'écran se fige pendant l'écriture : **attendre**) | le bloc dit « 2 000 entités », « écrit : oui, N octets, 2000 entités, EPSG:2154 » ; relever la durée de `saveVectorLayerAs` et le total | ☐ |
-| 2 | Toucher **trois fois** « 12. Tout enchaîner et chronométrer » (chaque appui écrit dans un dossier neuf) ; à chaque appui, noter le « TOTAL » | trois totaux ; au troisième appui, « Médiane des trois derniers … limite du brief 2 min : tenue » | ☐ |
+| 1 | Toucher « 9b. GeoJSON de 2 000 entités » (l'écran se fige pendant l'écriture : **attendre**, choisir « Attendre » si Android le propose ; redescendre au bas de l'écran) | le bloc dit « 2 000 entités », « écrit : oui, N octets, 2000 entités, EPSG:2154 » (N > 0) ; aucune ligne « ÉCHEC », fond non rouge ; relever la durée de `saveVectorLayerAs` et le total | ☐ |
+| 2 | Toucher « 12. Tout enchaîner : coût fixe par couche » **jusqu'à voir la ligne « Médiane des trois derniers »** (au moins trois appuis ; chaque appui écrit dans un dossier neuf ; l'écran se fige : attendre, redescendre au bas) ; à chaque appui, relever le « TOTAL » | **case 2 cochée** si les trois derniers appuis sont sans aucune ligne « ÉCHEC » et la ligne « Médiane des trois derniers » est affichée avec une médiane qui est bien celle des trois totaux relevés | ☐ |
 
-Relevé : durée de `saveVectorLayerAs` du 9b : … ; total du 9b : … ; totaux du bouton 12, appuis
-1, 2, 3 : … ; … ; … ; médiane : … Captures : `p3-duree-9b.png`, `p3-duree-12.png` (au troisième appui).
-**Réponse P3-6** : **oui** si la médiane des trois totaux est de 2 minutes (120 s) ou moins et que
-les quatre étapes sont conformes ; **non** sinon ; **essai raté** si une étape ne charge pas.
-(Un total qui compte une étape non conforme n'entre pas dans la médiane : le bloc le dit.)
+**Attendu** : la médiane dit « Médiane des trois derniers … » sans verdict ; **2 000 entités** au 9b.
+**Relevé** (valeurs lues, à ne pas confondre avec l'attendu) : durée de `saveVectorLayerAs` du
+9b : … ; total du 9b : … ; totaux du bouton 12, appuis 1, 2, 3 : … ; … ; … ; médiane lue : … ;
+**vérifier la médiane** : c'est le total du milieu une fois les trois triés. Une « durée illisible »
+ou un total à 0 ms **n'est pas une mesure** : ne pas le noter, le dire dans « Vu autrement ».
+Captures : `p3-duree-9b.png`, `p3-duree-12.png` (au dernier appui).
+**Réponse P3-6** : **oui** si la case 2 est cochée (la médiane des trois totaux est lue et juste, et
+**aucun ÉCHEC** sur les trois appuis) ; **non** sinon ; **essai raté** si une étape ne charge pas.
+(Un total qui compte une étape non conforme n'entre pas dans la médiane : le bloc le dit.) La
+réponse ne dit **rien de la règle des 2 minutes** du brief (voir l'encadré ci-dessus).
 
 **Si non (P3-1 à P3-6)** : la voie « réécrire dans `cerf-imports/` par `saveVectorLayerAs` » ne tient
 pas sur le Samsung (ou pas dans le temps) : le décompresseur de la mission 026 reste nécessaire ;
@@ -560,8 +603,8 @@ c'est cette réponse qui décide de l'ADR 0008.
 | P3-1 : Shapefile compressé réécrit, fichier écrit (oui / non / essai raté) | | `p3-q1-ecran.png` | | |
 | P3-2a : couleurs du `.qml` écrit par le plugin, Shapefile | | `p3-q2-carte.png` | | |
 | P3-2b : étiquettes, Shapefile | | `p3-q2-carte.png` | | |
-| P3-3a : GeoPackage, table `Parcelles` (fichier, couleurs, étiquettes) | | `p3-q3-ecran.png`, `p3-q3-carte.png` | | |
-| P3-3b : GeoPackage, table `Zones` | | `p3-q3-carte.png` | | |
+| P3-3a : GeoPackage, table `Parcelles` (fichier, couleurs, étiquettes) | | `p3-q3-ecran.png`, `p3-q3a-carte.png` | | |
+| P3-3b : GeoPackage, table `Zones` | | `p3-q3b-carte.png` | | |
 | P3-4a : GeoJSON compressé réécrit, fichier écrit | | `p3-q4-ecran.png` | | |
 | P3-4b : GeoJSON, style pris | | `p3-q4-carte.png` | | |
 | P3-5 : annexes vues (liste) et tout effacé (oui / non) | | `p3-q5-ecran.png` | | |
@@ -573,7 +616,7 @@ quand les neuf réponses (1a, 1b, 2, 3a, 3b, 4, 5, 6, 7) sont écrites, assez po
 styles et pour dire si la 012 peut reprojeter.
 
 **Prototype n° 3 : qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal passe
-les questions P3-1 à P3-6 sur le Samsung en mode avion, une capture par réponse, et note les trois
-totaux du bouton 12 ; on saura que ça marche quand les réponses P3-1 à P3-6 sont écrites, « essai
+les questions P3-1 à P3-6 sur le Samsung en mode avion, une capture par réponse (deux cartes pour
+P3-3), et note les trois totaux du bouton 12 ; on saura que ça marche quand les réponses P3-1 à P3-6 sont écrites, « essai
 raté » dit en toutes lettres quand une source ne charge pas : c'est ce qui décide si la
 mission 026 (décompresseur) reste nécessaire.

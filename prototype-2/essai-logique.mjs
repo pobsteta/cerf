@@ -34,7 +34,7 @@ export const BOUTONS = {
   B9B: '9b. GeoJSON de 2 000 entités',
   B10: '10. GeoPackage à deux tables',
   B11: '11. Fichiers annexes',
-  B12: '12. Tout enchaîner et chronométrer',
+  B12: '12. Tout enchaîner : coût fixe par couche',
 };
 
 export const NOM_ZIP = 'essai-styles.zip';
@@ -603,7 +603,7 @@ export function texteDuree(ms) {
   return nombreFr(ms / 1000, 2) + ' s (' + Math.round(ms) + ' ms)';
 }
 
-// Médiane d'une liste de durées (la règle du brief : médiane de 3 essais).
+// Médiane d'une liste de durées (médiane de 3 appuis du bouton 12).
 export function medianeMs(liste) {
   if (!liste || liste.length === 0) return null;
   const t = liste.slice().sort(function (a, b) { return a - b; });
@@ -611,15 +611,15 @@ export function medianeMs(liste) {
   return t.length % 2 === 1 ? t[m] : (t[m - 1] + t[m]) / 2;
 }
 
-export const LIMITE_MS = 120000;
-
 // Lignes du bilan du bouton 12 : les totaux déjà relevés, et la médiane quand il y en a trois.
+// Le bouton 12 mesure un COÛT FIXE sur quatre petites couches (2 entités chacune) : ce n'est PAS
+// la règle des 2 minutes du brief (Serre_EA2026 entier), donc aucun verdict sur cette règle.
 export function bilanChrono(totaux) {
   const lignes = ['Totaux relevés depuis le démarrage du plugin : ' + totaux.map(texteDuree).join(' ; ')];
   if (totaux.length >= 3) {
     const dernier = totaux.slice(totaux.length - 3);
     const m = medianeMs(dernier);
-    lignes.push('Médiane des trois derniers : ' + texteDuree(m) + ' ; limite du brief 2 min : ' + (m <= LIMITE_MS ? 'tenue' : 'NON tenue'));
+    lignes.push('Médiane des trois derniers : ' + texteDuree(m) + ' (coût fixe par couche, quatre petites couches ; sans verdict sur la règle des 2 minutes)');
   } else {
     lignes.push('Encore ' + (3 - totaux.length) + ' appui(s) pour la médiane de trois.');
   }

@@ -89,3 +89,9 @@ Plan `plugin/PLAN-012.md` (1aab609) **validé**.
 5. Pas de recontrôle des couches du registre à la réouverture.
 6. Shapefile vide sans `.prj` : refusé (contrôle 1 avant 4).
 7. Emprise : valeurs du référentiel 002 gelées.
+8. (après la relecture de a2b5250) Une couche qui n'est plus dans un zip réimporté sous le
+   même nom est **retirée du registre** (le zip réimporté remplace l'ancien en entier).
+9. Ordre du contrôle 1 quand plusieurs fichiers manquent : `.prj`, puis `.shx`, puis `.dbf`
+   (un seul message, celui du premier manquant).
+10. La lecture des Shapefile, GeoPackage et GeoTIFF par `couchesDuZip` relève d'une
+    **nouvelle mission (024)**, après le prototype n° 2 ; la 012 n'en livre que les contrôles.

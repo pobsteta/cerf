@@ -1,8 +1,8 @@
 # Mission 023 — Prototype n° 2 : styles et reprojection dans QField
 
 > Fiche rédigée par Claude (orchestrateur) le 4 novembre 2026, après le blocage de la 010
-> (pose des styles) et l'écart de la 012 (reprojection non prouvée). **Statut : décidée par
-> Pascal le 4 novembre 2026 (« prototype d'abord ») ; fiche à valider (porte n° 2).** Une
+> (pose des styles) et l'écart de la 012 (reprojection non prouvée). **Statut : validée par Pascal le
+> 4 novembre 2026 (porte n° 2).** Une
 > mission = une phrase = une branche = une PR.
 
 ## Mission

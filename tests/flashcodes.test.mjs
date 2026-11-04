@@ -44,8 +44,8 @@ test('préversions d\'essai : adresses des releases d\'essai, jamais les adresse
 
 test('prototype-2 : plugin et projet d\'essai de la préversion, jamais en mode stable', () => {
   assert.deepEqual(flashcodes('prototype-2', 'essai').map((f) => f.url), [
-    `${DEPOT}/download/prototype-2/cerf-prototype-2.zip`,
-    `${DEPOT}/download/prototype-2/cerf-essai-2.zip`,
+    `${DEPOT}/download/prototype-2/plugin-cerf-prototype-2.zip`,
+    `${DEPOT}/download/prototype-2/projet-cerf-essai-2.zip`,
   ]);
   assert.throws(() => flashcodes('prototype-2', 'stable'));
   const n = notes('prototype-2', 'essai', 'prototype-2');

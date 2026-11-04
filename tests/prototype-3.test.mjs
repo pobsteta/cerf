@@ -369,9 +369,9 @@ test('ligneSonde : taille ou « absent »', () => {
 
 // ---------------------------------------------------------------- Essai.qml, version, noms
 
-test('version 0.2.0 dans le module et metadata.txt ; boutons 0b et 8 à 12 présents, numérotés, uniques', () => {
-  assert.equal(L.VERSION, '0.2.0');
-  assert.match(lire('prototype-2/metadata.txt'), /^version=0\.2\.0$/m);
+test('version 2.3.0 dans le module et metadata.txt ; boutons 0b et 8 à 12 présents, numérotés, uniques', () => {
+  assert.equal(L.VERSION, '2.3.0');
+  assert.match(lire('prototype-2/metadata.txt'), /^version=2\.3\.0$/m);
   const essai = lire('prototype-2/Essai.qml');
   for (const k of ['B0B', 'B8', 'B9', 'B9B', 'B10', 'B11', 'B12']) assert.ok(essai.includes(`text: Zip.BOUTONS.${k};`), k);
   assert.equal(L.NOM_ZIP_Z, 'essai-styles-z.zip');
@@ -443,7 +443,7 @@ test('plugin/ n\'est pas touché ; le plugin livré garde les mêmes cinq fichie
 
 test('workflow : essai-styles-z.zip empaqueté, publié (create et upload) et son sha256 écrit dans les notes ; flashcodes inchangés', () => {
   const wf = lire('.github/workflows/release-prototype-2.yml').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
-  assert.match(wf, /sha256sum cerf-prototype-2\.zip cerf-essai-2\.zip essai-styles\.zip essai-styles-z\.zip essai-q3\.gpkg/);
+  assert.match(wf, /sha256sum plugin-cerf-prototype-2\.zip projet-cerf-essai-2\.zip essai-styles\.zip essai-styles-z\.zip essai-q3\.gpkg/);
   assert.match(wf, /gh release upload prototype-2 .*dist\/essai-styles-z\.zip .*dist\/flashcodes\/\* --clobber/);
   assert.match(wf, /avec_reprise\(\) \{ for essai in 1 2 3;/);
   assert.match(wf, /avec_reprise gh release upload prototype-2 /);

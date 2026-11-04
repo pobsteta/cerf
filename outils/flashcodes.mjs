@@ -52,13 +52,13 @@ export function flashcodes(type, mode) {
     return [
       {
         nom: 'flashcode-prototype-2-plugin',
-        url: `${DEPOT}/download/prototype-2/cerf-prototype-2.zip`,
+        url: `${DEPOT}/download/prototype-2/plugin-cerf-prototype-2.zip`,
         titre: 'Plugin du prototype n° 2',
         phrase: `Installe le plugin du prototype n° 2 : ${ACCES_PLUGIN}.`,
       },
       {
         nom: 'flashcode-prototype-2-projet',
-        url: `${DEPOT}/download/prototype-2/cerf-essai-2.zip`,
+        url: `${DEPOT}/download/prototype-2/projet-cerf-essai-2.zip`,
         titre: 'Projet d\'essai du prototype n° 2',
         phrase: `Importe le projet d'essai du prototype n° 2 : ${ACCES_PROJET}.`,
       },

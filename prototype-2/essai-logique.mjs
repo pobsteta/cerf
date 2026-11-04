@@ -11,7 +11,7 @@
 // (méthode 0) sont extraites : un décompresseur « inflate » n'est pas dans ce prototype
 // (décision de Pascal du 4 novembre 2026, question 1 du plan).
 
-export const VERSION = '0.2.0';
+export const VERSION = '2.3.0';
 
 // Noms des boutons, à reporter tels quels dans tests/recette/prototype-2.md.
 export const BOUTONS = {

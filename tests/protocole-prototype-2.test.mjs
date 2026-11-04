@@ -59,7 +59,7 @@ test('« Avant de commencer » : contrôle QGIS sur le poste, fichiers à ouvrir
   for (const f of ['UG_q1.geojson', 'UG_q2.geojson', 'Parcelles_q3.gpkg', 'UG_q4.geojson', 'FRT_q7.shp', 'FRT_sansprj.shp', 'Sans_crs.geojson', 'cerf-essai-2.qgs']) assert.ok(avant.includes(`\`${f}\``), f);
   assert.match(avant, /Désactiver/);
   assert.match(avant, /prototype n° 1/);
-  for (const f of ['cerf-prototype-2.zip', 'cerf-essai-2.zip', NOM_ZIP, 'essai-q3.gpkg']) {
+  for (const f of ['plugin-cerf-prototype-2.zip', 'projet-cerf-essai-2.zip', NOM_ZIP, 'essai-q3.gpkg']) {
     assert.ok(avant.includes(`https://github.com/pobsteta/cerf/releases/download/prototype-2/${f}`), f);
   }
 });

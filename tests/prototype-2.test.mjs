@@ -373,11 +373,11 @@ test('empaqueteur : 5 fichiers (dont essai-styles-z.zip, mission 027), plugin à
   const dossier = mkdtempSync(join(tmpdir(), 'cerf-p2-emp-'));
   try {
     const r = empaqueter(dossier);
-    assert.deepEqual(Object.keys(r.fichiers).sort(), ['cerf-essai-2.zip', 'cerf-prototype-2.zip', 'essai-q3.gpkg', 'essai-styles-z.zip', 'essai-styles.zip']);
-    const plugin = L.listerZip(readFileSync(join(dossier, 'cerf-prototype-2.zip'))).entrees.map((e) => e.nom);
+    assert.deepEqual(Object.keys(r.fichiers).sort(), ['essai-q3.gpkg', 'essai-styles-z.zip', 'essai-styles.zip', 'plugin-cerf-prototype-2.zip', 'projet-cerf-essai-2.zip']);
+    const plugin = L.listerZip(readFileSync(join(dossier, 'plugin-cerf-prototype-2.zip'))).entrees.map((e) => e.nom);
     assert.deepEqual(plugin, FICHIERS_PLUGIN);
     assert.ok(plugin.includes('main.qml') && plugin.every((n) => !n.includes('/')), 'main.qml à la racine');
-    const zp = readFileSync(join(dossier, 'cerf-essai-2.zip'));
+    const zp = readFileSync(join(dossier, 'projet-cerf-essai-2.zip'));
     const e = L.listerZip(zp).entrees;
     assert.deepEqual(e.map((x) => x.nom), ['cerf-essai-2.qgs']);
     assert.ok(Buffer.compare(readFileSync(join(dossier, 'essai-q3.gpkg')), essais.gpkg) === 0);

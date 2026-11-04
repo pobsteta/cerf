@@ -61,7 +61,7 @@ et du sort de la mission 012 (reprojection).
 
 Le `dev` n'a eu ni QGIS ni GDAL pour fabriquer les `.qml` et le GeoPackage : un fichier mal
 formé donnerait un « non » faux, et l'ADR se fonderait sur un faux. Télécharger sur le PC
-`essai-styles.zip` et `cerf-essai-2.zip` (liens plus bas, § B), les décompresser, puis ouvrir
+`essai-styles.zip` et `projet-cerf-essai-2.zip` (liens plus bas, § B), les décompresser, puis ouvrir
 dans QGIS **ces fichiers** et regarder (aucun réglage à faire : les styles doivent apparaître
 seuls). Le GeoPackage seul `essai-q3.gpkg` ne sert **qu'à ce contrôle sur le PC** (c'est le même
 fichier que `Parcelles_q3.gpkg` du zip) : **ne pas le mettre sur le Samsung**.
@@ -76,7 +76,7 @@ fichier que `Parcelles_q3.gpkg` du zip) : **ne pas le mettre sur le Samsung**.
 | `FRT_q7.shp` | système EPSG:2154 (lu dans le `.prj`) ; 2 polygones, champ `code_ug` | ☐ |
 | `FRT_sansprj.shp` | s'ouvre ; **pas de `.prj`** : QGIS pose un système ou demande lequel ; 2 polygones | ☐ |
 | `Sans_crs.geojson` | système **EPSG:4326** (ou `OGC:CRS84`) ; emprise absurde : propriétés de la couche, Information : X de **1 050 963 à 1 051 263**, Y de **6 841 112 à 6 841 762**, lus comme des « degrés » (mètres Lambert 93 pris pour des degrés) | ☐ |
-| `cerf-essai-2.qgs` (dans `cerf-essai-2.zip`) | s'ouvre sans erreur ; système du projet EPSG:2154 ; aucune couche | ☐ |
+| `cerf-essai-2.qgs` (dans `projet-cerf-essai-2.zip`) | s'ouvre sans erreur ; système du projet EPSG:2154 ; aucune couche | ☐ |
 
 Si l'une des lignes de `UG_q1`, `UG_q2`, `Parcelles_q3`, `UG_q4`, `FRT_q7` ou
 `cerf-essai-2.qgs` n'est pas cochée, **le défaut est dans le fichier d'essai, pas dans QField** :
@@ -92,13 +92,16 @@ l'installation du plugin et l'import du projet ont besoin du réseau.
 
 1. **Installer le plugin par URL** (méthode déjà éprouvée par Pascal au prototype n° 1, Cerf 0.1.1 ; si l'entrée « installer depuis une URL » n'existe pas dans le menu, le dire avant d'aller plus loin) : dans QField, menu (☰) puis Paramètres, Plugins, installer
    un plugin depuis une URL, et coller
-   https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-prototype-2.zip
-   (`cerf-prototype-2.zip`). **Ne pas renommer ce fichier** : QField nomme le dossier du plugin
-   d'après le nom du zip. Ou viser le flashcode de la préversion (PNG joint, affiché dans ses notes : icône QR code du champ d'URL).
-2. **Importer le projet** `cerf-essai-2.zip`
-   (https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-essai-2.zip) : à
+   https://github.com/pobsteta/cerf/releases/download/prototype-2/plugin-cerf-prototype-2.zip
+   (`plugin-cerf-prototype-2.zip`). **Ne pas renommer ce fichier** : QField nomme le dossier du plugin
+   d'après le nom du zip, sans la version : `plugin-cerf-prototype-2.zip` s'installe dans le dossier
+   `plugin-cerf-prototype`, à côté de l'ancien prototype n° 1 (dossier `cerf-prototype`). **Désinstaller
+   l'ancien une fois** (Paramètres, Plugins). Ou viser le flashcode de la préversion (PNG joint, affiché dans ses notes : icône QR code du champ d'URL).
+2. **Importer le projet** `projet-cerf-essai-2.zip`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/projet-cerf-essai-2.zip) : à
    l'écran d'accueil de QField, importer un projet depuis une URL (coller le lien) ; à défaut,
-   le télécharger d'abord (navigateur) puis l'importer comme zip. Le projet est en Lambert 93,
+   le télécharger d'abord (navigateur) puis l'importer comme zip. Le projet arrive dans un dossier neuf, `projet-cerf-essai-2` : **ouvrir celui-là**
+   (le prototype vérifie `cerf-essai-2.qgs`, qui reste le nom du fichier projet dans le zip). Le projet est en Lambert 93,
    sans fond de carte, **sans `cerf_id`**. Ou viser le flashcode de la préversion (« Import URL », icône QR code du champ).
 3. **Télécharger le zip d'essai** `essai-styles.zip`
    (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles.zip) avec le
@@ -420,8 +423,8 @@ une capture lisible de l'écran la remplace (défiler si le bloc est long).
    compressées** (méthode 8) : `FRT_q7.shp`, `.shx`, `.dbf`, `.prj`, `.cpg` (champ `nom` :
    « Étang », « Forêt »), `UG_q1.geojson`, `essai-gpkg2.gpkg` (tables `Parcelles` et `Zones`, sans
    `layer_styles`), `ProdBois_2000.geojson` (2 000 polygones).
-2. **Mettre à jour le plugin** : `cerf-prototype-2.zip` de la même préversion `prototype-2`
-   (version **0.2.0** à l'écran, en-tête ; si l'en-tête dit 0.1.0, le plugin n'est pas à jour :
+2. **Mettre à jour le plugin** : `plugin-cerf-prototype-2.zip` de la même préversion `prototype-2`
+   (version **2.3.0** à l'écran, en-tête ; si l'en-tête dit autre chose que 2.3.0, le plugin n'est pas à jour :
    le dire et s'arrêter). Le projet `cerf-essai-2` est inchangé. Ne pas retoucher aux autres
    plugins désactivés.
 3. **Sur le PC (facultatif, recommandé)** : ouvrir dans QGIS `FRT_q7.shp` (système EPSG:2154 ;

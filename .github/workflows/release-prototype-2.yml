@@ -109,14 +109,14 @@ jobs:
           {
             echo "Prototype n° 2 de Cerf (mission 023), plugin QField jetable et fichiers d'essai, à installer par URL."
             echo
-            echo "Ne pas renommer cerf-prototype-2.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Ne pas renommer plugin-cerf-prototype-2.zip : QField nomme le dossier du plugin d'après le nom du zip."
             echo "Commit empaqueté : $GITHUB_SHA (l'étiquette prototype-2 peut rester sur un commit plus ancien : upload --clobber ne la déplace pas ; c'est ce sha qui fait foi)."
             echo "Protocole d'essai : tests/recette/prototype-2.md. Données fictives, sans valeur métier."
             if [ -f vsizip.txt ]; then cat vsizip.txt; fi
             if [ -f ogrinfo.txt ]; then cat ogrinfo.txt; else echo "ogrinfo : non exécuté (gdal-bin non installé en 90 s) ; contrôle par QGIS sur le poste, voir le protocole."; fi
             echo
             echo '```'
-            (cd dist && sha256sum cerf-prototype-2.zip cerf-essai-2.zip essai-styles.zip essai-styles-z.zip essai-q3.gpkg)
+            (cd dist && sha256sum plugin-cerf-prototype-2.zip projet-cerf-essai-2.zip essai-styles.zip essai-styles-z.zip essai-q3.gpkg)
             echo '```'
             echo
             node outils/flashcodes.mjs notes prototype-2 essai prototype-2
@@ -124,9 +124,9 @@ jobs:
           # GitHub répond parfois HTTP 500 sur un envoi de fichier (vu le 4 novembre 2026) : trois essais.
           avec_reprise() { for essai in 1 2 3; do "$@" && return 0; echo "essai $essai échoué : $*"; sleep 15; done; return 1; }
           if gh release view prototype-2 >/dev/null 2>&1; then
-            avec_reprise gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
+            avec_reprise gh release upload prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
             gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
           else
-            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* \
+            gh release create prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Prototype n° 2" --notes-file notes.md --prerelease --latest=false
           fi

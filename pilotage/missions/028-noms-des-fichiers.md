@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Renommer les fichiers publiés pour que leur nom dise ce qu'ils sont (plugin-cerf.zip, projet-cerf.zip, projet-cerf-mise-a-jour.zip ; et pour le prototype plugin-cerf-prototype-2.zip, projet-cerf-essai-2.zip), avec adresses, flashcodes, notes et tests à jour, pour que Pascal et JFC ne confondent plus un plugin et un projet.
 
-**Redite par l'agent :** _à remplir par l'agent avant de commencer._
+**Redite par l'agent :** renommer les fichiers publiés en plugin-cerf.zip, projet-cerf.zip et projet-cerf-mise-a-jour.zip (adresses, flashcodes, notes, tests à jour, plus de flashcode de mise à jour), pour qu'on ne confonde plus plugin et projet.
 
 ## Décisions de Pascal (4 novembre 2026)
 

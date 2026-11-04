@@ -38,9 +38,11 @@ test('le zip de première installation contient cerf.qgz et saisie.gpkg (vide, i
   assert.ok(contenu(buf, 'saisie.gpkg').equals(readFileSync(join(RACINE, 'saisie.gpkg'))));
   assert.ok(contenu(buf, 'cerf.qgz').equals(readFileSync(join(RACINE, 'cerf.qgz'))));
 });
-test('noms des fichiers : ceux de la décision de Pascal', () => {
-  assert.equal(ZIP_MISE_A_JOUR, 'cerf-projet-modele.zip');
-  assert.equal(ZIP_PREMIERE_INSTALLATION, 'cerf-projet-modele-premiere-installation.zip');
+test('noms des fichiers : ceux de la décision de Pascal (fiche 028)', () => {
+  assert.equal(ZIP_MISE_A_JOUR, 'projet-cerf-mise-a-jour.zip');
+  assert.equal(ZIP_PREMIERE_INSTALLATION, 'projet-cerf.zip');
+  const r = fabriquerZips(join(tmp, 'n'), RACINE);
+  assert.ok(r.miseAJour.endsWith('/projet-cerf-mise-a-jour.zip') && r.premiereInstallation.endsWith('/projet-cerf.zip'));
 });
 test('déterministe : deux fabrications donnent les mêmes octets', () => {
   const a = fabriquerZips(join(tmp, 'c1'), RACINE), b = fabriquerZips(join(tmp, 'c2'), RACINE);

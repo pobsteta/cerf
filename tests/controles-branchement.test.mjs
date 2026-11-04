@@ -164,7 +164,7 @@ test('importerZip : un contrôle qui lève, ou un verdict absent, vaut refus', (
   assert.deepEqual(L.importerZip(v.ctx).chargees, []);
 });
 
-test('reimport : une couche acceptée puis refusée au réimport quitte le registre ; une couche absente du zip n\'est pas touchée (question à Pascal)', () => {
+test('reimport : une couche acceptée puis refusée au réimport quitte le registre ; une couche absente du zip réimporté est retirée aussi (décision n° 8)', () => {
   const ok = { charge: true, controle: null, message: null, avertissements: [] };
   const refus = { charge: false, controle: 5, message: 'a.geojson : Coordonnées incohérentes : système mal déclaré ?', avertissements: [] };
   const premier = contexte({ 'a.geojson': ok, 'b.geojson': ok });
@@ -175,14 +175,18 @@ test('reimport : une couche acceptée puis refusée au réimport quitte le regis
   const r = L.importerZip(second);
   assert.deepEqual(L.lireRegistre(second.reglages, ID).map((e) => e.couche), ['b']);
   assert.deepEqual(r.chargees.map((c) => c.couche), ['b']);
-  // Couche qui n'est plus dans le zip réimporté : entrée conservée (décision en attente de Pascal).
+  // Couche qui n'est plus dans le zip réimporté : entrée retirée (décision n° 8 : le zip remplace l'ancien en entier).
   const troisieme = { ...premier.ctx, octets: zip(['b.geojson']), controlerCouche: () => ok };
   L.importerZip(troisieme);
   assert.deepEqual(L.lireRegistre(troisieme.reglages, ID).map((e) => e.couche), ['b']);
   const p2 = contexte({ 'a.geojson': ok, 'b.geojson': ok });
   L.importerZip(p2.ctx);
   L.importerZip({ ...p2.ctx, octets: zip(['b.geojson']) });
-  assert.deepEqual(L.lireRegistre(p2.ctx.reglages, ID).map((e) => e.couche), ['a', 'b']);
+  assert.deepEqual(L.lireRegistre(p2.ctx.reglages, ID).map((e) => e.couche), ['b']);
+  // Un autre zip n'est pas touché par le réimport de celui-ci.
+  L.inscrire(p2.ctx.reglages, ID, { zip: 'autre.zip', couche: 'a', chemin_vsi: 'autre.zip/a.geojson', style: 'defaut', ajoutee_le: 'x' });
+  L.importerZip({ ...p2.ctx, octets: zip(['b.geojson']) });
+  assert.deepEqual(L.lireRegistre(p2.ctx.reglages, ID).map((e) => e.zip + '/' + e.couche), ['essai.zip/b', 'autre.zip/a']);
 });
 
 test('ouverture ratée : le contrôle passe quand même (lisible: false), message avec extension, sans erreur technique', () => {

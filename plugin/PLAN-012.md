@@ -270,8 +270,11 @@ risque principal : reprojection non prouvée côté QML ; sept questions à Pasc
   « contrôle 1 avant l'ouverture » : il est resté dans le module, mais exécuté après la
   tentative d'ouverture (qui ne coûte rien, la couche échouée n'étant pas ajoutée).
 - **Réimport d'un zip du même nom.** Une couche refusée (contrôle, ouverture, ajout impossible)
-  est retirée du registre : elle ne revient pas sans contrôle à la réouverture. Une couche qui
-  n'est plus du tout dans le zip réimporté garde son entrée : question posée à Pascal.
+  est retirée du registre : elle ne revient pas sans contrôle à la réouverture. Décision n° 8
+  de Pascal : une couche qui n'est plus du tout dans le zip réimporté est aussi retirée du
+  registre (le zip remplace l'ancien en entier). `importerZip` retire, avant la boucle, les
+  entrées du même zip dont la couche n'est plus listée ; les entrées des autres zips et les
+  fichiers de `cerf-imports/` ne sont pas touchés.
 - **Système de coordonnées.** Le plan exigeait un `authid` EPSG ; écart corrigé : la validité est
   celle de QGIS (un `.prj` ESRI ou IGNF valide est accepté), `authid` ne sert qu'au diagnostic,
   et l'objet `crs` de la couche est transmis tel quel à la reprojection (pas de

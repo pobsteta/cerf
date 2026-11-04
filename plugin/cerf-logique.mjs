@@ -456,6 +456,17 @@ export function importerZip(ctx) {
   }
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
+  // Décision n° 8 : le zip réimporté remplace l'ancien en entier. Les couches de ce zip qui n'y
+  // sont plus sortent du registre (aucun fichier n'est touché ; la copie est écrasée par QField).
+  const presentes = {};
+  for (let i = 0; i < couches.length; i++) presentes[couches[i].couche] = true;
+  const anciennes = lireRegistre(ctx.reglages, ctx.cerfId);
+  for (let i = 0; i < anciennes.length; i++) {
+    const e = anciennes[i];
+    if (e && typeof e === 'object' && e.zip === nomZip && !Object.prototype.hasOwnProperty.call(presentes, e.couche)) {
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: e.couche });
+    }
+  }
   const chargees = [];
   const refusees = [];
   const avertissements = [];

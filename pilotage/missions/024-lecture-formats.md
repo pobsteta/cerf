@@ -35,3 +35,12 @@
 ## Qui veille, qui tranche
 
 - **Relecteur :** `relecteur`, puis Pascal. 3 allers-retours. **Qui tranche :** Pascal.
+
+## Précisions après l'ADR 0008 (4 novembre 2026)
+
+**Statut : validée par Pascal le 4 novembre 2026** (« lance les trois points »). Les couches
+Shapefile et les tables de GeoPackage reconnues par `couchesDuZip` passent par la voie de l'ADR
+0008 posée par la 010 (contrôle en `/vsizip/`, réécriture par `saveVectorLayerAs`, `.qml` voisin,
+chargement) ; les GeoTIFF sont contrôlés et chargés en `/vsizip/` (`loadRasterLayer`), style par
+défaut. Le testeur écrit les tests d'abord (branche `mission/024-lecture-formats`) ; le dev part
+après la fusion de la 010.

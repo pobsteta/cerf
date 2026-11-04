@@ -27,6 +27,14 @@ _Modèle de carte :_
 
 ## Validé
 
+- [034-crs-valide](missions/034-crs-valide.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (sonnet)
+  - Mission : Système de coordonnées jugé valide d'après ce que QML voit (plugin 0.3.2)
+  - Moyens : sources de QGIS 3a92eb3, Cerf.qml
+- [035-essai-manuel-geojson](missions/035-essai-manuel-geojson.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (sonnet)
+  - Mission : Zip de démonstration tout en GeoJSON
+  - Moyens : outil de la mission 033
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip

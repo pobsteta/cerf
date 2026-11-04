@@ -59,3 +59,13 @@ après la fusion de la 010.
 - **En attente de Pascal :** nom affiché d'une couche rangée dans un dossier du zip ; GeoPackage
   sans aucune table vecteur (`[]`) : message ou silence ; texte du refus ; manière de lire les tables
   d'un `.gpkg` hors ligne (technique : prototype ou fiche 027).
+
+## Arbitrages de Pascal (4 novembre 2026, « oui à tout »)
+
+- Nom affiché d'une couche rangée dans un dossier du zip : **chemin complet dans le zip**
+  (ex. `Serre EA/réf/Parcelles.shp`, `d/Serre.gpkg/Releves`).
+- GeoPackage sans aucune table vecteur (`[]`) : **un message**, jamais le silence.
+- Refus d'un GeoPackage aux tables illisibles : « `Serre.gpkg : tables illisibles, couche non
+  chargée` » (avec le nom tel qu'il est dans le zip).
+- Lecture des tables hors ligne : la fiche 027 ne répond pas ; **prototype n° 4 (mission 030)**.
+  Le dev de la 024 part après la 010 et la 030.

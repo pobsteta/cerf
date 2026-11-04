@@ -20,10 +20,6 @@ _Modèle de carte :_
 
 ## Bac à sable
 
-- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
-  - Homme : `testeur` puis `dev` (sonnet)
-  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
-  - Moyens : prototype n° 2, zips de recette
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente
@@ -31,6 +27,14 @@ _Modèle de carte :_
 
 ## Validé
 
+- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
+  - Moyens : sources de QField 4.3.7, prototype n° 3, Samsung de Pascal
+- [031-nettoyage-retrait](missions/031-nettoyage-retrait.md) · depuis le cycle 6 · validée par Pascal le 4 novembre, après la 010
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Effacer au retrait les fichiers réécrits d'une couche
+  - Moyens : ADR 0007 amendée, ADR 0008, fiche 027 (P3-5)
 - [010-styles](missions/010-styles.md) · depuis le cycle 0
   - Homme : `dev` (sonnet)
   - Mission : Styles du manuel — cycle prévu 4
@@ -54,6 +58,10 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · tests prêts (65a6680) ; dev après la 010 et la 030
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
+  - Moyens : prototype n° 2, zips de recette
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -61,6 +69,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [029-amendements-adr-0008](missions/029-amendements-adr-0008.md) · depuis le cycle 6 · fusionnée (PR #22)
+  - Homme : `archiviste` (sonnet)
+  - Mission : Amender ADR 0003, ADR 0007 et la spec après l'ADR 0008
+  - Moyens : ADR 0008, fiche 010
 - [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML

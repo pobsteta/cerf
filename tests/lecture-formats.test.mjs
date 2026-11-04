@@ -229,8 +229,12 @@ test('sourceDeLaCouche : GeoPackage table: null -> jamais de source sans layerna
   const c = lire('couchesDuZip', ['d/a.gpkg']).find((x) => x.entree === 'd/a.gpkg');
   assert.ok(c, `${ROUGE} : d/a.gpkg doit sortir (table: null)`);
   assert.equal(c.table, null, `${ROUGE} : table: null`);
+  assert.equal(typeof m.sourceDeLaCouche, 'function', `${ROUGE} : sourceDeLaCouche doit exister`);
   let s;
-  try { s = lire('sourceDeLaCouche', COPIE, c); } catch { return; } // lever est un refus acceptable
+  try { s = m.sourceDeLaCouche(COPIE, c); } catch (e) {
+    if (e instanceof assert.AssertionError) throw e;
+    return; // une exception levée par sourceDeLaCouche elle-même est un refus acceptable
+  }
   assert.ok(!s, `${ROUGE} : pas de source pour table: null, reçu « ${s} »`);
 });
 
@@ -246,6 +250,9 @@ function contexteGpkg(noms, extra = {}) {
     decrireCouche: (c) => ({ nom: 'x', cache: c.nom }),
     controlerCouche: (d) => { controlees.push(d.nom); return ok; },
     ajouterALaCarte: (c, nom) => { ajoutees.push(nom); },
+    // Mission 010 (ADR 0008) : réécriture et .qml simulés (même modèle que plugin.test.mjs et controles-branchement.test.mjs).
+    reecrireCouche: (c, cible) => cible,
+    ecrireFichier: () => true,
     maintenant: () => new Date('2026-11-04T10:00:00Z'),
     ...extra,
   };
@@ -253,7 +260,7 @@ function contexteGpkg(noms, extra = {}) {
 }
 
 test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fichier, jamais ouvert ni chargé ; le GeoJSON voisin est traité', () => {
-  // Aucun service de lecture des tables n'est fourni : le plugin ne peut pas les connaître (hors ligne).
+  // Aucun service de lecture des tables n'est fourni : tant que la question de la lecture des tables hors ligne n'est pas tranchée par Pascal.
   const { ctx, ouvertes, ajoutees } = contexteGpkg(['a.gpkg', 'b.geojson']);
   const r = lire('importerZip', ctx);
   assert.ok(r.message.split('\n').some((l) => l.startsWith('a.gpkg')), `${ROUGE} : une ligne du message commence par a.gpkg : ${r.message}`);

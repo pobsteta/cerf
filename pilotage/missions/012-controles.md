@@ -75,3 +75,17 @@ un message clair par piège, aucune couche hors de France.
 - Le plan dit comment une couche QGIS devient l'objet `couche` (non testé par la 011).
 - Messages : nom de la couche en tête de chaque refus et avertissement (spec § 4, Pascal,
   4 novembre 2026).
+
+## Décisions de Pascal sur le plan (4 novembre 2026)
+
+Plan `plugin/PLAN-012.md` (1aab609) **validé**.
+1. Les tests de la 008 touchés par le changement d'interface de `importerZip` sont adaptés
+   par le **testeur** dans la même PR ; le dev n'y touche pas ; le service de contrôle est
+   obligatoire (absent → tout refusé).
+2. Shapefile sans `.shx` ou `.dbf` → refus comme le `.prj` (spec § 4, contrôle 1).
+3. Chargement des GeoTIFF : mission 010 ; la 012 ne livre que leur contrôle.
+4. Messages de refus aux textes de la spec, sans consigne ; la conduite à tenir va dans la
+   notice de JFC.
+5. Pas de recontrôle des couches du registre à la réouverture.
+6. Shapefile vide sans `.prj` : refusé (contrôle 1 avant 4).
+7. Emprise : valeurs du référentiel 002 gelées.

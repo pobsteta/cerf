@@ -2,7 +2,7 @@
 
 > Mission 002 (spec § 4 et § 8, point 4 ; ADR 0004). Calcul du 2 novembre 2026.
 > Valeurs lisibles par machine : `emprise-metropole.json`. Script : `outils/emprise.py`. Contour : `sources/`.
-> **Statut : valeur mesurée, à geler avant la fusion de la mission 012.**
+> **Statut : valeur mesurée, gelée par Pascal le 4 novembre 2026 (mission 012).**
 
 ## Résultat
 

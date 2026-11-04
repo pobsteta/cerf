@@ -24,6 +24,11 @@
 //       chaque avertissement commence par `couche.nom + ' : '` (ex. « FRT.shp : … »). Égalité stricte quand la spec
 //       donne le texte entier ; pour « illisible » et « couche vide » : préfixe + mot ; pour l'erreur de
 //       reprojection (exception, valeur non finie, null) la spec ne donne aucun texte : préfixe + message non vide.
+//     Contrôle 1, Shapefile (spec § 4, Pascal 4 nov. 2026) : `.prj` absent -> « <nom> : fichier .prj manquant, système de
+//       coordonnées inconnu » ; `.shx` ou `.dbf` absent -> « <nom> : fichier .shx manquant, couche non chargée » (idem .dbf) ;
+//       extensions de casse libre, fichier d'une autre couche ignoré. ORDRE si plusieurs manquent (spec muette, choix du
+//       testeur, question posée à Pascal) : .prj, puis .shx, puis .dbf (un seul message, celui du premier manquant).
+//       Un Shapefile vide sans `.prj` est refusé au contrôle 1 (avant le contrôle 4).
 //     resultat = { charge: boolean, controle: 1..5 | null (numéro du contrôle qui refuse),
 //                  message: string | null (refus), avertissements: string[] }
 //   Le premier contrôle qui échoue arrête la couche (reprojeter n'est alors pas appelé).
@@ -139,6 +144,52 @@ test('1 : le .prj d\'une autre couche du zip ne compte pas', async () => {
 test('1 : .prj absent prime sur une source illisible (ordre)', async () => {
   const r = await controler(SHP({ lisible: false, fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf'] }), espion());
   assert.equal(r.controle, 1); assert.equal(r.message, REFUS_PRJ);
+});
+const refusManquant = (ext) => `Parcelles.shp : fichier .${ext} manquant, couche non chargée`;
+for (const ext of ['shx', 'dbf']) {
+  const sans = (liste) => liste.filter((f) => !f.toLowerCase().endsWith('.' + ext));
+  const tous = ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj', 'Parcelles.cpg'];
+  test(`1 : .${ext} absent -> refus, message exact de la spec § 4`, async () => {
+    const s = espion();
+    const r = await controler(SHP({ fichiers: sans(tous) }), s);
+    assert.equal(r.charge, false); assert.equal(r.controle, 1); assert.equal(r.message, refusManquant(ext));
+    assert.equal(s.appels, 0, 'refusé avant lecture ni reprojection');
+  });
+  test(`1 : .${ext} retrouvé sans tenir compte de la casse`, async () => {
+    const r = await controler(SHP({ fichiers: tous.map((f) => f.replace(/\.(\w+)$/, (m) => m.toUpperCase())) }), espion());
+    assert.equal(r.charge, true);
+  });
+  test(`1 : le .${ext} d'une autre couche du zip ne compte pas`, async () => {
+    const r = await controler(SHP({ fichiers: [...sans(tous), 'FRT.' + ext] }), espion());
+    assert.equal(r.charge, false); assert.equal(r.controle, 1); assert.equal(r.message, refusManquant(ext));
+  });
+  test(`1 : .${ext} absent prime sur une source illisible (ordre)`, async () => {
+    const r = await controler(SHP({ lisible: false, fichiers: sans(tous) }), espion());
+    assert.equal(r.controle, 1); assert.equal(r.message, refusManquant(ext));
+  });
+  test(`1 : .${ext} absent et .cpg absent -> refus sans avertissement .cpg`, async () => {
+    const r = await controler(SHP({ fichiers: sans(tous).filter((f) => !f.endsWith('.cpg')) }), espion());
+    assert.equal(r.charge, false); assert.equal(r.message, refusManquant(ext));
+    assert.deepEqual(r.avertissements, []);
+  });
+}
+test('1 : ordre si plusieurs manquent : .prj avant .shx', async () => {
+  const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.dbf'] }), espion());
+  assert.equal(r.controle, 1); assert.equal(r.message, REFUS_PRJ);
+});
+test('1 : ordre si plusieurs manquent : .shx avant .dbf (.prj présent)', async () => {
+  const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.prj'] }), espion());
+  assert.equal(r.controle, 1); assert.equal(r.message, refusManquant('shx'));
+});
+test('1 : Shapefile vide sans .prj -> refus du contrôle 1, pas un avertissement « vide »', async () => {
+  const s = espion();
+  const r = await controler(SHP({ nbEntites: 0, emprise: null, fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.cpg'] }), s);
+  assert.equal(r.charge, false); assert.equal(r.controle, 1); assert.equal(r.message, REFUS_PRJ);
+  assert.deepEqual(r.avertissements, []); assert.equal(s.appels, 0);
+});
+test('1 : Shapefile vide sans .shx -> refus du contrôle 1', async () => {
+  const r = await controler(SHP({ nbEntites: 0, emprise: null, fichiers: ['Parcelles.shp', 'Parcelles.dbf', 'Parcelles.prj'] }), espion());
+  assert.equal(r.charge, false); assert.equal(r.controle, 1); assert.equal(r.message, refusManquant('shx'));
 });
 test('1 : .cpg absent -> chargé avec l\'avertissement « accents peut-être mal lus »', async () => {
   const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'] }), espion());

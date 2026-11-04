@@ -1,7 +1,7 @@
 # ADR 0003 — Lecture dans le zip et registre des couches
 
 - **Date :** 2026-11-02
-- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3) ; **amendée par l'ADR 0008 (4 novembre 2026)**
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -80,3 +80,25 @@ du projet.
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?
+
+## Amendée par l'ADR 0008 (4 novembre 2026)
+
+Décision de Pascal après le prototype n° 3 (voir [ADR 0008](0008-couches-sorties-du-zip.md)).
+Ce qui précède reste lisible tel quel ; ce qui change :
+
+- **Vecteurs** (GeoJSON, GeoPackage, Shapefile) : ils ne sont **plus lus dans le zip**. Le
+  plugin les ouvre en `/vsizip/`, les contrôle (ADR 0004), puis les **réécrit** par
+  `LayerUtils.saveVectorLayerAs` en GeoPackage dans
+  `<dossier du projet>/cerf-imports/<nom du zip>/`, **une table par fichier**, avec à côté,
+  avant le chargement, le `.qml` du style (celui du zip s'il existe, sinon la règle du
+  manuel). La couche est chargée depuis ce fichier, en lecture seule, et revient de même à la
+  réouverture.
+- **GeoTIFF** : **inchangés**, lus dans le zip par `/vsizip/`, style par défaut (tranche 1).
+- **Copie du zip** : **gardée** dans `cerf-imports/` (réparation, réimport). La phrase
+  « pas de décompression : pas de double stockage » ne vaut plus pour les vecteurs : la
+  place sur l'appareil est doublée (zip et fichiers réécrits).
+- **Registre** (schéma identique à la spec § 3.3) : `{ zip, couche, chemin: "<zip sans .zip>/<couche>.gpkg", style, ajoutee_le, qml? }` pour un vecteur ; un GeoTIFF et les anciennes entrées gardent `chemin_vsi`. Le champ `zip` est
+  **gardé** ; les chemins sont relatifs au dossier des copies.
+- **Valeur sacrifiée ajoutée** : la fidélité au format d'origine (un Shapefile devient un
+  GeoPackage).
+- La mission 026 (décompresseur JavaScript) est abandonnée.

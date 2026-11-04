@@ -385,11 +385,11 @@ test('empaqueteur : 6 fichiers (dont essai-styles-z.zip, mission 027, et essai-t
   } finally { rmSync(dossier, { recursive: true, force: true }); }
 });
 
-test('projet d\'essai : EPSG:2154, sans cerf_id, sans couche', () => {
+test('projet d\'essai : EPSG:2154, sans cerf_id, avec les seuls deux fonds IGN (détail : tests/projet-essai.test.mjs)', () => {
   const q = lire('essai-projet/cerf-essai-2.qgs');
   assert.match(q, /<authid>EPSG:2154<\/authid>/);
   assert.doesNotMatch(q, /cerf_id/);
-  assert.doesNotMatch(q, /<maplayer/);
+  assert.equal((q.match(/<maplayer /g) || []).length, 2);
   assert.ok(equilibre(q));
 });
 

@@ -2,7 +2,7 @@
 // Cerf, prototype n° 2 (mission 023, puis 027 et 030) : fabrique les six fichiers à poser sur le téléphone.
 //   plugin-cerf-prototype-2.zip : le plugin, main.qml à la racine (exigence de QField) ; le nom du
 //                          zip donne le nom du dossier du plugin : ne pas le renommer.
-//   projet-cerf-essai-2.zip : le projet d'essai cerf-essai-2.qgs (sans cerf_id, sans fond).
+//   projet-cerf-essai-2.zip : le projet d'essai cerf-essai-2.qgs (sans cerf_id ; avec les deux fonds IGN, groupe « Fonds de carte »).
 //   essai-styles.zip     : le zip d'essai (entrées stockées), voir fabriquer-essais.mjs.
 //   essai-styles-z.zip   : le zip d'essai ENTIÈREMENT compressé (méthode 8), mission 027.
 //   essai-tables-z.zip   : les GeoPackage du bouton 13 (lister les tables), compressés, mission 030.

@@ -44,3 +44,18 @@ Shapefile et les tables de GeoPackage reconnues par `couchesDuZip` passent par l
 chargement) ; les GeoTIFF sont contrôlés et chargés en `/vsizip/` (`loadRasterLayer`), style par
 défaut. Le testeur écrit les tests d'abord (branche `mission/024-lecture-formats`) ; le dev part
 après la fusion de la 010.
+
+## Décisions techniques de l'orchestrateur (4 novembre 2026, après la relecture n° 2 des tests)
+
+- **Rouge annoncé en plus des tests du testeur :** le code du dev cassera 14 tests existants
+  (3 sur la forme des entrées : `plugin-styles`, `plugin`, `squelette` « seul le GeoJSON » ;
+  11 du squelette parce que `essai.zip` contient le Shapefile complet `sous-dossier/shape_essai.*`).
+  **Le dev les adapte** (attendre aussi `shape_essai`, accepter les champs `format` et `nom`), sans
+  en affaiblir aucun ; le relecteur compare avant et après. `essai.zip` n'est pas modifié.
+- **Un seul vocabulaire de formats :** `geojson`, `shp`, `gpkg`, `tif`, celui de la 012
+  (`cerf-controles`) et de `decrireEntree` (010).
+- **GeoPackage aux tables inconnues (`table: null`) :** refusé avec un message qui commence par le
+  nom du fichier, sans ouverture ni chargement ; jamais chargé sur sa première table.
+- **En attente de Pascal :** nom affiché d'une couche rangée dans un dossier du zip ; GeoPackage
+  sans aucune table vecteur (`[]`) : message ou silence ; texte du refus ; manière de lire les tables
+  d'un `.gpkg` hors ligne (technique : prototype ou fiche 027).

@@ -99,3 +99,8 @@ Plan `plugin/PLAN-012.md` (1aab609) **validé**.
     registre ni sur la carte, message « aucune couche lisible dans <zip>, rien changé ».
 12. Messages de réouverture (« illisible (a) ») avec le nom et l'extension : hors de la 012,
     dans la mission 014 (registre complet).
+13. Zip réimporté dont **tous les GeoJSON sont illisibles** : import avorté aussi (décision
+    11 étendue).
+14. Passage supplémentaire du dev autorisé par Pascal (au-delà des 3 allers-retours) pour le
+    point 13 et pour refuser toute reprojection qui rend un point ou un rectangle **vide**
+    (QField 4.3.7 ne lève pas d'exception sur échec, lecture des sources par la 023).

@@ -12,7 +12,16 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.3.2';
+export const VERSION = '0.3.3';
+
+// Emprise d'une couche { xmin, ymin, xmax, ymax } (mission 037). Dans QGIS 3a92eb3, `extent` est une MÉTHODE
+// (`Q_INVOKABLE virtual QgsRectangle extent() const`, qgsmaplayer.h l. 564), pas une propriété : `couche.extent` vaut
+// alors une fonction, dont xMinimum est undefined. On l'appelle donc si c'est une fonction ; sinon on la lit telle quelle.
+export function lireEmprise(couche) {
+  let x = couche.extent;
+  if (typeof x === 'function') x = couche.extent();
+  return { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+}
 
 // Mission 034 : jugement de validité du système de coordonnées d'une couche, d'après ce que QML voit.
 // QGIS (commit 3a92eb3, embarqué par QField 4.3.7, src/core/proj/qgscoordinatereferencesystem.h, l. 218-223) n'expose

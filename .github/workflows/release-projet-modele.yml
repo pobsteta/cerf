@@ -13,6 +13,9 @@
 #    la date et le sha du commit sont dans les notes. Lancement manuel sur main : idem.
 #  - Cette release n'est JAMAIS « latest » (--latest=false) : « releases/latest/download/cerf.zip »
 #    (URL stable du plugin, mission 008) doit continuer à désigner la release du plugin.
+# Mission 025 : les flashcodes (PNG et SVG) des deux zips sont joints à la release et affichés dans ses notes
+# (outils/flashcodes.mjs ; qrencode pour générer, zbarimg pour décoder et contrôler l'URL). Sur main : adresses
+# stables ; préversion d'essai : adresses de « projet-modele-essai ».
 # Les zips sont fabriqués ici par outils/zips-projet-modele.mjs (testé) ; leur sha256 est écrit dans les
 # notes. Aucune clé, aucun secret : le jeton du dépôt suffit. Ce workflow ne touche pas au plugin
 # (release-plugin.yml) ni à outils/decider-release.mjs.
@@ -42,7 +45,11 @@ jobs:
           python-version: '3.12'
       - name: Dépendances Python des outils (pyproj, mission 002)
         run: pip install -r outils/requirements.txt
+      - name: Outils des flashcodes (qrencode, zbar-tools ; mission 025)
+        run: sudo apt-get update && sudo apt-get install -y qrencode zbar-tools
       - name: Tests
+        env:
+          CERF_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: "Zips et garde-fou (pas de saisie.gpkg dans la mise à jour)"
         run: |
@@ -51,6 +58,11 @@ jobs:
             echo "cerf-projet-modele.zip contient saisie.gpkg : refusé (il écraserait les saisies)" >&2; exit 1
           fi
           unzip -Z1 dist/cerf-projet-modele-premiere-installation.zip | grep -qx 'saisie.gpkg'
+      - name: Flashcodes (génération et contrôle par décodage)
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then mode=stable; else mode=essai; fi
+          node outils/flashcodes.mjs generer dist/flashcodes projet "$mode"
+          node outils/flashcodes.mjs verifier dist/flashcodes projet "$mode"
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -67,6 +79,12 @@ jobs:
             sha256sum dist/*.zip
             echo '```'
           } > notes.md
+          echo >> notes.md
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            node outils/flashcodes.mjs notes projet stable projet-modele >> notes.md
+          else
+            node outils/flashcodes.mjs notes projet essai projet-modele-essai >> notes.md
+          fi
           if [ "$GITHUB_REF_NAME" = "main" ]; then
             # Étiquette fixe : on supprime la release et son étiquette, puis on recrée sur le commit courant.
             if gh release view projet-modele >/dev/null 2>&1; then
@@ -76,7 +94,7 @@ jobs:
             if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/projet-modele" >/dev/null 2>&1; then
               gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/projet-modele"
             fi
-            gh release create projet-modele dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
+            gh release create projet-modele dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Projet modèle Cerf" --notes-file notes.md --latest=false
           else
             # Essai avant fusion (lancement manuel hors main) : même précaution pour l'étiquette d'essai.
@@ -85,10 +103,10 @@ jobs:
               gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/projet-modele-essai"
             fi
             if gh release view projet-modele-essai >/dev/null 2>&1; then
-              gh release upload projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip --clobber
+              gh release upload projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip dist/flashcodes/* --clobber
               gh release edit projet-modele-essai --notes-file notes.md --latest=false
             else
-              gh release create projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
+              gh release create projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip dist/flashcodes/* \
                 --target "$GITHUB_SHA" --title "Projet modèle, essai avant fusion" --notes-file notes.md --prerelease --latest=false
             fi
           fi

@@ -89,3 +89,65 @@ GeoPackage aussi publié seul ; fichiers d'essai ouverts par Pascal dans QGIS av
 (`ogrinfo` dans le workflow si rapide) ; `cerf-prototype-2.zip`, préversion `prototype-2`,
 Cerf 0.1.1 et prototype n° 1 désactivés pendant l'essai ; deux réponses (couleurs,
 étiquettes) aux questions 1 et 3 ; protocole écrit par le dev, relu par le testeur.
+
+## Remarques de relecture à reprendre (aller-retour 1/3, 4 novembre 2026)
+
+**Relecteur (code) :**
+1. **Bloquant** : `empriseVraisemblable` (`essai-logique.mjs`) accepte le `QgsRectangle()`
+   vide de QGIS ≥ 3.34 (xMin = yMin = +DBL_MAX, xMax = yMax = −DBL_MAX) : faux « couche
+   chargée » possible pour `Sans_crs` (question 7) et faux « oui » à la ligne 3 de la
+   question 6. Refuser min > max et les valeurs proches de DBL_MAX, afficher `isNull` de
+   l'emprise reprojetée, tester ces valeurs.
+2. Rechargement de la question 5 (`onLoadProjectEnded`) sur tout projet : n'agir que si le
+   projet ouvert est `cerf-essai-2.qgs` ; vérifier le projet ouvert aux autres boutons ;
+   protocole : désactiver le prototype n° 2 après l'essai.
+3. Question 5 : compter les couches du projet par leur source (chemin) plutôt que par la
+   marque ; au protocole, exiger « couche marquée retrouvée : oui » deux fois.
+4. Question 4 non rejouable : `FileUtils.deleteFiles` refuse le `.qml` ; utiliser
+   `platformUtilities.rmFile` (ADR 0007, dans `cerf-imports/` seulement) ou un sous-dossier
+   neuf par essai.
+5. Mineurs : accepter `OGC:CRS84` pour `Sans_crs` ; protocole question 6 lignes 6-7 : échec
+   attendu en NaN ; déclarer `layer_styles` dans `gpkg_contents` (`attributes`) ; ajouter
+   `cerf-essai-2.qgs` au contrôle QGIS.
+
+**Testeur (protocole `tests/recette/prototype-2.md`, corrections C1 à C15) :** même sens de
+lecture pour toutes les cases (question 2 inversée) ; neuf réponses, pas sept ; cases
+« noté » distinctes des cases « conforme » ; question 4 : fermer la fenêtre du plugin avant
+chaque capture de carte, bouger la carte avant la capture B, vérifier « Couche A retirée » ;
+question 5 : zoomer sur les couches, comment fermer et rouvrir un projet dans QField, « oui,
+mais par le projet » si n = 2 ; question 6 : piège des axes inversés et tous les messages
+possibles des lignes 4 à 7 ; préalables : installer le plugin par URL et importer le projet
+**avant** le mode avion, où arrive le téléchargement, activer Cerf prototype n° 2 seul ;
+contrôle QGIS de `UG_q2.geojson`, `FRT_sansprj.shp`, ordre de grandeur réel de `Sans_crs`
+(X ≈ 1 051 000, Y ≈ 6 840 000 « degrés »), 17 entrées ; captures Samsung : geste, nom,
+comment les sortir ; centrage manuel (ligne « Aller à la main vers », couche de 300 m) ;
+question 2 : attendu visible (deux carrés pleins sans étiquette) ; question 3 : critère
+principal la couleur et l'absence de remplissage ; question 7 : critère oui/non écrit et
+termes exacts de l'écran.
+
+**Décisions de Pascal (4 novembre 2026) :** question 5 « sans objet » pour une couche dont le
+style n'a pas été pris aux questions 1 ou 3 ; une capture lisible de l'écran d'erreur remplace
+la recopie ; `essai-q3.gpkg` sert seulement au contrôle QGIS sur le PC (le protocole le dit).
+
+## Remarques à reprendre (aller-retour 2/3, 4 novembre 2026)
+
+**Relecteur : prêt pour Pascal**, avec deux mineurs à reprendre ici :
+1. Protocole, question 5, ligne 1 : « si ce n'est pas 2 sur 2 par la source : s'arrêter,
+   capture » (la lecture de `layer.source` en QML n'est pas prouvée).
+2. Notes de la préversion : y écrire le sha du commit empaqueté (l'étiquette `prototype-2`
+   reste sur 35fce3b avec `upload --clobber`), ou déplacer l'étiquette.
+3. (Pour plus tard, non à faire ici) : si le plugin doit un jour effacer des `.qml`, l'ADR
+   0007 devra le dire.
+
+**Testeur (protocole) :** cinq précisions :
+1. Questions 1 et 3 : si la case 1 n'est pas cochée (couche non chargée), répondre « essai
+   raté » (pas « non »), avec la capture de l'écran d'erreur.
+2. Question 2 : même consigne « essai raté » si rien ne s'affiche ou si la couche ne charge pas.
+3. Question 5 : la règle se lit sur la ligne de chaque couche (« rechargée depuis le disque »
+   ou « déjà dans le projet, non rechargée »), pas sur n global.
+4. Question 7, case 4 : ajouter « bornes NaN ou infinies » aux formes d'échec qui valent refus.
+5. Zoom : repli « appui long sur la couche dans le panneau des couches, puis zoomer sur la
+   couche » ; recherche par coordonnées : taper deux entiers séparés par une espace
+   (« 1051113 6840462 »), sans virgule ni « m ». Installation du plugin : déjà éprouvée par
+   Pascal par URL (prototype n° 1, Cerf 0.1.1) ; ajouter seulement « si l'entrée n'existe
+   pas, le dire avant d'aller plus loin ».

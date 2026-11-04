@@ -69,3 +69,8 @@ après la fusion de la 010.
   chargée` » (avec le nom tel qu'il est dans le zip).
 - Lecture des tables hors ligne : la fiche 027 ne répond pas ; **prototype n° 4 (mission 030)**.
   Le dev de la 024 part après la 010 et la 030.
+- Note (relecture du 4 novembre) : le cas `[]` n'est pas testé dans `importerZip` tant que le
+  service de lecture des tables (mission 030) n'existe pas ; il le sera avec le dev de la 024.
+- Le chemin complet vaut pour **tous** les messages du § 4 (contrôles et avertissements), pas
+  seulement pour le refus d'un GeoPackage : lecture de l'orchestrateur de l'arbitrage de Pascal, à
+  confirmer par lui.

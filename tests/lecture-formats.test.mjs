@@ -4,7 +4,10 @@
 //
 // Interface PROPOSÉE (à confirmer par l'orchestrateur ; la 1re est une extension de la signature
 // publique de plugin/cerf-logique.mjs, seule partie du plugin lue) :
-//   couchesDuZip(noms, tables?) -> [{ couche, entree, format, ... }], dans l'ordre des noms
+//   couchesDuZip(noms, tables?) -> [{ couche, entree, nom, format, ... }], dans l'ordre des noms
+//     - nom : nom d'AFFICHAGE pour les messages du § 4, avec extension (« FRT.shp », « Serre.gpkg/Releves »).
+//       Pour une couche rangée dans un dossier du zip, la spec ne dit pas si le dossier en fait partie :
+//       les tests exigent seulement que nom FINISSE par « FRT.shp » (ou « Serre.gpkg/Releves »).
 //     - format : 'geojson' | 'shapefile' | 'geopackage' | 'geotiff'
 //     - couche : nom du fichier sans dossier ni extension ; pour un GeoPackage : le NOM DE LA TABLE
 //     - GeoJSON, GeoTIFF : { couche, entree, format }
@@ -12,7 +15,13 @@
 //       .shp .shx .dbf .prj .cpg, dans cet ordre, celles qui existent (un Shapefile incomplet
 //       est RENDU : c'est le contrôle 1 de la spec § 4 qui le refuse avec son message)
 //     - GeoPackage : + table ; entree = le .gpkg ; `tables` = { '<entrée .gpkg>': ['table', ...] }
-//       fourni par le plugin (les noms de tables ne sont pas dans le répertoire du zip)
+//       fourni par le plugin (les noms de tables ne sont pas dans le répertoire du zip).
+//       Un .gpkg dont les tables sont INCONNUES (pas de `tables`, ou pas de clé pour lui) n'est JAMAIS
+//       perdu en silence : il sort comme une entrée { format: 'geopackage', table: null } que le contrôle
+//       refusera en nommant le fichier. Liste VIDE ([]) = tables connues, aucune : aucune couche.
+//       Comment le plugin trouve les tables hors ligne n'est pas tranché ici (question pour Pascal).
+//   decrireEntree(entree, noms) (mission 010) : UNE SEULE source pour `fichiers` avec couchesDuZip
+//     (voir le dernier groupe de tests) : mêmes fichiers, même ordre, en noms sans dossier.
 //   sourceDeLaCouche(copie, c) -> source /vsizip/ :
 //     Shapefile : '/vsizip/<copie>/<entrée .shp>' ; GeoTIFF, GeoJSON : '/vsizip/<copie>/<entrée>' ;
 //     GeoPackage : '/vsizip/<copie>/<fichier.gpkg>|layername=<table>'
@@ -142,6 +151,52 @@ test('GeoPackage sans table vecteur (liste vide) : aucune couche', () => {
   egal(noms(['a.gpkg'], { 'a.gpkg': [] }), [], 'aucune table');
 });
 
+test('GeoPackage dont les tables sont inconnues : jamais perdu en silence (entrée table: null, contrôle 1 le refusera)', () => {
+  const cas = [
+    ['sans `tables`', ['a.gpkg'], undefined],
+    ['`tables` vide {}', ['a.gpkg'], {}],
+    ['`tables` sans clé pour ce .gpkg', ['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }],
+  ];
+  for (const [quoi, liste, tables] of cas) {
+    const r = lire('couchesDuZip', liste, tables);
+    const inconnu = r.filter((c) => c.format === 'geopackage' && c.entree === 'a.gpkg');
+    assert.equal(inconnu.length, 1, `${ROUGE} : a.gpkg (${quoi}) doit sortir une fois, pas disparaître`);
+    assert.equal(inconnu[0].table, null, `${ROUGE} : table: null (${quoi})`);
+    assert.ok(String(inconnu[0].nom).includes('a.gpkg'), `${ROUGE} : le nom nomme le fichier (${quoi}) : ${inconnu[0].nom}`);
+  }
+  // Le .gpkg connu voisin reste normal, dans l'ordre du zip.
+  egal(noms(['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }).map((c) => `${c.entree}:${c.table}`), ['a.gpkg:null', 'b.gpkg:T'], 'inconnu puis connu');
+  // Tables fournies pour un .gpkg dans un dossier : pas de doublon « inconnu » en plus.
+  egal(noms(['d/a.gpkg'], { 'd/a.gpkg': ['T'] }).map((c) => c.table), ['T'], 'connu : pas d\'entrée null en plus');
+});
+
+// ============================================================================ nom d'affichage (spec § 4)
+const nomsAffiches = (liste, tables) => lire('couchesDuZip', liste, tables).map((c) => c.nom);
+
+test('nom d\'affichage à la racine : nom du fichier avec extension, casse du zip ; table de GeoPackage : « fichier.gpkg/table »', () => {
+  egal(nomsAffiches(SHP('', 'FRT')), ['FRT.shp'], 'Shapefile');
+  egal(nomsAffiches(['UG.SHP', 'UG.SHX', 'UG.DBF', 'UG.PRJ']), ['UG.SHP'], 'Shapefile en capitales');
+  egal(nomsAffiches(['UG.geojson', 'b.JSON']), ['UG.geojson', 'b.JSON'], 'GeoJSON');
+  egal(nomsAffiches(['ortho.tif', 'Mnt.TIFF']), ['ortho.tif', 'Mnt.TIFF'], 'GeoTIFF');
+  egal(nomsAffiches(['Serre.gpkg'], { 'Serre.gpkg': ['Releves', 'Zones humides'] }),
+    ['Serre.gpkg/Releves', 'Serre.gpkg/Zones humides'], 'tables de GeoPackage');
+});
+
+test('nom d\'affichage d\'une couche rangée dans un dossier : finit par le nom attendu (le dossier n\'est pas tranché par la spec)', () => {
+  const r = lire('couchesDuZip', [...SHP('Serre EA/réf/', 'Parcelles'), 'a/b/UG.geojson', 'o/ortho.tif', 'd/Serre.gpkg'],
+    { 'd/Serre.gpkg': ['Releves'] }).map((c) => c.nom);
+  assert.equal(r.length, 4, `${ROUGE} : 4 couches`);
+  const fins = ['Parcelles.shp', 'UG.geojson', 'ortho.tif', 'Serre.gpkg/Releves'];
+  r.forEach((n, i) => assert.ok(typeof n === 'string' && n.endsWith(fins[i]), `${ROUGE} : « ${n} » doit finir par « ${fins[i]} »`));
+});
+
+test('nom d\'affichage : jamais vide ni sans extension, y compris dans le zip piege et le zip lourd', async () => {
+  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t024-'));
+  const piege = lire('couchesDuZip', await nomsZip(fabriquerPiege(dossier)));
+  egal(piege.map((c) => c.nom).sort(), ['FRT_sans_georef.tif', 'Parcelles_sans_prj.shp', 'UG_sans_crs.geojson', 'UG_vide.geojson', 'Zone_inconnue.geojson'],
+    'noms du zip piege');
+});
+
 // ============================================================================ mélange, silences
 test('tous formats mêlés : ordre du zip ; __MACOSX et ._* ignorés ; .qml, .qmd, .txt, dossiers ignorés', () => {
   const liste = [
@@ -232,4 +287,36 @@ test('Serre_EA2026 (liste décrite par le brief) : GeoJSON ProdBois + UG, Parcel
     gj('Serre_EA2026_p5_13_30_Res', 'Serre_EA2026_p5_13_30_Res.geojson'),
     shp('', 'UG'), shp('', 'Parcelles'), shp('', 'FRT'),
   ], '4 couches de Serre_EA2026');
+});
+
+// ============================================================================ une seule source pour `fichiers` (010 / 024)
+const base = (e) => e.substring(e.lastIndexOf('/') + 1);
+
+test('decrireEntree (010) et couchesDuZip (024) : mêmes fichiers, même ordre, même nom, pour chaque Shapefile (une seule source)', () => {
+  const zips = [
+    // désordre + annexes + .qml + un autre dossier de même nom + casse mêlée
+    ['sous/Parcelles.cpg', 'sous/Parcelles.prj', 'sous/Parcelles.dbf', 'sous/Parcelles.shx', 'sous/Parcelles.SHP',
+      'sous/Parcelles.qix', 'sous/Parcelles.sbn', 'sous/Parcelles.shp.xml', 'sous/Parcelles.qml',
+      'autre/Parcelles.shp', 'autre/Parcelles.dbf', 'UG.Shp', 'UG.PRJ', '__MACOSX/sous/._Parcelles.shp'],
+    SHP('', 'FRT'),
+    ['Parcelles.shp'],
+  ];
+  for (const noms of zips) {
+    const couches = lire('couchesDuZip', noms).filter((c) => c.format === 'shapefile');
+    assert.ok(couches.length >= 1, `${ROUGE} : au moins un Shapefile reconnu`);
+    for (const c of couches) {
+      const d = lire('decrireEntree', c.entree, noms);
+      assert.deepEqual(d.fichiers, c.fichiers.map(base), `${ROUGE} : fichiers de ${c.entree} identiques dans les deux fonctions`);
+      assert.equal(d.nom, base(c.entree), `${ROUGE} : nom de ${c.entree}`);
+      assert.ok(String(c.nom).endsWith(d.nom), `${ROUGE} : le nom d'affichage « ${c.nom} » finit par « ${d.nom} »`);
+    }
+  }
+});
+
+test('decrireEntree et couchesDuZip : nom d\'affichage cohérent pour GeoJSON et GeoTIFF', () => {
+  const noms = ['d/UG.geojson', 'o/ortho.TIF'];
+  for (const c of lire('couchesDuZip', noms)) {
+    const d = lire('decrireEntree', c.entree, noms);
+    assert.ok(String(c.nom).endsWith(d.nom), `${ROUGE} : « ${c.nom} » finit par « ${d.nom} »`);
+  }
 });

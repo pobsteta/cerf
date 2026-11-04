@@ -412,11 +412,17 @@ export function decrireEntree(entree, noms) {
   return { nom: fichier, format, fichiers };
 }
 
-// Décrit puis contrôle une couche ouverte ; toute exception vaut refus (spec § 4).
+// Décrit puis contrôle une couche ; toute exception vaut refus (spec § 4). Si l'ouverture a
+// échoué (`couche` nulle), on contrôle quand même avec `lisible: false` : le contrôle 1
+// (Shapefile incomplet) passe avant le 2 (« illisible »), et le message porte le nom avec
+// extension, sans erreur technique.
 function controlerSansPlanter(ctx, couche, c, noms) {
   const nom = nomDeFichier(c.entree);
   try {
-    const description = Object.assign({}, ctx.decrireCouche(couche), decrireEntree(c.entree, noms));
+    const entree = decrireEntree(c.entree, noms);
+    const lue = couche ? ctx.decrireCouche(couche) : { lisible: false };
+    const description = Object.assign({}, lue, entree);
+    if (!couche) description.lisible = false;
     const v = ctx.controlerCouche(description);
     if (v && v.charge === true) return { charge: true, avertissements: Array.isArray(v.avertissements) ? v.avertissements : [] };
     return { charge: false, message: v && v.message ? String(v.message) : nom + ' : couche refusée' };
@@ -465,12 +471,12 @@ export function importerZip(ctx) {
     const source = '/vsizip/' + copie + '/' + c.entree;
     // Ouvrir (sans ajouter à la carte), contrôler, puis seulement ajouter et inscrire.
     const r = chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
-    if (!r.couche) {
-      refusees.push({ couche: c.couche, entree: c.entree, raison: r.raison });
-      continue;
-    }
+    // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
+    // précède « illisible » et que le message porte le nom avec extension.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
     if (!verdict.charge) {
+      // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
       refusees.push({ couche: c.couche, entree: c.entree, raison: verdict.message, message: verdict.message });
       continue;
     }
@@ -479,7 +485,9 @@ export function importerZip(ctx) {
       r.couche.readOnly = true;
       ctx.ajouterALaCarte(r.couche, c.couche, source);
     } catch (e) {
-      refusees.push({ couche: c.couche, entree: c.entree, raison: 'ajout à la carte impossible' });
+      const message = nomDeFichier(c.entree) + ' : ajout à la carte impossible';
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
+      refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
       continue;
     }
     // Inscription après chaque couche (spec § 1, geste 5).

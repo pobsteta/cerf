@@ -164,6 +164,81 @@ test('importerZip : un contrôle qui lève, ou un verdict absent, vaut refus', (
   assert.deepEqual(L.importerZip(v.ctx).chargees, []);
 });
 
+test('reimport : une couche acceptée puis refusée au réimport quitte le registre ; une couche absente du zip n\'est pas touchée (question à Pascal)', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const refus = { charge: false, controle: 5, message: 'a.geojson : Coordonnées incohérentes : système mal déclaré ?', avertissements: [] };
+  const premier = contexte({ 'a.geojson': ok, 'b.geojson': ok });
+  L.importerZip(premier.ctx);
+  assert.deepEqual(L.lireRegistre(premier.ctx.reglages, ID).map((e) => e.couche), ['a', 'b']);
+  // Réimport du même nom : a est maintenant refusée, b reste acceptée.
+  const second = { ...premier.ctx, controlerCouche: (d) => (d.nom === 'a.geojson' ? refus : ok) };
+  const r = L.importerZip(second);
+  assert.deepEqual(L.lireRegistre(second.reglages, ID).map((e) => e.couche), ['b']);
+  assert.deepEqual(r.chargees.map((c) => c.couche), ['b']);
+  // Couche qui n'est plus dans le zip réimporté : entrée conservée (décision en attente de Pascal).
+  const troisieme = { ...premier.ctx, octets: zip(['b.geojson']), controlerCouche: () => ok };
+  L.importerZip(troisieme);
+  assert.deepEqual(L.lireRegistre(troisieme.reglages, ID).map((e) => e.couche), ['b']);
+  const p2 = contexte({ 'a.geojson': ok, 'b.geojson': ok });
+  L.importerZip(p2.ctx);
+  L.importerZip({ ...p2.ctx, octets: zip(['b.geojson']) });
+  assert.deepEqual(L.lireRegistre(p2.ctx.reglages, ID).map((e) => e.couche), ['a', 'b']);
+});
+
+test('ouverture ratée : le contrôle passe quand même (lisible: false), message avec extension, sans erreur technique', () => {
+  const vus = [];
+  const { ctx } = contexte({}, {
+    octets: zip(['UG.geojson']),
+    ouvrirCouche: () => { throw new Error('GDAL: erreur interne /vsizip/x'); },
+    controlerCouche: (d) => { vus.push(d); return C.controlerCouche(d, { reprojeter: identite }); },
+  });
+  const r = L.importerZip(ctx);
+  assert.equal(vus.length, 1);
+  assert.equal(vus[0].lisible, false);
+  assert.equal(r.refusees[0].message, 'UG.geojson : illisible');
+  assert.ok(r.message.split('\n').includes('UG.geojson : illisible'), r.message);
+  assert.doesNotMatch(r.message, /GDAL|vsizip/);
+  assert.deepEqual(L.lireRegistre(ctx.reglages, ID), []);
+  // Ouverture qui rend une couche invalide : même chemin.
+  const inv = contexte({}, { octets: zip(['UG.geojson']), ouvrirCouche: () => ({ isValid: false }),
+    controlerCouche: (d) => C.controlerCouche(d, { reprojeter: identite }) });
+  assert.equal(L.importerZip(inv.ctx).refusees[0].message, 'UG.geojson : illisible');
+});
+
+test('ouverture ratée d\'un Shapefile sans .prj : le contrôle 1 passe avant « illisible »', () => {
+  const { ctx } = contexte({}, {
+    octets: zip(['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf']),
+    ouvrirCouche: () => null,
+    controlerCouche: (d) => C.controlerCouche(d, { reprojeter: identite }),
+  });
+  // Seuls les .geojson sont reconnus par couchesDuZip (mission 010) : sans couche, rien n'est ouvert.
+  const r = L.importerZip(ctx);
+  assert.deepEqual(r.chargees, []);
+});
+
+test('ajout à la carte impossible : nom avec extension, retiré du registre', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const { ctx } = contexte({ 'a.geojson': ok, 'b.geojson': ok }, {
+    ajouterALaCarte: (c, nom) => { if (nom === 'a') throw new Error('boum'); },
+  });
+  const r = L.importerZip(ctx);
+  assert.ok(r.message.split('\n').includes('a.geojson : ajout à la carte impossible'), r.message);
+  assert.deepEqual(L.lireRegistre(ctx.reglages, ID).map((e) => e.couche), ['b']);
+});
+
+test('système valide sans code EPSG (ESRI, IGNF) : accepté, l\'objet crs est transmis tel quel à la reprojection', () => {
+  const crs = { objet: 'crs-de-la-couche' };
+  let recu;
+  const r = C.controlerCouche(
+    geojson2154(sur(500000, 6500000), { systeme: { valide: true, epsg: 0, authid: 'IGNF:LAMB93', crs } }),
+    { reprojeter: (e, epsg, c) => { recu = c; return { ...e }; } });
+  assert.equal(r.charge, true);
+  assert.equal(recu, crs);
+  const pts = [];
+  C.reprojeterEmprise({ xmin: 0, ymin: 0, xmax: 1, ymax: 1 }, 0, (x, y, epsg, c) => { pts.push(c); return { x, y }; }, crs);
+  assert.ok(pts.length > 0 && pts.every((c) => c === crs));
+});
+
 test('empaquetage : cerf-controles.mjs est dans la liste des fichiers du plugin (sinon QField ne le trouve pas)', () => {
   assert.ok(FICHIERS_PLUGIN.includes('cerf-controles.mjs'));
   assert.match(readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8'), /import "cerf-controles\.mjs" as Controles/);

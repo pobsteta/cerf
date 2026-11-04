@@ -260,3 +260,22 @@ avion : **un message clair par piège, aucune couche hors de France sur la carte
 
 4 novembre 2026 — Mission 012 (contrôles d'import), étape 1 : plan rendu (`plugin/PLAN-012.md`) ;
 risque principal : reprojection non prouvée côté QML ; sept questions à Pascal ; aucun code.
+
+## Réalisation : écarts au plan
+
+- **Ordre réel dans `importerZip`.** Ouverture (sans ajout à la carte), puis contrôle. Si
+  l'ouverture échoue (exception, couche nulle ou invalide), `controlerCouche` est quand même
+  appelé avec `lisible: false` : le contrôle 1 (Shapefile incomplet) passe avant « illisible »,
+  et le message porte le nom avec extension, sans erreur technique collée. Le plan disait
+  « contrôle 1 avant l'ouverture » : il est resté dans le module, mais exécuté après la
+  tentative d'ouverture (qui ne coûte rien, la couche échouée n'étant pas ajoutée).
+- **Réimport d'un zip du même nom.** Une couche refusée (contrôle, ouverture, ajout impossible)
+  est retirée du registre : elle ne revient pas sans contrôle à la réouverture. Une couche qui
+  n'est plus du tout dans le zip réimporté garde son entrée : question posée à Pascal.
+- **Système de coordonnées.** Le plan exigeait un `authid` EPSG ; écart corrigé : la validité est
+  celle de QGIS (un `.prj` ESRI ou IGNF valide est accepté), `authid` ne sert qu'au diagnostic,
+  et l'objet `crs` de la couche est transmis tel quel à la reprojection (pas de
+  `fromDescription("EPSG:"+n)`).
+- **Fuite mémoire faible.** Une couche ouverte puis refusée n'est pas ajoutée au projet ; sa
+  libération (propriété `CppOwnership` posée par `loadVectorLayer`) n'est pas prouvée : quelques
+  couches refusées par import, fuite faible acceptée, à noter au journal.

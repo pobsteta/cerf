@@ -75,7 +75,7 @@ function controler(couche, services) {
   let reprojetee = null;
   try {
     if (!services || typeof services.reprojeter !== 'function') throw new Error('service de reprojection absent');
-    reprojetee = services.reprojeter(couche.emprise, couche.systeme.epsg);
+    reprojetee = services.reprojeter(couche.emprise, couche.systeme.epsg, couche.systeme.crs);
   } catch (e) {
     reprojetee = null;
   }
@@ -100,9 +100,9 @@ export const SEGMENTS_PAR_BORD = 20;
 
 // Rectangle en EPSG:2154 d'une emprise `emprise` ({ xmin, ymin, xmax, ymax }, x = Est ou lon,
 // y = Nord ou lat, dans le système `epsg`), les bords densifiés DANS le système de la couche
-// puis chaque point reprojeté par `reprojeterPoint(x, y, epsg) -> { x, y }` (fourni par QField).
+// puis chaque point reprojeté par `reprojeterPoint(x, y, epsg, crs) -> { x, y }` (`crs` : l'objet système de la couche, rendu tel quel) (fourni par QField).
 // Lève une exception si l'emprise est absente ou non finie, ou si un point revient non fini.
-export function reprojeterEmprise(emprise, epsg, reprojeterPoint) {
+export function reprojeterEmprise(emprise, epsg, reprojeterPoint, crs) {
   if (!emprise || !fini(emprise.xmin) || !fini(emprise.ymin) || !fini(emprise.xmax) || !fini(emprise.ymax)) {
     throw new Error('emprise absente ou non finie');
   }
@@ -114,7 +114,7 @@ export function reprojeterEmprise(emprise, epsg, reprojeterPoint) {
       if (i !== 0 && i !== n && j !== 0 && j !== n) continue; // bords seulement
       const x = emprise.xmin + (emprise.xmax - emprise.xmin) * i / n;
       const y = emprise.ymin + (emprise.ymax - emprise.ymin) * j / n;
-      const p = reprojeterPoint(x, y, epsg);
+      const p = reprojeterPoint(x, y, epsg, crs);
       if (!p || !fini(p.x) || !fini(p.y)) throw new Error('reprojection : valeur non finie');
       if (p.x < xmin) xmin = p.x;
       if (p.x > xmax) xmax = p.x;

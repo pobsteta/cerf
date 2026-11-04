@@ -119,9 +119,12 @@ Item {
     try { lisible = !!(couche && couche.isValid); } catch (e) { lisible = false; }
     try {
       const crs = couche.crs;
+      // Validité = celle de QGIS ; un système valide sans code EPSG (.prj ESRI, IGNF) reste valide.
+      // `authid` ne sert qu'au diagnostic ; l'objet crs est passé tel quel à la reprojection.
       const auth = String(crs.authid || "");
       const m = /^EPSG:(\d+)$/.exec(auth);
-      systeme = { valide: !!crs.isValid && m !== null, epsg: m ? Number(m[1]) : 0 };
+      const valide = typeof crs.isValid === "function" ? !!crs.isValid() : !!crs.isValid;
+      systeme = { valide: valide, epsg: m ? Number(m[1]) : 0, authid: auth, crs: crs };
     } catch (e) { /* système inconnu */ }
     try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
     try {
@@ -134,8 +137,8 @@ Item {
   // Reprojette un point (x, y) de EPSG:<epsg> vers EPSG:2154. À vérifier dans QField v4.3.7 :
   // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
   // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
-  function reprojeterPoint(x, y, epsg) {
-    const source = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + epsg);
+  function reprojeterPoint(x, y, epsg, crs) {
+    const source = crs;
     const but = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154");
     const p = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), source, but);
     return { x: Number(p.x), y: Number(p.y) };
@@ -143,8 +146,8 @@ Item {
 
   function controlerCouche(description) {
     return Controles.controlerCouche(description, {
-      reprojeter: function (emprise, epsg) {
-        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint);
+      reprojeter: function (emprise, epsg, crs) {
+        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, crs);
       }
     });
   }
@@ -272,7 +275,6 @@ Item {
       nomZip: nom,
       octets: octets,
       reglages: reglages,
-      chargerCouche: chargeur(),
       ouvrirCouche: ouvrirCouche,
       decrireCouche: decrireCouche,
       controlerCouche: controlerCouche,

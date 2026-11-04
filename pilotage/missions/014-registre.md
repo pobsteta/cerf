@@ -64,3 +64,8 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 ## Comment saura-t-on que ça marche ?
 
 la couche retirée ne revient pas ; le zip réimporté remplace l'ancien.
+
+## Ajout du 4 novembre 2026 (Pascal)
+
+- Les messages de réouverture (couche qui ne se recharge pas, zip absent) commencent eux aussi
+  par le nom de la couche avec son extension (règle de la spec § 4, étendue au registre).

@@ -182,3 +182,5 @@
 2026-11-04 · Claude (orchestrateur) · 022 · après fusion de #17 : latest = plugin-v0.1.1, releases/latest/download/cerf.zip et les deux zips de l'adresse projet-modele répondent ; l'ancien cerf-projet-modele.zip est encore dans plugin-v0.1.1 (suppression à la main par Pascal, en attente).
 2026-11-04 · dev · 012 · aller-retour 2/3 (53eadf5) : décision n° 8 appliquée (couche absente du zip réimporté retirée du registre, aucun fichier effacé) ; 465 tests, 1 rouge : tests/plugin.test.mjs:191 (008), confié au testeur.
 2026-11-04 · testeur · 012 · test de la 008 adapté au nom avec extension (8b04fa1, une ligne) ; 465/465. Relecture aller-retour 2/3 lancée.
+2026-11-04 · relecteur · 012 · aller-retour 2/3 : à reprendre (vers 3/3) sur un point : refus pour doublon sans extension ; commentaire périmé de reprojeterPoint ; points 1 à 4 et décisions 8 à 10 faits, 465/465 ; CI absente sur 8b04fa1.
+2026-11-04 · Pascal · 012, 014 · décisions : zip réimporté sans couche lisible = import avorté, rien touché ; extension dans les messages de réouverture confiée à la 014.

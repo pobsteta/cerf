@@ -119,6 +119,9 @@ function contexte(verdicts, extra = {}) {
     decrireCouche: (c) => ({ nom: 'x', cache: c.nom }),
     controlerCouche: (d) => { journal.push('controler ' + d.nom); return verdicts[d.nom]; },
     ajouterALaCarte: (c, nom) => { journal.push('ajouter ' + nom); },
+    // Mission 010 (ADR 0008) : réécriture et .qml simulés, sans trace au journal (l'ordre ouvrir, contrôler, ajouter reste lisible).
+    reecrireCouche: (c, cible) => cible,
+    ecrireFichier: () => true,
     maintenant: () => new Date('2026-11-04T10:00:00Z'),
     ...extra,
   };
@@ -131,7 +134,8 @@ test('importerZip : ouvrir, contrôler, puis seulement ajouter et inscrire ; ref
     'b.geojson': { charge: true, controle: null, message: null, avertissements: ['b.geojson : couche vide'] },
   });
   const r = L.importerZip(ctx);
-  assert.deepEqual(journal, ['ouvrir a', 'controler a.geojson', 'ouvrir b', 'controler b.geojson', 'ajouter b']);
+  // Mission 010 (ADR 0008) : la copie GeoPackage est ouverte (2e « ouvrir b ») entre le contrôle et l'ajout à la carte.
+  assert.deepEqual(journal, ['ouvrir a', 'controler a.geojson', 'ouvrir b', 'controler b.geojson', 'ouvrir b', 'ajouter b']);
   assert.deepEqual(r.chargees.map((c) => c.couche), ['b']);
   assert.deepEqual(L.lireRegistre(ctx.reglages, ID).map((e) => e.couche), ['b']);
   assert.ok(Object.keys(stock).length > 0);
@@ -301,8 +305,9 @@ test('décision n° 13 : une seule couche lisible -> décision n° 8 (retrait de
     ajouterALaCarte: (c, n) => ordre.push('ajouter ' + n) });
   assert.deepEqual(r.chargees.map((c) => c.couche), ['b']);
   assert.deepEqual(L.lireRegistre(premier.ctx.reglages, ID).map((e) => e.couche), ['b']);
-  // Toutes ouvertes avant tout retrait ; chaque couche ouverte une seule fois.
-  assert.deepEqual(ordre, ['ouvrir a', 'ouvrir b', 'retrait carte essai.zip', 'ajouter b']);
+  // Toutes ouvertes avant tout retrait ; chaque source ouverte une seule fois.
+  // Mission 010 (ADR 0008) : 2e « ouvrir b » = la copie GeoPackage, après le retrait de la carte.
+  assert.deepEqual(ordre, ['ouvrir a', 'ouvrir b', 'retrait carte essai.zip', 'ouvrir b', 'ajouter b']);
 });
 
 test('décision n° 13 : premier import tout illisible (pas de réimport) -> messages de refus habituels', () => {

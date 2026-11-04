@@ -7,6 +7,7 @@ import QtQuick
 import org.qfield
 import "cerf-logique.mjs" as Logique
 import "cerf-controles.mjs" as Controles
+import "cerf-styles.mjs" as Styles
 
 Item {
   id: cerf
@@ -77,8 +78,9 @@ Item {
   // quelle (pas de double chargement). La logique pose readOnly ensuite.
   function chargeur() {
     const dossier = Logique.dossierCopies(dossierProjet());
-    return function (source, nom) {
-      const zip = Logique.zipDeLaSource(source, dossier);
+    return function (source, nom, zipDeLaCopie) {
+      // Copie GeoPackage (ADR 0008) : le zip est donné ; couche en /vsizip/ : il se lit dans la source.
+      const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
       if (deja) return deja;
       const couche = LayerUtils.loadVectorLayer(source, nom);
@@ -91,6 +93,54 @@ Item {
     };
   }
 
+  // Styles du manuel (mission 010). Ce que Cerf.qml sait dire à la logique : la géométrie et les
+  // champs d'une couche (QgsVectorLayer.geometryType() est Q_INVOKABLE, QgsFields expose « names »)
+  // et la lecture d'un fichier du zip (null si impossible). La POSE du style passe par un .qml écrit
+  // à côté de la copie, avant son chargement (ADR 0008) : voir reecrireCouche et ecrireFichier.
+  function infosCouche(couche) {
+    let noms = [];
+    try {
+      noms = couche.fields.names;
+    } catch (e) {
+      noms = [];
+    }
+    let geometrie = null;
+    try {
+      geometrie = Styles.geometrieDe(couche.geometryType());
+    } catch (e) {
+      geometrie = null;
+    }
+    return { geometrie: geometrie, champs: noms };
+  }
+
+  function lireTexte(zip, chemin) {
+    try {
+      const octets = Logique.octetsDe(FileUtils.readFileContent("/vsizip/" + Logique.cheminCopie(dossierProjet(), zip) + "/" + chemin));
+      return octets.length === 0 ? null : Logique.texteDe(octets);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ---- ADR 0008, prouvé sur le Samsung par le prototype n° 3 (fiche 027).
+  // Réécrit la couche ouverte (/vsizip/) en GeoPackage ; rend le chemin écrit, ou "" si QField a
+  // refusé (échec muet : la raison n'est que dans le journal de QField). saveVectorLayerAs crée les
+  // dossiers et écrase sans contrôle de chemin : la garde est dans la logique (peutEcrireCopie).
+  function reecrireCouche(couche, cible) {
+    return String(LayerUtils.saveVectorLayerAs(couche, cible, "GPKG") || "");
+  }
+
+  // Écrit un texte en UTF-8 (le .qml), le relit pour comparer la taille. true si écrit.
+  function ecrireFichier(chemin, texte) {
+    const octets = Logique.octetsUtf8(texte);
+    FileUtils.writeFileContent(chemin, Logique.arrayBufferExact(octets));
+    return Logique.octetsDe(FileUtils.readFileContent(chemin)).length === octets.length;
+  }
+
+  function effacerFichier(chemin) {
+    return !!platformUtilities.rmFile(chemin);
+  }
+
   // ---- Mission 012 : ouvrir, contrôler, puis seulement ajouter (spec § 4).
   // NON PROUVÉ (aucun accès aux sources de QField pour la mission 012) : chaque appel marqué
   // « à vérifier » ci-dessous est à confirmer sur le Samsung ; un appel absent ou en erreur
@@ -101,9 +151,10 @@ Item {
     return LayerUtils.loadVectorLayer(source, nom);
   }
 
-  // Ajoute à la carte une couche acceptée, marquée (zip, couche).
-  function ajouterALaCarte(couche, nom, source) {
-    const zip = Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
+  // Ajoute à la carte une couche acceptée, marquée (zip, couche). `zipDonne` : le zip de la copie
+  // GeoPackage (ADR 0008) ; à défaut il se lit dans une source /vsizip/.
+  function ajouterALaCarte(couche, nom, source, zipDonne) {
+    const zip = zipDonne ? String(zipDonne) : Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
     couche.setCustomProperty("cerf/zip", zip);
     couche.setCustomProperty("cerf/couche", nom);
     ProjectUtils.addMapLayer(qgisProject, couche);
@@ -278,6 +329,13 @@ Item {
       nomZip: nom,
       octets: octets,
       reglages: reglages,
+      styles: Styles,
+      infosCouche: infosCouche,
+      lireTexte: lireTexte,
+      reecrireCouche: reecrireCouche,
+      ecrireFichier: ecrireFichier,
+      effacerFichier: effacerFichier,
+      existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,

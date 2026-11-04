@@ -119,7 +119,7 @@ function fausseTelephonie({ rend = true } = {}) {
 }
 const attendre = async (v) => await v;
 
-// Mission 012 : importerZip n'appelle plus chargerCouche mais quatre services obligatoires.
+// Mission 012 : importerZip n'appelle plus chargerCouche mais quatre services obligatoires (six depuis la mission 010).
 // `controle` : fonction (description) -> verdict ; par défaut elle accepte (le refus est le fait des tests qui le veulent).
 function servicesControle(couches, controle) {
   return {
@@ -127,6 +127,9 @@ function servicesControle(couches, controle) {
     decrireCouche: (c) => ({ lisible: c.isValid, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
     controlerCouche: controle ?? (() => ({ charge: true, controle: 'ok', message: '', avertissements: [] })),
     ajouterALaCarte: (c, n, s) => { (couches.ajoutees ??= []).push({ nom: n, source: s, couche: c }); },
+    // Mission 010 (ADR 0008) : réécriture en GeoPackage et écriture du .qml, simulées (le chemin demandé est rendu).
+    reecrireCouche: (c, cible) => { (couches.reecrites ??= []).push({ source: c.source, cible }); return cible; },
+    ecrireFichier: (chemin, texte) => { (couches.ecrits ??= []).push({ chemin, texte }); return true; },
   };
 }
 
@@ -258,16 +261,22 @@ test('couches du zip (squelette) : seul le GeoJSON, nom sans extension, casse ig
 // ============================================================================================
 // 4. Importer un zip : charger, lecture seule, inscrire au registre (geste 5 ; ADR 0003)
 // ============================================================================================
-test('nominal : une couche GeoJSON du zip est chargée par /vsizip/ sur la copie, en lecture seule', async () => {
+// Mission 010 (ADR 0008) : la couche est ouverte en /vsizip/, réécrite en GeoPackage, puis la COPIE est
+// chargée et ajoutée à la carte : deux ouvertures par couche au lieu d'une.
+test('nominal : une couche GeoJSON du zip est ouverte par /vsizip/ sur la copie, réécrite, et la copie est chargée en lecture seule', async () => {
   const m = await M();
   const { ctx, couches } = ctxImport();
   const r = await attendre(m.importerZip(ctx));
-  assert.equal(couches.appels.length, 1);
+  assert.equal(couches.appels.length, 2);
   assert.deepEqual(couches.appels[0], {
     source: `/vsizip/${COPIES}/essai.zip/points_essai.geojson`,
     nom: 'points_essai',
   });
-  assert.equal(couches.couches[0].readOnly, true, 'couche importée : lecture seule (CLAUDE.md, Terrain)');
+  assert.deepEqual(couches.appels[1], {
+    source: `${COPIES}/essai/points_essai.gpkg|layername=points_essai`,
+    nom: 'points_essai',
+  });
+  assert.equal(couches.couches[1].readOnly, true, 'couche importée : lecture seule (CLAUDE.md, Terrain)');
   assert.equal(r.chargees.length, 1);
   assert.deepEqual(r.refusees, []);
 });
@@ -281,11 +290,11 @@ test('nominal : l\'entrée du registre a la forme de la spec § 3.3, chemin rela
   const liste = JSON.parse(brut);
   assert.equal(liste.length, 1);
   const [en] = liste;
-  assert.deepEqual(Object.keys(en).sort(), ['ajoutee_le', 'chemin_vsi', 'couche', 'style', 'zip']);
+  assert.deepEqual(Object.keys(en).sort(), ['ajoutee_le', 'chemin', 'couche', 'style', 'zip']);
   assert.equal(en.zip, 'essai.zip');
   assert.equal(en.couche, 'points_essai');
-  assert.equal(en.chemin_vsi, 'essai.zip/points_essai.geojson');
-  assert.ok(!en.chemin_vsi.startsWith('/') && !en.chemin_vsi.includes(ID) && !en.chemin_vsi.includes('Imported'),
+  assert.equal(en.chemin, 'essai/points_essai.gpkg', 'la copie GeoPackage (ADR 0008), relative au dossier des copies');
+  assert.ok(!en.chemin.startsWith('/') && !en.chemin.includes(ID) && !en.chemin.includes('Imported'),
     'chemin relatif : ni dossier de l\'application, ni cerf_id');
   assert.equal(typeof en.style, 'string');
   assert.equal(new Date(en.ajoutee_le).getTime(), new Date('2026-11-03T10:00:00Z').getTime());
@@ -297,9 +306,11 @@ test('couches dans un sous-dossier : le chemin du zip garde le sous-dossier ; un
   await attendre(m.importerZip(ctx));
   assert.deepEqual(couches.appels.map((a) => a.source), [
     `/vsizip/${COPIES}/deux.zip/a.geojson`,
+    `${COPIES}/deux/a.gpkg|layername=a`,
     `/vsizip/${COPIES}/deux.zip/sous/b.geojson`,
+    `${COPIES}/deux/b.gpkg|layername=b`,
   ]);
-  assert.deepEqual(couches.appels.map((a) => a.nom), ['a', 'b']);
+  assert.deepEqual(couches.appels.map((a) => a.nom), ['a', 'a', 'b', 'b']);
 });
 
 test('critère « après chaque couche » (§ 1 geste 5) : si la 2e couche plante, la 1re est déjà inscrite', async () => {
@@ -406,13 +417,14 @@ test('critère 4 (logique) : après « redémarrage » (nouveaux objets, mêmes 
     chargerCouche: (s, n) => couches2.charger(s, n),
   }));
   assert.equal(r.actif, true);
-  assert.deepEqual(couches2.appels, [{ source: `/vsizip/${COPIES}/essai.zip/points_essai.geojson`, nom: 'points_essai' }]);
+  // ADR 0008 : rechargée depuis la copie GeoPackage ; le zip n'est plus relu.
+  assert.deepEqual(couches2.appels, [{ source: `${COPIES}/essai/points_essai.gpkg|layername=points_essai`, nom: 'points_essai' }]);
   assert.equal(couches2.couches[0].readOnly, true);
   assert.deepEqual(reglagesRelus.ecritures, [], 'recharger ne réécrit pas le registre');
   assert.equal(r.absentes?.length ?? 0, 0);
 });
 
-test('« existe » est interrogé avec le chemin de la copie du zip (pas de la couche)', async () => {
+test('« existe » est interrogé avec le chemin de la copie GeoPackage de la couche (ADR 0008 ; plus le zip)', async () => {
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
@@ -421,10 +433,10 @@ test('« existe » est interrogé avec le chemin de la copie du zip (pas de la c
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => { vus.push(c); return true; },
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
   }));
-  assert.deepEqual([...new Set(vus)], [`${COPIES}/essai.zip`]);
+  assert.deepEqual([...new Set(vus)], [`${COPIES}/essai/points_essai.gpkg`]);
 });
 
-test('zip absent à l\'ouverture : l\'entrée reste au registre, un message unique « N couches … zip absent » (§ 3.3)', async () => {
+test('copie absente à l\'ouverture : l\'entrée reste au registre, un message unique « N couches … copie absente » (§ 3.3, ADR 0008)', async () => {
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
@@ -435,11 +447,11 @@ test('zip absent à l\'ouverture : l\'entrée reste au registre, un message uniq
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.deepEqual(couches.appels, []);
-  assert.equal(r.message, "2 couches n'ont pas pu être rechargées : zip absent");
+  assert.equal(r.message, "2 couches n'ont pas pu être rechargées : copie absente (réimporter le zip)");
   assert.equal(reglages.magasin.get(`cerf/${ID}`), avant, 'le registre n\'est pas modifié');
 });
 
-test('zip absent pour une seule couche : « 1 couche n\'a pas pu être rechargée : zip absent » (singulier)', async () => {
+test('copie absente pour une seule couche : « 1 couche n\'a pas pu être rechargée : copie absente (réimporter le zip) » (singulier)', async () => {
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
@@ -447,10 +459,30 @@ test('zip absent pour une seule couche : « 1 couche n\'a pas pu être rechargé
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => false,
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
   }));
-  assert.equal(r.message, "1 couche n'a pas pu être rechargée : zip absent");
+  assert.equal(r.message, "1 couche n'a pas pu être rechargée : copie absente (réimporter le zip)");
 });
 
-test('un zip absent ne bloque pas les couches d\'un autre zip présent', async () => {
+// Entrée des versions 0.2.x (chemin_vsi) : rechargée dans le zip, message « zip absent » inchangé.
+test('entrée à chemin_vsi (0.2.x, GeoTIFF) : zip absent -> « zip absent » ; zip présent -> rechargée par /vsizip/', async () => {
+  const m = await M();
+  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([
+    { zip: 'ancien.zip', couche: 'vieux', chemin_vsi: 'ancien.zip/vieux.geojson', style: 'defaut', ajoutee_le: '2026-11-03T10:00:00.000Z' },
+  ]) });
+  const absent = await attendre(m.demarrerProjet({
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => false,
+    chargerCouche: (s, n) => faussesCouches().charger(s, n),
+  }));
+  assert.equal(absent.message, "1 couche n'a pas pu être rechargée : zip absent");
+  const couches = faussesCouches();
+  await attendre(m.demarrerProjet({
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
+    chargerCouche: (s, n) => couches.charger(s, n),
+  }));
+  assert.deepEqual(couches.appels, [{ source: `/vsizip/${COPIES}/ancien.zip/vieux.geojson`, nom: 'vieux' }]);
+  assert.equal(couches.couches[0].readOnly, true);
+});
+
+test('une copie absente ne bloque pas les couches d\'un autre zip présent', async () => {
   const m = await M();
   const reglages = faussesReglages();
   const c0 = faussesCouches();
@@ -458,11 +490,11 @@ test('un zip absent ne bloque pas les couches d\'un autre zip présent', async (
   await attendre(m.importerZip(ctxImport({ reglages, couches: c0, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
   const couches = faussesCouches();
   const r = await attendre(m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => c.endsWith('/essai.zip'),
+    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => c.includes('/essai/'),
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
   assert.deepEqual(couches.appels.map((a) => a.nom), ['points_essai']);
-  assert.equal(r.message, "2 couches n'ont pas pu être rechargées : zip absent");
+  assert.equal(r.message, "2 couches n'ont pas pu être rechargées : copie absente (réimporter le zip)");
   assert.equal(m.lireRegistre(reglages, ID).length, 3, 'les trois entrées restent au registre');
 });
 
@@ -471,7 +503,7 @@ test('couche du registre qui ne se charge plus : message, entrée conservée, au
   const reglages = faussesReglages();
   const c0 = faussesCouches();
   await attendre(m.importerZip(ctxImport({ reglages, couches: c0, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
-  const couches = faussesCouches({ echecs: [`/vsizip/${COPIES}/deux.zip/a.geojson`] });
+  const couches = faussesCouches({ echecs: [`${COPIES}/deux/a.gpkg|layername=a`] });
   const r = await attendre(m.demarrerProjet({
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),

@@ -169,8 +169,9 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 **Pas de chargement forcé** : l'agent ne peut pas passer outre un refus (§ 9, n° 7).
 
 **Nom de la couche dans les messages** : chaque refus et chaque avertissement commence par
-le nom de la couche (« FRT : … ») ; un zip peut en contenir plusieurs (Pascal,
-4 novembre 2026).
+le nom de la couche **avec son extension**, tel qu'il est dans le zip (« FRT.shp : … »,
+« Parcelles.shp : … ») ; pour une table de GeoPackage, « fichier.gpkg/table : … » ; un zip
+peut en contenir plusieurs (Pascal, 4 novembre 2026).
 
 ## 5. Styles (annexe de la convention du zip)
 
@@ -185,7 +186,11 @@ des accents.
 ponctuelle ou linéaire garde le style par défaut, avec l'avertissement « nom reconnu mais
 pas un polygone » (Pascal, 4 novembre 2026). **Champs `essence` et `diametre`** reconnus
 sans tenir compte de la casse (`ESSENCE`, `Diametre`…) ; l'étiquette utilise le nom réel
-du champ (Pascal, 4 novembre 2026).
+du champ (Pascal, 4 novembre 2026). **GeoPackage** : le nom comparé aux motifs est celui de
+la **table** (un `Serre.gpkg` avec les tables `UG` et `Parcelles` donne deux couches
+stylées ; le `.qml` d'une table porte son nom, `UG.qml`). **`.qml` vide ou illisible** : il
+est ignoré, la règle par nom (ou le style par défaut) s'applique, avec l'avertissement
+« .qml illisible, style du manuel appliqué » (Pascal, 4 novembre 2026).
 
 | Règle | Motif | Géométrie | Symbole | Étiquette |
 |---|---|---|---|---|

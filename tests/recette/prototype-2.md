@@ -2,7 +2,8 @@
 
 > Rédigé par le `dev` le 4 novembre 2026 (mission 023, étape 2), d'après le plan
 > `prototype-2/PLAN.md` validé par Pascal avec ses dix réponses, et la fiche
-> `pilotage/missions/023-prototype-2.md`. Relecture à faire par le `testeur`.
+> `pilotage/missions/023-prototype-2.md` ; repris le même jour (aller-retour 1/3) d'après les
+> corrections C1 à C15 du `testeur` et les trois décisions de Pascal.
 > **Statut : proposé, pas encore suivi.** Les gestes nomment les boutons tels qu'ils figurent
 > dans `prototype-2/essai-logique.mjs` (`BOUTONS`, source de `Essai.qml`) ; un test
 > (`tests/protocole-prototype-2.test.mjs`) vérifie que les noms sont les mêmes.
@@ -16,13 +17,35 @@ ignore un `.qml` posé après le chargement ; (5) garde le style après réouver
 pour un GeoJSON et un Shapefile lus en `/vsizip/`. Les réponses décident de l'ADR des styles
 et du sort de la mission 012 (reprojection).
 
-**Comment remplir.** Pour chaque geste : le faire, regarder, puis cocher `☐` en `☒` si le
-résultat attendu est vu tel quel. Un résultat différent se note dans « Vu autrement », jamais
-dans la case. Une case non cochée veut dire non. **Une capture nommée par réponse** (noms
-donnés ci-dessous), à joindre à la PR ou au journal. Captures **en intérieur** : les couleurs
-d'essai sont très différentes, un reflet de soleil les brouillerait. **Critère** : sept
-réponses oui/non (les questions 1, 3 et 4 en comptent deux ou trois, séparées), aucun seuil de
-temps. Le prototype affiche chaque erreur mot pour mot : la recopier dans « Vu autrement ».
+**Comment remplir (une seule règle de lecture pour toutes les cases).**
+
+- Dans chaque tableau de gestes, la dernière colonne est **« Conforme ☐ »** : on la coche (`☒`)
+  si, et seulement si, **ce qui est écrit dans la colonne « Résultat attendu » est vu tel quel**
+  sur l'appareil. Cela vaut pour **toutes** les cases, y compris la question 2, où le résultat
+  attendu est un échec du style (carrés pleins, sans étiquette) : on coche si on voit cet
+  échec. Case non cochée = on n'a pas vu cela : écrire ce qu'on a vu dans « Vu autrement ».
+- Dans les tableaux de **relevés** (ceux qui n'ont pas de résultat attendu), la dernière colonne
+  est **« Noté ☐ »** : on la coche quand la valeur est écrite dans le tableau. « Noté » ne dit
+  rien de « conforme ».
+- La **réponse oui / non** de chaque question n'est **pas** une case : elle s'écrit dans le
+  tableau « Réponses » en fin de protocole, avec la règle donnée dans chaque question
+  (« Réponse : … »).
+- **Neuf réponses** en tout : 1a, 1b, 2, 3a, 3b, 4, 5, 6, 7 (les questions 1 et 3 en comptent
+  deux). Aucun seuil de temps.
+- **Captures.** Une capture nommée par réponse (noms ci-dessous), **en intérieur** (les couleurs
+  d'essai sont très différentes, un reflet de soleil les brouillerait). Geste Samsung : appuyer
+  **en même temps** sur le bouton latéral (marche/arrêt) et sur Volume bas, une seconde. La
+  capture porte le nom que Samsung lui donne (`Screenshot_…`) ; on n'a pas à la renommer :
+  **dans le tableau « Réponses », écrire le nom Samsung en face du nom attendu**. Pour les sortir
+  du téléphone : application Galerie, ouvrir la capture, Partager (courriel), ou câble USB vers
+  le PC (dossier `DCIM/Screenshots`). À joindre à la PR ou au journal.
+- **Quand le prototype affiche une erreur** (« ERREUR », « REFUSÉ », « Écran du prototype NON
+  chargé ») : ne rien recopier ; **une capture lisible de l'écran d'erreur** (défiler et en faire
+  plusieurs si le bloc est long) la remplace (décision de Pascal, 4 novembre 2026).
+- **Fenêtre du plugin.** Le bouton « Fermer » en haut de la fenêtre du plugin la ferme et
+  montre la carte ; pour la rouvrir, toucher son bouton dans la barre des plugins. Les
+  consignes « fermer la fenêtre » sont là pour que la capture montre la **carte**, pas le bloc de
+  texte.
 
 ## Avant de commencer
 
@@ -34,75 +57,109 @@ temps. Le prototype affiche chaque erreur mot pour mot : la recopier dans « Vu 
 | Version de QField | |
 | Prototype installé (version à l'écran, en-tête) | |
 
-**1. Sur le poste, avant tout : contrôler les fichiers d'essai avec QGIS.** Je n'ai eu ni QGIS
-ni GDAL pour fabriquer les `.qml` et le GeoPackage : un fichier mal formé donnerait un « non »
-faux, et l'ADR se fonderait sur un faux. Télécharger `essai-styles.zip`, le décompresser, puis
-ouvrir dans QGIS **ces fichiers** et regarder (aucun réglage à faire : les styles doivent
-apparaître seuls) :
+### A. Sur le PC, avant tout : contrôler les fichiers d'essai avec QGIS
 
-| Fichier à ouvrir | À voir dans QGIS | Vu ☐ |
+Le `dev` n'a eu ni QGIS ni GDAL pour fabriquer les `.qml` et le GeoPackage : un fichier mal
+formé donnerait un « non » faux, et l'ADR se fonderait sur un faux. Télécharger sur le PC
+`essai-styles.zip` et `cerf-essai-2.zip` (liens plus bas, § B), les décompresser, puis ouvrir
+dans QGIS **ces fichiers** et regarder (aucun réglage à faire : les styles doivent apparaître
+seuls). Le GeoPackage seul `essai-q3.gpkg` ne sert **qu'à ce contrôle sur le PC** (c'est le même
+fichier que `Parcelles_q3.gpkg` du zip) : **ne pas le mettre sur le Samsung**.
+
+| Fichier à ouvrir | À voir dans QGIS | Conforme ☐ |
 |---|---|---|
+| `essai-styles.zip` (gestionnaire de fichiers du PC) | **17 entrées** : 13 fichiers de base + `FRT_sansprj.shp`, `.shx`, `.dbf`, `.cpg` | ☐ |
 | `UG_q1.geojson` (avec `UG_q1.qml` à côté) | contour bleu, sans remplissage, étiquettes `UG1` et `UG2` en bleu ; système de la couche : EPSG:2154 | ☐ |
-| `Parcelles_q3.gpkg` (table `Parcelles_q3`) | contour orange, 1 mm, sans remplissage, étiquettes `P1` et `P2` en orange (style pris dans `layer_styles`) ; Gestionnaire de styles : un style par défaut | ☐ |
+| `UG_q2.geojson` (avec `UG_q2.qml` à côté) | comme `UG_q1` : contour bleu, sans remplissage, étiquettes `UG3` et `UG4` en bleu ; EPSG:2154 | ☐ |
+| `Parcelles_q3.gpkg` ou `essai-q3.gpkg` (table `Parcelles_q3`) | contour orange, 1 mm, sans remplissage, étiquettes `P1` et `P2` en orange (style pris dans `layer_styles`) ; Gestionnaire de styles : un style par défaut | ☐ |
 | `UG_q4.geojson` (avec `UG_q4.qml` à côté) | contour vert-bleu, sans remplissage, étiquettes `UG5` et `UG6` | ☐ |
-| `FRT_q7.shp` | système EPSG:2154 (lu dans le `.prj`) | ☐ |
-| `Sans_crs.geojson` | système **EPSG:4326** et emprise absurde (des milliers de « degrés ») | ☐ |
+| `FRT_q7.shp` | système EPSG:2154 (lu dans le `.prj`) ; 2 polygones, champ `code_ug` | ☐ |
+| `FRT_sansprj.shp` | s'ouvre ; **pas de `.prj`** : QGIS pose un système ou demande lequel ; 2 polygones | ☐ |
+| `Sans_crs.geojson` | système **EPSG:4326** (ou `OGC:CRS84`) ; emprise absurde : propriétés de la couche, Information : X de **1 050 963 à 1 051 263**, Y de **6 841 112 à 6 841 762**, lus comme des « degrés » (mètres Lambert 93 pris pour des degrés) | ☐ |
+| `cerf-essai-2.qgs` (dans `cerf-essai-2.zip`) | s'ouvre sans erreur ; système du projet EPSG:2154 ; aucune couche | ☐ |
 
-Si l'une des trois premières lignes n'est pas cochée, **le défaut est dans le fichier
-d'essai, pas dans QField** : s'arrêter, me donner le `.qml` que QGIS produit (couche, Style,
-Enregistrer le style), je remplace le mien. Ne pas passer à l'essai sur le Samsung.
+Si l'une des lignes de `UG_q1`, `UG_q2`, `Parcelles_q3`, `UG_q4`, `FRT_q7` ou
+`cerf-essai-2.qgs` n'est pas cochée, **le défaut est dans le fichier d'essai, pas dans QField** :
+s'arrêter, donner au `dev` le `.qml` que QGIS produit (couche, Style, Enregistrer le style), il
+remplace le sien. Ne pas passer à l'essai sur le Samsung. (Les lignes `FRT_sansprj` et
+`Sans_crs` ne bloquent pas : ce sont des pièges, on note ce que QGIS en dit.)
 
-**2. Avant le mode avion : télécharger sur le Samsung** depuis la préversion `prototype-2`
-(https://github.com/pobsteta/cerf/releases/tag/prototype-2) :
+### B. Sur le Samsung, AVEC le réseau (avant le mode avion)
 
-- le plugin `cerf-prototype-2.zip`, à installer par URL dans QField
-  (https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-prototype-2.zip) ;
-  **ne pas renommer ce fichier** : QField nomme le dossier du plugin d'après le nom du zip ;
-- le projet `cerf-essai-2.zip`
-  (https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-essai-2.zip), à
-  importer comme projet : Lambert 93, sans fond de carte, **sans `cerf_id`** ;
-- le zip d'essai `essai-styles.zip`
-  (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles.zip) :
-  **17 entrées, toutes stockées** (sans compression), à laisser **tel quel** dans
-  Téléchargements ;
-- en repli seulement, le GeoPackage seul `essai-q3.gpkg`
-  (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-q3.gpkg).
+Dans le navigateur du téléphone, depuis la préversion `prototype-2`
+(https://github.com/pobsteta/cerf/releases/tag/prototype-2). **Tout se fait avant le mode avion** :
+l'installation du plugin et l'import du projet ont besoin du réseau.
 
-**3. Désactiver** les plugins « Cerf » 0.1.1 et « Cerf, prototype n° 1 » (Paramètres, Plugins) :
-trois boutons de plugin sur la barre prêtent à confusion. Ne laisser actif que « Cerf,
-prototype n° 2 ».
+1. **Installer le plugin par URL** : dans QField, menu (☰) puis Paramètres, Plugins, installer
+   un plugin depuis une URL, et coller
+   https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-prototype-2.zip
+   (`cerf-prototype-2.zip`). **Ne pas renommer ce fichier** : QField nomme le dossier du plugin
+   d'après le nom du zip.
+2. **Importer le projet** `cerf-essai-2.zip`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-essai-2.zip) : à
+   l'écran d'accueil de QField, importer un projet depuis une URL (coller le lien) ; à défaut,
+   le télécharger d'abord (navigateur) puis l'importer comme zip. Le projet est en Lambert 93,
+   sans fond de carte, **sans `cerf_id`**.
+3. **Télécharger le zip d'essai** `essai-styles.zip`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles.zip) avec le
+   navigateur : **le fichier arrive dans le dossier « Téléchargements »** du téléphone (appli
+   « Mes fichiers », Téléchargements). Il a **17 entrées, toutes stockées** (sans compression) :
+   le **laisser tel quel** (ne pas le décompresser, ne pas le renommer ; s'il s'appelle
+   `essai-styles (1).zip`, supprimer l'ancien et le retélécharger).
+4. Le GeoPackage seul `essai-q3.gpkg`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-q3.gpkg) n'est **pas**
+   pour le Samsung : voir § A (contrôle QGIS sur le PC).
+5. **Plugins** (QField, Paramètres, Plugins) : **Désactiver** « Cerf » 0.1.1 et
+   « Cerf, prototype n° 1 », **activer** « Cerf, prototype n° 2 » **seul** : trois boutons de plugin sur la barre
+   prêtent à confusion. Si le bouton du prototype n° 2 n'apparaît pas, quitter QField et le
+   relancer.
+6. **Ouvrir le projet `cerf-essai-2`**, puis passer en **mode avion** et **couper le Wi-Fi**
+   (le réseau n'entre dans aucune question : c'est ce qui est essayé). Toucher le bouton du
+   prototype dans la barre des plugins ; l'en-tête dit version, projet (`…/cerf-essai-2.qgs`),
+   dossier du projet, dossier `cerf-imports`.
 
-**4. Ouvrir le projet `cerf-essai-2`**, puis passer en **mode avion** (le réseau n'entre dans
-aucune question : c'est ce qui est essayé). Écran du prototype : toucher son bouton dans la
-barre des plugins ; l'en-tête dit version, projet, dossier du projet, dossier `cerf-imports`.
+**Le prototype n'agit que dans `cerf-essai-2.qgs`.** Dans tout autre projet, un bouton répond
+« REFUSÉ : le projet ouvert n'est pas cerf-essai-2.qgs » et ne fait rien : ouvrir le bon projet.
 
 **Limite assumée (décision de Pascal, 4 novembre 2026).** Le zip d'essai est **stocké**. Un zip
 de JFC, fait par QGIS ou 7-Zip, est **compressé** : le prototype ne sait pas l'extraire. Si les
 questions 1 et 3 passent, une mission « inflate en JavaScript » suit. Le prototype dit
 « entrée compressée, non extraite » si on lui en donne un.
 
-**Gestes à ne faire qu'une fois chacun** : toucher deux fois « 1. Couche sortie du zip »
-ajoute la couche deux fois ; si cela arrive, le noter dans « Vu autrement » et fermer puis
-rouvrir le projet.
+**Gestes à ne faire qu'une fois chacun** (sauf la question 4, rejouable) : toucher deux fois
+« 1. Couche sortie du zip » ajoute la couche deux fois ; si cela arrive, le noter dans « Vu
+autrement », puis fermer et rouvrir le projet (voir question 5, premier geste de réouverture).
 
 ## Question 0 (préparation, sans réponse) : copier le zip dans le projet
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
 | 1 | Toucher « 0. Préparer le zip », accepter la permission de stockage si Android la demande, choisir `essai-styles.zip` dans Téléchargements | l'en-tête dit « Dernier zip copié : …/cerf-imports/essai-styles.zip (présent) » ; le bloc de résultat liste **17 entrées**, toutes « stockée », avec taille et CRC32 | ☐ |
 
 Capture : `q0-liste.png` (la liste, défilée si besoin). Si le bloc dit « 0 octet rendu » ou une
-erreur : le noter, **tout le reste est impossible**, s'arrêter et le dire.
+erreur : capture lisible, **tout le reste est impossible**, s'arrêter et le dire.
 
 ## Question 1 : couche sortie du zip, `.qml` écrit à côté avant le chargement
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 1. Couche sortie du zip » | le bloc dit, pour `UG_q1.geojson` puis `UG_q1.qml`, « IDENTIQUE » (taille et CRC32 relus = ceux du zip) ; « Le .qml est écrit AVANT le chargement » ; `isValid : true`, `crs.authid : EPSG:2154`, `extent()` autour de X 1 050 000 ; Y 6 840 000 ; « Couche ajoutée à la carte » | ☐ |
-| 2 | Fermer la fenêtre du plugin, regarder la carte (si « Centrage : ERREUR », zoomer à la main sur la position que donne le bloc) | **1a, couleurs** : deux carrés au **contour bleu, fin, sans remplissage** = oui ; remplissage plein ou couleur au hasard = non | ☐ |
-| 3 | Regarder les carrés | **1b, étiquettes** : `UG1` et `UG2` écrits en **bleu**, petit corps (10 pt) = oui ; pas d'étiquette, ou étiquette d'une autre couleur = non | ☐ |
+| 1 | Toucher « 1. Couche sortie du zip » | le bloc dit, pour `UG_q1.geojson` puis `UG_q1.qml`, « IDENTIQUE » (taille et CRC32 relus = ceux du zip) ; « Le .qml est écrit AVANT le chargement » ; `isValid : true`, `crs.authid : EPSG:2154`, `extent()` autour de X 1 050 163 à 1 050 463, Y 6 840 312 à 6 840 962 ; « Couche ajoutée à la carte » | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte (voir « Centrage » plus bas) ; capture | **1a, couleurs** : deux carrés au **contour bleu, fin, sans remplissage** | ☐ |
+| 3 | Regarder les carrés ; capture | **1b, étiquettes** : `UG1` et `UG2` écrits en **bleu**, petit corps (10 pt) | ☐ |
 
-Captures : `q1-carte.png` (la carte zoomée sur la couche), `q1-ecran.png` (l'écran du plugin).
+**Centrage.** Le prototype centre la carte sur la couche. Si le bloc dit « Centrage : ERREUR », il
+écrit une ligne **« Aller à la main vers : EPSG:2154, X (est) = … m ; Y (nord) = … m »** :
+c'est le centre de la couche. Les couches d'essai sont de **petits carrés de 300 m** : il faut
+zoomer fort (échelle de l'ordre du 1 : 2 000), sinon on ne voit qu'un point. Essayer la barre
+de recherche de QField avec ces deux nombres (X puis Y) ; si elle ne propose rien, zoomer à la
+main sur la zone en s'aidant des couches déjà posées. Noter « centrage à la main » dans « Vu
+autrement ».
+
+Captures : `q1-carte.png` (la carte zoomée sur la couche, fenêtre du plugin fermée),
+`q1-ecran.png` (l'écran du plugin).
+
+**Réponse 1a** : oui si la case 2 est cochée, sinon non. **Réponse 1b** : oui si la case 3 est
+cochée, sinon non.
 
 **Si non (1a ou 1b)** : un `.qml` posé à côté d'une couche sortie du zip n'est pas pris en
 compte par `LayerUtils.loadVectorLayer` : l'ADR des styles ne peut pas compter sur lui ;
@@ -113,13 +170,16 @@ couleurs oui, étiquettes à poser autrement.
 
 ## Question 2 : couche lue dans le zip (`/vsizip/`), `.qml` dans le zip
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
 | 1 | Toucher « 2. Couche lue dans le zip » | `isValid : true`, `crs.authid : EPSG:2154`, « Couche ajoutée » ; la source commence par `/vsizip//` | ☐ |
-| 2 | Regarder la carte | **attendu : non** : deux carrés au style par défaut de QGIS (remplissage plein, couleur au hasard, sans étiquette), entre ceux de la question 1 et ceux de la question 3. **Oui, surprise** si contour bleu sans remplissage avec étiquettes `UG3` et `UG4` : le dire en gros | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **deux carrés pleins, sans étiquette** (style par défaut de QGIS : remplissage plein, couleur au hasard, ni contour bleu fin ni `UG3`/`UG4` écrits), à l'est de ceux de la question 1 | ☐ |
 
-Captures : `q2-carte.png`, `q2-ecran.png`. Répondre à « le style est pris dans le zip ? » : oui / non
-(attendu : **non**).
+Captures : `q2-carte.png`, `q2-ecran.png`.
+
+**Réponse 2** (à la question « le style est pris dans le zip ? ») : **non** si la case 2 est
+cochée (c'est le résultat attendu) ; **oui, surprise** si on voit au contraire un contour bleu
+sans remplissage avec les étiquettes `UG3` et `UG4` : le dire en gros.
 
 **Si non (attendu)** : le plugin doit lire le `.qml` lui-même (c'est la spec § 5) et le poser
 par une autre voie, ou sortir la couche du zip (question 1).
@@ -128,34 +188,48 @@ par une autre voie, ou sortir la couche du zip (question 1).
 
 ## Question 3 : GeoPackage avec table `layer_styles`
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
 | 1 | Toucher « 3. GeoPackage avec styles » | `Parcelles_q3.gpkg` « IDENTIQUE » (binaire : CRC32 relu) ; source `…/Parcelles_q3.gpkg\|layername=Parcelles_q3` ; `isValid : true`, `crs.authid : EPSG:2154` | ☐ |
-| 2 | Regarder la carte | **3a, couleurs** : deux carrés au **contour orange, épais (1 mm), sans remplissage** = oui | ☐ |
-| 3 | Regarder les carrés | **3b, étiquettes** : `P1` et `P2` en **orange**, gros corps (15 pt) = oui | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **3a, couleurs** (critère principal) : deux carrés au **contour orange, sans remplissage** (l'épaisseur de 1 mm se note, elle ne décide pas) | ☐ |
+| 3 | Regarder les carrés | **3b, étiquettes** : `P1` et `P2` en **orange** (le gros corps, 15 pt, se note, il ne décide pas) | ☐ |
 
 Captures : `q3-carte.png`, `q3-ecran.png`.
 
+**Réponse 3a** : oui si la case 2 est cochée, sinon non. **Réponse 3b** : oui si la case 3 est
+cochée, sinon non.
+
 **Si non** : la table `layer_styles` n'est pas lue au chargement : pas de style porté par le
-GeoPackage lui-même ; à dire à l'ADR des styles. (Si la question « Avant de commencer » 1 a été
-cochée, le défaut n'est pas dans le fichier.)
+GeoPackage lui-même ; à dire à l'ADR des styles. (Si le contrôle QGIS du § A a été coché, le
+défaut n'est pas dans le fichier.)
 
 **Vu autrement :**
 
 ## Question 4 : `.qml` posé après le chargement
 
-| N° | Geste | Résultat attendu | Vu ☐ |
-|---|---|---|---|
-| 1 | Toucher « 4. .qml posé après » | `UG_q4.geojson` « IDENTIQUE » ; « UG_q4.qml absent du dossier : oui » ; couche ajoutée ; l'écran dit « CAPTURE A MAINTENANT » | ☐ |
-| 2 | Regarder la carte (carrés à l'est de ceux de la question 3), **capture A** | style par défaut de QGIS (remplissage plein, sans étiquette) | ☐ |
-| 3 | Toucher « 4b. Écrire le .qml maintenant » | `UG_q4.qml` « IDENTIQUE » ; « La couche A n'a PAS été rechargée » ; l'écran dit « CAPTURE B MAINTENANT » | ☐ |
-| 4 | Regarder la carte, **capture B** | **oui si la couche A n'a pas changé** : le style n'est lu qu'à la construction de la couche | ☐ |
-| 5 | Toucher « 4c. Recharger la couche (reload) » ; regarder la carte | à noter : le bloc donne `typeof couche.reload`, le résultat de `reload()` (ou l'erreur) ; **la couche a-t-elle changé de style** (vert-bleu avec étiquettes) ? Réponse notée, pas de résultat attendu | ☐ |
-| 6 | Toucher « 4d. Nouvelle couche, même fichier » ; **capture D** | la couche A est retirée ; la nouvelle couche `UG_q4_bis` a le style **vert-bleu `#008B8B`**, sans remplissage, étiquettes `UG5` et `UG6` | ☐ |
+Rejouable : toucher de nouveau « 4. .qml posé après » retire l'ancienne couche A, efface l'ancien
+`UG_q4.qml` (effacement limité au dossier `cerf-imports` du projet) et repart de zéro. Le bloc doit
+alors dire « effacé par rmFile : true » ; s'il dit « Essai arrêté », capture et s'arrêter.
 
-Captures : `q4-a.png`, `q4-b.png`, `q4-d.png`, `q4-ecran.png` (écran après 4d). Réponse de la
-question : le `.qml` posé après est ignoré = oui (cases 4 et 6). Note 4c : `reload()`
-relit-il le style ? oui / non / absent.
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 4. .qml posé après » | `UG_q4.geojson` « IDENTIQUE » ; « UG_q4.qml absent du dossier : oui » ; couche ajoutée ; l'écran dit « CAPTURE A » | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte (carrés à l'est de ceux de la question 3) ; **capture A** (`q4-a.png`) ; rouvrir le plugin | style par défaut de QGIS : carrés pleins, sans étiquette | ☐ |
+| 3 | Toucher « 4b. Écrire le .qml maintenant » | `UG_q4.qml` « IDENTIQUE » ; « La couche A n'a PAS été rechargée » ; l'écran dit « CAPTURE B » | ☐ |
+| 4 | **Fermer la fenêtre du plugin**, **déplacer un peu la carte** (un doigt, pour forcer le redessin), regarder ; **capture B** (`q4-b.png`) | **la couche A n'a pas changé** (toujours carrés pleins sans étiquette) : le style n'est lu qu'à la construction de la couche | ☐ |
+| 5 | Rouvrir le plugin, toucher « 4d. Nouvelle couche, même fichier » | « Couche A retirée : oui » ; le bloc charge `UG_q4_bis` | ☐ |
+| 6 | **Fermer la fenêtre du plugin** ; **capture D** (`q4-d.png`) | seule la nouvelle couche `UG_q4_bis` est visible, au style **vert-bleu `#008B8B`**, sans remplissage, étiquettes `UG5` et `UG6` | ☐ |
+
+Relevé facultatif, **sans résultat attendu** (entre les cases 4 et 5 si l'on veut) :
+
+| Geste | Ce que dit le bloc ou la carte (à écrire) | Noté ☐ |
+|---|---|---|
+| Rouvrir le plugin, toucher « 4c. Recharger la couche (reload) » ; fermer la fenêtre, regarder la couche A | `typeof couche.reload` : … ; `reload()` : … (ou l'erreur) ; la couche A a-t-elle changé de style (vert-bleu avec étiquettes) ? oui / non / `reload` absent : | ☐ |
+
+Captures : `q4-a.png`, `q4-b.png`, `q4-d.png`, `q4-ecran.png` (écran du plugin après 4d).
+
+**Réponse 4** : **oui** (le `.qml` posé après est ignoré) si la case 4 est cochée **et** la case
+6 aussi ; non si la couche A a changé à la capture B.
 
 **Si non (la couche A change après 4b)** : QGIS surveille le fichier et relit le style : bonne
 nouvelle, l'ordre « `.qml` puis couche » n'est plus une contrainte ; à dire à l'ADR.
@@ -164,18 +238,41 @@ nouvelle, l'ordre « `.qml` puis couche » n'est plus une contrainte ; à dire �
 
 ## Question 5 : réouverture du projet
 
-À faire **après** les questions 1 et 3 (les deux couches `UG_q1` et `Parcelles_q3` sont sur
-la carte).
+À faire **après** les questions 1 et 3 (les deux couches `UG_q1` et `Parcelles_q3` sont sur la
+carte). Si, aux questions 1 ou 3, le style n'a **pas** été pris (réponse non), la couche
+concernée est **« sans objet »** pour cette question : on ne peut pas dire qu'un style qui n'a
+jamais été pris « revient ».
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 5. Mémoriser » | « Réglages de QField : écrit 2 couche(s) » ; la ligne « Relu : » montre les deux chemins | ☐ |
-| 2 | **Fermer le projet, puis le rouvrir** (sans rien toucher d'autre) ; ouvrir le plugin | le bloc dit « Réouverture détectée (loadProjectEnded) » ; sinon toucher « 5. Après réouverture » | ☐ |
-| 3 | Lire la ligne « Présentes dans le projet : n » | note : **n = 0, 1 ou 2** (si 2, QField a enregistré le projet avec les couches, et le style vu peut venir du projet enregistré, pas du fichier voisin) | ☐ |
-| 4 | Regarder la carte | **oui** si les deux couches sont revenues avec leur style (bleu et orange, étiquettes) | ☐ |
+| 1 | **Zoomer sur les deux couches** (de sorte que les deux soient dans l'écran) ; toucher « 5. Mémoriser » | « Réglages de QField : écrit 2 couche(s) » ; la ligne « Relu : » montre les deux chemins ; **deux fois** « couche marquée (cerf/proto2) retrouvée dans le projet : oui » (un seul « oui » ou un « NON » : s'arrêter, capture, le dire) ; « Couches retrouvées par leur source (chemin) : 2 sur 2 » | ☐ |
+| 2 | Fermer le projet puis le rouvrir (voir le geste ci-dessous), **sans rien toucher d'autre** ; rouvrir la fenêtre du plugin | le bloc dit « Réouverture détectée (loadProjectEnded) » ; sinon toucher « 5. Après réouverture » | ☐ |
+| 3 | **Zoomer de nouveau sur la zone des couches** (après réouverture, la carte peut être ailleurs), fermer la fenêtre du plugin, regarder ; capture | `UG_q1` revenue avec son style **bleu et ses étiquettes** et `Parcelles_q3` revenue avec son style **orange et ses étiquettes** | ☐ |
 
-Captures : `q5-carte.png`, `q5-ecran.png`. Pour les couches « rechargées » par le plugin (n < 2),
-la réponse vaut : le style est relu depuis le disque, sans réécrire de `.qml`.
+**Fermer et rouvrir le projet dans QField.** Les intitulés exacts dépendent de la version de
+QField ; dans l'ordre : (a) menu (☰), puis « Fermer le projet » s'il existe ; (b) sinon, menu (☰)
+puis « Ouvrir un projet local » et choisir de nouveau `cerf-essai-2` ; (c) sinon, quitter
+QField entièrement (bouton « applis récentes » d'Android, balayer QField vers le haut) et le
+relancer : il rouvre le dernier projet. Écrire dans « Vu autrement » **le geste réellement fait**.
+Ne pas désactiver le plugin pendant ce temps.
+
+Relevé, **sans résultat attendu** :
+
+| Ligne du bloc | Valeur à écrire | Noté ☐ |
+|---|---|---|
+| « Présentes dans le projet à l'ouverture (par la source) : n = … sur 2 » | n = 0, 1 ou 2 : | ☐ |
+| Pour chaque couche : « déjà dans le projet, non rechargée » ou « rechargée depuis le disque, sans réécrire de .qml » | `UG_q1` : … ; `Parcelles_q3` : … | ☐ |
+
+Captures : `q5-carte.png`, `q5-ecran.png`.
+
+**Réponse 5** (par couche, puis une seule ligne dans le tableau final) :
+- **sans objet** pour une couche dont le style n'a pas été pris aux questions 1 ou 3 ;
+- **oui** si la couche est « rechargée depuis le disque » (n < 2 pour elle) **et** revenue avec
+  son style : le style est relu du fichier voisin, sans réécrire de `.qml` ;
+- **oui, mais par le projet** si la couche est « déjà dans le projet, non rechargée » (n = 2) et
+  avec son style : QField a enregistré le projet avec les couches, le style peut venir du projet
+  enregistré, pas du fichier voisin ;
+- **non** si elle n'est pas revenue, ou revenue sans son style.
 
 **Si non** : les couches importées ne reviennent pas seules à la réouverture (n = 0) ou
 reviennent sans leur style : le plugin doit recharger les couches et reposer le style à chaque
@@ -185,28 +282,44 @@ ouverture ; à dire à l'ADR.
 
 ## Question 6 : reprojection depuis QML, hors ligne
 
-**Mode avion activé** : le réseau n'entre pas dans ces appels.
+**Mode avion activé** : le réseau n'entre pas dans ces appels. Un seul toucher sur « 6.
+Reprojection » donne tout l'écran ; le défiler.
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
 | 1 | Toucher « 6. Reprojection » | les deux systèmes : `fromDescription(EPSG:2154).isValid : true`, `authid : EPSG:2154` ; `wgs84Crs().isValid : true`, `authid : EPSG:4326` | ☐ |
-| 2 | **Ligne 1**, point (longitude 7,76189 ; latitude 48,56906) | X (est) ≈ **1 051 113**, Y (nord) ≈ **6 840 462** à **5 m** près ; « à 5 m près : oui » | ☐ |
-| 3 | **Ligne 2**, emprise (7,75 ; 48,56) à (7,77 ; 48,58) | rectangle non nul, quatre bornes de l'ordre de X 1 04x xxx à 1 05x xxx, Y 6 83x xxx à 6 84x xxx ; `isNull : false` | ☐ |
-| 4 | **Ligne 3** | « OUI, vraisemblable » : tous les coins dans X 89 101 à 1 252 436, Y 6 036 555 à 7 120 480 | ☐ |
+| 2 | **Ligne 1**, point (longitude 7,76189 ; latitude 48,56906) | X (est) ≈ **1 051 113**, Y (nord) ≈ **6 840 462** à **5 m** près ; « à 5 m près : oui ». **Piège des axes** : si le bloc dit « AXES INVERSÉS » (X ≈ 6 840 462 et Y ≈ 1 051 113), c'est **non** | ☐ |
+| 3 | **Ligne 2**, emprise (7,75 ; 48,56) à (7,77 ; 48,58) | rectangle dont les quatre bornes sont de l'ordre de X 1 04x xxx à 1 05x xxx et Y 6 83x xxx à 6 84x xxx, **xMinimum plus petit que xMaximum et yMinimum plus petit que yMaximum**, `isNull : false`. Un rectangle à des valeurs de l'ordre de 1,79e+308 (le « vide » de QGIS) est **non** | ☐ |
+| 4 | **Ligne 3** | « OUI, vraisemblable » (tous les coins dans X 89 101 à 1 252 436, Y 6 036 555 à 7 120 480, `isNull` faux). La réponse « NON (vide, inversée, nulle ou hors emprise) » est **non** | ☐ |
 
-Ne pas cocher une valeur à `undefined`, `0 ; 0` ou accompagnée d'une exception : c'est non.
-Lignes à **noter**, sans résultat attendu fixé (elles disent ce que QField fait en cas
-d'erreur, pour la 012) :
+Ne pas cocher une valeur à `undefined`, `0 ; 0`, `NaN`, à 1,79e+308, ou accompagnée d'une
+exception (« ERREUR ») : c'est non, avec une capture lisible.
 
-| Ligne | Ce que dit le bloc (à recopier) |
+Lignes à **relever**, sans résultat attendu fixé (elles disent ce que QField fait en cas
+d'erreur, pour la 012). Le bloc écrit, pour les lignes 5 à 7, la valeur rendue puis **un** des
+messages suivants (liste complète) :
+
+| Message possible | Sens |
 |---|---|
-| 4 : noms qui existent (`typeof`) | `GeometryUtils` : … ; `CoordinateReferenceSystemUtils` : … |
-| 5 : même système des deux côtés | attendu : « rendue SANS changement » : |
-| 6 : système invalide (`invalidCrs`) | « rendue SANS changement », « vide (0 ; 0) » ou autre : |
-| 7 : reprojection impossible (mètres pris pour des degrés) | « vide (0 ; 0) : ÉCHEC silencieux », exception, ou autre : |
+| « rendue SANS changement » | QField a rendu le point d'entrée tel quel |
+| « transformée » | une autre valeur numérique, finie, non nulle |
+| « vide (0 ; 0) : ÉCHEC silencieux » | QField a rendu 0 ; 0 |
+| « non numérique (undefined ou autre) : ÉCHEC » | pas de nombre rendu |
+| « valeurs infinies ou NaN : ÉCHEC » | `Infinity` ou `NaN` rendu |
+| « ERREUR … » (au lieu d'un message) | exception levée par QField |
+
+| Ligne | Ce que dit le bloc (à recopier : le mot du message ci-dessus) | Noté ☐ |
+|---|---|---|
+| 4 : noms qui existent (`typeof`) | `GeometryUtils` : … ; `CoordinateReferenceSystemUtils` : … (pour chaque nom : `function`, `undefined` ou autre) | ☐ |
+| 5 : même système des deux côtés (EPSG:2154 vers EPSG:2154) | attendu : « rendue SANS changement » : | ☐ |
+| 6 : système source invalide (`invalidCrs`) vers EPSG:2154 | **échec attendu, en `NaN`** (« valeurs infinies ou NaN : ÉCHEC ») ; sinon un autre message de la liste : | ☐ |
+| 7 : reprojection impossible (mètres Lambert 93 pris pour des degrés WGS84) | **échec attendu, en `NaN`** (« valeurs infinies ou NaN : ÉCHEC ») ; sinon un autre message de la liste : | ☐ |
 
 Captures : `q6-ecran-haut.png` et `q6-ecran-bas.png` (l'écran entier, lignes 1 à 7, défilé).
-La question répond : la reprojection point et emprise existe depuis QML, hors ligne = oui / non.
+
+**Réponse 6** (la reprojection point et emprise existe depuis QML, hors ligne) : **oui** si les
+cases 1, 2, 3 et 4 sont cochées toutes les quatre, sinon non. Les lignes 5 à 7 ne changent pas
+cette réponse : elles disent seulement comment un échec se voit.
 
 **Si non** : la 012 ne peut pas reprojeter depuis QML avec ces fonctions ; sa décision
 (contrôle de vraisemblance) reste à reprendre. **Quoi qu'il arrive, les lignes 6 et 7** disent
@@ -217,40 +330,61 @@ le contrôle de la 012 devra le traiter comme une erreur.
 
 ## Question 7 : `crs`, `extent` et `featureCount()` en `/vsizip/`
 
-| N° | Geste | Résultat attendu | Vu ☐ |
+Un toucher sur « 7. Métadonnées d'une couche » donne quatre blocs, l'un sous l'autre ; défiler.
+Termes exacts de l'écran : `isValid`, `crs.authid`, `crs.isValid`, `crs.description`,
+`extent() : xMinimum … ; xMaximum … ; yMinimum … ; yMaximum …`, `featureCount() appelé en direct`,
+`comptage par createFeatureIterator`, `emprise reprojetée en EPSG:2154`, `isNull`, et la ligne
+« Verdict spec § 4 (couche lue en … ) : … couche chargée » ou « … refus ».
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
 |---|---|---|---|
-| 1 | Toucher « 7. Métadonnées d'une couche » | quatre blocs : `UG_q2.geojson`, `Sans_crs.geojson`, `FRT_q7.shp`, `FRT_sansprj.shp`, chacun lu en `/vsizip/` | ☐ |
-| 2 | Bloc `UG_q2.geojson` | `isValid : true`, `crs.authid : EPSG:2154`, comptage par `createFeatureIterator` : **2** | ☐ |
-| 3 | Bloc `FRT_q7.shp` | `isValid : true`, `crs.authid : EPSG:2154`, comptage : **2** | ☐ |
-| 4 | Bloc `Sans_crs.geojson` | `crs.authid : EPSG:4326` (RFC 7946) et `extent()` absurde (X de l'ordre de 1 051 000 « degrés ») ; « emprise reprojetée en EPSG:2154 » **vide ou hors emprise**, verdict « refus » : le refus de la 012 est possible | ☐ |
+| 1 | Toucher « 7. Métadonnées d'une couche » | quatre blocs, dans cet ordre : `UG_q2.geojson`, `Sans_crs.geojson`, `FRT_q7.shp`, `FRT_sansprj.shp`, chacun commençant par « === … (en /vsizip/) » | ☐ |
+| 2 | Bloc `UG_q2.geojson` | `isValid : true`, `crs.authid : EPSG:2154`, `comptage par createFeatureIterator : 2` | ☐ |
+| 3 | Bloc `FRT_q7.shp` | `isValid : true`, `crs.authid : EPSG:2154`, `comptage par createFeatureIterator : 2` | ☐ |
+| 4 | Bloc `Sans_crs.geojson` | `crs.authid` vaut `EPSG:4326` **ou** `OGC:CRS84` (ligne « Lu en WGS84 … : oui ») ; `extent()` absurde, X de 1 050 963 à 1 051 263 et Y de 6 841 112 à 6 841 762 « degrés » ; sous « emprise reprojetée en EPSG:2154 » : bornes vides, inversées (xMinimum > xMaximum), `isNull : true`, ou hors emprise, et la ligne « Verdict spec § 4 … refus ». (Si le bloc dit « ERREUR » à la place de la reprojection : ne pas cocher, capture lisible.) | ☐ |
 
-À **noter** (sans résultat attendu) : `featureCount()` appelé en direct (valeur ou erreur ;
-attendu : non invocable) ; `FRT_sansprj.shp` : quel système QField rend-il **sans `.prj`**
-(`crs.authid`, `crs.isValid`, `crs.description`), et quelle emprise ; `crs.description` des
-autres couches ; une emprise nulle sur un fichier vide ou illisible.
+À **relever** (sans résultat attendu) :
 
-Capture : `q7-ecran-1.png` à `q7-ecran-4.png` (un écran par bloc, défilé).
+| Quoi | Ce que dit le bloc (à écrire) | Noté ☐ |
+|---|---|---|
+| `featureCount() appelé en direct` (les quatre blocs) | une valeur, ou une erreur (attendu : non invocable) : | ☐ |
+| `FRT_sansprj.shp` : système rendu **sans `.prj`** | `crs.authid` : … ; `crs.isValid` : … ; `crs.description` : … | ☐ |
+| `FRT_sansprj.shp` : emprise | `extent()` : … (attendu : X de 1 051 763 à 1 052 063, Y de 6 841 112 à 6 841 762 si le système est pris pour du Lambert 93) | ☐ |
+| `crs.description` des trois autres blocs | `UG_q2` : … ; `Sans_crs` : … ; `FRT_q7` : … | ☐ |
+
+Captures : `q7-ecran-1.png` à `q7-ecran-4.png` (un écran par bloc, défilé).
+
+**Réponse 7** : **oui** si les cases 2, 3 et 4 sont cochées toutes les trois (le système, l'emprise
+et le comptage sont lisibles en `/vsizip/` et permettent de refuser `Sans_crs`), sinon non. Les
+lignes à relever (surtout le Shapefile sans `.prj`) se disent dans « Remarque ».
 
 **Si non** : la 012 ne peut pas se fonder sur `crs` ou `extent` pour refuser une couche
 sans système ; à reprendre.
 
 **Vu autrement :**
 
+## Après l'essai
+
+1. **Désactiver « Cerf, prototype n° 2 »** (QField, Paramètres, Plugins) : il n'agit que dans
+   `cerf-essai-2.qgs`, mais un plugin d'essai n'a rien à faire sur un appareil de terrain.
+2. Réactiver, si on le veut, « Cerf » 0.1.1 et « Cerf, prototype n° 1 ».
+3. Remplir le tableau ci-dessous.
+
 ## Réponses (à remplir par Pascal)
 
-| Question | Réponse (oui / non) | Capture jointe | Remarque |
-|---|---|---|---|
-| 1a : couleurs du `.qml` pris, couche sortie du zip | | `q1-carte.png` | |
-| 1b : étiquettes prises, couche sortie du zip | | `q1-carte.png` | |
-| 2 : style pris dans le zip en `/vsizip/` (attendu : non) | | `q2-carte.png` | |
-| 3a : couleurs de `layer_styles` | | `q3-carte.png` | |
-| 3b : étiquettes de `layer_styles` | | `q3-carte.png` | |
-| 4 : `.qml` posé après ignoré (attendu : oui) ; note 4c ; 4d | | `q4-a.png`, `q4-b.png`, `q4-d.png` | |
-| 5 : le style revient après réouverture ; n présentes | | `q5-carte.png` | |
-| 6 : reprojection point et emprise, hors ligne | | `q6-ecran-haut.png`, `q6-ecran-bas.png` | |
-| 7 : `crs`, `extent`, `featureCount()` en `/vsizip/` | | `q7-ecran-1.png` à `q7-ecran-4.png` | |
+| Question | Réponse (oui / non / règle de la question) | Capture jointe (nom attendu) | Nom Samsung de la capture | Remarque |
+|---|---|---|---|---|
+| 1a : couleurs du `.qml` pris, couche sortie du zip | | `q1-carte.png` | | |
+| 1b : étiquettes prises, couche sortie du zip | | `q1-carte.png` | | |
+| 2 : style pris dans le zip en `/vsizip/` (attendu : non) | | `q2-carte.png` | | |
+| 3a : couleurs de `layer_styles` | | `q3-carte.png` | | |
+| 3b : étiquettes de `layer_styles` | | `q3-carte.png` | | |
+| 4 : `.qml` posé après ignoré (attendu : oui) ; 4d | | `q4-a.png`, `q4-b.png`, `q4-d.png` | | |
+| 5 : le style revient après réouverture (oui / oui, mais par le projet / non / sans objet, par couche) ; n | | `q5-carte.png` | | |
+| 6 : reprojection point et emprise, hors ligne | | `q6-ecran-haut.png`, `q6-ecran-bas.png` | | |
+| 7 : `crs`, `extent`, `featureCount()` en `/vsizip/` | | `q7-ecran-1.png` à `q7-ecran-4.png` | | |
 
 **Qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal passe les sept
 questions sur le Samsung en mode avion, une capture par réponse ; on saura que ça marche
-quand sept réponses oui/non sont écrites, assez pour l'ADR des styles et pour dire si la 012
-peut reprojeter.
+quand les neuf réponses (1a, 1b, 2, 3a, 3b, 4, 5, 6, 7) sont écrites, assez pour l'ADR des
+styles et pour dire si la 012 peut reprojeter.

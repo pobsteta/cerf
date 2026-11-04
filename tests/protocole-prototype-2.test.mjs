@@ -56,7 +56,7 @@ test('questions 1 et 3 : deux réponses séparées (couleurs, étiquettes) ; mod
 
 test('« Avant de commencer » : contrôle QGIS sur le poste, fichiers à ouvrir, désactivation des autres plugins, URL de la préversion', () => {
   const avant = sections.find((p) => p.startsWith('Avant de commencer'));
-  for (const f of ['UG_q1.geojson', 'Parcelles_q3.gpkg', 'UG_q4.geojson', 'FRT_q7.shp', 'Sans_crs.geojson']) assert.ok(avant.includes(`\`${f}\``), f);
+  for (const f of ['UG_q1.geojson', 'UG_q2.geojson', 'Parcelles_q3.gpkg', 'UG_q4.geojson', 'FRT_q7.shp', 'FRT_sansprj.shp', 'Sans_crs.geojson', 'cerf-essai-2.qgs']) assert.ok(avant.includes(`\`${f}\``), f);
   assert.match(avant, /Désactiver/);
   assert.match(avant, /prototype n° 1/);
   for (const f of ['cerf-prototype-2.zip', 'cerf-essai-2.zip', NOM_ZIP, 'essai-q3.gpkg']) {
@@ -69,4 +69,56 @@ test('tableau final : une ligne par réponse (1a, 1b, 2, 3a, 3b, 4, 5, 6, 7) et 
   const lignes = finale.split('\n').filter((l) => /^\| (1a|1b|2|3a|3b|4|5|6|7) :/.test(l));
   assert.equal(lignes.length, 9);
   assert.match(t, /Qui fait quoi d'ici quand, et comment saura-t-on que ça marche \?/);
+});
+
+test('aller-retour 1 : une seule règle de lecture (« Conforme ☐ » / « Noté ☐ »), neuf réponses, plus de « Vu ☐ »', () => {
+  assert.doesNotMatch(t, /\| Vu ☐ \|/, 'plus de colonne « Vu »');
+  assert.doesNotMatch(t, /sept réponses/i);
+  assert.match(t, /\*\*Neuf réponses\*\*/);
+  assert.match(t, /Conforme ☐/);
+  assert.match(t, /Noté ☐/);
+  // toute case ☐ de tableau est dans une colonne « Conforme », « Noté » ou « Vu » (contrôle QGIS)
+  for (const l of t.split('\n').filter((x) => /^\|.*\| ☐ \|$/.test(x))) assert.ok(l.endsWith('| ☐ |'));
+  const entetes = t.split('\n').filter((x) => /^\| .*(Conforme ☐|Noté ☐|Vu ☐) \|$/.test(x));
+  assert.ok(entetes.length >= 12, `${entetes.length} tableaux à cases`);
+  assert.match(question(2), /Réponse 2[\s\S]*non\*\* si la case 2 est\s+cochée/);
+});
+
+test('aller-retour 1 : question 4 (fenêtre fermée avant capture, carte bougée, « Couche A retirée »), question 5 (zoom, réouverture, « sans objet »)', () => {
+  const q4 = question(4);
+  assert.match(q4, /Fermer la fenêtre du plugin\*\*, \*\*déplacer un peu la carte/);
+  assert.match(q4, /Couche A retirée : oui/);
+  assert.match(q4, /rmFile/);
+  const q5 = question(5);
+  assert.match(q5, /sans objet/);
+  assert.match(q5, /oui, mais par le projet/);
+  assert.match(q5, /Zoomer/);
+  assert.match(q5, /Fermer et rouvrir le projet dans QField/);
+  assert.match(q5, /deux fois\*\* « couche marquée \(cerf\/proto2\) retrouvée dans le projet : oui »/);
+});
+
+test('aller-retour 1 : question 6 (axes inversés, tous les messages, NaN attendu aux lignes 6-7) et question 7 (critère, termes de l\'écran)', () => {
+  const q6 = question(6);
+  assert.match(q6, /AXES INVERSÉS/);
+  for (const m of ['rendue SANS changement', 'transformée', 'vide (0 ; 0) : ÉCHEC silencieux', 'non numérique (undefined ou autre) : ÉCHEC', 'valeurs infinies ou NaN : ÉCHEC']) assert.ok(q6.includes(m), m);
+  assert.match(q6, /échec attendu, en `NaN`/);
+  const q7 = question(7);
+  assert.match(q7, /\*\*Réponse 7\*\* : \*\*oui\*\* si les cases 2, 3 et 4/);
+  for (const m of ['crs.description', 'comptage par createFeatureIterator', 'emprise reprojetée en EPSG:2154', 'Verdict spec § 4']) assert.ok(q7.includes(m), m);
+  assert.match(q7, /OGC:CRS84/);
+});
+
+test('aller-retour 1 : préalables (avant le mode avion), téléchargement, captures Samsung, essai-q3.gpkg pour le PC seul, désactivation finale', () => {
+  const avant = sections.find((p) => p.startsWith('Avant de commencer'));
+  assert.match(avant, /Tout se fait avant le mode avion/);
+  assert.match(avant, /installer\s+un plugin depuis une URL/);
+  assert.match(avant, /dossier « Téléchargements »/);
+  assert.match(avant, /\*\*activer\*\* « Cerf, prototype n° 2 » \*\*seul\*\*/);
+  assert.match(avant, /ne sert \*\*qu'à ce contrôle sur le PC\*\*/);
+  assert.match(avant, /\*\*17 entrées\*\*/);
+  assert.match(avant, /1 050 963 à 1 051 263/);
+  assert.match(t, /Volume bas/);
+  assert.match(t, /Nom Samsung/);
+  assert.match(t, /capture lisible de l'écran d'erreur/);
+  assert.match(t, /## Après l'essai[\s\S]*Désactiver « Cerf, prototype n° 2 »/);
 });

@@ -1,23 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Mission 009 : tests de la reconnaissance des couches et du style attendu (spec § 5).
 // Écrits SANS lire le code du plugin : ils partent de docs/spec.md § 5 (consultée le 4 novembre 2026,
-// branche mission/010-styles = origin/main e950dc5) et de la fiche 009.
+// y compris les décisions de Pascal du 4 novembre : polygones seuls avec avertissement, casse des champs)
+// et de la fiche 009.
 //
 // ROUGE ATTENDU JUSQU'À LA MISSION 010 : le module plugin/cerf-styles.mjs n'existe pas encore.
 //
 // CONTRAT PROPOSÉ à la mission 010 (module `plugin/cerf-styles.mjs`, fonctions pures, sans QField ni QGIS) :
 //
-//   reconnaitre({ nom, geometrie, champs, qml }) -> { regle, source }
+//   reconnaitre({ nom, geometrie, champs, qml }) -> { regle, source, avertissement }
 //     nom        : nom de la couche SANS extension (« Parcelles_serre » pour Parcelles_serre.gpkg)
 //     geometrie  : 'polygone' | 'point' | 'ligne' (les Multi* sont ramenées à leur type par l'appelant)
-//     champs     : tableau de noms de champs (peut être absent ou vide)
+//     champs     : tableau de noms RÉELS de champs (peut être absent ou vide). essence et diametre sont reconnus
+//                  sans tenir compte de la casse (ESSENCE, Diametre...).
 //     qml        : contenu du .qml de même nom trouvé dans le zip, ou absent/null
 //     regle      : 'UG' | 'Parcelles' | 'FRT' | 'ProdBois' | null (null = style par défaut de QGIS)
 //     source     : 'qml' | 'nom' | 'champs' | 'defaut'      (ordre de priorité du § 5)
-//     Quand un .qml est fourni : { regle: null, source: 'qml' } (le .qml gagne, le plugin le lit lui-même).
+//     avertissement : TOUJOURS présent (objet comparé en entier) : la chaîne exacte
+//                  « nom reconnu mais pas un polygone » quand le nom (sans extension, casse et accents ignorés) est celui
+//                  d'UG, Parcelles ou FRT mais que la couche est ponctuelle ou linéaire ET qu'elle garde le style par
+//                  défaut ; null dans tous les autres cas. Choix du testeur : un point nommé UG portant essence et
+//                  diametre devient ProdBois (il a un style) : avertissement null ; un .qml fourni : null aussi.
+//     Quand un .qml est fourni : { regle: null, source: 'qml', avertissement: null } (le .qml gagne, le plugin le lit lui-même).
 //
-//   styleDe(regle, { champCode }) -> style | null
+//   styleDe(regle, { champCode, champEssence, champDiametre }) -> style | null
 //     champCode : nom du champ de code (UG, Parcelles, FRT) ; sans effet pour ProdBois.
+//     champEssence, champDiametre : noms RÉELS des champs (ProdBois seulement), trouvés par l'appelant sans tenir
+//                  compte de la casse ; l'expression est "<champEssence>" || '\n' || "<champDiametre>". Absents :
+//                  'essence' et 'diametre' (donc l'expression exacte de la spec).
 //     style = { symbole, etiquette } exactement comme les constantes ATTENDU et PRODBOIS ci-dessous.
 //
 //   trouverQml(cheminCouche, cheminsDuZip) -> chemin du .qml | null
@@ -65,7 +75,7 @@ const CODE = { UG: 'CODE_UG', Parcelles: 'CODE_PARC', FRT: 'CODE_FRT' };
 
 const poly = (nom, extra = {}) => ({ nom, geometrie: 'polygone', champs: [], ...extra });
 const pts = (nom, champs, extra = {}) => ({ nom, geometrie: 'point', champs, ...extra });
-const DEFAUT = { regle: null, source: 'defaut' };
+const DEFAUT = { regle: null, source: 'defaut', avertissement: null };
 
 // ---- 1. Oracle indépendant : le tableau de la spec lui-même (passe sans le plugin) ----
 function tableauSpec() {
@@ -108,16 +118,16 @@ test('oracle : les noms attendus de ces tests sont tranchés comme la spec (moti
 // ---- 2. Reconnaissance par le nom ----
 test('nom : UG.shp, Parcelles_serre.gpkg, frt-2026.geojson, PARCELLE.shp sont reconnus (noms sans extension)', async () => {
   const { reconnaitre } = await M();
-  assert.deepEqual(reconnaitre(poly('UG')), { regle: 'UG', source: 'nom' });
-  assert.deepEqual(reconnaitre(poly('Parcelles_serre')), { regle: 'Parcelles', source: 'nom' });
-  assert.deepEqual(reconnaitre(poly('frt-2026')), { regle: 'FRT', source: 'nom' });
-  assert.deepEqual(reconnaitre(poly('PARCELLE')), { regle: 'Parcelles', source: 'nom' });
+  assert.deepEqual(reconnaitre(poly('UG')), { regle: 'UG', source: 'nom', avertissement: null });
+  assert.deepEqual(reconnaitre(poly('Parcelles_serre')), { regle: 'Parcelles', source: 'nom', avertissement: null });
+  assert.deepEqual(reconnaitre(poly('frt-2026')), { regle: 'FRT', source: 'nom', avertissement: null });
+  assert.deepEqual(reconnaitre(poly('PARCELLE')), { regle: 'Parcelles', source: 'nom', avertissement: null });
 });
 
 test('nom : tous les noms du tableau de motifs (casse, accents, séparateurs _ - espace)', async () => {
   const { reconnaitre } = await M();
   for (const [r, noms] of Object.entries(OUI)) {
-    for (const n of noms) assert.deepEqual(reconnaitre(poly(n)), { regle: r, source: 'nom' }, n);
+    for (const n of noms) assert.deepEqual(reconnaitre(poly(n)), { regle: r, source: 'nom', avertissement: null }, n);
   }
 });
 
@@ -126,20 +136,39 @@ test('nom : ugly.shp ne doit pas être UG, ni les autres presque-noms', async ()
   for (const n of NON) assert.deepEqual(reconnaitre(poly(n)), DEFAUT, `« ${n} »`);
 });
 
-test('nom : le motif exige la géométrie polygone (tableau § 5) ; UG en points ou lignes n\'est pas UG', async () => {
+const AVERT = 'nom reconnu mais pas un polygone';
+test('nom : UG, Parcelles, FRT en points ou lignes gardent le défaut, avec l\'avertissement « nom reconnu mais pas un polygone »', async () => {
   const { reconnaitre } = await M();
   for (const g of ['point', 'ligne']) {
-    for (const n of ['UG', 'Parcelles', 'FRT']) assert.deepEqual(reconnaitre({ nom: n, geometrie: g, champs: [] }), DEFAUT, `${n} ${g}`);
+    for (const n of ['UG', 'Parcelles', 'FRT', 'ug_serre', 'PARCELLE', 'frt-2026', 'Parcellés'])
+      assert.deepEqual(reconnaitre({ nom: n, geometrie: g, champs: [] }), { regle: null, source: 'defaut', avertissement: AVERT }, `${n} ${g}`);
   }
+  assert.deepEqual(reconnaitre({ nom: 'UG', geometrie: 'point' }), { regle: null, source: 'defaut', avertissement: AVERT }); // champs absents
+});
+
+test('nom : pas d\'avertissement pour un nom non reconnu (ugly), ni pour un polygone reconnu', async () => {
+  const { reconnaitre } = await M();
+  for (const g of ['point', 'ligne', 'polygone']) assert.deepEqual(reconnaitre({ nom: 'ugly', geometrie: g, champs: [] }), DEFAUT, g);
+  assert.equal(reconnaitre(poly('UG')).avertissement, null);
+});
+
+test('nom : ligne nommée UG portant essence et diametre : défaut (ProdBois est ponctuel) et avertissement', async () => {
+  const { reconnaitre } = await M();
+  assert.deepEqual(reconnaitre({ nom: 'UG', geometrie: 'ligne', champs: ['essence', 'diametre'] }), { regle: null, source: 'defaut', avertissement: AVERT });
+});
+
+test('nom : avec un .qml, un point nommé UG n\'a pas d\'avertissement (le .qml gagne)', async () => {
+  const { reconnaitre } = await M();
+  assert.deepEqual(reconnaitre({ nom: 'UG', geometrie: 'point', champs: [], qml: '<qgis/>' }), { regle: null, source: 'qml', avertissement: null });
 });
 
 // ---- 3. Reconnaissance par les champs (ProdBois / Relevés) ----
 test('champs : point avec essence ET diametre = ProdBois, quel que soit son nom', async () => {
   const { reconnaitre } = await M();
   const c = ['idTige', 'essence', 'diametre', 'color'];
-  assert.deepEqual(reconnaitre(pts('Serre_EA2026_p5_13_30_Res', c)), { regle: 'ProdBois', source: 'champs' });
-  assert.deepEqual(reconnaitre(pts('Releves_2026', ['diametre', 'essence'])), { regle: 'ProdBois', source: 'champs' });
-  assert.deepEqual(reconnaitre(pts('Saisie terrain', ['essence', 'diametre', 'remarque', 'date'])), { regle: 'ProdBois', source: 'champs' });
+  assert.deepEqual(reconnaitre(pts('Serre_EA2026_p5_13_30_Res', c)), { regle: 'ProdBois', source: 'champs', avertissement: null });
+  assert.deepEqual(reconnaitre(pts('Releves_2026', ['diametre', 'essence'])), { regle: 'ProdBois', source: 'champs', avertissement: null });
+  assert.deepEqual(reconnaitre(pts('Saisie terrain', ['essence', 'diametre', 'remarque', 'date'])), { regle: 'ProdBois', source: 'champs', avertissement: null });
 });
 
 test('champs : il faut les DEUX champs ; un seul, ou aucun, donne le style par défaut', async () => {
@@ -148,6 +177,16 @@ test('champs : il faut les DEUX champs ; un seul, ou aucun, donne le style par d
   assert.deepEqual(reconnaitre(pts('Releves', ['diametre', 'remarque'])), DEFAUT);
   assert.deepEqual(reconnaitre(pts('Releves', [])), DEFAUT);
   assert.deepEqual(reconnaitre({ nom: 'Releves', geometrie: 'point' }), DEFAUT); // champs absents
+});
+
+test('champs : essence et diametre reconnus sans tenir compte de la casse (ESSENCE, Diametre...)', async () => {
+  const { reconnaitre } = await M();
+  const PB = { regle: 'ProdBois', source: 'champs', avertissement: null };
+  assert.deepEqual(reconnaitre(pts('Releves', ['ESSENCE', 'DIAMETRE'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['Essence', 'Diametre', 'x'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['diametre', 'eSsEnCe'])), PB);
+  assert.deepEqual(reconnaitre(pts('Releves', ['ESSENCE', 'remarque'])), DEFAUT); // les DEUX restent exigés
+  assert.deepEqual(reconnaitre(pts('Releves', ['essences', 'diametres'])), DEFAUT); // pas de correspondance partielle
 });
 
 test('champs : la règle ProdBois ne vaut que pour une couche ponctuelle', async () => {
@@ -165,25 +204,25 @@ test('champs : un nom « ProdBois » sans les champs n\'est pas reconnu', async 
 test('priorité : un .qml fourni l\'emporte sur le nom (UG.qml pour UG), sur les champs, et sur le défaut', async () => {
   const { reconnaitre } = await M();
   const qml = '<qgis version="3.34"/>';
-  assert.deepEqual(reconnaitre(poly('UG', { qml })), { regle: null, source: 'qml' });
-  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diametre'], { qml })), { regle: null, source: 'qml' });
-  assert.deepEqual(reconnaitre(poly('Zone_inconnue', { qml })), { regle: null, source: 'qml' });
+  assert.deepEqual(reconnaitre(poly('UG', { qml })), { regle: null, source: 'qml', avertissement: null });
+  assert.deepEqual(reconnaitre(pts('Releves', ['essence', 'diametre'], { qml })), { regle: null, source: 'qml', avertissement: null });
+  assert.deepEqual(reconnaitre(poly('Zone_inconnue', { qml })), { regle: null, source: 'qml', avertissement: null });
 });
 
 test('priorité : qml null ou absent = pas de .qml', async () => {
   const { reconnaitre } = await M();
-  assert.deepEqual(reconnaitre(poly('UG', { qml: null })), { regle: 'UG', source: 'nom' });
-  assert.deepEqual(reconnaitre(poly('UG', { qml: undefined })), { regle: 'UG', source: 'nom' });
+  assert.deepEqual(reconnaitre(poly('UG', { qml: null })), { regle: 'UG', source: 'nom', avertissement: null });
+  assert.deepEqual(reconnaitre(poly('UG', { qml: undefined })), { regle: 'UG', source: 'nom', avertissement: null });
 });
 
 test('priorité : le nom l\'emporte sur les champs (polygone UG portant essence et diametre)', async () => {
   const { reconnaitre } = await M();
-  assert.deepEqual(reconnaitre(poly('UG', { champs: ['essence', 'diametre'] })), { regle: 'UG', source: 'nom' });
+  assert.deepEqual(reconnaitre(poly('UG', { champs: ['essence', 'diametre'] })), { regle: 'UG', source: 'nom', avertissement: null });
 });
 
 test('priorité : un point nommé UG avec essence et diametre passe aux champs (le nom ne vaut que pour un polygone)', async () => {
   const { reconnaitre } = await M();
-  assert.deepEqual(reconnaitre(pts('UG', ['essence', 'diametre'])), { regle: 'ProdBois', source: 'champs' });
+  assert.deepEqual(reconnaitre(pts('UG', ['essence', 'diametre'])), { regle: 'ProdBois', source: 'champs', avertissement: null });
 });
 
 // ---- 5. Le .qml du zip : lequel appartient à quelle couche ----
@@ -238,6 +277,15 @@ test('style : l\'étiquette ProdBois reste celle du mail de JFC (|| et non conca
   assert.ok(e.includes('||') && !/concat/i.test(e), e);
 });
 
+test('style ProdBois : l\'étiquette utilise le nom réel des champs (ESSENCE, Diametre) ; minuscules = expression exacte de la spec', async () => {
+  const { styleDe } = await M();
+  const s = styleDe('ProdBois', { champEssence: 'ESSENCE', champDiametre: 'Diametre' });
+  assert.equal(s.etiquette.expression, '"ESSENCE" || \'\\n\' || "Diametre"');
+  assert.deepEqual(s, { ...PRODBOIS, etiquette: { ...PRODBOIS.etiquette, expression: '"ESSENCE" || \'\\n\' || "Diametre"' } });
+  assert.deepEqual(styleDe('ProdBois', { champEssence: 'essence', champDiametre: 'diametre' }), PRODBOIS);
+  assert.equal(styleDe('ProdBois', { champEssence: 'Essence', champDiametre: 'DIAMETRE' }).etiquette.expression, '"Essence" || \'\\n\' || "DIAMETRE"');
+});
+
 test('style : règle nulle = pas de style imposé (défaut de QGIS)', async () => {
   const { styleDe } = await M();
   assert.equal(styleDe(null, { champCode: null }), null);
@@ -245,9 +293,10 @@ test('style : règle nulle = pas de style imposé (défaut de QGIS)', async () =
 
 test('codes : toute règle produite appartient à {UG, Parcelles, FRT, ProdBois, null} ; toute source à {qml, nom, champs, defaut}', async () => {
   const { reconnaitre } = await M();
-  const cas = [poly('UG'), poly('Parcelles'), poly('FRT'), pts('r', ['essence', 'diametre']), poly('ugly'), poly('UG', { qml: 'x' })];
+  const cas = [poly('UG'), poly('Parcelles'), poly('FRT'), pts('r', ['essence', 'diametre']), poly('ugly'), poly('UG', { qml: 'x' }), { nom: 'UG', geometrie: 'point', champs: [] }];
   for (const c of cas) {
-    const { regle, source } = reconnaitre(c);
+    const { regle, source, avertissement } = reconnaitre(c);
+    assert.ok(avertissement === null || avertissement === AVERT, String(avertissement));
     assert.ok([null, 'UG', 'Parcelles', 'FRT', 'ProdBois'].includes(regle), String(regle));
     assert.ok(['qml', 'nom', 'champs', 'defaut'].includes(source), source);
   }

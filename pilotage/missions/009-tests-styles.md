@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire les tests de la reconnaissance des couches (motif de nom, champs essence et diametre, .qml du zip) et du style attendu de chacune, pour que le § 5 de la spec soit vérifié automatiquement.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Écrire (amendement du 4 novembre 2026) les tests qui vérifient que reconnaître une couche et lui donner son style suit le § 5 de la spec, y compris les décisions de Pascal (règles par nom réservées aux polygones avec avertissement, champs essence et diametre sans tenir compte de la casse, étiquette au nom réel du champ), pour que la mission 010 soit jugée sur des tests écrits sans lire son code.
 
 ## Les trois questions (règle de staffing)
 

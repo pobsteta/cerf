@@ -184,3 +184,4 @@
 2026-11-04 · testeur · 012 · test de la 008 adapté au nom avec extension (8b04fa1, une ligne) ; 465/465. Relecture aller-retour 2/3 lancée.
 2026-11-04 · relecteur · 012 · aller-retour 2/3 : à reprendre (vers 3/3) sur un point : refus pour doublon sans extension ; commentaire périmé de reprojeterPoint ; points 1 à 4 et décisions 8 à 10 faits, 465/465 ; CI absente sur 8b04fa1.
 2026-11-04 · Pascal · 012, 014 · décisions : zip réimporté sans couche lisible = import avorté, rien touché ; extension dans les messages de réouverture confiée à la 014.
+2026-11-04 · dev · 012 · aller-retour 3/3 (10e1172) : doublon avec l'entrée et son extension, réimport sans couche = import avorté (décision 11), commentaire de reprojeterPoint corrigé ; paramètre epsg gardé (signature figée par un test de la 012) ; 467/467. Relecture finale lancée.

@@ -151,3 +151,5 @@ en `/vsizip/`, style par défaut. Plugin en **0.3.0**.
 - **Préversion du plugin 0.3.0 publiée avant la fusion** : la branche `mission/010-styles`
   déclenche la préversion « plugin-essai », pour l'essai de Pascal sur le Samsung (couleurs de
   `Serre_EA2026`, réouverture, réimport du même zip).
+- **Confirmé par Pascal (4 novembre) :** ancien `.qml` impossible à effacer = couche refusée
+  (« ancien style (.qml) impossible à effacer, couche refusée »).

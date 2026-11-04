@@ -74,3 +74,6 @@ après la fusion de la 010.
 - Le chemin complet vaut pour **tous** les messages du § 4 (contrôles et avertissements), pas
   seulement pour le refus d'un GeoPackage : lecture de l'orchestrateur de l'arbitrage de Pascal, à
   confirmer par lui.
+- **Confirmé par Pascal (4 novembre) :** chemin complet pour tous les messages du § 4 ;
+  GeoPackage sans table vecteur : « `Serre.gpkg : aucune table vecteur, couche non chargée` »
+  (distinct de « tables illisibles »).

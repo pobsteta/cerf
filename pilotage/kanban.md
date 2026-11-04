@@ -6,7 +6,7 @@
 > colonne ; on change ce numéro chaque fois qu'elle change de colonne.
 > **Une carte qui ne bouge pas est souvent la mauvaise nouvelle à dire tout de suite.**
 
-**Dernier cycle :** 5 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
+**Dernier cycle :** 6 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
 rien lancé. Une carte est immobile quand dernier cycle − N ≥ 2.)_
 
 _Modèle de carte :_
@@ -27,18 +27,10 @@ _Modèle de carte :_
 
 ## Validé
 
-- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 0
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests des règles de style — cycle prévu 4
-  - Moyens : `docs/spec.md` § 5
 - [010-styles](missions/010-styles.md) · depuis le cycle 0
   - Homme : `dev` (sonnet)
   - Mission : Styles du manuel — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 0
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests des contrôles d'import — cycle prévu 4
-  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
 - [012-controles](missions/012-controles.md) · depuis le cycle 0
   - Homme : `dev` (opus)
   - Mission : Contrôles d'import — cycle prévu 5
@@ -55,10 +47,6 @@ _Modèle de carte :_
   - Homme : `afficheur` (sonnet)
   - Mission : Panneau du plugin pour gants et soleil — cycle prévu 6
   - Moyens : `docs/spec.md` § 1 et § 4
-- [016-zips-recette](missions/016-zips-recette.md) · depuis le cycle 0
-  - Homme : `testeur` (sonnet)
-  - Mission : Zips de recette piege et lourd — cycle prévu 3
-  - Moyens : `docs/spec.md` § 6
 - [017-convention-zip](missions/017-convention-zip.md) · depuis le cycle 0
   - Homme : `archiviste` (sonnet)
   - Mission : Convention du zip — cycle prévu 5
@@ -66,8 +54,25 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests des règles de style — cycle prévu 4
+  - Moyens : `docs/spec.md` § 5
+- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 6 · lancée au cycle 6
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests des contrôles d'import — cycle prévu 4
+  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
+- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · lancée au cycle 6
+  - Homme : `dev` (sonnet)
+  - Mission : Rangement des workflows de publication
+  - Moyens : workflows de release, relectures de la 021
+
 ## Terminé
 
+- [016-zips-recette](missions/016-zips-recette.md) · depuis le cycle 6 · PR #11 fusionnée (zips piege et lourd)
+  - Homme : `testeur` (sonnet)
+  - Mission : Zips de recette piege et lourd — cycle prévu 3
+  - Moyens : `docs/spec.md` § 6
 - [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026
   - Homme : `testeur` (sonnet)
   - Mission : Tests de la couche de saisie du projet modèle

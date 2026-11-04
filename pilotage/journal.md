@@ -180,3 +180,4 @@
 2026-11-04 · Pascal · 012, 022, 023, 024 · décisions : couche absente d'un zip réimporté retirée du registre ; ordre .prj, .shx, .dbf confirmé ; lecture des Shapefile, GeoPackage et GeoTIFF dans une nouvelle mission 024 (fiche au bac à sable) ; fiche 023 validée ; fusion de #17 demandée.
 2026-11-04 · Claude (orchestrateur) · 022 · PR #17 fusionnée dans main (a606432) ; carte 022 en Terminé ; 023 lancée (plan d'abord).
 2026-11-04 · Claude (orchestrateur) · 022 · après fusion de #17 : latest = plugin-v0.1.1, releases/latest/download/cerf.zip et les deux zips de l'adresse projet-modele répondent ; l'ancien cerf-projet-modele.zip est encore dans plugin-v0.1.1 (suppression à la main par Pascal, en attente).
+2026-11-04 · dev · 012 · aller-retour 2/3 (53eadf5) : décision n° 8 appliquée (couche absente du zip réimporté retirée du registre, aucun fichier effacé) ; 465 tests, 1 rouge : tests/plugin.test.mjs:191 (008), confié au testeur.

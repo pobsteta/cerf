@@ -6,7 +6,8 @@
 //   export const EMPRISE_VRAISEMBLANCE = { xmin, xmax, ymin, ymax }   // spec § 4 point 5, élargie de 10 km
 //   export function controlerCouche(couche, services) -> resultat    // synchrone, sans réseau
 //     couche = {
-//       nom:       'Parcelles.shp',            // nom affiché dans les messages
+//       nom:       'Parcelles.shp',            // nom AVEC extension, tel qu'il est dans le zip et affiché dans les messages
+//                                              // (Pascal, 4 nov. 2026 ; table GeoPackage : 'fichier.gpkg/table')
 //       format:    'shp' | 'geojson' | 'gpkg' | 'tif',
 //       fichiers:  ['Parcelles.shp', ...],     // noms des fichiers du zip portant la même racine (casse libre)
 //       lisible:   true | false,               // la source s'ouvre (résultat de l'appel QGIS/QField)
@@ -21,7 +22,8 @@
 //       un raster ; il n'est pas appelé quand un contrôle 1, 2 ou 3 refuse, ni pour une couche vide (4).
 //     Messages (spec § 4, « Nom de la couche dans les messages », Pascal, 4 novembre 2026) : chaque refus et
 //       chaque avertissement commence par `couche.nom + ' : '` (ex. « FRT : … »). Égalité stricte quand la spec
-//       donne le texte entier ; pour « illisible », « couche vide » et l'erreur de reprojection : préfixe + mot.
+//       donne le texte entier ; pour « illisible » et « couche vide » : préfixe + mot ; pour l'erreur de
+//       reprojection (exception, valeur non finie, null) la spec ne donne aucun texte : préfixe + message non vide.
 //     resultat = { charge: boolean, controle: 1..5 | null (numéro du contrôle qui refuse),
 //                  message: string | null (refus), avertissements: string[] }
 //   Le premier contrôle qui échoue arrête la couche (reprojeter n'est alors pas appelé).
@@ -145,7 +147,7 @@ test('1 : .cpg absent -> chargé avec l\'avertissement « accents peut-être mal
 });
 test('1 : .cpg absent mais emprise incohérente -> refus, et pas de chargement', async () => {
   const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'], systeme: { valide: true, epsg: 4326 }, emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 } }), espion());
-  assert.equal(r.charge, false); assert.equal(r.controle, 5);
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'Parcelles.shp');
 });
 test('1 : un GeoJSON n\'a pas besoin de .prj', async () => {
   const r = await controler(Sain({ fichiers: ['UG.geojson'] }), espion());
@@ -220,6 +222,8 @@ test('4 : couche vide -> chargée, avertissement, et reprojeter n\'est pas appel
 test('4 : couche vide chargée même si son emprise (fantôme) serait hors de France', async () => {
   const r = await controler(Sain({ nbEntites: 0, emprise: { xmin: 0, ymin: 0, xmax: 1, ymax: 1 } }), espion());
   assert.equal(r.charge, true);
+  assert.equal(r.avertissements.length, 1);
+  assert.ok(r.avertissements[0].startsWith(P('UG.geojson')) && r.avertissements[0].includes('vide'), r.avertissements[0]);
 });
 test('4 : .cpg absent et couche vide -> chargée avec deux avertissements', async () => {
   const r = await controler(SHP({ nbEntites: 0, emprise: null, fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'] }), espion());
@@ -252,7 +256,7 @@ for (const [nom, e] of [
 }
 test('5 : emprise à cheval sur le bord (une partie dedans) -> refus : contenue, pas intersectée', async () => {
   const r = await controler(L93(REF.xmax - 500, 6826000, REF.xmax + 500, 6826500), espion());
-  assert.equal(r.controle, 5);
+  assert.equal(r.controle, 5); eqEmprise(r, 'UG.geojson');
 });
 test('5 : Genève (942025 ; 6572608) acceptée : limite connue de l\'ADR 0004 (rectangle)', async () => {
   const r = await controler(L93(942025, 6572608, 942025, 6572608), espion());
@@ -275,6 +279,7 @@ for (const [nom, v] of [['NaN', NaN], ['Infinity', Infinity], ['null', null], ['
   test(`5 : reprojection qui rend ${nom} -> refus`, async () => {
     const r = await controler(Sain(), { reprojeter: () => (v === null || v === undefined ? v : { xmin: v, ymin: v, xmax: v, ymax: v }) });
     assert.equal(r.charge, false); assert.equal(r.controle, 5);
+    assert.ok(r.message.startsWith(P('UG.geojson')) && r.message.length > P('UG.geojson').length, r.message);
   });
 }
 test('5 : pas de chargement forcé : le résultat de refus ne porte aucune option de passer outre', async () => {

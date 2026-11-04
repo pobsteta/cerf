@@ -44,7 +44,20 @@ test('préversions d\'essai : adresses des releases d\'essai, jamais les adresse
   assert.throws(() => flashcodes('autre', 'stable'));
 });
 
-for (const [type, mode] of [['plugin', 'stable'], ['projet', 'stable'], ['plugin', 'essai'], ['projet', 'essai']]) {
+test('prototype-2 : plugin et projet d\'essai de la préversion, jamais en mode stable', () => {
+  assert.deepEqual(flashcodes('prototype-2', 'essai').map((f) => f.url), [
+    `${DEPOT}/download/prototype-2/cerf-prototype-2.zip`,
+    `${DEPOT}/download/prototype-2/cerf-essai-2.zip`,
+  ]);
+  assert.throws(() => flashcodes('prototype-2', 'stable'));
+  const n = notes('prototype-2', 'essai', 'prototype-2');
+  assert.match(n, /download\/prototype-2\/flashcode-prototype-2-plugin\.png/);
+  assert.match(n, /download\/prototype-2\/flashcode-prototype-2-projet\.png/);
+  assert.match(n, /« Install plugin from URL »/);
+  assert.match(n, /« Import URL »/);
+});
+
+for (const [type, mode] of [['plugin', 'stable'], ['projet', 'stable'], ['plugin', 'essai'], ['projet', 'essai'], ['prototype-2', 'essai']]) {
   test(`décodage ${type} ${mode} : PNG et SVG donnent exactement l'URL`, { skip: saut }, () => {
     const dossier = mkdtempSync(join(tmpdir(), 'cerf-flash-'));
     try {
@@ -134,5 +147,18 @@ test('workflow projet modèle : génère, contrôle, joint les flashcodes aux re
   assert.match(wf, /gh release create projet-modele dist\/cerf-projet-modele\.zip dist\/cerf-projet-modele-premiere-installation\.zip dist\/flashcodes\/\*/);
   assert.match(wf, /gh release upload projet-modele-essai dist\/cerf-projet-modele\.zip dist\/cerf-projet-modele-premiere-installation\.zip dist\/flashcodes\/\* --clobber/);
   assert.match(wf, /--title "Projet modèle Cerf" --notes-file notes\.md --latest=false/);
+  assert.doesNotMatch(wf, /--latest(?!=false)/);
+});
+
+test('workflow prototype n° 2 : génère, contrôle, joint les flashcodes, reste préversion non « latest »', () => {
+  const wf = code('release-prototype-2.yml');
+  assert.match(wf, /apt-get install -y qrencode zbar-tools/);
+  assert.match(wf, /CERF_FLASHCODES_EXIGER: '1'/);
+  assert.match(wf, /node outils\/flashcodes\.mjs generer dist\/flashcodes prototype-2 essai/);
+  assert.match(wf, /node outils\/flashcodes\.mjs verifier dist\/flashcodes prototype-2 essai/);
+  assert.match(wf, /node outils\/flashcodes\.mjs notes prototype-2 essai prototype-2\n\s+\} > notes\.md/);
+  assert.match(wf, /gh release upload prototype-2 .*dist\/flashcodes\/\* --clobber/);
+  assert.match(wf, /gh release create prototype-2 .*dist\/flashcodes\/\*/);
+  assert.match(wf, /--prerelease --latest=false/);
   assert.doesNotMatch(wf, /--latest(?!=false)/);
 });

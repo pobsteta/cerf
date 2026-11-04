@@ -27,10 +27,18 @@ jobs:
           python-version: '3.12'
       - name: Dépendances Python des outils (pyproj, mission 002)
         run: pip install -r outils/requirements.txt
+      - name: Outils des flashcodes (qrencode, zbar-tools ; mission 025)
+        run: sudo apt-get update && sudo apt-get install -y qrencode zbar-tools
       - name: Tests
+        env:
+          CERF_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: Zips et GeoPackage d'essai
         run: node prototype-2/empaqueter.mjs dist
+      - name: Flashcodes du plugin et du projet d'essai (génération et contrôle par décodage)
+        run: |
+          node outils/flashcodes.mjs generer dist/flashcodes prototype-2 essai
+          node outils/flashcodes.mjs verifier dist/flashcodes prototype-2 essai
       # Contrôle des fichiers d'essai par GDAL (ogrinfo), seulement si gdal-bin s'installe vite
       # (90 s au plus) : l'étape d'installation ne bloque pas la publication, mais si GDAL est
       # là, un fichier d'essai que GDAL ne lit pas bloque. Le résultat est dit dans les notes.
@@ -79,11 +87,13 @@ jobs:
             echo '```'
             (cd dist && sha256sum cerf-prototype-2.zip cerf-essai-2.zip essai-styles.zip essai-q3.gpkg)
             echo '```'
+            echo
+            node outils/flashcodes.mjs notes prototype-2 essai prototype-2
           } > notes.md
           if gh release view prototype-2 >/dev/null 2>&1; then
-            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg --clobber
+            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
             gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
           else
-            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg \
+            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Prototype n° 2" --notes-file notes.md --prerelease --latest=false
           fi

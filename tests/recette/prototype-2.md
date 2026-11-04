@@ -94,12 +94,12 @@ l'installation du plugin et l'import du projet ont besoin du réseau.
    un plugin depuis une URL, et coller
    https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-prototype-2.zip
    (`cerf-prototype-2.zip`). **Ne pas renommer ce fichier** : QField nomme le dossier du plugin
-   d'après le nom du zip.
+   d'après le nom du zip. Ou viser le flashcode de la préversion (PNG joint, affiché dans ses notes : icône QR code du champ d'URL).
 2. **Importer le projet** `cerf-essai-2.zip`
    (https://github.com/pobsteta/cerf/releases/download/prototype-2/cerf-essai-2.zip) : à
    l'écran d'accueil de QField, importer un projet depuis une URL (coller le lien) ; à défaut,
    le télécharger d'abord (navigateur) puis l'importer comme zip. Le projet est en Lambert 93,
-   sans fond de carte, **sans `cerf_id`**.
+   sans fond de carte, **sans `cerf_id`**. Ou viser le flashcode de la préversion (« Import URL », icône QR code du champ).
 3. **Télécharger le zip d'essai** `essai-styles.zip`
    (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles.zip) avec le
    navigateur : **le fichier arrive dans le dossier « Téléchargements »** du téléphone (appli

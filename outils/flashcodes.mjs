@@ -6,9 +6,9 @@
 // releases d'essai (pour que Pascal installe l'essai avant fusion), jamais les adresses stables.
 //
 // Usage :
-//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet> <stable|essai>   PNG + SVG dans <dossier>
-//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet> <stable|essai>   décode et compare
-//   node outils/flashcodes.mjs notes    <plugin|projet> <stable|essai> <étiquette> bloc Markdown des notes
+//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet|prototype-2> <stable|essai>   PNG + SVG dans <dossier>
+//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet|prototype-2> <stable|essai>   décode et compare
+//   node outils/flashcodes.mjs notes    <plugin|projet|prototype-2> <stable|essai> <étiquette> bloc Markdown des notes
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -48,6 +48,24 @@ export function flashcodes(type, mode) {
         url: `${DEPOT}/download/${etiquette}/${MISE_A_JOUR}`,
         titre: 'Projet modèle, mise à jour',
         phrase: `Met à jour le projet modèle d'un appareil déjà en service, sans toucher aux points saisis : ${ACCES_PROJET}.`,
+      },
+    ];
+  }
+  if (type === 'prototype-2') {
+    // Mission 023 : préversion jetable, sans adresse stable ; seul le mode « essai » existe.
+    if (mode !== 'essai') throw new Error('prototype-2 n\'a pas d\'adresse stable : mode « essai » seulement');
+    return [
+      {
+        nom: 'flashcode-prototype-2-plugin',
+        url: `${DEPOT}/download/prototype-2/cerf-prototype-2.zip`,
+        titre: 'Plugin du prototype n° 2',
+        phrase: `Installe le plugin du prototype n° 2 : ${ACCES_PLUGIN}.`,
+      },
+      {
+        nom: 'flashcode-prototype-2-projet',
+        url: `${DEPOT}/download/prototype-2/cerf-essai-2.zip`,
+        titre: 'Projet d\'essai du prototype n° 2',
+        phrase: `Importe le projet d'essai du prototype n° 2 : ${ACCES_PROJET}.`,
       },
     ];
   }

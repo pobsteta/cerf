@@ -97,7 +97,8 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Zip réimporté sous le même nom** : la nouvelle copie remplace l'ancienne ; les couches
   vecteur sont **réécrites** (ADR 0008) ; les GeoTIFF du registre qui en viennent sont
   rechargés. Le sort du dossier `cerf-imports/<nom du zip>/` au réimport reste une question
-  ouverte (mission 014, ADR 0007 amendée).
+  ouverte (mission 014, ADR 0007 amendée). **Ancien `.qml`** : effacé avant l'écriture de la
+  nouvelle copie, voir § 5.
 - **Zip absent à l'ouverture** (carte SD retirée, copie effacée) : ne vaut plus que pour les
   **GeoTIFF** et les anciennes entrées (`chemin_vsi`) : l'entrée **reste** au registre ; un
   message unique dit « 2 couches n'ont pas pu être rechargées : zip absent » ; l'agent peut
@@ -201,9 +202,12 @@ avec son extension, tel qu'il est dans le zip** : « FRT.shp : … » à la raci
 plusieurs et deux dossiers peuvent porter des fichiers de même nom (Pascal, 4 novembre 2026,
 qui précise l'arbitrage du même jour sur le nom avec extension).
 
-**GeoPackage dont on ne peut pas lister les tables** (Pascal, 4 novembre 2026) :
-- tables inconnues ou illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
+**GeoPackage sans table lisible** (Pascal, 4 novembre 2026) :
+- tables illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
   chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée ») ;
+  *[le cas « tables inconnues » (liste des tables impossible à obtenir) est provisoirement rangé
+  sous ce message : le mot « inconnues » ne vient pas de Pascal ; en attente de Pascal et de la
+  mission 030]* ;
 - aucune table vecteur → refus « `<chemin>.gpkg` : aucune table vecteur, couche non chargée ».
 - Dans les deux cas, le fichier n'est **jamais ouvert sans `layername`** (QGIS ouvrirait la
   première table en silence) et n'est **jamais ignoré en silence** ; les autres couches du zip
@@ -211,6 +215,21 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
 - **À l'étude, non tranché ici** : comment le plugin lit les tables d'un GeoPackage hors ligne
   (mission 030, prototype n° 4). Tant que ce n'est pas tranché, tout GeoPackage du zip tombe dans
   le premier cas.
+
+**Deux couches de même nom dans deux dossiers du zip** (`a/UG.geojson`, `b/UG.geojson`) : elles
+donneraient la même copie `cerf-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
+de la seconde (décision n° 4 du plan de la mission 008, validée par Pascal le 3 novembre 2026) qui
+empêche cette collision : « `<chemin de la seconde>` : nom de couche en double dans le zip (déjà
+pris par `<chemin de la première>`) ». Texte : `plugin/cerf-logique.mjs` ligne 501 (branche
+`mission/012-controles`, tête b8b5937) ; test : `tests/controles-branchement.test.mjs` ligne 255.
+
+**Refus à la copie dans `cerf-imports/`** (après les contrôles ci-dessus, avant le `.qml`, § 5).
+Textes recopiés mot pour mot de `plugin/cerf-logique.mjs`, fonction `copierEtStyler`, commit
+d7f9f2e (branche `mission/010-styles`) ; le nom en tête suit la règle ci-dessus :
+- « `<chemin>` : nom non écrivable dans cerf-imports/, couche refusée » (ligne 569) ;
+- « `<chemin>` : copie impossible (écriture refusée par QField), couche refusée » (ligne 574) ;
+- « `<chemin>` : copie écrite hors de cerf-imports/, couche refusée » (ligne 576) ;
+- « `<chemin>` : copie illisible après réécriture, couche refusée » (ligne 605).
 
 ## 5. Styles (annexe de la convention du zip)
 
@@ -236,7 +255,7 @@ silence), **puis vérifie qu'il a disparu**, qu'il y ait ou non un style à pose
 - Le `.qml` mal écrit ne s'efface pas non plus → couche **refusée** : « `<chemin>` : style (.qml)
   mal écrit et impossible à effacer, couche refusée ».
 Le nom de ces messages suit la règle du § 4 (chemin complet dans le zip). Les textes sont ceux du
-code de la mission 010 (voir l'ADR 0008, section du 4 novembre 2026).
+code de la mission 010 (`plugin/cerf-logique.mjs`, `copierEtStyler`, commit d7f9f2e).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.

@@ -27,10 +27,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [032-spec-messages](missions/032-spec-messages.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
-  - Homme : `archiviste` (sonnet)
-  - Mission : Spec § 4 et ADR 0008 : messages au chemin complet, GeoPackage, ancien .qml
-  - Moyens : arbitrages du 4 novembre, code de la 010, tests de la 024
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
@@ -65,6 +61,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [032-spec-messages](missions/032-spec-messages.md) · depuis le cycle 6 · fusionnée (PR #24)
+  - Homme : `archiviste` (sonnet)
+  - Mission : Spec § 4 et ADR 0008 : messages au chemin complet, GeoPackage, ancien .qml
+  - Moyens : arbitrages du 4 novembre, code de la 010, tests de la 024
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · fusionnée (PR #18)
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4

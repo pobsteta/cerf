@@ -216,3 +216,4 @@
 2026-11-04 · Pascal · 010, 012, 023, 026 · décisions : couches sorties du zip avec leur .qml (ADR 0008 à écrire, critiquée par le contradicteur, ADR 0003 et spec § 3.3 à amender) ; décompresseur inflate en JavaScript dans une mission 026 (testeur puis dev) ; fusion de #19 (012) demandée.
 2026-11-04 · Claude (orchestrateur) · 008, 010, 026 · ADR 0008 « couches sorties du zip avec leur style écrit à côté » proposée (amende l'ADR 0003), critique confiée au contradicteur ; fiche 026 (inflate) au bac à sable, à valider.
 2026-11-04 · dev · 012 · préparation de la fusion (d9b2c21) : main et pilotage fusionnés sans conflit, plugin en 0.2.0 (la 010 passera en 0.3.0) ; 486/486.
+2026-11-04 · Claude (orchestrateur) · 011, 012 · PR #19 fusionnée dans main (4464b7f) ; release plugin-v0.2.0 publiée, « latest », avec cerf.zip 0.2.0 et son flashcode ; cartes 011 et 012 en Terminé.

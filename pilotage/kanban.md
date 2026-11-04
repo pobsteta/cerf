@@ -39,10 +39,6 @@ _Modèle de carte :_
   - Homme : `dev` (sonnet)
   - Mission : Styles du manuel — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [012-controles](missions/012-controles.md) · depuis le cycle 0
-  - Homme : `dev` (opus)
-  - Mission : Contrôles d'import — cycle prévu 5
-  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -70,13 +66,17 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 6 · lancée au cycle 6
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests des contrôles d'import — cycle prévu 4
-  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
 
 ## Terminé
 
+- [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0
+  - Homme : `dev` (opus)
+  - Mission : Contrôles d'import — cycle prévu 5
+  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
+- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 6 · PR #19 fusionnée
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests des contrôles d'import — cycle prévu 4
+  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
 - [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · PR #20 fusionnée, éprouvée sur le Samsung
   - Homme : `dev` (sonnet)
   - Mission : Flashcodes des adresses stables dans les releases

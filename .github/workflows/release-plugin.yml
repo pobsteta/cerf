@@ -7,16 +7,23 @@
 #    outils/decider-release.mjs), sinon sortie verte ; refusée si l'étiquette existe déjà
 #    (oblige à monter la version). Lancement manuel sur main : publiée. URL stable :
 #    https://github.com/pobsteta/cerf/releases/latest/download/cerf.zip
+#  - Mission 022 : cette release ne porte QUE le plugin (cerf.zip) et l'essai de recette (essai.zip) ;
+#    le projet modèle (cerf-projet-modele.zip) n'a qu'une adresse, celle de release-projet-modele.yml
+#    (.../releases/download/projet-modele/...). Seule « plugin-v<version> » devient « latest ».
 # Les zips sont fabriqués ici (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans
 # les notes de la release. L'étiquette est créée par la release elle-même.
 name: Release du plugin
 on:
   push:
     branches: ['main', 'mission/008-squelette-plugin']
-    paths: ['plugin/**', 'tests/**', 'cerf.qgz', '.github/workflows/release-plugin.yml']
+    paths: ['plugin/**', 'tests/**', '.github/workflows/release-plugin.yml']
   workflow_dispatch:
 permissions:
   contents: write
+# Une publication à la fois, sans jamais en annuler une en cours (deux pushes rapprochés se suivent).
+concurrency:
+  group: release-plugin
+  cancel-in-progress: false
 jobs:
   publier:
     runs-on: ubuntu-latest
@@ -52,8 +59,6 @@ jobs:
         run: |
           node plugin/empaqueter.mjs dist
           cp tests/recette/essai/essai.zip dist/
-          cp cerf.qgz dist/
-          (cd dist && zip -X cerf-projet-modele.zip cerf.qgz && rm cerf.qgz)
       - name: Release
         if: steps.decision.outputs.action == 'publier'
         env:
@@ -71,12 +76,12 @@ jobs:
             echo '```'
           } > notes.md
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            gh release create "plugin-v$version" dist/cerf.zip dist/cerf-projet-modele.zip \
-              --target "$GITHUB_SHA" --title "Cerf $version" --notes-file notes.md
+            gh release create "plugin-v$version" dist/cerf.zip \
+              --target "$GITHUB_SHA" --title "Cerf $version" --notes-file notes.md --latest
           elif gh release view plugin-essai >/dev/null 2>&1; then
-            gh release upload plugin-essai dist/cerf.zip dist/essai.zip dist/cerf-projet-modele.zip --clobber
-            gh release edit plugin-essai --notes-file notes.md
+            gh release upload plugin-essai dist/cerf.zip dist/essai.zip --clobber
+            gh release edit plugin-essai --notes-file notes.md --latest=false
           else
-            gh release create plugin-essai dist/cerf.zip dist/essai.zip dist/cerf-projet-modele.zip \
-              --target "$GITHUB_SHA" --title "Cerf, essai avant fusion" --notes-file notes.md --prerelease
+            gh release create plugin-essai dist/cerf.zip dist/essai.zip \
+              --target "$GITHUB_SHA" --title "Cerf, essai avant fusion" --notes-file notes.md --prerelease --latest=false
           fi

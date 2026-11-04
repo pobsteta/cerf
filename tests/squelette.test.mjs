@@ -119,6 +119,17 @@ function fausseTelephonie({ rend = true } = {}) {
 }
 const attendre = async (v) => await v;
 
+// Mission 012 : importerZip n'appelle plus chargerCouche mais quatre services obligatoires.
+// `controle` : fonction (description) -> verdict ; par défaut elle accepte (le refus est le fait des tests qui le veulent).
+function servicesControle(couches, controle) {
+  return {
+    ouvrirCouche: (s, n) => couches.charger(s, n),
+    decrireCouche: (c) => ({ lisible: c.isValid, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
+    controlerCouche: controle ?? (() => ({ charge: true, controle: 'ok', message: '', avertissements: [] })),
+    ajouterALaCarte: (c, n, s) => { (couches.ajoutees ??= []).push({ nom: n, source: s, couche: c }); },
+  };
+}
+
 function ctxImport(extra = {}) {
   const couches = extra.couches ?? faussesCouches();
   const reglages = extra.reglages ?? faussesReglages();
@@ -126,7 +137,7 @@ function ctxImport(extra = {}) {
     couches, reglages,
     ctx: {
       cerfId: ID, dossierProjet: PROJET, nomZip: 'essai.zip', octets: octetsEssai,
-      reglages, chargerCouche: (s, n) => couches.charger(s, n),
+      reglages, ...servicesControle(couches, extra.controle),
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
     },
@@ -711,4 +722,26 @@ test('licence : plugin/cerf-logique.mjs porte l\'étiquette SPDX GPL-3.0-or-late
   await M();
   const src = readFileSync(MODULE, 'utf8');
   assert.match(src, /SPDX-License-Identifier: GPL-3\.0-or-later/);
+});
+
+test('mission 012 : sans l\'un des quatre services de contrôle, rien n\'est ouvert, ajouté ni inscrit', async () => {
+  const m = await M();
+  for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte']) {
+    const { ctx, couches, reglages } = ctxImport();
+    delete ctx[service];
+    const r = await attendre(m.importerZip(ctx));
+    assert.deepEqual(r.chargees, [], service);
+    assert.deepEqual(couches.appels, [], service);
+    assert.deepEqual(couches.ajoutees ?? [], [], service);
+    assert.deepEqual(reglages.ecritures, [], service);
+  }
+});
+
+test('mission 012 : un contrôle qui refuse -> la couche n\'est ni ajoutée à la carte ni inscrite', async () => {
+  const m = await M();
+  const { ctx, couches, reglages } = ctxImport({ controle: () => ({ charge: false, controle: 'refus', message: 'hors France', avertissements: [] }) });
+  const r = await attendre(m.importerZip(ctx));
+  assert.deepEqual(r.chargees, []);
+  assert.deepEqual(couches.ajoutees ?? [], []);
+  assert.deepEqual(reglages.ecritures, []);
 });

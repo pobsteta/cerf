@@ -6,6 +6,7 @@
 import QtQuick
 import org.qfield
 import "cerf-logique.mjs" as Logique
+import "cerf-controles.mjs" as Controles
 
 Item {
   id: cerf
@@ -88,6 +89,70 @@ Item {
       }
       return couche;
     };
+  }
+
+  // ---- Mission 012 : ouvrir, contrôler, puis seulement ajouter (spec § 4).
+  // NON PROUVÉ (aucun accès aux sources de QField pour la mission 012) : chaque appel marqué
+  // « à vérifier » ci-dessous est à confirmer sur le Samsung ; un appel absent ou en erreur
+  // donne un REFUS de la couche (jamais « contrôle sauté »).
+
+  // Ouvre la couche sans l'ajouter au projet.
+  function ouvrirCouche(source, nom) {
+    return LayerUtils.loadVectorLayer(source, nom);
+  }
+
+  // Ajoute à la carte une couche acceptée, marquée (zip, couche).
+  function ajouterALaCarte(couche, nom, source) {
+    const zip = Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
+    couche.setCustomProperty("cerf/zip", zip);
+    couche.setCustomProperty("cerf/couche", nom);
+    ProjectUtils.addMapLayer(qgisProject, couche);
+  }
+
+  // Lectures de la couche pour les contrôles ; chaque lecture est protégée (échec = valeur
+  // « mauvaise », donc refus). À vérifier : crs, featureCount(), extent.
+  function decrireCouche(couche) {
+    let lisible = false;
+    let systeme = { valide: false, epsg: 0 };
+    let nbEntites = -1;
+    let emprise = null;
+    try { lisible = !!(couche && couche.isValid); } catch (e) { lisible = false; }
+    try {
+      const crs = couche.crs;
+      // Validité = celle de QGIS ; un système valide sans code EPSG (.prj ESRI, IGNF) reste valide.
+      // `authid` ne sert qu'au diagnostic ; l'objet crs est passé tel quel à la reprojection.
+      const auth = String(crs.authid || "");
+      const m = /^EPSG:(\d+)$/.exec(auth);
+      const valide = typeof crs.isValid === "function" ? !!crs.isValid() : !!crs.isValid;
+      systeme = { valide: valide, epsg: m ? Number(m[1]) : 0, authid: auth, crs: crs };
+    } catch (e) { /* système inconnu */ }
+    try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
+    try {
+      const x = couche.extent;
+      emprise = { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+    } catch (e) { emprise = null; }
+    return { lisible: lisible, systeme: systeme, nbEntites: nbEntites, emprise: emprise };
+  }
+
+  // Reprojette un point (x, y) du système `crs` de la couche (objet rendu tel quel) vers EPSG:2154. À vérifier dans QField v4.3.7 :
+  // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
+  // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
+  function reprojeterPoint(x, y, epsg, crs) {
+    const source = crs;
+    const but = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154");
+    const p = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), source, but);
+    // QField 4.3.7 ne lève rien sur échec : il rend un QgsPoint() vide. Vide = échec = refus.
+    // Source déjà en 2154 : l'entrée est rendue telle quelle (non vide), donc acceptée.
+    if (!p || (typeof p.isEmpty === "function" ? p.isEmpty() : p.isEmpty === true)) throw new Error("reprojection : point vide");
+    return { x: Number(p.x), y: Number(p.y) };
+  }
+
+  function controlerCouche(description) {
+    return Controles.controlerCouche(description, {
+      reprojeter: function (emprise, epsg, crs) {
+        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, crs);
+      }
+    });
   }
 
   function retirerDeLaCarte(zip, nom) {
@@ -205,15 +270,19 @@ Item {
       message(Logique.messageLectureRefusee(nom, versionQField(), FileUtils.isWithinProjectDirectory(chemin)));
       return;
     }
-    // Zip réimporté sous le même nom : ses couches sont retirées de la carte puis rechargées.
-    retirerLeZipDeLaCarte(nom);
+    // Zip réimporté sous le même nom : ses couches sont retirées de la carte (par importerZip,
+    // une fois sûr qu'au moins une couche est lisible) puis rechargées.
     const r = Logique.importerZip({
       cerfId: id,
       dossierProjet: dossierProjet(),
       nomZip: nom,
       octets: octets,
       reglages: reglages,
-      chargerCouche: chargeur(),
+      ouvrirCouche: ouvrirCouche,
+      retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
+      decrireCouche: decrireCouche,
+      controlerCouche: controlerCouche,
+      ajouterALaCarte: ajouterALaCarte,
       maintenant: function () { return new Date(); }
     });
     let texte = r.message;

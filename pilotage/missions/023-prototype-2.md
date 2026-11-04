@@ -151,3 +151,25 @@ la recopie ; `essai-q3.gpkg` sert seulement au contrôle QGIS sur le PC (le prot
    (« 1051113 6840462 »), sans virgule ni « m ». Installation du plugin : déjà éprouvée par
    Pascal par URL (prototype n° 1, Cerf 0.1.1) ; ajouter seulement « si l'entrée n'existe
    pas, le dire avant d'aller plus loin ».
+
+## Résultat de l'essai (Pascal, Samsung, QField 4.3.7, 4 novembre 2026)
+
+| Réponse | Question | Résultat |
+|---|---|---|
+| 1a | couche sortie du zip, `.qml` écrit avant : couleurs | **oui** |
+| 1b | … étiquettes | **oui** |
+| 2 | couche lue en `/vsizip/`, `.qml` dans le zip : style pris | **non** (carrés pleins, sans étiquette — attendu) |
+| 3a | GeoPackage `layer_styles` : couleurs | **oui** |
+| 3b | … étiquettes | **oui** |
+| 4 | `.qml` posé après le chargement : ignoré | **oui** |
+| 5 | style gardé après réouverture | **oui**, couches rechargées depuis le disque |
+| 6 | Strasbourg reprojeté depuis QML à 5 m près | **oui** |
+| 7 | `Sans_crs.geojson` (Lambert 93 lu en WGS84) refusé | **oui** |
+
+Contrôle QGIS sur le PC : fichiers d'essai conformes. Flashcodes : éprouvés.
+
+**Conséquences, à trancher par Pascal :** le style du manuel se pose en **sortant la couche
+du zip** dans `<projet>/cerf-imports/` avec son `.qml` écrit **avant** le chargement (ou par
+la table `layer_styles` d'un GeoPackage) ; lire la couche dans le zip ne le permet pas (ADR à
+écrire, ADR 0003 à amender). Les vrais zips sont compressés : il faut un décompresseur
+(« inflate ») en JavaScript. La reprojection depuis QML marche : la 012 peut s'y appuyer.

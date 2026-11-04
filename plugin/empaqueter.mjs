@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application (mission 008) : fabrique cerf.zip, à installer par URL.
+// Cerf, plugin QField d'application (mission 008) : fabrique plugin-cerf.zip, à installer par URL.
 // main.qml à la racine du zip (exigence de QField : src/app/qfpluginmanager.cpp L441-448,
-// v4.3.7). Le nom « cerf.zip » donne le dossier du plugin « cerf » (L452) : ne pas le renommer.
+// v4.3.7). Le nom « plugin-cerf.zip » donne le dossier du plugin « plugin-cerf » (L452) : ne pas le renommer
+// (mission 028 ; l'ancien « Cerf », dossier « cerf », est à désinstaller une fois).
 // Le zip n'est pas versé au dépôt : il est publié en release par
 // .github/workflows/release-plugin.yml (décision de Pascal n° 2, 3 novembre 2026).
 //
@@ -20,7 +21,7 @@ const entree = (nom) => ({ nom: Buffer.from(nom, 'utf8'), donnees: readFileSync(
 
 export function empaqueter(sortie) {
   mkdirSync(sortie, { recursive: true });
-  const chemin = join(sortie, 'cerf.zip');
+  const chemin = join(sortie, 'plugin-cerf.zip');
   writeFileSync(chemin, ecrireZip(FICHIERS_PLUGIN.map(entree)));
   return { chemin, taille: statSync(chemin).size };
 }

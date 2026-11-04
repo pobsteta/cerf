@@ -37,14 +37,14 @@ test('projet modèle : étiquette orpheline supprimée avant de recréer (main),
 
 test('projet modèle : ne touche pas aux releases du plugin', () => {
   const wf = code('release-projet-modele.yml');
-  assert.doesNotMatch(wf, /plugin-v|plugin-essai|dist\/cerf\.zip/);
+  assert.doesNotMatch(wf, /plugin-v|plugin-essai|dist\/plugin-cerf\.zip/);
 });
 
-test('plugin : ne publie plus cerf-projet-modele.zip, ne fabrique plus de projet modèle', () => {
+test('plugin : ne publie plus projet-cerf.zip, ne fabrique plus de projet modèle', () => {
   const wf = code('release-plugin.yml');
-  assert.doesNotMatch(wf, /cerf-projet-modele/);
+  assert.doesNotMatch(wf, /projet-cerf/);
   assert.doesNotMatch(wf, /cerf\.qgz/);
-  assert.match(wf, /gh release create "plugin-v\$version" dist\/cerf\.zip/);
+  assert.match(wf, /gh release create "plugin-v\$version" dist\/plugin-cerf\.zip/);
 });
 
 test('plugin : seule plugin-v<version> est « latest », l\'essai ne l\'est pas ; groupe concurrency', () => {
@@ -58,4 +58,15 @@ test('plugin : seule plugin-v<version> est « latest », l\'essai ne l\'est pas 
 test('les deux workflows ont des groupes concurrency distincts (une file d\'attente ne perd pas l\'autre publication)', () => {
   const g = (f) => code(f).match(/group: (\S+)/)[1];
   assert.notEqual(g('release-plugin.yml'), g('release-projet-modele.yml'));
+});
+
+test('mission 028 : aucun ancien nom de fichier publié dans les workflows ; notes de mise à jour à la main', () => {
+  for (const f of ['release-plugin.yml', 'release-projet-modele.yml']) {
+    assert.doesNotMatch(code(f), /dist\/cerf\.zip|cerf-projet-modele|premiere-installation/, f);
+  }
+  const notes = code('release-projet-modele.yml');
+  assert.match(notes, /Mise à jour d'un appareil déjà en service : projet-cerf-mise-a-jour\.zip \(cerf\.qgz seul\), à la main/);
+  assert.match(notes, /câble USB/);
+  assert.match(notes, /Pas de flashcode pour la mise à jour/);
+  assert.doesNotMatch(notes, /flashcodes\.mjs[^\n]*mise-a-jour/);
 });

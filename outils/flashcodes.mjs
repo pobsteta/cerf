@@ -17,8 +17,9 @@ import { fileURLToPath } from 'node:url';
 
 export const DEPOT = 'https://github.com/pobsteta/cerf/releases';
 
-const PREMIERE = 'cerf-projet-modele-premiere-installation.zip';
-const MISE_A_JOUR = 'cerf-projet-modele.zip';
+// Mission 028 : noms des fichiers publiés. Pas de flashcode pour la mise à jour du projet (copie de cerf.qgz à la main).
+const PLUGIN = 'plugin-cerf.zip';
+const PROJET = 'projet-cerf.zip';
 
 const ACCES_PLUGIN =
   'dans QField, Paramètres, Plugins, « Install plugin from URL », touche l\'icône QR code du champ, puis vise cet écran';
@@ -31,23 +32,17 @@ const ACCES_PROJET =
 export function flashcodes(type, mode) {
   if (!['stable', 'essai'].includes(mode)) throw new Error(`mode inconnu : ${mode}`);
   if (type === 'plugin') {
-    const url = mode === 'stable' ? `${DEPOT}/latest/download/cerf.zip` : `${DEPOT}/download/plugin-essai/cerf.zip`;
+    const url = mode === 'stable' ? `${DEPOT}/latest/download/${PLUGIN}` : `${DEPOT}/download/plugin-essai/${PLUGIN}`;
     return [{ nom: 'flashcode-plugin', url, titre: 'Plugin Cerf', phrase: `Installe le plugin Cerf : ${ACCES_PLUGIN}.` }];
   }
   if (type === 'projet') {
     const etiquette = mode === 'stable' ? 'projet-modele' : 'projet-modele-essai';
     return [
       {
-        nom: 'flashcode-projet-premiere-installation',
-        url: `${DEPOT}/download/${etiquette}/${PREMIERE}`,
-        titre: 'Projet modèle, première installation',
-        phrase: `Installe le projet modèle avec sa couche « Saisie terrain » vide, une seule fois par appareil : ${ACCES_PROJET}.`,
-      },
-      {
-        nom: 'flashcode-projet-mise-a-jour',
-        url: `${DEPOT}/download/${etiquette}/${MISE_A_JOUR}`,
-        titre: 'Projet modèle, mise à jour',
-        phrase: `Met à jour le projet modèle d'un appareil déjà en service, sans toucher aux points saisis : ${ACCES_PROJET}.`,
+        nom: 'flashcode-projet',
+        url: `${DEPOT}/download/${etiquette}/${PROJET}`,
+        titre: 'Projet Cerf, première installation',
+        phrase: `Installe le projet Cerf avec sa couche « Saisie terrain » vide, une seule fois par appareil : ${ACCES_PROJET}.`,
       },
     ];
   }

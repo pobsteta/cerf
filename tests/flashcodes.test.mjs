@@ -25,20 +25,18 @@ test('les outils de décodage sont présents quand on les exige', () => {
   if (EXIGER) assert.ok(OUTILS, 'qrencode et zbarimg doivent être installés');
 });
 
-test('adresses stables : exactement celles de la fiche 025', () => {
-  assert.deepEqual(flashcodes('plugin', 'stable').map((f) => f.url), [`${DEPOT}/latest/download/cerf.zip`]);
+test('adresses stables : celles de la fiche 025, noms de la fiche 028 (aucun flashcode pour la mise à jour)', () => {
+  assert.deepEqual(flashcodes('plugin', 'stable').map((f) => f.url), [`${DEPOT}/latest/download/plugin-cerf.zip`]);
   assert.deepEqual(flashcodes('projet', 'stable').map((f) => f.url), [
-    `${DEPOT}/download/projet-modele/cerf-projet-modele-premiere-installation.zip`,
-    `${DEPOT}/download/projet-modele/cerf-projet-modele.zip`,
+    `${DEPOT}/download/projet-modele/projet-cerf.zip`,
   ]);
 });
 
 test('préversions d\'essai : adresses des releases d\'essai, jamais les adresses stables', () => {
   const urls = [...flashcodes('plugin', 'essai'), ...flashcodes('projet', 'essai')].map((f) => f.url);
   assert.deepEqual(urls, [
-    `${DEPOT}/download/plugin-essai/cerf.zip`,
-    `${DEPOT}/download/projet-modele-essai/cerf-projet-modele-premiere-installation.zip`,
-    `${DEPOT}/download/projet-modele-essai/cerf-projet-modele.zip`,
+    `${DEPOT}/download/plugin-essai/plugin-cerf.zip`,
+    `${DEPOT}/download/projet-modele-essai/projet-cerf.zip`,
   ]);
   assert.throws(() => flashcodes('plugin', 'autre'));
   assert.throws(() => flashcodes('autre', 'stable'));
@@ -113,13 +111,13 @@ test('svgVersPbm : matrice de modules relue, SVG inconnu refusé', () => {
 
 test('notes : image, URL en clair, une phrase avec l\'écran de QField', () => {
   const n = notes('projet', 'stable', 'projet-modele');
-  assert.match(n, /!\[Projet modèle, première installation\]\(https:\/\/github\.com\/pobsteta\/cerf\/releases\/download\/projet-modele\/flashcode-projet-premiere-installation\.png\)/);
-  assert.match(n, /`https:\/\/github\.com\/pobsteta\/cerf\/releases\/download\/projet-modele\/cerf-projet-modele-premiere-installation\.zip`/);
-  assert.match(n, /flashcode-projet-mise-a-jour\.png/);
+  assert.match(n, /!\[Projet Cerf, première installation\]\(https:\/\/github\.com\/pobsteta\/cerf\/releases\/download\/projet-modele\/flashcode-projet\.png\)/);
+  assert.match(n, /`https:\/\/github\.com\/pobsteta\/cerf\/releases\/download\/projet-modele\/projet-cerf\.zip`/);
+  assert.doesNotMatch(n, /mise-a-jour/);
   assert.match(n, /« Import URL »/);
   const p = notes('plugin', 'stable', 'plugin-v0.1.0');
   assert.match(p, /download\/plugin-v0\.1\.0\/flashcode-plugin\.png/);
-  assert.match(p, /`https:\/\/github\.com\/pobsteta\/cerf\/releases\/latest\/download\/cerf\.zip`/);
+  assert.match(p, /`https:\/\/github\.com\/pobsteta\/cerf\/releases\/latest\/download\/plugin-cerf\.zip`/);
   assert.match(p, /« Install plugin from URL »/);
   assert.match(notes('plugin', 'essai', 'plugin-essai'), /essai/);
 });
@@ -132,8 +130,8 @@ test('workflow plugin : génère, contrôle, joint les flashcodes aux releases e
   assert.match(wf, /node outils\/flashcodes\.mjs verifier dist\/flashcodes plugin "\$mode"/);
   assert.match(wf, /node outils\/flashcodes\.mjs notes plugin stable "plugin-v\$version" >> notes\.md/);
   assert.match(wf, /node outils\/flashcodes\.mjs notes plugin essai plugin-essai >> notes\.md/);
-  assert.match(wf, /gh release create "plugin-v\$version" dist\/cerf\.zip dist\/flashcodes\/\*/);
-  assert.match(wf, /gh release upload plugin-essai dist\/cerf\.zip dist\/essai\.zip dist\/flashcodes\/\* --clobber/);
+  assert.match(wf, /gh release create "plugin-v\$version" dist\/plugin-cerf\.zip dist\/flashcodes\/\*/);
+  assert.match(wf, /gh release upload plugin-essai dist\/plugin-cerf\.zip dist\/essai\.zip dist\/flashcodes\/\* --clobber/);
   // Le plugin n'a pas changé de contenu ni de rôle : seule plugin-v<version> reste « latest ».
   assert.match(wf, /--title "Cerf \$version" --notes-file notes\.md --latest\b(?!=)/);
 });
@@ -144,8 +142,8 @@ test('workflow projet modèle : génère, contrôle, joint les flashcodes aux re
   assert.match(wf, /CERF_FLASHCODES_EXIGER: '1'/);
   assert.match(wf, /node outils\/flashcodes\.mjs generer dist\/flashcodes projet "\$mode"/);
   assert.match(wf, /node outils\/flashcodes\.mjs verifier dist\/flashcodes projet "\$mode"/);
-  assert.match(wf, /gh release create projet-modele dist\/cerf-projet-modele\.zip dist\/cerf-projet-modele-premiere-installation\.zip dist\/flashcodes\/\*/);
-  assert.match(wf, /gh release upload projet-modele-essai dist\/cerf-projet-modele\.zip dist\/cerf-projet-modele-premiere-installation\.zip dist\/flashcodes\/\* --clobber/);
+  assert.match(wf, /gh release create projet-modele dist\/projet-cerf\.zip dist\/projet-cerf-mise-a-jour\.zip dist\/flashcodes\/\*/);
+  assert.match(wf, /gh release upload projet-modele-essai dist\/projet-cerf\.zip dist\/projet-cerf-mise-a-jour\.zip dist\/flashcodes\/\* --clobber/);
   assert.match(wf, /--title "Projet modèle Cerf" --notes-file notes\.md --latest=false/);
   assert.doesNotMatch(wf, /--latest(?!=false)/);
 });

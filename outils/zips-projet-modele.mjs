@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Mission 021 : fabrique les deux zips du projet modèle (décision de Pascal n° 1, 3 novembre 2026).
-//   cerf-projet-modele.zip                       = cerf.qgz seul : zip de MISE À JOUR. Il ne contient pas
-//                                                  saisie.gpkg, donc ne peut pas écraser les points déjà saisis.
-//   cerf-projet-modele-premiere-installation.zip = cerf.qgz + saisie.gpkg vide : à n'utiliser qu'UNE fois par
-//                                                  appareil (un saisie.gpkg rempli recopié serait perdu).
+//   projet-cerf-mise-a-jour.zip = cerf.qgz seul : MISE À JOUR, par copie de cerf.qgz à la main (câble USB)
+//                                 dans le dossier du projet (mission 028 : QField importe un zip dans un dossier
+//                                 neuf, sans les points saisis). Sans saisie.gpkg : ne peut rien écraser.
+//   projet-cerf.zip             = cerf.qgz + saisie.gpkg vide : PREMIÈRE INSTALLATION, une seule fois par
+//                                 appareil (un saisie.gpkg rempli recopié serait perdu).
 // Déterministe (dates MS-DOS fixes, ordre fixe). Écrit pour Cerf, sans dépendance.
 // Usage : node outils/zips-projet-modele.mjs <dossier-de-sortie> [dossier-des-sources (défaut : racine du dépôt)]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -11,8 +12,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from '../tests/recette/essai/zip-ecrire.mjs';
 
-export const ZIP_MISE_A_JOUR = 'cerf-projet-modele.zip';
-export const ZIP_PREMIERE_INSTALLATION = 'cerf-projet-modele-premiere-installation.zip';
+export const ZIP_MISE_A_JOUR = 'projet-cerf-mise-a-jour.zip';
+export const ZIP_PREMIERE_INSTALLATION = 'projet-cerf.zip';
 export const NOM_QGZ = 'cerf.qgz', NOM_GPKG = 'saisie.gpkg';
 
 const entree = (nom, donnees) => ({ nom: Buffer.from(nom, 'utf8'), donnees, stocke: false, utf8: true });

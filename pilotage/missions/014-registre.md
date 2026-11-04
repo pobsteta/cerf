@@ -69,3 +69,6 @@ la couche retirée ne revient pas ; le zip réimporté remplace l'ancien.
 
 - Les messages de réouverture (couche qui ne se recharge pas, zip absent) commencent eux aussi
   par le nom de la couche avec son extension (règle de la spec § 4, étendue au registre).
+- Le zip réimporté est copié sous un nom provisoire dans `cerf-imports/` et ne remplace
+  l'ancienne copie qu'après un import réussi (Pascal, 4 novembre 2026) : un zip abîmé ne doit
+  pas rendre illisibles, à la réouverture, les couches gardées sur la carte.

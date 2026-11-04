@@ -64,7 +64,12 @@ function ctxImport(extra = {}) {
     couches, reglages,
     ctx: {
       cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe('a.geojson'),
-      reglages, chargerCouche: (s, n) => couches.charger(s, n),
+      reglages,
+      // Mission 012 : quatre services obligatoires à la place de chargerCouche (le contrôle accepte).
+      ouvrirCouche: (s, n) => couches.charger(s, n),
+      decrireCouche: (c) => ({ lisible: c.isValid, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
+      controlerCouche: () => ({ charge: true, controle: 'ok', message: '', avertissements: [] }),
+      ajouterALaCarte: () => {},
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
     },
@@ -271,10 +276,16 @@ test('retirerCouche : message quand la copie sert encore', async () => {
 });
 
 // ============================================================================ forme du plugin
-const FICHIERS = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'metadata.txt', 'icon.svg'];
+// Liste explicite (mission 012 : sept fichiers, cerf-controles.mjs en plus). La mission 010 y ajoutera
+// cerf-styles.mjs : ajouter alors la ligne ci-dessous, sans toucher au reste.
+const FICHIERS = [
+  'main.qml', 'Cerf.qml', 'Panneau.qml',
+  'cerf-logique.mjs', 'cerf-controles.mjs',
+  'metadata.txt', 'icon.svg',
+];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
 
-test('forme : les six fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
+test('forme : les sept fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
   for (const f of FICHIERS) assert.ok(existsSync(join(PLUGIN, f)), `absent : plugin/${f}`);
   const meta = lire('metadata.txt');
   assert.match(meta, /^\[general\]$/m);
@@ -317,7 +328,7 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : cerf.zip a main.qml à sa racine et exactement les six fichiers du plugin', async () => {
+test('empaquetage : cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin (dont cerf-controles.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
@@ -327,6 +338,7 @@ test('empaquetage : cerf.zip a main.qml à sa racine et exactement les six fichi
     const noms = m.nomsDuZip(readFileSync(r.chemin));
     assert.deepEqual([...noms].sort(), [...FICHIERS].sort());
     assert.ok(noms.includes('main.qml'));
+    assert.ok(noms.includes('cerf-controles.mjs'));
   } finally {
     rmSync(sortie, { recursive: true, force: true });
   }

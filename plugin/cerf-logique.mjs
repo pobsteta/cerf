@@ -12,7 +12,46 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.3.2';
+export const VERSION = '0.3.4';
+
+// Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
+// `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
+// expose `LayerUtils.createFeatureIterator(couche)` (qflayerutils.h l. 234), dont l'itérateur a hasNext(), next() et
+// close() invocables (l. 52-75). `creerIterateur` est ce service, passé en paramètre (testable sans QField).
+// Le contrôle 4 n'a besoin que de « vide » (0) ou « non vide » (au moins 1) : on s'arrête à la PREMIÈRE entité
+// (plafond = 1), sans parcourir une grosse couche. nbEntites ne sert qu'à ce contrôle 4 : valeur 0 ou 1, jamais un total.
+// Un itérateur impossible à créer ou qui lève rend { lisible: false } (contrôle 2, « illisible »), jamais « vide ».
+// L'itérateur est toujours fermé.
+export const PLAFOND_COMPTAGE = 1;
+export function compterEntites(couche, creerIterateur) {
+  let it = null;
+  let nbEntites = 0;
+  let lisible = true;
+  try {
+    it = creerIterateur(couche);
+    if (!it) throw new Error('itérateur absent');
+    while (nbEntites < PLAFOND_COMPTAGE && it.hasNext()) {
+      it.next();
+      nbEntites++;
+    }
+  } catch (e) {
+    lisible = false;
+    nbEntites = -1;
+  }
+  if (it) {
+    try { it.close(); } catch (e) { /* fermeture sans effet sur le résultat */ }
+  }
+  return { lisible: lisible, nbEntites: nbEntites };
+}
+
+// Emprise d'une couche { xmin, ymin, xmax, ymax } (mission 037). Dans QGIS 3a92eb3, `extent` est une MÉTHODE
+// (`Q_INVOKABLE virtual QgsRectangle extent() const`, qgsmaplayer.h l. 564), pas une propriété : `couche.extent` vaut
+// alors une fonction, dont xMinimum est undefined. On l'appelle donc si c'est une fonction ; sinon on la lit telle quelle.
+export function lireEmprise(couche) {
+  let x = couche.extent;
+  if (typeof x === 'function') x = couche.extent();
+  return { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+}
 
 // Mission 034 : jugement de validité du système de coordonnées d'une couche, d'après ce que QML voit.
 // QGIS (commit 3a92eb3, embarqué par QField 4.3.7, src/core/proj/qgscoordinatereferencesystem.h, l. 218-223) n'expose
@@ -478,7 +517,7 @@ function controlerSansPlanter(ctx, couche, c, noms) {
   const nom = nomDeFichier(c.entree);
   try {
     const entree = decrireEntree(c.entree, noms);
-    const lue = couche ? ctx.decrireCouche(couche) : { lisible: false };
+    const lue = couche ? ctx.decrireCouche(couche, entree.format) : { lisible: false };
     const description = Object.assign({}, lue, entree);
     if (!couche) description.lisible = false;
     const v = ctx.controlerCouche(description);

@@ -105,8 +105,8 @@ test('forme : cerf-logique.mjs sans ?., ?? ni import', () => {
   const code = sansCommentaires(lire('cerf-logique.mjs'));
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.3.2, branche de la mission dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.3.2');
-  assert.match(lire('metadata.txt'), /^version=0\.3\.2$/m);
+test('version et préversion : 0.3.4, branche de la mission dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.3.4');
+  assert.match(lire('metadata.txt'), /^version=0\.3\.4$/m);
   assert.match(readFileSync(resolve(PLUGIN, '../.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/034-crs-valide'/);
 });

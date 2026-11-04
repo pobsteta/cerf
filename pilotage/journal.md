@@ -211,3 +211,4 @@
 2026-11-04 · Claude (orchestrateur) · 025 · PR #20 fusionnée dans main (7efb073) ; carte 025 en Terminé ; la release projet-modele se republie avec ses flashcodes.
 2026-11-04 · Claude (orchestrateur) · 025 · après fusion : release projet-modele recréée avec ses quatre flashcodes (PNG et SVG, première installation et mise à jour) ; latest reste plugin-v0.1.1.
 2026-11-04 · Pascal · 023 · « tout fonctionne sur PC et Samsung » (contrôle QGIS et installation) ; demande : un flashcode aussi pour le prototype n° 2. Confié au dev de la 023 ; neuf réponses du protocole demandées à Pascal.
+2026-11-04 · dev · 023 · flashcodes du plugin et du projet d'essai ajoutés à la préversion prototype-2 (c831465), décodés en CI, joints en PNG et SVG ; 466/466 ; latest reste plugin-v0.1.1. Petit ajout sans relecture séparée : relu avec la 023 avant fusion.

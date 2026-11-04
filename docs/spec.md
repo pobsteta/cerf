@@ -152,8 +152,10 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
 
 1. **Shapefile incomplet** : `.prj` absent → refus « Parcelles.shp : fichier .prj
-   manquant, système de coordonnées inconnu ». `.cpg` absent → chargement avec
-   avertissement « accents peut-être mal lus ».
+   manquant, système de coordonnées inconnu ». `.shx` ou `.dbf` absent → refus
+   « UG.shp : fichier .shx manquant, couche non chargée » (même forme pour `.dbf` ; Pascal,
+   4 novembre 2026). `.cpg` absent → chargement avec avertissement « accents peut-être mal
+   lus ». Un Shapefile vide sans `.prj` est refusé (contrôle 1 avant le contrôle 4).
 2. **Lecture** : la source ne s'ouvre pas → refus « illisible ».
 3. **Système invalide** (GeoTIFF sans géoréférencement, `.prj` illisible) → refus
    « système de coordonnées inconnu ».

@@ -54,3 +54,11 @@
 ## Qui veille, qui tranche
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
+
+## Décisions de Pascal sur le plan (4 novembre 2026)
+
+Plan `prototype-2/PLAN-3.md` (bc92fdf) **validé avec ses sept réponses** : jeu de 2 000
+entités (bouton 9b) ; nouveau zip `essai-styles-z.zip`, l'ancien inchangé ; même projet
+`cerf-essai-2` et même préversion `prototype-2` (sha dans les notes) ; « Étang » et « Forêt »
+dans le `.dbf` ; dossier neuf `q3-<N>` par appui ; pas d'essai de chemin non inscriptible ;
+protocole en section « Prototype n° 3 » de `tests/recette/prototype-2.md`, relu par le testeur.

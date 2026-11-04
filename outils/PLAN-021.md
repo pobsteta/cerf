@@ -277,3 +277,12 @@ R-tree ; contrainte bloquante dans QField ; `now()` rempli seul et fuseau ; widg
    appareil qui a déjà servi, car cela efface les points saisis.
 3. **Rapporter les points au bureau** : fermer le projet dans QField, puis copier `saisie.gpkg` (le fichier seul, sans
    le renommer) sur le PC ; il s'ouvre dans QGIS en Lambert 93.
+
+## Note de suivi (mission 022, 4 novembre 2026) : le § 4 est dépassé sur trois points
+
+- Le déclencheur `mission/021-couche-saisie` de `release-projet-modele.yml` est **retiré** ; l'essai avant fusion se fait
+  par lancement manuel (`workflow_dispatch`) sur une branche autre que `main` (préversion `projet-modele-essai`).
+- `release-plugin.yml` ne fabrique ni ne publie plus `cerf-projet-modele.zip` : l'adresse du projet modèle est
+  `…/releases/download/projet-modele/…`, la seule. Seule `plugin-v<version>` est « latest ».
+- Les deux workflows ont chacun un groupe `concurrency` (sans annulation en cours) ; une étiquette `projet-modele`
+  sans release est supprimée avant la recréation.

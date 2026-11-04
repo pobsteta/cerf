@@ -3,8 +3,9 @@
 #                                                   ne peut pas écraser les points déjà saisis) ;
 #  - cerf-projet-modele-premiere-installation.zip : cerf.qgz + saisie.gpkg vide, une seule fois par appareil.
 # Déclencheurs :
-#  - push sur mission/021-couche-saisie : préversion « projet-modele-essai », écrasée à chaque push,
-#    pour l'essai de Pascal avant fusion ;
+#  - lancement manuel (workflow_dispatch) sur une branche autre que main : préversion
+#    « projet-modele-essai », écrasée à chaque lancement, pour l'essai de Pascal avant fusion
+#    (mission 022 : plus aucun déclencheur par push sur une branche de mission) ;
 #  - push sur main : release à étiquette FIXE « projet-modele », écrasée à chaque version (suppression
 #    puis recréation, comme « plugin-essai ») ; URLs stables :
 #      https://github.com/pobsteta/cerf/releases/download/projet-modele/cerf-projet-modele.zip
@@ -18,13 +19,16 @@
 name: Release du projet modèle
 on:
   push:
-    # La branche mission/021-couche-saisie ne sert qu'à l'essai avant fusion : son déclencheur sera
-    # retiré après la fusion de la mission 021.
-    branches: ['main', 'mission/021-couche-saisie']
+    branches: ['main']
     paths: ['cerf.qgz', 'saisie.gpkg', 'outils/projet-modele.mjs', 'outils/zips-projet-modele.mjs', '.github/workflows/release-projet-modele.yml']
   workflow_dispatch:
 permissions:
   contents: write
+# Une publication à la fois, sans jamais en annuler une en cours : la suppression puis la recréation
+# de l'étiquette fixe ne doit pas être interrompue ni se chevaucher.
+concurrency:
+  group: release-projet-modele
+  cancel-in-progress: false
 jobs:
   publier:
     runs-on: ubuntu-latest
@@ -68,12 +72,23 @@ jobs:
             if gh release view projet-modele >/dev/null 2>&1; then
               gh release delete projet-modele --cleanup-tag --yes
             fi
+            # Étiquette orpheline (sans release, p. ex. release supprimée à la main) : à fermer avant de recréer.
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/projet-modele" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/projet-modele"
+            fi
             gh release create projet-modele dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
               --target "$GITHUB_SHA" --title "Projet modèle Cerf" --notes-file notes.md --latest=false
-          elif gh release view projet-modele-essai >/dev/null 2>&1; then
-            gh release upload projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip --clobber
-            gh release edit projet-modele-essai --notes-file notes.md --latest=false
           else
-            gh release create projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
-              --target "$GITHUB_SHA" --title "Projet modèle, essai avant fusion" --notes-file notes.md --prerelease --latest=false
+            # Essai avant fusion (lancement manuel hors main) : même précaution pour l'étiquette d'essai.
+            if ! gh release view projet-modele-essai >/dev/null 2>&1 \
+               && gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/projet-modele-essai" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/projet-modele-essai"
+            fi
+            if gh release view projet-modele-essai >/dev/null 2>&1; then
+              gh release upload projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip --clobber
+              gh release edit projet-modele-essai --notes-file notes.md --latest=false
+            else
+              gh release create projet-modele-essai dist/cerf-projet-modele.zip dist/cerf-projet-modele-premiere-installation.zip \
+                --target "$GITHUB_SHA" --title "Projet modèle, essai avant fusion" --notes-file notes.md --prerelease --latest=false
+            fi
           fi

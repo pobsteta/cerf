@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, prototype n° 2 (mission 023) : l'écran aux gros boutons (gants, soleil), un bouton
+// Cerf, prototype n° 2 (mission 023, puis 027) : l'écran aux gros boutons (gants, soleil), un bouton
 // par question du protocole tests/recette/prototype-2.md. Écrit pour Cerf (ADR 0006).
 // La logique pure est dans essai-logique.mjs (testée sous Node) ; ce fichier n'appelle que
 // l'API de QField lue dans son code (prototype-2/PLAN.md § 3). Il ne prouve rien par
@@ -26,6 +26,12 @@ Item {
   property var octetsZip: null         // contenu du zip copié (petit : quelques Ko)
   property var coucheQ4: null          // couche « A » de la question 4
   property var suivies: []             // couches des questions 1 et 3 : { chemin, nom }
+  // Prototype n° 3 (mission 027).
+  property string copieZ: ""           // chemin du zip compressé copié dans cerf-imports
+  property string zipEnCours: ""       // nom du zip que le sélecteur de fichiers doit rendre
+  property int compteurQ3: 0           // dernier N de q3-<N> utilisé
+  property var dernierQ3: null         // { dossier, bases, couches } du dernier essai écrit
+  property var totaux12: []            // durées totales du bouton 12 (ms)
 
   component GrosBouton: Button {
     Layout.fillWidth: true
@@ -71,16 +77,21 @@ Item {
     } catch (e) {
       imports = "ERREUR : " + e.message;
     }
-    return "Cerf, prototype n° 2, version " + Zip.VERSION + "\n"
+    return "Cerf, prototype n° 2 (et n° 3), version " + Zip.VERSION + "\n"
       + "Projet : " + (nomProjet() || "aucun projet ouvert") + "\n"
       + "Dossier du projet : " + (dossierProjet() || "inconnu") + "\n"
       + "Dossier cerf-imports : " + imports + "\n"
-      + "Dernier zip copié : " + (copie || "aucun") + (copie ? (existe(copie) ? " (présent)" : " (ABSENT)") : "");
+      + "Dernier zip copié : " + (copie || "aucun") + (copie ? (existe(copie) ? " (présent)" : " (ABSENT)") : "") + "\n"
+      + "Zip compressé copié : " + (copieZ || "aucun") + (copieZ ? (existe(copieZ) ? " (présent)" : " (ABSENT)") : "");
   }
 
   function afficher(titre, lignes) {
     zoneEntete.text = entete();
     zoneResultat.text = titre + "\n" + lignes.join("\n");
+    // Un échec se voit de loin : fond rouge pâle dès qu'une ligne commence par « ÉCHEC ».
+    let echec = false;
+    for (let i = 0; i < lignes.length; i++) if (String(lignes[i]).indexOf("ÉCHEC") === 0) echec = true;
+    cadreResultat.color = echec ? "#ffcdd2" : "#fff8e1";
     defilement.contentY = 0;
   }
 
@@ -114,7 +125,14 @@ Item {
   // -------------------------------------------------------------- zip (bouton 0)
 
   function preparerZip() {
-    const titre = Zip.BOUTONS.B0;
+    preparerZipNomme(Zip.BOUTONS.B0, Zip.NOM_ZIP);
+  }
+
+  function preparerZipCompresse() {
+    preparerZipNomme(Zip.BOUTONS.B0B, Zip.NOM_ZIP_Z);
+  }
+
+  function preparerZipNomme(titre, nomZip) {
     if (!projetOk(titre)) return;
     let dossier = "";
     try {
@@ -124,7 +142,8 @@ Item {
       return;
     }
     prefixeEnCours = dossier;
-    afficher(titre, ["Sélecteur de fichiers ouvert : choisir « " + Zip.NOM_ZIP + " » (Téléchargements).",
+    zipEnCours = nomZip;
+    afficher(titre, ["Sélecteur de fichiers ouvert : choisir « " + nomZip + " » (Téléchargements).",
       "La copie ira dans : " + dossier]);
     try {
       platformUtilities.requestStoragePermission();
@@ -135,6 +154,7 @@ Item {
   }
 
   function zipRecu(recu) {
+    if (zipEnCours === Zip.NOM_ZIP_Z) { zipCompresseRecu(recu); return; }
     const titre = Zip.BOUTONS.B0;
     if (!recu) {
       afficher(titre, ["Copie annulée ou échouée : aucun chemin reçu de QField."]);
@@ -144,6 +164,36 @@ Item {
     const lignes = ["Chemin reçu de QField : " + String(recu), "Copie : " + copie];
     if (Zip.nomDeFichier(copie) !== Zip.NOM_ZIP) lignes.push("ATTENTION : le fichier choisi ne s'appelle pas « " + Zip.NOM_ZIP + " ».");
     chargerZip(lignes, true);
+    afficher(titre, lignes);
+  }
+
+  // Bouton 0b : le zip compressé n'est PAS extrait (aucun décompresseur dans le plugin). On lit
+  // seulement son répertoire central pour afficher méthode, taille et CRC32 de chaque entrée.
+  function zipCompresseRecu(recu) {
+    const titre = Zip.BOUTONS.B0B;
+    if (!recu) {
+      afficher(titre, ["ÉCHEC : copie annulée ou échouée, aucun chemin reçu de QField."]);
+      return;
+    }
+    copieZ = Zip.cheminRecu(prefixeEnCours, String(recu));
+    const lignes = ["Chemin reçu de QField : " + String(recu), "Copie : " + copieZ];
+    if (Zip.nomDeFichier(copieZ) !== Zip.NOM_ZIP_Z) lignes.push("ATTENTION : le fichier choisi ne s'appelle pas « " + Zip.NOM_ZIP_Z + " ».");
+    try {
+      const octets = Zip.octetsDe(FileUtils.readFileContent(copieZ));
+      if (octets.length === 0) {
+        lignes.unshift("ÉCHEC : 0 octet rendu par QField (copie absente ou hors du projet ?).");
+      } else {
+        const liste = Zip.listerZip(octets);
+        let stockees = 0;
+        for (let i = 0; i < liste.entrees.length; i++) if (liste.entrees[i].methode === 0) stockees++;
+        lignes.push("Octets lus : " + octets.length + " ; entrées : " + liste.entrees.length
+          + " (stockées : " + stockees + ", compressées : " + (liste.entrees.length - stockees) + ")");
+        for (let i = 0; i < liste.entrees.length; i++) lignes.push("  " + Zip.ligneEntree(liste.entrees[i]));
+        lignes.push("Le zip n'est pas extrait : GDAL le lira en /vsizip/.");
+      }
+    } catch (e) {
+      lignes.unshift("ÉCHEC : lecture du zip : " + e.message);
+    }
     afficher(titre, lignes);
   }
 
@@ -692,6 +742,338 @@ Item {
     afficher(titre, lignes);
   }
 
+
+  // -------------------------------------------------------------- prototype n° 3 (mission 027)
+
+  // Garde commune : projet d'essai ouvert, zip compressé copié. Rend vrai si l'on peut continuer.
+  function pretQ3(titre, lignes) {
+    if (!projetOk(titre)) return false;
+    if (copieZ === "") {
+      let defaut = "";
+      try {
+        defaut = Zip.dossierImports(dossierProjet()) + Zip.NOM_ZIP_Z;
+      } catch (e) {
+        lignes.push("ÉCHEC : " + e.message);
+        return false;
+      }
+      if (existe(defaut)) copieZ = defaut;
+    }
+    if (copieZ === "" || !existe(copieZ)) {
+      lignes.push("ÉCHEC, essai raté : le zip compressé n'est pas là. Toucher d'abord « " + Zip.BOUTONS.B0B + " ».");
+      return false;
+    }
+    return true;
+  }
+
+  // Dossier neuf q3-<N>/ (rien d'écrasé, rien d'effacé). Rend le chemin avec barre finale, ou "".
+  function dossierNeufQ3(lignes) {
+    try {
+      const d = Zip.prochainDossierQ3(dossierProjet(), compteurQ3 + 1, function (c) { return existe(c); });
+      compteurQ3 = d.n;
+      lignes.push("Dossier de sortie (neuf) : " + d.chemin);
+      return d.chemin;
+    } catch (e) {
+      lignes.push("ÉCHEC : " + e.message);
+      return "";
+    }
+  }
+
+  // Écrit un .qml de texte (octets UTF-8), le relit, compare taille et CRC32. Garde de chemin.
+  function ecrireQml(chemin, texte, lignes) {
+    if (!Zip.peutEcrireQ3(chemin, dossierProjet())) {
+      lignes.push("REFUSÉ d'écrire " + chemin + " : hors de cerf-imports/q3-<N>/ du projet.");
+      return false;
+    }
+    try {
+      const octets = Zip.octetsUtf8(texte);
+      const retour = FileUtils.writeFileContent(chemin, Zip.arrayBufferExact(octets));
+      const relu = Zip.octetsDe(FileUtils.readFileContent(chemin));
+      const pareil = relu.length === octets.length && Zip.crc32(relu) === Zip.crc32(octets);
+      lignes.push(Zip.nomDeFichier(chemin) + " écrit par le plugin (retour " + retour + "), relu " + relu.length + " octets pour "
+        + octets.length + " : " + (pareil ? "IDENTIQUE" : "DIFFÉRENT"));
+      return pareil;
+    } catch (e) {
+      lignes.push("ÉCHEC : écriture de " + chemin + " : " + e);
+      return false;
+    }
+  }
+
+  // Valeurs d'un champ pour toutes les entités de la couche (accents), ou null si illisible.
+  function valeursChamp(couche, champ, lignes) {
+    try {
+      const valeurs = [];
+      const it = LayerUtils.createFeatureIterator(couche);
+      while (it.hasNext()) valeurs.push(String(it.next().attribute(champ)));
+      it.close();
+      lignes.push("Champ « " + champ + " » relu dans la copie : " + valeurs.join(" ; "));
+      return valeurs;
+    } catch (e) {
+      lignes.push("Lecture du champ « " + champ + " » : ERREUR " + e);
+      return null;
+    }
+  }
+
+  function nombreEntites(couche) {
+    let n = -1;
+    try {
+      n = Number(couche.featureCount());
+    } catch (e) {
+      n = -1;
+    }
+    if (!(n >= 0)) {
+      try {
+        n = compterObjets(couche);
+      } catch (e) {
+        n = -1;
+      }
+    }
+    return n;
+  }
+
+  // Réécrit UNE couche du zip compressé : source en /vsizip/, isValid, saveVectorLayerAs vers
+  // <dossier>/<base>.gpkg, .qml à côté (si cas.style), chargement de la copie. Rend
+  // { ok, couche, ms: { source, ecriture, qml, copie, total } } ; les lignes disent tout, y compris
+  // un échec muet (chaîne vide rendue par saveVectorLayerAs).
+  function reecrire(cas, dossier, lignes, ajouter) {
+    const ms = { source: 0, ecriture: 0, qml: 0, copie: 0, total: 0 };
+    const debut = Date.now();
+    const bilan = function (ok, couche) {
+      ms.total = Date.now() - debut;
+      return { ok: ok, couche: couche, ms: ms };
+    };
+    const uri = Zip.sourceDuCas(cas, copieZ);
+    lignes.push("--- " + cas.base + " : source " + uri);
+
+    // 1. Source en /vsizip/ ; isValid vérifié AVANT saveVectorLayerAs.
+    let t = Date.now();
+    let src = null;
+    try {
+      src = LayerUtils.loadVectorLayer(uri, "src_" + cas.base);
+    } catch (e) {
+      lignes.push("loadVectorLayer (source) : ERREUR " + e);
+    }
+    ms.source = Date.now() - t;
+    lignes.push("Durée, ouverture de la source : " + Zip.texteDuree(ms.source));
+    const valide = src ? tenter(lignes, "Source isValid", function () { return src.isValid; }) : false;
+    if (!src || valide !== true) {
+      lignes.push(Zip.jugerCopie(cas, { sourceValide: false }).texte);
+      return bilan(false, null);
+    }
+    const authidSource = String(tenter(lignes, "Source crs.authid", function () { return src.crs.authid; }));
+    const nSource = nombreEntites(src);
+    lignes.push("Source featureCount : " + nSource);
+    try {
+      lignes.push("Source extent() : " + texteEmprise(emprise(src)));
+    } catch (e) {
+      lignes.push("Source extent() : ERREUR " + e);
+    }
+
+    // 2. saveVectorLayerAs (synchrone : l'écran se fige pendant l'écriture).
+    const cible = dossier + cas.base + ".gpkg";
+    if (!Zip.peutEcrireQ3(cible, dossierProjet())) {
+      lignes.push("ÉCHEC : REFUSÉ d'écrire " + cible + " : hors de cerf-imports/q3-<N>/ du projet.");
+      return bilan(false, null);
+    }
+    t = Date.now();
+    let rendu = "";
+    try {
+      rendu = String(LayerUtils.saveVectorLayerAs(src, cible, "GPKG") || "");
+    } catch (e) {
+      lignes.push("saveVectorLayerAs : ERREUR " + e);
+    }
+    ms.ecriture = Date.now() - t;
+    lignes.push("Durée, saveVectorLayerAs : " + Zip.texteDuree(ms.ecriture));
+    lignes.push("saveVectorLayerAs a rendu : " + (rendu === "" ? "(chaîne vide)" : rendu));
+    if (rendu === "") {
+      // Échec muet : la raison n'est que dans le journal de QField. On montre ce qu'on peut vérifier.
+      const j = Zip.jugerCopie(cas, { sourceValide: true, cheminRendu: "" });
+      lignes.push(j.texte);
+      lignes.push("Contrôles : source valide " + valide + " ; " + nSource + " entités ; dossier de sortie présent : "
+        + (existe(dossier.replace(/\/+$/, "")) ? "oui" : "non") + " ; fichier cible présent : " + (existe(cible) ? "oui" : "non"));
+      return bilan(false, null);
+    }
+    if (rendu !== cible) lignes.push("ATTENTION : le chemin rendu diffère du chemin demandé (" + cible + ").");
+    if (!Zip.peutEcrireQ3(rendu, dossierProjet())) {
+      lignes.push("ÉCHEC : le fichier rendu est hors de cerf-imports/q3-<N>/ : " + rendu + " (non chargé, non effacé).");
+      return bilan(false, null);
+    }
+
+    // 3. .qml écrit par le plugin à côté, AVANT le chargement de la copie.
+    if (cas.style !== "") {
+      t = Date.now();
+      const qmlOk = ecrireQml(dossier + cas.base + ".qml", Zip.qmlStyle(Zip.STYLES[cas.style]), lignes);
+      ms.qml = Date.now() - t;
+      lignes.push("Durée, écriture du .qml : " + Zip.texteDuree(ms.qml));
+      if (!qmlOk) {
+        lignes.push("ÉCHEC : le .qml n'a pas pu être écrit : la copie n'est pas chargée.");
+        return bilan(false, null);
+      }
+    }
+
+    // 4. Chargement de la copie.
+    t = Date.now();
+    const couche = charger(Zip.uriGpkg(rendu, cas.base), cas.base, lignes, ajouter);
+    ms.copie = Date.now() - t;
+    lignes.push("Durée, chargement de la copie : " + Zip.texteDuree(ms.copie));
+    const copieValide = couche ? couche.isValid === true : false;
+    let octets = 0;
+    try {
+      octets = Zip.octetsDe(FileUtils.readFileContent(rendu)).length;
+    } catch (e) {
+      lignes.push("Taille du .gpkg : ERREUR " + e);
+    }
+    const nCopie = copieValide ? nombreEntites(couche) : -1;
+    const authidCopie = copieValide ? String(couche.crs.authid) : "";
+    const accents = cas.champAccents !== "" && copieValide
+      ? Zip.accentsLus(cas.accents, valeursChamp(couche, cas.champAccents, lignes)) : null;
+    const j = Zip.jugerCopie(cas, { sourceValide: true, cheminRendu: rendu, copieValide: copieValide, octets: octets,
+      entites: nCopie, authid: authidCopie, accents: accents });
+    lignes.push(j.texte);
+    if (authidSource !== authidCopie) lignes.push("Système de la source : " + authidSource + " ; de la copie : " + authidCopie + " (la copie ne reprojette pas).");
+    return bilan(j.ok, couche);
+  }
+
+  function noterQ3(dossier, bases, couches) {
+    dernierQ3 = { dossier: dossier, bases: bases, couches: couches };
+  }
+
+  function lignesDurees(lignes, ms) {
+    lignes.push("Total : " + Zip.texteDuree(ms.total) + " (source " + ms.source + " ms ; saveVectorLayerAs " + ms.ecriture
+      + " ms ; .qml " + ms.qml + " ms ; copie " + ms.copie + " ms)");
+  }
+
+  // Un bouton à un seul cas (8, 9, 9b).
+  function unCas(titre, cas, ajouter, consigne) {
+    const lignes = [];
+    if (!pretQ3(titre, lignes)) { afficher(titre, lignes); return; }
+    const dossier = dossierNeufQ3(lignes);
+    if (dossier === "") { afficher(titre, lignes); return; }
+    const r = reecrire(cas, dossier, lignes, ajouter);
+    lignesDurees(lignes, r.ms);
+    noterQ3(dossier, [cas.base], r.couche ? [r.couche] : []);
+    lignes.push(consigne);
+    afficher(titre, lignes);
+  }
+
+  function shapefileReecrire() {
+    unCas(Zip.BOUTONS.B8, Zip.CAS.shp, true,
+      "À répondre : Q1 (fichier écrit, 2 entités, EPSG:2154, accents) ; Q2 (FERMER la fenêtre, carte : contour vert-bleu et étiquettes FRT1, FRT2). Capture de l'écran, puis de la carte.");
+  }
+
+  function geojsonReecrire() {
+    unCas(Zip.BOUTONS.B9, Zip.CAS.geojson, true,
+      "À répondre : Q4 (comme Q1 et Q2 pour le GeoJSON ; contour bleu, étiquettes UG1, UG2). Capture de l'écran, puis de la carte.");
+  }
+
+  function geojsonGrand() {
+    unCas(Zip.BOUTONS.B9B, Zip.CAS.grand, false,
+      "2 000 entités : relever la durée de saveVectorLayerAs et le total (la copie n'est ni stylée ni ajoutée à la carte). Capture de l'écran.");
+  }
+
+  // Une seule table d'un GeoPackage du zip à la fois (une couche = une table) : deux appels.
+  function geopackageDeuxTables() {
+    const titre = Zip.BOUTONS.B10;
+    const lignes = [];
+    if (!pretQ3(titre, lignes)) { afficher(titre, lignes); return; }
+    const dossier = dossierNeufQ3(lignes);
+    if (dossier === "") { afficher(titre, lignes); return; }
+    const a = reecrire(Zip.CAS.parcelles, dossier, lignes, true);
+    const b = reecrire(Zip.CAS.zones, dossier, lignes, true);
+    lignesDurees(lignes, { total: a.ms.total + b.ms.total, source: a.ms.source + b.ms.source, ecriture: a.ms.ecriture + b.ms.ecriture,
+      qml: a.ms.qml + b.ms.qml, copie: a.ms.copie + b.ms.copie });
+    const couches = [];
+    if (a.couche) couches.push(a.couche);
+    if (b.couche) couches.push(b.couche);
+    noterQ3(dossier, [Zip.CAS.parcelles.base, Zip.CAS.zones.base], couches);
+    lignes.push("À répondre : Q3, table par table : Parcelles (orange, étiquettes P1, P2) et Zones (bleu, étiquettes Z1, Z2), chacune dans son fichier, sans mélange. Capture de l'écran, puis de la carte.");
+    afficher(titre, lignes);
+  }
+
+  // Sonde un fichier : QField n'offre pas de listage, on lit chaque nom attendu.
+  function sonder(chemin) {
+    let octets = 0;
+    try {
+      octets = Zip.octetsDe(FileUtils.readFileContent(chemin)).length;
+    } catch (e) {
+      octets = 0;
+    }
+    return { octets: octets, existe: existe(chemin) };
+  }
+
+  function fichiersAnnexes() {
+    const titre = Zip.BOUTONS.B11;
+    const lignes = [];
+    if (!projetOk(titre)) return;
+    if (!dernierQ3) { afficher(titre, ["Aucune couche écrite : toucher d'abord « " + Zip.BOUTONS.B8 + " », « " + Zip.BOUTONS.B9 + " » ou « " + Zip.BOUTONS.B10 + " »."]); return; }
+    const d = dernierQ3;
+    lignes.push("Dossier sondé : " + d.dossier);
+    for (let i = 0; i < d.couches.length; i++) lignes.push("Couche copie " + retirerDeLaCarte(d.couches[i]));
+    dernierQ3 = { dossier: d.dossier, bases: d.bases, couches: [] };
+    const chemins = Zip.cheminsAttendus(d.dossier, d.bases);
+    lignes.push("--- Avant effacement");
+    const presents = [];
+    for (let i = 0; i < chemins.length; i++) {
+      const sonde = sonder(chemins[i]);
+      lignes.push(Zip.ligneSonde(chemins[i], sonde.octets, sonde.existe));
+      if (sonde.octets > 0 || sonde.existe) presents.push(chemins[i]);
+    }
+    lignes.push("Fichiers présents : " + presents.length);
+    lignes.push("--- Effacement par rmFile (seulement sous cerf-imports/q3-<N>/)");
+    for (let i = 0; i < presents.length; i++) {
+      if (!Zip.peutEffacerQ3(presents[i], dossierProjet())) {
+        lignes.push("REFUSÉ d'effacer " + presents[i] + " : hors de cerf-imports/q3-<N>/ du projet.");
+        continue;
+      }
+      tenter(lignes, "rmFile " + Zip.nomDeFichier(presents[i]), function () { return platformUtilities.rmFile(presents[i]); });
+    }
+    lignes.push("--- Après effacement");
+    let restent = 0;
+    for (let i = 0; i < presents.length; i++) {
+      const sonde = sonder(presents[i]);
+      lignes.push(Zip.ligneSonde(presents[i], sonde.octets, sonde.existe));
+      if (sonde.octets > 0 || sonde.existe) restent++;
+    }
+    lignes.push("Tout effacé : " + (restent === 0 ? "oui" : "NON, " + restent + " fichier(s) restent"));
+    if (restent > 0) lignes.unshift("ÉCHEC : " + restent + " fichier(s) n'ont pas pu être effacés.");
+    afficher(titre, lignes);
+  }
+
+  function toutEnchainer() {
+    const titre = Zip.BOUTONS.B12;
+    const lignes = [];
+    if (!pretQ3(titre, lignes)) { afficher(titre, lignes); return; }
+    const dossier = dossierNeufQ3(lignes);
+    if (dossier === "") { afficher(titre, lignes); return; }
+    const debut = Date.now();
+    const cas = [Zip.CAS.shp, Zip.CAS.geojson, Zip.CAS.parcelles, Zip.CAS.zones];
+    const durees = [];
+    const bases = [];
+    const couches = [];
+    let tous = true;
+    for (let i = 0; i < cas.length; i++) {
+      const r = reecrire(cas[i], dossier, lignes, true);
+      durees.push(cas[i].base + " : " + Zip.texteDuree(r.ms.total));
+      bases.push(cas[i].base);
+      if (r.couche) couches.push(r.couche);
+      if (!r.ok) tous = false;
+    }
+    const total = Date.now() - debut;
+    noterQ3(dossier, bases, couches);
+    lignes.push("=== Durées, étape par étape (boutons 8, 9, 10 à la suite, sans écran entre)");
+    for (let i = 0; i < durees.length; i++) lignes.push(durees[i]);
+    lignes.push("TOTAL : " + Zip.texteDuree(total));
+    if (tous) {
+      const liste = totaux12.slice();
+      liste.push(total);
+      totaux12 = liste;
+    } else {
+      lignes.unshift("ÉCHEC : au moins une étape n'est pas conforme (voir plus bas) : ce total ne compte pas pour la médiane.");
+    }
+    const bilan = Zip.bilanChrono(totaux12);
+    for (let i = 0; i < bilan.length; i++) lignes.push(bilan[i]);
+    afficher(titre, lignes);
+  }
+
   // -------------------------------------------------------------- écran
 
   Connections {
@@ -723,6 +1105,7 @@ Item {
       }
 
       Rectangle {
+        id: cadreResultat
         Layout.fillWidth: true
         Layout.preferredHeight: zoneResultat.implicitHeight + 16
         color: "#fff8e1"
@@ -754,6 +1137,13 @@ Item {
       GrosBouton { text: Zip.BOUTONS.B5R; onClicked: essai.reouverture(false) }
       GrosBouton { text: Zip.BOUTONS.B6; onClicked: essai.reprojection() }
       GrosBouton { text: Zip.BOUTONS.B7; onClicked: essai.metadonnees() }
+      GrosBouton { text: Zip.BOUTONS.B0B; onClicked: essai.preparerZipCompresse() }
+      GrosBouton { text: Zip.BOUTONS.B8; onClicked: essai.shapefileReecrire() }
+      GrosBouton { text: Zip.BOUTONS.B9; onClicked: essai.geojsonReecrire() }
+      GrosBouton { text: Zip.BOUTONS.B9B; onClicked: essai.geojsonGrand() }
+      GrosBouton { text: Zip.BOUTONS.B10; onClicked: essai.geopackageDeuxTables() }
+      GrosBouton { text: Zip.BOUTONS.B11; onClicked: essai.fichiersAnnexes() }
+      GrosBouton { text: Zip.BOUTONS.B12; onClicked: essai.toutEnchainer() }
 
       Item { Layout.preferredHeight: 48 }
     }

@@ -30,10 +30,10 @@ test('prototype 2 : groupe concurrency propre, distinct des trois autres workflo
   }
 });
 
-test('prototype 2 : tests, empaquetage, quatre fichiers publiés', () => {
+test('prototype 2 (et 3) : tests, empaquetage, cinq fichiers publiés', () => {
   assert.match(wf, /run: node --test/);
   assert.match(wf, /node prototype-2\/empaqueter\.mjs dist/);
-  for (const f of ['cerf-prototype-2.zip', 'cerf-essai-2.zip', 'essai-styles.zip', 'essai-q3.gpkg']) assert.ok(wf.includes(`dist/${f}`), f);
+  for (const f of ['cerf-prototype-2.zip', 'cerf-essai-2.zip', 'essai-styles.zip', 'essai-styles-z.zip', 'essai-q3.gpkg']) assert.ok(wf.includes(`dist/${f}`), f);
 });
 
 test('prototype 2 : ogrinfo seulement si gdal-bin est installé, sans bloquer la publication sinon', () => {

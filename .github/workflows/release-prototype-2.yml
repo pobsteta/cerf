@@ -1,4 +1,5 @@
-# Publie le prototype n° 2 (mission 023) en préversion GitHub « prototype-2 » à chaque push
+# Publie le prototype n° 2 (mission 023, puis le prototype n° 3, mission 027, même préversion et
+# même plugin : zip d'essai compressé essai-styles-z.zip en plus) en préversion GitHub « prototype-2 » à chaque push
 # sur la branche du prototype (l'étiquette est créée par la release ; le proxy de la session
 # refuse le push d'étiquettes). Les fichiers sont fabriqués ici par prototype-2/empaqueter.mjs
 # (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans les notes.
@@ -71,6 +72,35 @@ jobs:
           ogrinfo -ro -al -so Sans_crs.geojson | tee sans.txt
           grep -q 'Feature Count: 2' sans.txt
           cd .. && rm -rf ctl
+          # Prototype n° 3 : essai-styles-z.zip décompressé ici (ce contrôle-là bloque : les fichiers
+          # doivent être valides), puis lu EN /vsizip/ (la voie de QField) ; cette seconde lecture
+          # ne bloque pas : c'est ce que l'essai sur le Samsung met à l'épreuve, on la dit dans les notes.
+          mkdir ctlz && cd ctlz && unzip -q ../dist/essai-styles-z.zip
+          ogrinfo -ro -al -so FRT_q7.shp | tee frtz.txt
+          grep -q 'Feature Count: 2' frtz.txt
+          grep -q '2154' frtz.txt
+          ogrinfo -ro -al FRT_q7.shp | tee frtz-nom.txt
+          grep -q 'Étang' frtz-nom.txt
+          grep -q 'Forêt' frtz-nom.txt
+          ogrinfo -ro -al -so UG_q1.geojson | tee ugz.txt
+          grep -q 'Feature Count: 2' ugz.txt
+          ogrinfo -ro -al -so essai-gpkg2.gpkg Parcelles | tee parz.txt
+          grep -q 'Feature Count: 2' parz.txt
+          ogrinfo -ro -al -so essai-gpkg2.gpkg Zones | tee zonz.txt
+          grep -q 'Feature Count: 2' zonz.txt
+          ogrinfo -ro essai-gpkg2.gpkg | tee couchesz.txt
+          if grep -q 'layer_styles' couchesz.txt; then echo 'essai-gpkg2.gpkg ne doit pas avoir de layer_styles'; exit 1; fi
+          ogrinfo -ro -al -so ProdBois_2000.geojson | tee grandz.txt
+          grep -q 'Feature Count: 2000' grandz.txt
+          cd ..
+          if ogrinfo -ro -al -so /vsizip/dist/essai-styles-z.zip/FRT_q7.shp | grep -q 'Feature Count: 2' \
+            && ogrinfo -ro -al -so /vsizip/dist/essai-styles-z.zip/UG_q1.geojson | grep -q 'Feature Count: 2' \
+            && ogrinfo -ro -al -so /vsizip/dist/essai-styles-z.zip/essai-gpkg2.gpkg Parcelles | grep -q 'Feature Count: 2'; then
+            echo 'ogrinfo en /vsizip/ du zip compressé (Shapefile, GeoJSON, GeoPackage) : lu par GDAL' > vsizip.txt
+          else
+            echo 'ogrinfo en /vsizip/ du zip compressé : au moins une lecture a échoué (non bloquant, c est la question de l essai)' > vsizip.txt
+          fi
+          rm -rf ctlz
           echo 'ogrinfo : lecture des fichiers d essai par GDAL : ok' > ogrinfo.txt
       - name: Release
         env:
@@ -82,18 +112,19 @@ jobs:
             echo "Ne pas renommer cerf-prototype-2.zip : QField nomme le dossier du plugin d'après le nom du zip."
             echo "Commit empaqueté : $GITHUB_SHA (l'étiquette prototype-2 peut rester sur un commit plus ancien : upload --clobber ne la déplace pas ; c'est ce sha qui fait foi)."
             echo "Protocole d'essai : tests/recette/prototype-2.md. Données fictives, sans valeur métier."
+            if [ -f vsizip.txt ]; then cat vsizip.txt; fi
             if [ -f ogrinfo.txt ]; then cat ogrinfo.txt; else echo "ogrinfo : non exécuté (gdal-bin non installé en 90 s) ; contrôle par QGIS sur le poste, voir le protocole."; fi
             echo
             echo '```'
-            (cd dist && sha256sum cerf-prototype-2.zip cerf-essai-2.zip essai-styles.zip essai-q3.gpkg)
+            (cd dist && sha256sum cerf-prototype-2.zip cerf-essai-2.zip essai-styles.zip essai-styles-z.zip essai-q3.gpkg)
             echo '```'
             echo
             node outils/flashcodes.mjs notes prototype-2 essai prototype-2
           } > notes.md
           if gh release view prototype-2 >/dev/null 2>&1; then
-            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
+            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
             gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
           else
-            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg dist/flashcodes/* \
+            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Prototype n° 2" --notes-file notes.md --prerelease --latest=false
           fi

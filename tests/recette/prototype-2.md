@@ -369,6 +369,172 @@ sans système ; à reprendre.
 
 **Vu autrement :**
 
+## Prototype n° 3 (mission 027) : couche réécrite par `saveVectorLayerAs`, puis stylée
+
+> Rédigé par le `dev` le 4 novembre 2026 (mission 027, étape 2), d'après le plan
+> `prototype-2/PLAN-3.md` validé par Pascal avec ses réponses (fiche
+> `pilotage/missions/027-prototype-3.md`). **Statut : proposé, pas encore suivi ; relecture par
+> le `testeur` demandée.** Les noms de boutons sont ceux de `BOUTONS` dans
+> `prototype-2/essai-logique.mjs` (même test de concordance que plus haut).
+
+**But.** Dire, sur critère fixé d'avance, si, **hors réseau**, QField (sur le Samsung de Pascal)
+sait : ouvrir en `/vsizip/` une couche d'un zip **compressé** (Shapefile, GeoJSON, GeoPackage à
+deux tables), la **réécrire** dans `cerf-imports/q3-<N>/` par `LayerUtils.saveVectorLayerAs`
+(un `.gpkg` par couche), puis poser le style du manuel par un `.qml` **écrit par le plugin** à
+côté de la copie, avant son chargement. Si oui, la voie évite le décompresseur de la mission 026
+(ADR 0008) ; si non, on le sait avant d'écrire du code de production.
+
+**Même lecture que le reste du protocole.** « Conforme ☐ » : on coche (`☒`) si, et seulement si,
+ce qui est écrit dans « Résultat attendu » est vu tel quel ; sinon, écrire ce qu'on a vu dans
+« Vu autrement ». « Noté ☐ » : la valeur est écrite, rien de plus. La réponse oui / non s'écrit
+dans le tableau « Réponses » en fin de protocole.
+**« Essai raté » n'est pas « non »** : si la **source ne charge pas** (le bloc dit « ÉCHEC, essai
+raté : la source ne charge pas »), la question n'a pas été posée à QField : répondre « **essai
+raté** » (et non « non »), avec la capture de l'écran. **« Non »** veut dire : la source a chargé,
+et ce qui est attendu n'est pas vu. Un **échec muet** de `saveVectorLayerAs` (le bloc dit
+« ÉCHEC MUET : saveVectorLayerAs a rendu une chaîne vide ») est un **non** à la question 1
+(ou 4), pas un essai raté. Le fond du bloc de résultat devient **rouge pâle** dès qu'une ligne
+commence par « ÉCHEC ».
+**Une capture par réponse** (noms ci-dessous, mêmes règles que plus haut : en intérieur, nom Samsung
+écrit dans le tableau « Réponses »). Quand le prototype affiche « ERREUR », « REFUSÉ » ou « ÉCHEC » :
+une capture lisible de l'écran la remplace (défiler si le bloc est long).
+
+### Avant de commencer (prototype n° 3)
+
+1. **Avec le réseau, avant le mode avion** : télécharger le zip d'essai **compressé**
+   `essai-styles-z.zip`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles-z.zip) dans
+   « Téléchargements », sans le décompresser ni le renommer. Il a **8 entrées, toutes
+   compressées** (méthode 8) : `FRT_q7.shp`, `.shx`, `.dbf`, `.prj`, `.cpg` (champ `nom` :
+   « Étang », « Forêt »), `UG_q1.geojson`, `essai-gpkg2.gpkg` (tables `Parcelles` et `Zones`, sans
+   `layer_styles`), `ProdBois_2000.geojson` (2 000 polygones).
+2. **Mettre à jour le plugin** : `cerf-prototype-2.zip` de la même préversion `prototype-2`
+   (version **0.2.0** à l'écran, en-tête ; si l'en-tête dit 0.1.0, le plugin n'est pas à jour :
+   le dire et s'arrêter). Le projet `cerf-essai-2` est inchangé. Ne pas retoucher aux autres
+   plugins désactivés.
+3. **Sur le PC (facultatif, recommandé)** : ouvrir dans QGIS `FRT_q7.shp` (système EPSG:2154 ;
+   champ `nom` : « Étang », « Forêt » lisibles) et `essai-gpkg2.gpkg` (deux tables, aucun style
+   enregistré) tirés du zip. Si une lecture est fausse, le défaut est dans le fichier d'essai :
+   s'arrêter et le dire.
+4. Mode avion, Wi-Fi coupé, projet `cerf-essai-2` ouvert, fenêtre du plugin ouverte, **dérouler
+   jusqu'aux boutons 0b à 12** (sous le bouton « 7. Métadonnées d'une couche »).
+5. Geste unique : toucher « 0b. Préparer le zip compressé », accepter la permission de stockage si
+   Android la demande, choisir `essai-styles-z.zip` dans Téléchargements. **Rien n'est extrait** :
+   le plugin n'a pas de décompresseur, GDAL lit le zip en `/vsizip/`.
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 0b | Toucher « 0b. Préparer le zip compressé » et choisir le zip | l'en-tête dit « Zip compressé copié : …/cerf-imports/essai-styles-z.zip (présent) » ; le bloc liste **8 entrées**, « stockées : 0, compressées : 8 » ; « Le zip n'est pas extrait » | ☐ |
+
+Chaque bouton 8 à 12 écrit dans un **dossier neuf** `cerf-imports/q3-<N>/` (N = 1, 2, 3…, à
+chaque appui) : rien n'est écrasé. Le bouton 11 est le seul à effacer, et seulement dans ces
+dossiers. **Chaque bouton ne se touche qu'une fois pour la réponse** ; on peut rejouer, mais la
+réponse est celle du premier appui.
+
+### Question P3-1 : Shapefile compressé réécrit par `saveVectorLayerAs`
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 8. Shapefile : réécrire, styler » | le bloc donne, dans l'ordre : source `/vsizip/…/FRT_q7.shp`, `Source isValid : true`, `Source featureCount : 2` ; `saveVectorLayerAs a rendu : …/q3-<N>/FRT_q7.gpkg` (**pas** « chaîne vide ») ; `FRT_q7.qml écrit par le plugin … IDENTIQUE` ; la copie `isValid : true`, `crs.authid : EPSG:2154` ; **« écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : oui »** (N > 0) ; « Champ « nom » relu dans la copie : Étang ; Forêt » | ☐ |
+
+Relevé, sans résultat attendu :
+
+| Ligne du bloc | Valeur à écrire | Noté ☐ |
+|---|---|---|
+| « Durée, saveVectorLayerAs » | | ☐ |
+| « Total » | | ☐ |
+| La ligne « Champ « nom » relu » (accents : écrire les deux mots tels qu'ils s'affichent) | | ☐ |
+
+Si la ligne « Lecture du champ « nom » : ERREUR … » apparaît, la lecture de l'attribut par le
+plugin a échoué (pas la copie) : vérifier les accents autrement, en touchant un carré de la
+carte (fiche de l'entité) et en lisant `nom`, le dire dans « Vu autrement ».
+Capture : `p3-q1-ecran.png` (l'écran, défilé si besoin).
+
+**Réponse P3-1** : **oui** si la case 1 est cochée ; **non** si la source a chargé mais que le
+fichier n'est pas écrit (chaîne vide, 0 octet, 0 entité, système vide ou autre que EPSG:2154,
+accents déformés) ; **essai raté** si la source ne charge pas.
+
+### Question P3-2 : la copie, stylée par le `.qml` écrit par le plugin
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Après le bouton 8 : **fermer la fenêtre du plugin**, regarder la carte (zoomer fort si besoin, voir « Centrage » plus haut : carrés de 300 m) ; capture | **2a, couleurs** : deux carrés au **contour vert-bleu, fin, sans remplissage** | ☐ |
+| 2 | Regarder les carrés ; capture | **2b, étiquettes** : `FRT1` et `FRT2` écrits en vert-bleu, petit corps (10 pt) | ☐ |
+
+Capture : `p3-q2-carte.png`.
+
+**Réponse P3-2a** : oui si la case 1 est cochée, sinon non. **Réponse P3-2b** : oui si la case 2 est
+cochée, sinon non. **Essai raté** (et non non) à P3-2a et P3-2b si la réponse P3-1 est « essai
+raté » ou « non » (couche non chargée).
+
+### Question P3-3 : GeoPackage à deux tables, un fichier et un style par table
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 10. GeoPackage à deux tables » | le bloc dit, pour `Parcelles` puis pour `Zones` : source valide, 2 entités, `saveVectorLayerAs` rend `…/q3-<N>/Parcelles.gpkg` puis `…/Zones.gpkg`, `.qml` « IDENTIQUE », « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **3a, Parcelles** : contour **orange**, 1 mm, étiquettes `P1`, `P2` en orange (15 pt) | ☐ |
+| 3 | Même carte (la zone des Zones est 800 m au sud : zoomer dessus) ; capture | **3b, Zones** : contour **bleu**, étiquettes `Z1`, `Z2` en bleu ; **aucun mélange** entre les deux couches | ☐ |
+
+Captures : `p3-q3-ecran.png`, `p3-q3-carte.png`.
+
+**Réponse P3-3a** (Parcelles) et **P3-3b** (Zones), chacune : oui si sa case est cochée, sinon
+non ; **essai raté** si la source ne charge pas (le GeoPackage ouvert en `/vsizip/` est
+justement un des risques : un « essai raté » ici est une réponse utile, à écrire en toutes lettres).
+
+### Question P3-4 : GeoJSON compressé
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 9. GeoJSON : réécrire, styler » | comme la case 1 de P3-1 pour `UG_q1.geojson` : fichier `…/q3-<N>/UG_q1.gpkg`, « écrit : oui, N octets, 2 entités, EPSG:2154, accents lus : sans objet » | ☐ |
+| 2 | **Fermer la fenêtre du plugin**, regarder la carte ; capture | **4, style** : contour **bleu**, sans remplissage, étiquettes `UG1`, `UG2` en bleu | ☐ |
+
+Captures : `p3-q4-ecran.png`, `p3-q4-carte.png`. Ce GeoJSON porte un membre `crs` (EPSG:2154) : le
+système de la copie doit donc être EPSG:2154 ; un GeoJSON **sans** `crs` serait lu en WGS84, mais
+ce n'est pas essayé ici (travail de la mission 012).
+
+**Réponse P3-4a** (fichier écrit) : même règle que P3-1 (**oui** / **non** / **essai raté**).
+**Réponse P3-4b** (style) : oui si la case 2 est cochée, non sinon, essai raté si la source ne charge pas.
+
+### Question P3-5 : fichiers annexes, effaçables après retrait de la couche
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 11. Fichiers annexes » (il retire de la carte les couches du dernier essai, puis **sonde** chaque nom attendu : QField n'offre pas de listage) | une ligne par nom : `….gpkg : N octets`, `….qml : N octets`, et `absent` ou une taille pour `….gpkg-wal`, `….gpkg-shm`, `….aux.xml`, `….gpkg.aux.xml` ; puis « Effacement par rmFile » sans « REFUSÉ » ; puis « Après effacement » | ☐ |
+| 2 | Lire la dernière ligne ; capture | **« Tout effacé : oui »** | ☐ |
+
+Relevé, sans résultat attendu :
+
+| À relever | Valeur à écrire | Noté ☐ |
+|---|---|---|
+| Annexes présentes avant effacement (autres que `.gpkg` et `.qml`) : `-wal`, `-shm`, `.aux.xml` | | ☐ |
+
+Capture : `p3-q5-ecran.png`. Faire ce bouton **après** avoir regardé et photographié les cartes
+des questions P3-2 à P3-4 : il retire les couches. Il agit sur **le dernier dossier écrit** : le
+toucher juste après le bouton 8 (ou le 10), pas après le 12 (qui écrit quatre couches d'un coup).
+
+**Réponse P3-5** : la liste des annexes vues (relevé) **et** « tout effacé : oui » ou « non ».
+**Non** si une ligne « Après effacement » montre encore un fichier (le bloc devient rouge, « ÉCHEC »).
+**Essai raté** si le bouton dit qu'aucune couche n'a été écrite.
+
+### Durées : volume et règle des deux minutes
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Toucher « 9b. GeoJSON de 2 000 entités » (l'écran se fige pendant l'écriture : **attendre**) | le bloc dit « 2 000 entités », « écrit : oui, N octets, 2000 entités, EPSG:2154 » ; relever la durée de `saveVectorLayerAs` et le total | ☐ |
+| 2 | Toucher **trois fois** « 12. Tout enchaîner et chronométrer » (chaque appui écrit dans un dossier neuf) ; à chaque appui, noter le « TOTAL » | trois totaux ; au troisième appui, « Médiane des trois derniers … limite du brief 2 min : tenue » | ☐ |
+
+Relevé : durée de `saveVectorLayerAs` du 9b : … ; total du 9b : … ; totaux du bouton 12, appuis
+1, 2, 3 : … ; … ; … ; médiane : … Captures : `p3-duree-9b.png`, `p3-duree-12.png` (au troisième appui).
+**Réponse P3-6** : **oui** si la médiane des trois totaux est de 2 minutes (120 s) ou moins et que
+les quatre étapes sont conformes ; **non** sinon ; **essai raté** si une étape ne charge pas.
+(Un total qui compte une étape non conforme n'entre pas dans la médiane : le bloc le dit.)
+
+**Si non (P3-1 à P3-6)** : la voie « réécrire dans `cerf-imports/` par `saveVectorLayerAs` » ne tient
+pas sur le Samsung (ou pas dans le temps) : le décompresseur de la mission 026 reste nécessaire ;
+c'est cette réponse qui décide de l'ADR 0008.
+
+**Vu autrement :**
+
 ## Après l'essai
 
 1. **Désactiver « Cerf, prototype n° 2 »** (QField, Paramètres, Plugins) : il n'agit que dans
@@ -389,8 +555,23 @@ sans système ; à reprendre.
 | 5 : le style revient après réouverture (oui / oui, mais par le projet / non / sans objet, par couche) ; n | | `q5-carte.png` | | |
 | 6 : reprojection point et emprise, hors ligne | | `q6-ecran-haut.png`, `q6-ecran-bas.png` | | |
 | 7 : `crs`, `extent`, `featureCount()` en `/vsizip/` | | `q7-ecran-1.png` à `q7-ecran-4.png` | | |
+| P3-1 : Shapefile compressé réécrit, fichier écrit (oui / non / essai raté) | | `p3-q1-ecran.png` | | |
+| P3-2a : couleurs du `.qml` écrit par le plugin, Shapefile | | `p3-q2-carte.png` | | |
+| P3-2b : étiquettes, Shapefile | | `p3-q2-carte.png` | | |
+| P3-3a : GeoPackage, table `Parcelles` (fichier, couleurs, étiquettes) | | `p3-q3-ecran.png`, `p3-q3-carte.png` | | |
+| P3-3b : GeoPackage, table `Zones` | | `p3-q3-carte.png` | | |
+| P3-4a : GeoJSON compressé réécrit, fichier écrit | | `p3-q4-ecran.png` | | |
+| P3-4b : GeoJSON, style pris | | `p3-q4-carte.png` | | |
+| P3-5 : annexes vues (liste) et tout effacé (oui / non) | | `p3-q5-ecran.png` | | |
+| P3-6 : durées, médiane de trois (oui / non / essai raté) | | `p3-duree-9b.png`, `p3-duree-12.png` | | |
 
 **Qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal passe les sept
 questions sur le Samsung en mode avion, une capture par réponse ; on saura que ça marche
 quand les neuf réponses (1a, 1b, 2, 3a, 3b, 4, 5, 6, 7) sont écrites, assez pour l'ADR des
 styles et pour dire si la 012 peut reprojeter.
+
+**Prototype n° 3 : qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal passe
+les questions P3-1 à P3-6 sur le Samsung en mode avion, une capture par réponse, et note les trois
+totaux du bouton 12 ; on saura que ça marche quand les réponses P3-1 à P3-6 sont écrites, « essai
+raté » dit en toutes lettres quand une source ne charge pas : c'est ce qui décide si la
+mission 026 (décompresseur) reste nécessaire.

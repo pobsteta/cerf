@@ -220,7 +220,7 @@ const wf = readFileSync(join(racine, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché aussi sur mission/035, publie les deux zips et leurs flashcodes, notes : quel zip prendre', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel', 'mission\/035-essai-manuel-geojson', 'mission\/036-notes-essai-manuel'\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel', 'mission\/035-essai-manuel-geojson', 'mission\/036-notes-essai-manuel', 'mission\/040-publier-piege'\]/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\* dist\/essai-manuel-geojson\.zip dist\/flashcodes-geojson\/\*/);
@@ -228,5 +228,5 @@ test('workflow : déclenché aussi sur mission/035, publie les deux zips et leur
   assert.match(wf, /essai-manuel-geojson\.zip.*tant que le plugin ne lit pas les Shapefile/);
   assert.match(wf, /mission 024/);
   assert.match(wfCode, /--prerelease --latest=false/);
-  assert.doesNotMatch(wfCode, /plugin-essai|plugin-v|projet-modele/);
+  assert.doesNotMatch(wfCode.split('\n').filter((l) => !/^\s*echo /.test(l)).join('\n'), /plugin-essai|plugin-v|projet-modele/); // les notes (echo) peuvent nommer la préversion plugin-essai (mission 040)
 });

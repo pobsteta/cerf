@@ -20,10 +20,6 @@ _Modèle de carte :_
 
 ## Bac à sable
 
-- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · en attente du prototype n° 3
-  - Homme : `testeur` puis `dev` (opus)
-  - Mission : Décompresseur deflate en JavaScript pour les zips de JFC
-  - Moyens : RFC 1951, node:zlib comme oracle
 - [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
@@ -58,14 +54,6 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · lancée (plan)
-  - Homme : `dev` (opus)
-  - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
-  - Moyens : prototype n° 2, sources QField
-- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · validée, lancée (plan)
-  - Homme : `dev` (opus)
-  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
-  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -73,6 +61,18 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
+  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
+- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · essai réussi sur le Samsung
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
+  - Moyens : prototype n° 2, sources QField
+- [028-noms-des-fichiers](missions/028-noms-des-fichiers.md) · depuis le cycle 6 · PR #21 fusionnée, plugin 0.2.1
+  - Homme : `dev` (sonnet)
+  - Mission : Fichiers publiés nommés plugin-… et projet-…
+  - Moyens : workflows de release, flashcodes
 - [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0
   - Homme : `dev` (opus)
   - Mission : Contrôles d'import — cycle prévu 5
@@ -148,6 +148,10 @@ _Modèle de carte :_
 
 ## Abandonné
 
+- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · abandonnée : saveVectorLayerAs suffit (prototype n° 3)
+  - Homme : `testeur` puis `dev` (opus)
+  - Mission : Décompresseur deflate en JavaScript pour les zips de JFC
+  - Moyens : RFC 1951, node:zlib comme oracle
 _Avec la raison, en une ligne._
 
 ## Livraisons

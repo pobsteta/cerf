@@ -227,6 +227,13 @@ retient la voie 1 :
    partage de QField), sans QFieldCloud et sans bouton d'export ; la notice de JFC
    l'explique.
 
+## Amendement de Pascal (4 novembre 2026) : couches sorties du zip
+
+Après les prototypes n° 2 et n° 3 (fiches 023, 027), le point « pas de décompression : GDAL lit
+dans le zip » ne vaut plus que pour les GeoTIFF : les couches vecteur sont ouvertes dans le
+zip, contrôlées, puis réécrites en GeoPackage dans `cerf-imports/` avec leur style à côté, pour
+que les couleurs du manuel s'affichent (ADR 0008).
+
 ## Validation
 
 Brief et spec **validés par Pascal le 2 novembre 2026** (porte n° 1).

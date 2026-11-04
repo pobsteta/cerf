@@ -27,6 +27,10 @@ _Modèle de carte :_
 
 ## Validé
 
+- [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (sonnet)
+  - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)
+  - Moyens : prototype n° 2 (reprojection prouvée), Cerf.qml
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip

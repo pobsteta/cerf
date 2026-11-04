@@ -80,3 +80,7 @@ après la fusion de la 010.
 - **Écart à combler par le dev de la 024 :** les messages de la 010 (contrôles et styles) portent
   le nom court (`nomDeFichier(c.entree)`) ; la spec amendée (032) exige le chemin complet dans le
   zip pour tous les messages.
+- **Exigence tirée de la relecture de la 030 (4 novembre) :** si la lecture de `gpkg_contents`
+  ne rend aucune table vecteur alors que les sondes `layerid` ouvrent des couches, ou si un
+  `data_type` manque, c'est « tables illisibles », jamais « aucune table vecteur ». Le testeur
+  l'ajoutera quand la voie de lecture sera fixée par l'essai du prototype n° 4.

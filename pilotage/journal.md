@@ -207,3 +207,4 @@
 2026-11-04 · relecteur · 023 · aller-retour 2/3 (2718ed0) : prêt pour Pascal ; sept points faits, 450/450, préversion prototype-2 conforme (sha du commit dans les notes, fichiers identiques à edf4c8b). Essai sur le Samsung entre les mains de Pascal.
 2026-11-04 · Pascal · 025 · décision : les trois flashcodes (plugin, première installation, mise à jour) confirmés.
 2026-11-04 · relecteur · 025 · prête pour Pascal (398 verts, adresses exactes, contrôle par décodage avant release, sources QField vérifiées) ; la branche porte aussi le pilotage ; flashcode stable du plugin seulement à la prochaine version ; la fusion republie projet-modele. PR #20 ouverte en brouillon. Lancement manuel des workflows refusé à la session (403) : à faire par Pascal dans Actions.
+2026-11-04 · Pascal · 025 · essai : les flashcodes fonctionnent sur le Samsung ; fusion de #20 demandée.

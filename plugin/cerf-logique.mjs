@@ -630,15 +630,19 @@ function cheminsProteges(dossier, autres) {
 }
 
 // Efface les fichiers réécrits d'une couche vecteur sortie du registre. Rend les noms des fichiers
-// qui existaient et sont restés (ordre de SUFFIXES_COUCHE). Ne lève jamais. Sans `existe`, rien n'est
-// tenté (la réponse de l'effacement n'est jamais crue : on vérifie avant et après).
+// qui existaient et sont restés (ordre de SUFFIXES_COUCHE), et `nonVerifiable` quand le service `existe`
+// manque : rien n'est alors tenté (la réponse de l'effacement n'est jamais crue : on vérifie avant et
+// après). Ne lève jamais.
+const PHRASE_NON_VERIFIABLE = 'Effacement non vérifiable : fichiers peut-être restés.';
 function effacerFichiersDeCouche(ctx, zip, couche, autres) {
   const restes = [];
+  const bilan = { restes, nonVerifiable: false };
   try {
-    if (!estNomDeZip(zip) || !estNomSimple(couche) || couche.indexOf('|') >= 0) return restes;
-    if (/\.zip$/i.test(dossierDuZip(zip))) return restes;
+    if (!estNomDeZip(zip) || !estNomSimple(couche) || couche.indexOf('|') >= 0) return bilan;
+    if (/\.zip$/i.test(dossierDuZip(zip))) return bilan;
     const dossier = dossierCopies(ctx.dossierProjet);
-    if (dossier === '' || typeof ctx.existe !== 'function') return restes;
+    if (dossier === '') return bilan;
+    if (typeof ctx.existe !== 'function') { bilan.nonVerifiable = true; return bilan; }
     let rm = null;
     if (typeof ctx.effacerFichier === 'function') rm = ctx.effacerFichier;
     else if (ctx.platformUtilities && typeof ctx.platformUtilities.rmFile === 'function') rm = (c) => ctx.platformUtilities.rmFile(c);
@@ -656,7 +660,12 @@ function effacerFichiersDeCouche(ctx, zip, couche, autres) {
   } catch (e) {
     /* jamais d'exception : ce qui est connu est rendu */
   }
-  return restes;
+  return bilan;
+}
+
+function noterEffacement(cumul, bilan) {
+  for (let i = 0; i < bilan.restes.length; i++) cumul.restes.push(bilan.restes[i]);
+  if (bilan.nonVerifiable) cumul.nonVerifiable = true;
 }
 
 export function importerZip(ctx) {
@@ -726,13 +735,14 @@ export function importerZip(ctx) {
   // couches, réécrites par saveVectorLayerAs).
   const presentes = {};
   for (let i = 0; i < couches.length; i++) presentes[couches[i].couche] = true;
+  const bilanEfface = { restes: [], nonVerifiable: false };
   const anciennes = lireRegistre(ctx.reglages, ctx.cerfId);
   for (let i = 0; i < anciennes.length; i++) {
     const e = anciennes[i];
     if (e && typeof e === 'object' && e.zip === nomZip && !Object.prototype.hasOwnProperty.call(presentes, e.couche)) {
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: e.couche });
       if (typeof e.chemin === 'string') {
-        effacerFichiersDeCouche(ctx, nomZip, e.couche, lireRegistre(ctx.reglages, ctx.cerfId));
+        noterEffacement(bilanEfface, effacerFichiersDeCouche(ctx, nomZip, e.couche, lireRegistre(ctx.reglages, ctx.cerfId)));
       }
     }
   }
@@ -760,7 +770,7 @@ export function importerZip(ctx) {
       // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
       const etaitInscrite = lireRegistre(ctx.reglages, ctx.cerfId).some((x) => memeCouche(x, nomZip, c.couche) && typeof x.chemin === 'string');
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
-      if (etaitInscrite) effacerFichiersDeCouche(ctx, nomZip, c.couche, lireRegistre(ctx.reglages, ctx.cerfId));
+      if (etaitInscrite) noterEffacement(bilanEfface, effacerFichiersDeCouche(ctx, nomZip, c.couche, lireRegistre(ctx.reglages, ctx.cerfId)));
       refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
     };
     if (!verdict.charge) { refuser(verdict.message); continue; }
@@ -797,6 +807,8 @@ export function importerZip(ctx) {
   }
   for (let i = 0; i < refusees.length; i++) lignes.push(refusees[i].message || `${refusees[i].couche} : ${refusees[i].raison}`);
   for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
+  if (bilanEfface.restes.length > 0) lignes.push(`Fichiers restés sur l'appareil : ${bilanEfface.restes.join(', ')}.`);
+  if (bilanEfface.nonVerifiable) lignes.push(PHRASE_NON_VERIFIABLE);
   return { chargees, refusees, avertissements, message: lignes.join('\n') };
 }
 
@@ -923,9 +935,12 @@ export function retirerCouche(ctx) {
   if (!r.retiree) return { efface: false, message: `Couche absente du registre : ${couche}.` };
   const debut = `Couche retirée : ${couche}.`;
   // Fichiers réécrits de la couche (mission 031) : après la carte et le registre, jamais bloquant.
-  let restes = [];
-  if (vectorielle) restes = effacerFichiersDeCouche(ctx, zip, couche, lireRegistre(ctx.reglages, ctx.cerfId));
-  const phrase = restes.length > 0 ? ` Fichiers restés sur l'appareil : ${restes.join(', ')}.` : '';
+  let phrase = '';
+  if (vectorielle) {
+    const b = effacerFichiersDeCouche(ctx, zip, couche, lireRegistre(ctx.reglages, ctx.cerfId));
+    if (b.restes.length > 0) phrase = ` Fichiers restés sur l'appareil : ${b.restes.join(', ')}.`;
+    if (b.nonVerifiable) phrase += ` ${PHRASE_NON_VERIFIABLE}`;
+  }
   if (!r.zipInutile) {
     const n = nombreDeCouchesDuZip(ctx.reglages, ctx.cerfId, zip);
     return { efface: false, message: `${debut}${phrase} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };

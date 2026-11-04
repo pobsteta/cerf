@@ -353,7 +353,11 @@ embarqué (sauf échec à J+2).
    est affiché (valeur sacrifiée : la place).
    Au retrait d'une couche, si un fichier réécrit de la couche (`.gpkg`, `.qml`, `-wal`, `-shm`,
    `.aux.xml`) ne peut pas être effacé : « Fichiers restés sur l'appareil : <noms>. » (noms des
-   fichiers réellement restés ; arbitrage de Pascal, 4 novembre 2026, mission 031).
+   fichiers réellement restés ; arbitrage de Pascal, 4 novembre 2026, mission 031). Même ligne
+   au réimport d'un zip, pour une couche sortie du registre dont un fichier résiste. Si le service
+   `existe` est absent (retrait comme réimport), aucun fichier de couche n'est effacé et le message
+   dit : « Effacement non vérifiable : fichiers peut-être restés. » (la copie du zip garde sa règle :
+   effacée à la dernière couche).
 3. **Un seul `cerf.qgz` par appareil** pour toutes les forêts.
 4. Licence **GPL-3.0-or-later** ; aucune ligne recopiée de `qfield-layer-loader` ni de
    `qfield_addLayer` ; **le code est à Pascal**.

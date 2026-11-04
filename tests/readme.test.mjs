@@ -27,3 +27,25 @@ test('les adresses des flashcodes stables et de la mise à jour figurent dans le
 test('le README ne contient ni clé ni jeton', () => {
   assert.doesNotMatch(readme, /ghp_|apikey|secret|token/i);
 });
+
+test('la version du plugin annoncée est celle de plugin/metadata.txt', () => {
+  const meta = readFileSync(join(RACINE, 'plugin', 'metadata.txt'), 'utf8');
+  const version = /^version=(.+)$/m.exec(meta)[1].trim();
+  assert.ok(readme.includes(`Le plugin ${version} (sur \`main\`)`), version);
+});
+
+test('le plafond cité est PLAFOND_LISTAGE_OCTETS', async () => {
+  const { PLAFOND_LISTAGE_OCTETS } = await import('../plugin/cerf-logique.mjs');
+  assert.equal(PLAFOND_LISTAGE_OCTETS, 10000000);
+  assert.ok(readme.includes('10 Mo'));
+  assert.ok(readme.includes(PLAFOND_LISTAGE_OCTETS.toLocaleString('fr-FR').replace(/\s/g, ' ')) || readme.includes('10 000 000'));
+});
+
+test('les champs de code et les messages de retrait cités existent dans le code', async () => {
+  const { CHAMPS_CODE } = await import('../plugin/cerf-styles.mjs');
+  for (const c of Object.values(CHAMPS_CODE)) assert.ok(readme.includes('`' + c + '`'), c);
+  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  for (const m of ["Fichiers restés sur l'appareil", "Copie conservée sur l'appareil"]) {
+    assert.ok(readme.includes(m) && src.includes(m), m);
+  }
+});

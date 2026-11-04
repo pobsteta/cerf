@@ -15,9 +15,9 @@ Un seul projet `cerf.qgz` par appareil, pour toutes les forêts de l'agent (§ 9
 | 0 | Une fois par appareil : installer le plugin par son URL et copier `cerf.qgz`. | QField installe le plugin d'application (ADR 0001). | oui |
 | 1 | Au bureau ou la veille : copier le zip sur l'appareil ; ouvrir le projet sur la zone du jour. | Les tuiles XYZ consultées sont mises en cache (ADR 0002). | oui |
 | 2 | Sur le terrain : ouvrir `cerf.qgz`. | Le plugin reconnaît un projet Cerf (`cerf_id`, § 3.3) et recharge les couches de son registre. | non |
-| 3 | Toucher le bouton « Ajouter un zip » (barre d'outils des plugins). | Ouvre le sélecteur de fichiers Android. | non |
+| 3 | Toucher le bouton Cerf (barre d'outils des plugins), puis « Ajouter un zip » dans le panneau Cerf qui s'ouvre. | Ouvre le sélecteur de fichiers Android. | non |
 | 4 | Choisir le zip. | Copie le zip (§ 3.3), en liste le contenu (prototype n° 1). | non |
-| 5 | Cocher les couches à charger (toutes cochées par défaut). | Pour chaque couche : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
+| 5 | Rien à cocher (Pascal, 4 novembre 2026) : toutes les couches du zip sont chargées ; une couche se retire ensuite dans le panneau Cerf (étape 7). | Pour chaque couche du zip : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
 | 6 | Regarder la carte. | Couches aux couleurs du manuel, étiquettes essence/diamètre sur ProdBois. | non |
 | 7 | Retirer une couche, depuis le panneau du plugin (ou le menu de la couche, si QField le permet à un plugin). | Retire la couche de la carte et du registre. La copie du zip est effacée quand plus aucune couche ne s'en sert **si QField le permet** ; sinon elle reste et son nom est affiché (§ 9, n° 2). | non |
 | 8 | Fermer, rouvrir le projet, ou redémarrer l'appareil. | Étape 2 : tout revient. | non |
@@ -172,7 +172,7 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 
 ## 4. Contrôles à l'import (ADR 0004)
 
-Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
+Dans l'ordre, pour chaque couche du zip ; le premier qui échoue arrête la couche :
 
 1. **Shapefile incomplet** : `.prj` absent → refus « Serre EA/réf/Parcelles.shp : fichier .prj
    manquant, système de coordonnées inconnu » (le nom est le chemin complet dans le zip, voir
@@ -220,16 +220,14 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
 donneraient la même copie `cerf-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
 de la seconde (décision n° 4 du plan de la mission 008, validée par Pascal le 3 novembre 2026) qui
 empêche cette collision : « `<chemin de la seconde>` : nom de couche en double dans le zip (déjà
-pris par `<chemin de la première>`) ». Texte : `plugin/cerf-logique.mjs` ligne 501 (branche
-`mission/012-controles`, tête b8b5937) ; test : `tests/controles-branchement.test.mjs` ligne 255.
+pris par `<chemin de la première>`) ». Texte : `plugin/cerf-logique.mjs`, fonction `importerZip` ; test : `tests/controles-branchement.test.mjs`.
 
 **Refus à la copie dans `cerf-imports/`** (après les contrôles ci-dessus, avant le `.qml`, § 5).
-Textes recopiés mot pour mot de `plugin/cerf-logique.mjs`, fonction `copierEtStyler`, commit
-d7f9f2e (branche `mission/010-styles`) ; le nom en tête suit la règle ci-dessus :
-- « `<chemin>` : nom non écrivable dans cerf-imports/, couche refusée » (ligne 569) ;
-- « `<chemin>` : copie impossible (écriture refusée par QField), couche refusée » (ligne 574) ;
-- « `<chemin>` : copie écrite hors de cerf-imports/, couche refusée » (ligne 576) ;
-- « `<chemin>` : copie illisible après réécriture, couche refusée » (ligne 605).
+Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pas la spec) ; le nom en tête suit la règle ci-dessus :
+- « `<chemin>` : nom non écrivable dans cerf-imports/, couche refusée » ;
+- « `<chemin>` : copie impossible (écriture refusée par QField), couche refusée » ;
+- « `<chemin>` : copie écrite hors de cerf-imports/, couche refusée » ;
+- « `<chemin>` : copie illisible après réécriture, couche refusée ».
 
 ## 5. Styles (annexe de la convention du zip)
 

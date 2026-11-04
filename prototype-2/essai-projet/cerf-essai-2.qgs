@@ -1,0 +1,15 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Projet d'essai du prototype n° 2 de Cerf (mission 023) : sans couche, sans fond de carte
+     (hors ligne), en Lambert 93, SANS variable de projet d'identifiant (le prototype n'en a pas besoin).
+     Écrit à la main : à ouvrir d'abord dans QGIS. -->
+<qgis projectname="cerf-essai-2" version="3.40.0-Bratislava">
+  <homePath path=""/>
+  <title>cerf-essai-2</title>
+  <projectCrs>
+    <spatialrefsys nativeFormat="Wkt">
+      <authid>EPSG:2154</authid>
+    </spatialrefsys>
+  </projectCrs>
+  <layer-tree-group/>
+</qgis>

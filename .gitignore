@@ -1,3 +1,4 @@
 .claude/worktrees/
 # Mission 004 : zips du prototype, fabriqués par prototype/empaqueter.mjs, mis en ligne en release (non versés)
 prototype/dist/
+prototype-2/dist/

@@ -77,3 +77,6 @@ après la fusion de la 010.
 - **Confirmé par Pascal (4 novembre) :** chemin complet pour tous les messages du § 4 ;
   GeoPackage sans table vecteur : « `Serre.gpkg : aucune table vecteur, couche non chargée` »
   (distinct de « tables illisibles »).
+- **Écart à combler par le dev de la 024 :** les messages de la 010 (contrôles et styles) portent
+  le nom court (`nomDeFichier(c.entree)`) ; la spec amendée (032) exige le chemin complet dans le
+  zip pour tous les messages.

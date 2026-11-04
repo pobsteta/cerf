@@ -73,6 +73,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [028-noms-des-fichiers](missions/028-noms-des-fichiers.md) · depuis le cycle 6 · PR #21 fusionnée, plugin 0.2.1
+  - Homme : `dev` (sonnet)
+  - Mission : Fichiers publiés nommés plugin-… et projet-…
+  - Moyens : workflows de release, flashcodes
 - [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0
   - Homme : `dev` (opus)
   - Mission : Contrôles d'import — cycle prévu 5

@@ -29,8 +29,11 @@
 //       qui fournit les tables à importerZip n'existe pas encore (mission 030).
 //       Comment le plugin trouve les tables hors ligne n'est pas tranché ici (question pour Pascal).
 //   decrireEntree(entree, noms) (mission 010, tel que livré : TOUS les fichiers du même dossier, dans l'ordre du zip,
-//     annexes et .qml compris ; tests/controles-branchement.test.mjs le fixe) : pas de second calcul divergent
-//     (voir le dernier groupe de tests) : chaque fichier de `fichiers` de couchesDuZip y figure, en nom sans dossier ;
+//     annexes et .qml compris ; tests/controles-branchement.test.mjs le fixe, mais seulement « même dossier ») : pas de
+//     second calcul divergent (voir le dernier groupe de tests). Règle imposée, par Shapefile : parmi les fichiers de même
+//     racine (casse libre) dont l'extension est .shp .shx .dbf .prj ou .cpg, l'ensemble tiré de decrireEntree.fichiers
+//     est ÉGAL à celui de `fichiers` de couchesDuZip (en noms sans dossier). Sinon un .prj présent dans l'un et absent
+//     de l'autre ferait accepter un Shapefile incomplet au contrôle 1. Le reste (.qml, annexes) reste libre ;
 //     son `nom` court reste sans dossier = dernier segment du `nom` de couchesDuZip (pour un fichier non GeoPackage).
 //   sourceDeLaCouche(copie, c) -> source /vsizip/ :
 //     Shapefile : '/vsizip/<copie>/<entrée .shp>' ; GeoTIFF, GeoJSON : '/vsizip/<copie>/<entrée>' ;
@@ -299,6 +302,22 @@ test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouv
     `${ROUGE} : ligne exacte du refus, nom tel que dans le zip : ${r.message}`);
 });
 
+test('importerZip : Shapefile sans .prj rangé dans un dossier -> ligne exacte du contrôle 1 avec le chemin complet, rien chargé ni inscrit', async () => {
+  // Contrôle 1 réel (cerf-controles.mjs, boîte noire) derrière le service : decrireEntree lui passe le nom COURT et les fichiers ;
+  // le message d'importerZip doit, lui, porter le chemin complet dans le zip (arbitrage de Pascal du 4 novembre 2026).
+  const C = await import(pathToFileURL(join(ici, '..', 'plugin', 'cerf-controles.mjs')).href);
+  const zone = { xmin: 600000, ymin: 6500000, xmax: 600100, ymax: 6500100 };
+  const { ctx, ajoutees } = contexteGpkg(['Serre EA/réf/Parcelles.shp', 'Serre EA/réf/Parcelles.shx', 'Serre EA/réf/Parcelles.dbf'], {
+    controlerCouche: (d) => C.controlerCouche({ lisible: true, systeme: { valide: true, epsg: 2154 }, nbEntites: 3, emprise: zone, ...d }, { reprojeter: (e) => ({ ...e }) }),
+  });
+  const r = lire('importerZip', ctx);
+  assert.ok(r.message.split('\n').includes('Serre EA/réf/Parcelles.shp : fichier .prj manquant, système de coordonnées inconnu'),
+    `${ROUGE} : ligne exacte du contrôle 1 (spec § 4), chemin complet : ${r.message}`);
+  assert.deepEqual(ajoutees, [], `${ROUGE} : rien ajouté à la carte`);
+  assert.deepEqual(r.chargees, [], `${ROUGE} : rien chargé`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId), [], `${ROUGE} : registre vide`);
+});
+
 // ============================================================================ sources /vsizip/
 const COPIE = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre/cerf-imports/Serre_EA2026.zip';
 const source = (liste, tables, i = 0) => {
@@ -374,7 +393,7 @@ test('Serre_EA2026 (liste décrite par le brief) : GeoJSON ProdBois + UG, Parcel
 // ============================================================================ une seule source pour `fichiers` (010 / 024)
 const base = (e) => e.substring(e.lastIndexOf('/') + 1);
 
-test('decrireEntree (010) et couchesDuZip (024) : chaque fichier du Shapefile figure dans decrireEntree, même nom court (cohérence)', () => {
+test('decrireEntree (010) et couchesDuZip (024) : mêmes fichiers .shp/.shx/.dbf/.prj/.cpg de même racine (égalité), même nom court (cohérence)', () => {
   const zips = [
     // désordre + annexes + .qml + un autre dossier de même nom + casse mêlée
     ['sous/Parcelles.cpg', 'sous/Parcelles.prj', 'sous/Parcelles.dbf', 'sous/Parcelles.shx', 'sous/Parcelles.SHP',
@@ -383,15 +402,18 @@ test('decrireEntree (010) et couchesDuZip (024) : chaque fichier du Shapefile fi
     SHP('', 'FRT'),
     ['Parcelles.shp'],
   ];
+  const EXT_SHP = /\.(shp|shx|dbf|prj|cpg)$/i;
+  const racine = (f) => f.replace(/\.[^.]*$/, '').toLowerCase();
   for (const noms of zips) {
     const couches = lire('couchesDuZip', noms).filter((c) => c.format === 'shp');
     assert.ok(couches.length >= 1, `${ROUGE} : au moins un Shapefile reconnu`);
     for (const c of couches) {
       const d = lire('decrireEntree', c.entree, noms);
-      // decrireEntree (010) liste tous les fichiers du dossier : on exige l'inclusion, pas l'égalité.
-      for (const f of c.fichiers.map(base)) {
-        assert.ok(d.fichiers.includes(f), `${ROUGE} : « ${f} » (fichiers de ${c.entree}) figure dans decrireEntree : ${d.fichiers}`);
-      }
+      const r = racine(base(c.entree));
+      // Égalité (pas inclusion) sur les cinq extensions du Shapefile, pour la même racine ; le reste de decrireEntree est libre.
+      const decrits = d.fichiers.filter((f) => EXT_SHP.test(f) && racine(f) === r).sort();
+      const rendus = c.fichiers.map(base).sort();
+      assert.deepEqual(decrits, rendus, `${ROUGE} : fichiers du Shapefile ${c.entree} : decrireEntree ${decrits} / couchesDuZip ${rendus}`);
       assert.equal(d.nom, base(c.entree), `${ROUGE} : nom de ${c.entree}`);
       assert.equal(c.nom, c.entree, `${ROUGE} : nom d'affichage = chemin dans le zip`);
       assert.equal(d.nom, base(c.nom), `${ROUGE} : nom court = dernier segment du nom d'affichage`);

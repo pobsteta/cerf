@@ -369,11 +369,11 @@ test('aucune coordonnée d\'essai hors de l\'emprise de la spec § 4 (sauf Sans_
 
 // ---------------------------------------------------------------- empaquetage
 
-test('empaqueteur : 4 fichiers, plugin à la racine du zip, projet sans cerf_id', () => {
+test('empaqueteur : 5 fichiers (dont essai-styles-z.zip, mission 027), plugin à la racine du zip, projet sans cerf_id', () => {
   const dossier = mkdtempSync(join(tmpdir(), 'cerf-p2-emp-'));
   try {
     const r = empaqueter(dossier);
-    assert.deepEqual(Object.keys(r.fichiers).sort(), ['cerf-essai-2.zip', 'cerf-prototype-2.zip', 'essai-q3.gpkg', 'essai-styles.zip']);
+    assert.deepEqual(Object.keys(r.fichiers).sort(), ['cerf-essai-2.zip', 'cerf-prototype-2.zip', 'essai-q3.gpkg', 'essai-styles-z.zip', 'essai-styles.zip']);
     const plugin = L.listerZip(readFileSync(join(dossier, 'cerf-prototype-2.zip'))).entrees.map((e) => e.nom);
     assert.deepEqual(plugin, FICHIERS_PLUGIN);
     assert.ok(plugin.includes('main.qml') && plugin.every((n) => !n.includes('/')), 'main.qml à la racine');
@@ -417,7 +417,7 @@ test('main.qml n\'importe aucun .mjs ; metadata : nom, version du module', () =>
 test('noms de boutons : numérotés, uniques', () => {
   const noms = Object.values(L.BOUTONS);
   assert.equal(new Set(noms).size, noms.length);
-  assert.deepEqual(Object.keys(L.BOUTONS), ['B0', 'B1', 'B2', 'B3', 'B4', 'B4B', 'B4C', 'B4D', 'B5M', 'B5R', 'B6', 'B7']);
+  assert.deepEqual(Object.keys(L.BOUTONS), ['B0', 'B1', 'B2', 'B3', 'B4', 'B4B', 'B4C', 'B4D', 'B5M', 'B5R', 'B6', 'B7', 'B0B', 'B8', 'B9', 'B9B', 'B10', 'B11', 'B12']);
 });
 
 // ---------------------------------------------------------------- compléments

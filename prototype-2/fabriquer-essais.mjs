@@ -5,6 +5,10 @@
 // Données FICTIVES : carrés de 300 m autour de Strasbourg, sans valeur métier, en Lambert 93
 // (EPSG:2154), coordonnées X (est) puis Y (nord), en mètres.
 //
+// Mission 027 : fabriquerEssais3() fabrique en plus essai-styles-z.zip, ENTIÈREMENT compressé
+// (méthode 8, node:zlib), dont un GeoPackage à deux tables sans layer_styles et un GeoJSON de
+// 2 000 polygones. Le zip essai-styles.zip (stocké) reste inchangé, octet pour octet.
+//
 // Usage : node prototype-2/fabriquer-essais.mjs [dossier-de-sortie]
 //
 // Limite dite : ni QGIS ni GDAL dans la session de fabrication ; les .qml et le GeoPackage
@@ -17,73 +21,17 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { ecrireZip } from '../tests/recette/essai/zip-ecrire.mjs';
 import { PRJ_L93 } from '../tests/recette/essai/fabriquer-essais.mjs';
+import { STYLES, qmlStyle, CHAMP_ETIQUETTE, NOM_ZIP_Z, NOM_GPKG2 } from './essai-logique.mjs';
 
 // Centre des essais : le point de la question 6 reprojeté (1 051 112,70 ; 6 840 461,54,
 // pyproj 3.8.0), arrondi au mètre.
 export const CENTRE_L93 = { x: 1051113, y: 6840462 };
 const COTE = 300;
 
-// Styles du manuel (spec § 5) : couleur du contour ET de l'étiquette, épaisseur, police.
-export const STYLES = {
-  ug: { rvb: [0, 0, 255], epaisseurMm: '0.6', policePt: 10 },
-  parcelles: { rvb: [255, 140, 0], epaisseurMm: '1', policePt: 15 },
-  frt: { rvb: [0, 139, 139], epaisseurMm: '0.6', policePt: 10 },
-};
-
-const CHAMP = 'code_ug';
-
-// .qml d'une couche polygone : contour seul (remplissage « no »), étiquette simple sur code_ug.
-export function qmlStyle(s) {
-  const c = `${s.rvb[0]},${s.rvb[1]},${s.rvb[2]},255`;
-  const transparent = `${s.rvb[0]},${s.rvb[1]},${s.rvb[2]},0`;
-  return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="3.34.0-Prizren" styleCategories="Symbology|Labeling" labelsEnabled="1" hasScaleBasedVisibilityFlag="0" minScale="100000000" maxScale="0">
-  <renderer-v2 type="singleSymbol" symbollevels="0" enableorderby="0" forceraster="0" referencescale="-1">
-    <symbols>
-      <symbol type="fill" name="0" alpha="1" force_rhr="0" clip_to_extent="1">
-        <data_defined_properties>
-          <Option type="Map">
-            <Option type="QString" name="name" value=""/>
-            <Option name="properties"/>
-            <Option type="QString" name="type" value="collection"/>
-          </Option>
-        </data_defined_properties>
-        <layer class="SimpleFill" enabled="1" locked="0" pass="0">
-          <Option type="Map">
-            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
-            <Option type="QString" name="color" value="${transparent}"/>
-            <Option type="QString" name="joinstyle" value="bevel"/>
-            <Option type="QString" name="offset" value="0,0"/>
-            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
-            <Option type="QString" name="offset_unit" value="MM"/>
-            <Option type="QString" name="outline_color" value="${c}"/>
-            <Option type="QString" name="outline_style" value="solid"/>
-            <Option type="QString" name="outline_width" value="${s.epaisseurMm}"/>
-            <Option type="QString" name="outline_width_unit" value="MM"/>
-            <Option type="QString" name="style" value="no"/>
-          </Option>
-        </layer>
-      </symbol>
-    </symbols>
-    <rotation/>
-    <sizescale/>
-  </renderer-v2>
-  <labeling type="simple">
-    <settings calloutType="simple">
-      <text-style fieldName="${CHAMP}" isExpression="0" fontSize="${s.policePt}" fontSizeUnit="Point" textColor="${c}" textOpacity="1" fontWeight="50" fontItalic="0" fontUnderline="0" fontStrikeout="0" fontLetterSpacing="0" fontWordSpacing="0" blendMode="0" multilineHeight="1" previewBkgrdColor="255,255,255,255" namedStyle="Regular">
-        <families/>
-        <text-buffer bufferDraw="0" bufferSize="1" bufferSizeUnits="MM" bufferColor="255,255,255,255" bufferOpacity="1" bufferBlendMode="0" bufferJoinStyle="128" bufferNoFill="1"/>
-        <background shapeDraw="0"/>
-        <shadow shadowDraw="0"/>
-      </text-style>
-      <placement placement="1" placementFlags="10" polygonPlacementFlags="2" dist="0" distUnits="MM" priority="5" overlapHandling="PreventOverlap"/>
-      <rendering scaleVisibility="0" scaleMin="0" scaleMax="0" fontMinPixelSize="3" fontMaxPixelSize="10000" fontLimitPixelSize="0" obstacle="1" obstacleFactor="1" obstacleType="1" labelPerPart="0" upsidedownLabels="0" limitNumLabels="0" maxNumLabels="2000" displayAll="1" mergeLines="0" minFeatureSize="0" zIndex="0"/>
-    </settings>
-  </labeling>
-  <layerGeometryType>2</layerGeometryType>
-</qgis>
-`;
-}
+// Styles du manuel et .qml : dans essai-logique.mjs (le plugin écrit lui-même le .qml des
+// boutons 8 à 12, mission 027) ; repris ici pour la fabrication des fichiers d'essai.
+export { STYLES, qmlStyle };
+const CHAMP = CHAMP_ETIQUETTE;
 
 // Le .qml de la question 4, écrit PAR LE PLUGIN après le chargement : même texte que celui
 // rangé dans le zip, en vert-bleu (style FRT) pour qu'on le distingue du bleu des questions 1 et 2.
@@ -116,8 +64,34 @@ function emprise(anneaux) {
   return { xmin: Math.min(...xs), xmax: Math.max(...xs), ymin: Math.min(...ys), ymax: Math.max(...ys) };
 }
 
+// .dbf dBASE III : champs texte (type C) ; valeurs en UTF-8, complétées par des espaces à la
+// longueur du champ (en OCTETS). Avec le seul champ code_ug de 10 octets, les mêmes octets
+// qu'avant la mission 027 (le zip essai-styles.zip reste inchangé).
+function ecrireDbf(champs, n) {
+  const tailleEntete = 32 + 32 * champs.length + 1;
+  const tailleEnr = 1 + champs.reduce((a, c) => a + c.longueur, 0);
+  const dbf = Buffer.alloc(tailleEntete + tailleEnr * n + 1);
+  dbf[0] = 3; dbf[1] = 126; dbf[2] = 11; dbf[3] = 4;
+  dbf.writeUInt32LE(n, 4); dbf.writeUInt16LE(tailleEntete, 8); dbf.writeUInt16LE(tailleEnr, 10);
+  champs.forEach((c, k) => { dbf.write(c.nom, 32 + 32 * k, 'latin1'); dbf[32 + 32 * k + 11] = 0x43; dbf[32 + 32 * k + 16] = c.longueur; });
+  dbf[tailleEntete - 1] = 0x0d;
+  for (let i = 0; i < n; i++) {
+    let o = tailleEntete + tailleEnr * i;
+    dbf[o++] = 0x20;
+    for (const c of champs) {
+      const v = Buffer.from(c.valeurs[i], 'utf8');
+      if (v.length > c.longueur) throw new Error(`valeur trop longue pour le champ ${c.nom} : ${c.valeurs[i]}`);
+      dbf.fill(0x20, o, o + c.longueur);
+      v.copy(dbf, o);
+      o += c.longueur;
+    }
+  }
+  dbf[dbf.length - 1] = 0x1a;
+  return dbf;
+}
+
 // Shapefile polygone (ESRI, 1998) : anneaux horaires dans le .shp.
-function shapefile(anneaux, codes) {
+function shapefile(anneaux, codes, noms) {
   const e = emprise(anneaux);
   const tailleEnr = 8 + 4 + 32 + 4 + 4 + 4 + 16 * 5; // en-tête d'enregistrement + contenu = 136
   const shp = Buffer.alloc(100 + tailleEnr * anneaux.length);
@@ -138,13 +112,11 @@ function shapefile(anneaux, codes) {
     horaire.forEach((p, k) => { shp.writeDoubleLE(p[0], o + 56 + 16 * k); shp.writeDoubleLE(p[1], o + 64 + 16 * k); });
     shx.writeInt32BE(o / 2, 100 + 8 * i); shx.writeInt32BE((tailleEnr - 8) / 2, 104 + 8 * i);
   });
-  // .dbf : un champ texte « code_ug » de 10 caractères.
-  const dbf = Buffer.alloc(65 + 11 * codes.length + 1);
-  dbf[0] = 3; dbf[1] = 126; dbf[2] = 11; dbf[3] = 4;
-  dbf.writeUInt32LE(codes.length, 4); dbf.writeUInt16LE(65, 8); dbf.writeUInt16LE(11, 10);
-  dbf.write(CHAMP, 32, 'latin1'); dbf[43] = 0x43; dbf[48] = 10; dbf[64] = 0x0d;
-  codes.forEach((c, i) => { dbf.write(' ' + c.padEnd(10, ' '), 65 + 11 * i, 'latin1'); });
-  dbf[dbf.length - 1] = 0x1a;
+  // .dbf : un champ texte « code_ug » de 10 caractères ; avec « noms » (mission 027), un second
+  // champ texte « nom » de 20 octets, en UTF-8 (le .cpg dit UTF-8) pour éprouver les accents.
+  const champs = [{ nom: CHAMP, longueur: 10, valeurs: codes }];
+  if (noms) champs.push({ nom: 'nom', longueur: 20, valeurs: noms });
+  const dbf = ecrireDbf(champs, codes.length);
   return { shp, shx, dbf };
 }
 
@@ -239,11 +211,96 @@ export function fabriquerEssais() {
   return { entrees, zip, gpkg };
 }
 
+// --------------------------------------------------------------------------- mission 027
+
+export const NB_GRAND = 2000;
+export const NOM_GRAND = 'ProdBois_2000.geojson';
+
+// Entrées du zip compressé (8), dans l'ordre.
+export const NOMS_ENTREES_Z = [
+  'FRT_q7.shp', 'FRT_q7.shx', 'FRT_q7.dbf', 'FRT_q7.prj', 'FRT_q7.cpg',
+  'UG_q1.geojson',
+  NOM_GPKG2,
+  NOM_GRAND,
+];
+
+// Accents du .dbf de FRT_q7 (champ « nom ») : à relire intacts dans la copie.
+export const NOMS_FRT_Q7 = ['Étang', 'Forêt'];
+
+// GeoPackage à deux tables (Parcelles, Zones), SANS layer_styles : le style ne peut venir que du
+// .qml écrit par le plugin. Même schéma que fabriquerGpkg, sans R-tree. tables : [{ nom, anneaux, codes }].
+function fabriquerGpkgTables(tables) {
+  const dossier = mkdtempSync(join(tmpdir(), 'cerf-gpkg2-'));
+  const chemin = join(dossier, NOM_GPKG2);
+  try {
+    const db = new DatabaseSync(chemin);
+    try {
+      db.exec(`PRAGMA page_size = 4096; PRAGMA journal_mode = DELETE; PRAGMA application_id = 1196444487; PRAGMA user_version = 10300;
+CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT NOT NULL, srs_id INTEGER PRIMARY KEY, organization TEXT NOT NULL, organization_coordsys_id INTEGER NOT NULL, definition TEXT NOT NULL, description TEXT);
+CREATE TABLE gpkg_contents (table_name TEXT NOT NULL PRIMARY KEY, data_type TEXT NOT NULL, identifier TEXT UNIQUE, description TEXT DEFAULT '', last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')), min_x DOUBLE, min_y DOUBLE, max_x DOUBLE, max_y DOUBLE, srs_id INTEGER, CONSTRAINT fk_gc_r_srs_id FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id));
+CREATE TABLE gpkg_geometry_columns (table_name TEXT NOT NULL, column_name TEXT NOT NULL, geometry_type_name TEXT NOT NULL, srs_id INTEGER NOT NULL, z TINYINT NOT NULL, m TINYINT NOT NULL, CONSTRAINT pk_geom_cols PRIMARY KEY (table_name, column_name), CONSTRAINT uk_gc_table_name UNIQUE (table_name), CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name), CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id));`);
+      for (const t of tables) db.exec(`CREATE TABLE ${t.nom} (fid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, geom POLYGON, ${CHAMP} TEXT);`);
+      const srs = db.prepare('INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)');
+      srs.run('Undefined Cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined Cartesian coordinate reference system');
+      srs.run('Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system');
+      srs.run('WGS 84 geodetic', 4326, 'EPSG', 4326, WKT_4326, 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid');
+      srs.run('RGF93 v1 / Lambert-93', 2154, 'EPSG', 2154, WKT_2154, 'Lambert-93, France métropolitaine (Corse comprise)');
+      for (const t of tables) {
+        const e = emprise(t.anneaux);
+        db.prepare('INSERT INTO gpkg_contents (table_name, data_type, identifier, description, last_change, min_x, min_y, max_x, max_y, srs_id) VALUES (?,?,?,?,?,?,?,?,?,?)')
+          .run(t.nom, 'features', t.nom, '', DATE_FIXE, e.xmin, e.ymin, e.xmax, e.ymax, 2154);
+        db.prepare('INSERT INTO gpkg_geometry_columns VALUES (?,?,?,?,0,0)').run(t.nom, 'geom', 'POLYGON', 2154);
+        const ins = db.prepare(`INSERT INTO ${t.nom} (geom, ${CHAMP}) VALUES (?, ?)`);
+        t.anneaux.forEach((a, i) => ins.run(blobPolygone(a), t.codes[i]));
+      }
+    } finally { db.close(); }
+    return readFileSync(chemin);
+  } finally { rmSync(dossier, { recursive: true, force: true }); }
+}
+
+// 2 000 polygones (ordre de grandeur du ProdBois de Serre_EA2026) : grille de 50 x 40 carrés de
+// 20 m au pas de 25 m, au nord-est du centre des essais. EPSG:2154, avec membre crs.
+function grandGeojson() {
+  const anneaux = []; const codes = [];
+  for (let l = 0; l < 40; l++) {
+    for (let c = 0; c < 50; c++) {
+      const x0 = CENTRE_L93.x - 625 + 25 * c; const y0 = CENTRE_L93.y + 1500 + 25 * l;
+      anneaux.push([[x0, y0], [x0 + 20, y0], [x0 + 20, y0 + 20], [x0, y0 + 20], [x0, y0]]);
+      codes.push('PB' + String(anneaux.length).padStart(4, '0'));
+    }
+  }
+  return geojson('ProdBois_2000', anneaux, codes, true);
+}
+
+// Rend { entrees: [{ nom, donnees }], zip, gpkg } : essai-styles-z.zip, TOUTES les entrées
+// compressées (méthode 8), y compris le .gpkg (déjà un fichier SQLite : c'est le cas réel).
+export function fabriquerEssais3() {
+  const q7 = carres(800, 0); const q1 = carres(-800, 0);
+  const gpkg = fabriquerGpkgTables([
+    { nom: 'Parcelles', anneaux: carres(0, 0), codes: ['P1', 'P2'] },
+    { nom: 'Zones', anneaux: carres(0, -800), codes: ['Z1', 'Z2'] },
+  ]);
+  const f7 = shapefile(q7, ['FRT1', 'FRT2'], NOMS_FRT_Q7);
+  const contenus = {
+    'FRT_q7.shp': f7.shp, 'FRT_q7.shx': f7.shx, 'FRT_q7.dbf': f7.dbf, 'FRT_q7.prj': PRJ_L93, 'FRT_q7.cpg': 'UTF-8',
+    'UG_q1.geojson': geojson('UG_q1', q1, ['UG1', 'UG2'], true),
+    [NOM_GPKG2]: gpkg,
+    [NOM_GRAND]: grandGeojson(),
+  };
+  const b = (x) => (Buffer.isBuffer(x) ? x : Buffer.from(x, 'utf8'));
+  const entrees = NOMS_ENTREES_Z.map((nom) => ({ nom, donnees: b(contenus[nom]) }));
+  const zip = ecrireZip(entrees.map((e) => ({ nom: Buffer.from(e.nom, 'utf8'), donnees: e.donnees, stocke: false, utf8: true })));
+  return { entrees, zip, gpkg };
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const sortie = process.argv[2] || dirname(fileURLToPath(import.meta.url));
   mkdirSync(sortie, { recursive: true });
   const r = fabriquerEssais();
   writeFileSync(join(sortie, 'essai-styles.zip'), r.zip);
   writeFileSync(join(sortie, 'essai-q3.gpkg'), r.gpkg);
+  const r3 = fabriquerEssais3();
+  writeFileSync(join(sortie, NOM_ZIP_Z), r3.zip);
+  console.log(`écrit : ${join(sortie, NOM_ZIP_Z)} (${r3.zip.length} octets, ${r3.entrees.length} entrées compressées)`);
   console.log(`écrit : ${join(sortie, 'essai-styles.zip')} (${r.zip.length} octets, ${r.entrees.length} entrées) et essai-q3.gpkg (${r.gpkg.length} octets)`);
 }

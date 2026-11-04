@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, prototype n° 2 (mission 023) : fabrique les quatre fichiers à poser sur le téléphone.
+// Cerf, prototype n° 2 (mission 023, puis 027) : fabrique les cinq fichiers à poser sur le téléphone.
 //   cerf-prototype-2.zip : le plugin, main.qml à la racine (exigence de QField) ; le nom du
 //                          zip donne le nom du dossier du plugin : ne pas le renommer.
 //   cerf-essai-2.zip     : le projet d'essai cerf-essai-2.qgs (sans cerf_id, sans fond).
 //   essai-styles.zip     : le zip d'essai (entrées stockées), voir fabriquer-essais.mjs.
+//   essai-styles-z.zip   : le zip d'essai ENTIÈREMENT compressé (méthode 8), mission 027.
 //   essai-q3.gpkg        : le GeoPackage seul, en repli.
 // Rien n'est versé au dépôt (prototype-2/dist/ est dans .gitignore).
 //
@@ -12,7 +13,7 @@ import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from '../tests/recette/essai/zip-ecrire.mjs';
-import { fabriquerEssais } from './fabriquer-essais.mjs';
+import { fabriquerEssais, fabriquerEssais3 } from './fabriquer-essais.mjs';
 
 const ici = dirname(fileURLToPath(import.meta.url));
 
@@ -23,10 +24,12 @@ const entree = (nom, chemin) => ({ nom: Buffer.from(nom, 'utf8'), donnees: readF
 export function empaqueter(sortie) {
   mkdirSync(sortie, { recursive: true });
   const essais = fabriquerEssais();
+  const essais3 = fabriquerEssais3();
   const contenu = {
     'cerf-prototype-2.zip': ecrireZip(FICHIERS_PLUGIN.map((f) => entree(f, join(ici, f)))),
     'cerf-essai-2.zip': ecrireZip([entree('cerf-essai-2.qgs', join(ici, 'essai-projet', 'cerf-essai-2.qgs'))]),
     'essai-styles.zip': essais.zip,
+    'essai-styles-z.zip': essais3.zip,
     'essai-q3.gpkg': essais.gpkg,
   };
   const fichiers = {};

@@ -10,11 +10,17 @@
 // Les fichiers d'une couche vecteur se déduisent de son nom (ADR 0007 amendée) dans cerf-imports/<zip sans .zip>/ :
 //   <couche>.gpkg, <couche>.qml, <couche>.gpkg-wal, <couche>.gpkg-shm, <couche>.gpkg.aux.xml
 // (forme exacte des annexes : question posée à Pascal, la spec dit seulement « -wal, -shm, .aux.xml »).
+// Le message d'un effacement raté est celui décidé par Pascal : « Fichiers restés sur l'appareil : a.gpkg, a.qml. ».
+// La fausse rmFile répond faux pour un fichier absent, comme QFile::remove (ADR 0007).
+// Réimport (fiche 031) : une couche absente du nouveau zip, ou refusée au réimport, perd ses fichiers (via importerZip).
 // Hors champ (question ouverte de la mission 014) : dossier vide, remplacement du dossier au réimport.
+// Signalé à l'orchestrateur : l'ADR 0008 § « Ce qui change » n° 1 écrit « dossier remplacé en entier à un réimport réussi »,
+// alors que l'ADR 0007 amendée et la spec § 3.3 le laissent en question ouverte (014) : non tranché ici.
 // L'API de QField est simulée : ces tests ne prouvent rien sur le Samsung (fiche 031, § Terrain).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -56,8 +62,9 @@ function monde({ entrees, disque = [], rate = [], leve = [], menteur = [] }) {
   const rm = (chemin) => {
     journal.push('effacer ' + chemin); appels.push(chemin);
     if (leve.includes(chemin)) throw new Error('refusé (simulé)');
-    if (rate.includes(chemin)) return false;
     if (menteur.includes(chemin)) return true;
+    // QFile::remove (ADR 0007, prototype/PLAN.md) répond faux pour un fichier absent, comme pour un échec.
+    if (!sur_disque.has(chemin) || rate.includes(chemin)) return false;
     sur_disque.delete(chemin);
     return true;
   };
@@ -72,6 +79,10 @@ function monde({ entrees, disque = [], rate = [], leve = [], menteur = [] }) {
   return { ctx, journal, appels, sur_disque, reglages };
 }
 const lance = async (w, extra = {}) => { const m = await M(); return await Promise.resolve(m.retirerCouche({ ...w.ctx, ...extra })); };
+// Mot entier : « a.gpkg » ne doit pas être trouvé dans « a.gpkg-wal » ni « a.gpkg.aux.xml » (un point final de phrase passe).
+const nomme = (message, nom) => new RegExp('(^|[^\\w.-])' + nom.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '(?![-\\w]|\\.\\w)').test(message);
+// Phrase décidée par Pascal : « Fichiers restés sur l'appareil : a.gpkg, a.qml. » (noms réellement restés, « , », point final).
+const phraseRestes = (message) => { const m = /Fichiers restés sur l'appareil : (.*?)\.(?=\s|$)/s.exec(message); return m ? m[0] : null; };
 const sansZip = (appels) => appels.filter((c) => !c.endsWith('.zip'));
 
 // ---- Cas nominal --------------------------------------------------------------------------------
@@ -133,9 +144,12 @@ test('garde : un chemin trafiqué au registre n\'est jamais suivi (les fichiers 
 test('garde : nom de couche douteux au registre (« .. », « a/b », « ../x ») -> rien n\'est effacé hors de cerf-imports/<dossier du zip>/<nom>', async () => {
   for (const couche of ['..', 'a/b', '../x', '../../cerf']) {
     const w = monde({ entrees: [vec('z.zip', couche), vec('z.zip', 'b')], disque: [`${PROJET}/cerf.qgz`, `${PROJET}/cerf.qml`, `${COPIES}/z/b.gpkg`] });
-    await lance(w);
+    await lance(w, { couche });
     const pasDirect = new RegExp('^' + (COPIES + '/z/').replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '[^/]+$');
-    for (const c of w.appels) assert.match(c, pasDirect, `couche « ${couche} » : ${c} n'est pas directement dans cerf-imports/z/`);
+    for (const c of w.appels) {
+      assert.match(c, pasDirect, `couche « ${couche} » : ${c} n'est pas directement dans cerf-imports/z/`);
+      assert.ok(!c.split('/').some((seg) => seg === '..' || seg === '.'), `couche « ${couche} » : segment relatif dans ${c}`);
+    }
     assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true, couche);
     assert.equal(w.sur_disque.has(`${COPIES}/z/b.gpkg`), true, couche);
   }
@@ -196,7 +210,7 @@ test('rmFile répond faux pour un fichier : son nom est dit, les autres fichiers
   const [g, q, ...annexes] = fichiers('z.zip', 'a');
   const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: fichiers('z.zip', 'a'), rate: [g] });
   const r = await lance(w);
-  assert.ok(r.message.includes('a.gpkg'), `le nom du fichier resté est affiché : « ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.gpkg'), `le nom du fichier resté est affiché : « ${r.message} » : ${R}`);
   assert.equal(w.sur_disque.has(g), true);
   for (const f of [q, ...annexes]) assert.equal(w.sur_disque.has(f), false, `${f} : l'échec d'un fichier n'arrête pas les autres : ${R}`);
   assert.deepEqual(m.lireRegistre(w.reglages, ID).map((x) => x.couche), ['b']);
@@ -205,8 +219,32 @@ test('rmFile répond faux pour un fichier : son nom est dit, les autres fichiers
 test('rmFile répond faux pour tout : les noms du .gpkg et du .qml sont dits', async () => {
   const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: fichiers('z.zip', 'a'), rate: fichiers('z.zip', 'a') });
   const r = await lance(w);
-  assert.ok(r.message.includes('a.gpkg'), `« ${r.message} » : ${R}`);
-  assert.ok(r.message.includes('a.qml'), `« ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.gpkg'), `« ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.qml'), `« ${r.message} » : ${R}`);
+  // Les cinq fichiers sont présents et tous refusent : les cinq restent, listés par la phrase décidée par Pascal (ordre libre).
+  const ph = phraseRestes(r.message);
+  assert.ok(ph && ph.startsWith("Fichiers restés sur l'appareil : "), r.message);
+  assert.deepEqual(ph.slice("Fichiers restés sur l'appareil : ".length, -1).split(', ').sort(), ['a.gpkg', 'a.gpkg-shm', 'a.gpkg-wal', 'a.gpkg.aux.xml', 'a.qml']);
+});
+
+test('message exact (décision de Pascal) : .gpkg et .qml restés, seuls fichiers existants -> « Fichiers restés sur l\'appareil : a.gpkg, a.qml. »', async () => {
+  const [g, q] = fichiers('z.zip', 'a');
+  const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: [g, q], rate: [g, q] });
+  const r = await lance(w);
+  assert.equal(phraseRestes(r.message), "Fichiers restés sur l'appareil : a.gpkg, a.qml.", `« ${r.message} » : ${R}`);
+});
+
+test('annexes qui n\'ont jamais existé (seuls .gpkg et .qml sont là) : le message ne les nomme jamais comme « restées »', async () => {
+  const [g, q] = fichiers('z.zip', 'a');
+  const annexes = ['a.gpkg-wal', 'a.gpkg-shm', 'a.gpkg.aux.xml'];
+  const cas = { 'tout est effacé': [], '.gpkg refuse': [g], '.gpkg et .qml refusent': [g, q] };
+  for (const [nom, rate] of Object.entries(cas)) {
+    const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: [g, q], rate });
+    const r = await lance(w);
+    for (const a of annexes) assert.ok(!r.message.includes(a), `${nom} : « ${a} » n'a jamais existé mais figure dans « ${r.message} »`);
+    assert.equal(nomme(r.message, 'a.gpkg'), rate.includes(g), `${nom} : a.gpkg nommé si et seulement s'il est resté : « ${r.message} » : ${R}`);
+    assert.equal(nomme(r.message, 'a.qml'), rate.includes(q), `${nom} : a.qml nommé si et seulement s'il est resté : « ${r.message} » : ${R}`);
+  }
 });
 
 test('rmFile lève une erreur : pas d\'exception, le nom est dit, les autres fichiers sont tentés, le registre est à jour', async () => {
@@ -214,7 +252,7 @@ test('rmFile lève une erreur : pas d\'exception, le nom est dit, les autres fic
   const [g, q] = fichiers('z.zip', 'a');
   const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: fichiers('z.zip', 'a'), leve: [g] });
   const r = await lance(w);
-  assert.ok(r.message.includes('a.gpkg'), `« ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.gpkg'), `« ${r.message} » : ${R}`);
   assert.equal(w.sur_disque.has(q), false, `le .qml est effacé malgré l'erreur sur le .gpkg : ${R}`);
   assert.deepEqual(m.lireRegistre(w.reglages, ID).map((x) => x.couche), ['b']);
 });
@@ -223,14 +261,14 @@ test('rmFile répond vrai mais existe reste vrai : on ne croit pas la réponse, 
   const [g] = fichiers('z.zip', 'a');
   const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: fichiers('z.zip', 'a'), menteur: [g] });
   const r = await lance(w);
-  assert.ok(r.message.includes('a.gpkg'), `« ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.gpkg'), `« ${r.message} » : ${R}`);
 });
 
 test('platformUtilities.rmFile absent (QField l\'a déplacé) : pas d\'exception, les noms des fichiers restants sont dits, registre à jour', async () => {
   const m = await M();
   const w = monde({ entrees: [vec('z.zip', 'a'), vec('z.zip', 'b')], disque: fichiers('z.zip', 'a') });
   const r = await lance(w, { platformUtilities: {}, effacerFichier: undefined });
-  assert.ok(r.message.includes('a.gpkg'), `« ${r.message} » : ${R}`);
+  assert.ok(nomme(r.message, 'a.gpkg'), `« ${r.message} » : ${R}`);
   assert.deepEqual(m.lireRegistre(w.reglages, ID).map((x) => x.couche), ['b']);
 });
 
@@ -257,4 +295,102 @@ test('registre mêlant ancienne entrée et vecteur dans le même zip : seul le v
   await lance(w);
   assert.deepEqual(trie(w.appels), trie(fichiers('z.zip', 'a')), R);
   assert.equal(w.sur_disque.has(`${COPIES}/z/t.gpkg`), true);
+});
+
+// ---- Réimport : une couche sort du registre (absente du nouveau zip, ou refusée) ---------------------
+// importerZip est celui de tests/squelette.test.mjs et tests/plugin-styles.test.mjs ; effacement par
+// ctx.effacerFichier (plugin-styles) ou platformUtilities.rmFile (squelette), même fonction.
+const GJ = '{"type":"FeatureCollection","features":[]}';
+const zipDe = (...noms) => ecrireZip(noms.map((nom) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.from(GJ), stocke: false, utf8: true })));
+const OK = { charge: true, controle: null, message: null, avertissements: [] };
+const REFUS = { charge: false, controle: 5, message: 'a.geojson : Coordonnées incohérentes : système mal déclaré ?', avertissements: [] };
+
+function mondeImport({ disque = [], rate = [], leve = [] } = {}) {
+  const sur_disque = new Set(disque);
+  const appels = [];
+  const m = new Map();
+  const reglages = { value: (k, d) => (m.has(k) ? m.get(k) : d), setValue: (k, v) => m.set(k, v) };
+  const rm = (chemin) => {
+    appels.push(chemin);
+    if (leve.includes(chemin)) throw new Error('refusé (simulé)');
+    if (!sur_disque.has(chemin) || rate.includes(chemin)) return false;
+    sur_disque.delete(chemin);
+    return true;
+  };
+  const ctx = {
+    cerfId: ID, dossierProjet: PROJET, nomZip: 'deux.zip', reglages, octets: zipDe('a.geojson', 'sous/b.geojson'),
+    maintenant: () => new Date(DATE),
+    ouvrirCouche: (source, nom) => ({ source, name: nom, isValid: true, readOnly: false }),
+    decrireCouche: () => ({ lisible: true, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
+    controlerCouche: () => OK,
+    reecrireCouche: (c, cible) => cible,
+    ecrireFichier: (chemin) => { sur_disque.add(chemin); return true; },
+    ajouterALaCarte: () => {},
+    existe: (chemin) => sur_disque.has(chemin),
+    effacerFichier: rm,
+    platformUtilities: { rmFile: rm },
+  };
+  return { ctx, reglages, sur_disque, appels };
+}
+const couchesDe = (m, reglages, zip) => m.lireRegistre(reglages, ID).filter((x) => x.zip === zip).map((x) => x.couche);
+
+test('réimport : une couche absente du nouveau zip perd son .gpkg, son .qml et ses annexes ; les autres fichiers sont intacts', async () => {
+  const m = await M();
+  const w = mondeImport();
+  await Promise.resolve(m.importerZip(w.ctx));
+  assert.deepEqual(couchesDe(m, w.reglages, 'deux.zip'), ['a', 'b']);
+  const autres = [...fichiers('y.zip', 'b'), gpkg('deux.zip', 'a')];
+  for (const f of [...fichiers('deux.zip', 'b'), ...autres]) w.sur_disque.add(f);
+  w.appels.length = 0;
+  await Promise.resolve(m.importerZip({ ...w.ctx, octets: zipDe('a.geojson') }));
+  for (const f of fichiers('deux.zip', 'b')) assert.equal(w.sur_disque.has(f), false, `${f} doit avoir disparu : ${R}`);
+  for (const f of autres) assert.equal(w.sur_disque.has(f), true, `${f} ne doit pas être touché (autre zip, ou couche gardée)`);
+  assert.ok(!w.appels.includes(gpkg('deux.zip', 'a')), 'le .gpkg de la couche gardée n\'est pas effacé');
+  for (const c of w.appels) assert.ok(c.startsWith(`${COPIES}/deux/`), `effacement hors du dossier du zip réimporté : ${c}`);
+  assert.deepEqual(couchesDe(m, w.reglages, 'deux.zip'), ['a']);
+});
+
+test('réimport : une couche refusée au réimport (contrôle) perd ses fichiers ; la couche acceptée garde les siens', async () => {
+  const m = await M();
+  const w = mondeImport();
+  await Promise.resolve(m.importerZip(w.ctx));
+  for (const f of [...fichiers('deux.zip', 'a'), ...fichiers('deux.zip', 'b')]) w.sur_disque.add(f);
+  w.appels.length = 0;
+  await Promise.resolve(m.importerZip({ ...w.ctx, controlerCouche: (d) => (d.nom === 'a.geojson' ? REFUS : OK) }));
+  for (const f of fichiers('deux.zip', 'a')) assert.equal(w.sur_disque.has(f), false, `${f} (couche refusée) doit avoir disparu : ${R}`);
+  assert.equal(w.sur_disque.has(gpkg('deux.zip', 'b')), true, 'le .gpkg de b (acceptée) reste');
+  assert.ok(!w.appels.includes(gpkg('deux.zip', 'b')), 'le .gpkg de b n\'est pas effacé');
+  assert.deepEqual(couchesDe(m, w.reglages, 'deux.zip'), ['b']);
+});
+
+test('réimport : effacement raté ou qui lève -> pas d\'exception, le registre est quand même à jour', async () => {
+  const m = await M();
+  for (const mode of ['rate', 'leve']) {
+    const fb = fichiers('deux.zip', 'b');
+    const w = mondeImport({ [mode]: fb });
+    await Promise.resolve(m.importerZip(w.ctx));
+    for (const f of fb) w.sur_disque.add(f);
+    await Promise.resolve(m.importerZip({ ...w.ctx, octets: zipDe('a.geojson') }));
+    assert.deepEqual(couchesDe(m, w.reglages, 'deux.zip'), ['a'], mode);
+    for (const f of fb) assert.equal(w.sur_disque.has(f), true, `${mode} : ${f} reste, l'effacement a échoué`);
+  }
+});
+
+test('réimport : un zip trafiqué (nom douteux) ne fait rien effacer', async () => {
+  const m = await M();
+  const w = mondeImport({ disque: [`${PROJET}/cerf.qgz`] });
+  for (const nomZip of ['../deux.zip', 'a/b.zip', '..']) {
+    await Promise.resolve(m.importerZip({ ...w.ctx, nomZip }));
+    assert.deepEqual(w.appels, [], nomZip);
+  }
+  assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true);
+});
+
+// ---- Branchement dans Cerf.qml (modèle : tests/plugin-styles.test.mjs, test « Cerf.qml : branche saveVectorLayerAs ») -----
+test('Cerf.qml : l\'appel à Logique.retirerCouche passe existe (FileUtils.fileExists) et effacerFichier', () => {
+  const qml = readFileSync(new URL('../plugin/Cerf.qml', import.meta.url), 'utf8');
+  const appel = /Logique\.retirerCouche\(\{[\s\S]*?\}\);/.exec(qml);
+  assert.ok(appel, 'appel à Logique.retirerCouche introuvable dans Cerf.qml');
+  assert.match(appel[0], /existe: function \(chemin\) \{ return FileUtils\.fileExists\(chemin\); \}/, `existe non branché : ${R}`);
+  assert.match(appel[0], /effacerFichier: effacerFichier/, `effacerFichier non branché : ${R}`);
 });

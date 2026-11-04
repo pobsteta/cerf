@@ -62,6 +62,7 @@ _Modèle de carte :_
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
   - Moyens : prototype n° 2, zips de recette
+
 ## Terminé
 
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · fusionnée (PR #18)

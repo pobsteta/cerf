@@ -208,3 +208,4 @@
 2026-11-04 · Pascal · 025 · décision : les trois flashcodes (plugin, première installation, mise à jour) confirmés.
 2026-11-04 · relecteur · 025 · prête pour Pascal (398 verts, adresses exactes, contrôle par décodage avant release, sources QField vérifiées) ; la branche porte aussi le pilotage ; flashcode stable du plugin seulement à la prochaine version ; la fusion republie projet-modele. PR #20 ouverte en brouillon. Lancement manuel des workflows refusé à la session (403) : à faire par Pascal dans Actions.
 2026-11-04 · Pascal · 025 · essai : les flashcodes fonctionnent sur le Samsung ; fusion de #20 demandée.
+2026-11-04 · Claude (orchestrateur) · 025 · PR #20 fusionnée dans main (7efb073) ; carte 025 en Terminé ; la release projet-modele se republie avec ses flashcodes.

@@ -70,6 +70,9 @@ function ctxImport(extra = {}) {
       decrireCouche: (c) => ({ lisible: c.isValid, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
       controlerCouche: () => ({ charge: true, controle: 'ok', message: '', avertissements: [] }),
       ajouterALaCarte: () => {},
+      // Mission 010 (ADR 0008) : réécriture en GeoPackage et écriture du .qml, simulées (le chemin demandé est rendu).
+      reecrireCouche: (c, cible) => cible,
+      ecrireFichier: () => true,
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
     },
@@ -180,11 +183,15 @@ test('décision 4 : deux GeoJSON de même nom dans deux dossiers -> la seconde r
   const m = await M();
   const { ctx, couches, reglages } = ctxImport({ ctx: { octets: zipDe('a/UG.geojson', 'b/UG.geojson', 'c.geojson') } });
   const r = m.importerZip(ctx);
-  assert.deepEqual(couches.appels.map((a) => a.source), [`/vsizip/${COPIES}/x.zip/a/UG.geojson`, `/vsizip/${COPIES}/x.zip/c.geojson`]);
+  // Mission 010 (ADR 0008) : chaque couche acceptée est ouverte en /vsizip/ puis sa copie GeoPackage chargée.
+  assert.deepEqual(couches.appels.map((a) => a.source), [
+    `/vsizip/${COPIES}/x.zip/a/UG.geojson`, `${COPIES}/x/UG.gpkg|layername=UG`,
+    `/vsizip/${COPIES}/x.zip/c.geojson`, `${COPIES}/x/c.gpkg|layername=c`,
+  ]);
   assert.deepEqual(r.refusees.map((x) => x.couche), ['UG']);
   assert.equal(r.refusees[0].entree, 'b/UG.geojson');
   assert.match(r.refusees[0].raison, /double/);
-  assert.deepEqual(m.lireRegistre(reglages, ID).map((x) => x.chemin_vsi), ['x.zip/a/UG.geojson', 'x.zip/c.geojson']);
+  assert.deepEqual(m.lireRegistre(reglages, ID).map((x) => x.chemin), ['x/UG.gpkg', 'x/c.gpkg']);
 });
 
 // ============================================================================ import : messages, dates
@@ -276,16 +283,15 @@ test('retirerCouche : message quand la copie sert encore', async () => {
 });
 
 // ============================================================================ forme du plugin
-// Liste explicite (mission 012 : sept fichiers, cerf-controles.mjs en plus). La mission 010 y ajoutera
-// cerf-styles.mjs : ajouter alors la ligne ci-dessous, sans toucher au reste.
+// Liste explicite (mission 012 : cerf-controles.mjs ; mission 010 : cerf-styles.mjs).
 const FICHIERS = [
   'main.qml', 'Cerf.qml', 'Panneau.qml',
-  'cerf-logique.mjs', 'cerf-controles.mjs',
+  'cerf-logique.mjs', 'cerf-controles.mjs', 'cerf-styles.mjs',
   'metadata.txt', 'icon.svg',
 ];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
 
-test('forme : les sept fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
+test('forme : les huit fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
   for (const f of FICHIERS) assert.ok(existsSync(join(PLUGIN, f)), `absent : plugin/${f}`);
   const meta = lire('metadata.txt');
   assert.match(meta, /^\[general\]$/m);
@@ -328,7 +334,7 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : plugin-cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin (dont cerf-controles.mjs)', async () => {
+test('empaquetage : plugin-cerf.zip a main.qml à sa racine et exactement les huit fichiers du plugin (dont cerf-controles.mjs et cerf-styles.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
@@ -351,6 +357,14 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   assert.match(wf, /plugin-essai/);
   assert.match(wf, /plugin-v\$version/);
   assert.match(wf, /mission\/008-squelette-plugin/);
+  assert.match(wf, /mission\/010-styles/);
+  // Toute branche autre que main = préversion : jamais « latest », flashcode d'essai.
+  assert.match(wf, /gh release edit plugin-essai --notes-file notes\.md --latest=false/);
+  assert.match(wf, /--prerelease --latest=false/);
+  // L'étiquette plugin-essai suit le commit poussé (gh release edit ne la déplace pas) ; jamais plugin-v*.
+  assert.match(wf, /gh api --method PATCH "repos\/\$GITHUB_REPOSITORY\/git\/refs\/tags\/plugin-essai" -f sha="\$GITHUB_SHA" -F force=true/);
+  assert.ok(!/git\/refs\/tags\/plugin-v/.test(wf), 'aucune étiquette de version stable déplacée');
+  assert.match(wf, /\[ "\$GITHUB_REF_NAME" = "main" \]; then mode=stable; else mode=essai/);
 });
 
 // ============================================================================ aides du pont QML (Cerf.qml)
@@ -379,5 +393,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.2\.1$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.3\.4$/m);
 });

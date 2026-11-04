@@ -104,3 +104,23 @@ contrôlée (012) depuis `/vsizip/`, réécrite en GeoPackage (une table par fic
 gardée. La mission 026 (décompresseur) est **abandonnée**. Valeur sacrifiée ajoutée : la
 fidélité au format d'origine (un Shapefile devient un GeoPackage). À faire : amender l'ADR 0003,
 l'ADR 0007 (effacement des `.gpkg`, `.qml` et annexes dans `cerf-imports/`) et la spec § 3.3.
+
+## Arbitrages du 4 novembre 2026 (mission 032 : messages et ancien .qml)
+
+Ajout daté ; rien ci-dessus n'est modifié. Les textes des messages ne sont pas recopiés ici :
+source unique, spec § 4 et § 5.
+
+1. **Ancien `.qml` voisin effacé avant l'écriture**, puis on vérifie qu'il a disparu, qu'il y
+   ait ou non un style à poser (sinon un `.qml` d'un import précédent s'appliquerait en silence).
+   Refus et avertissements qui en découlent : spec § 5.
+2. **Nom dans les messages** : le chemin complet tel qu'il est dans le zip, pour tous les
+   contrôles et tous les avertissements : spec § 4.
+3. **GeoPackage dont les tables ne sont pas lisibles, ou sans table vecteur** : refus, jamais
+   ouvert sans `layername`, jamais ignoré en silence : spec § 4. La façon de lire les tables
+   hors ligne reste à l'étude (mission 030) ; elle n'est pas tranchée ici.
+
+## Note datée (4 novembre 2026, ajout accepté par Pascal)
+
+« Ce qui change » n° 1 décrit la voie par extraction, non retenue ; pour la voie retenue
+(`saveVectorLayerAs`), le remplacement du dossier au réimport reste ouvert (mission 014, ADR 0007
+amendée).

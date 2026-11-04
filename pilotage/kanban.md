@@ -20,10 +20,6 @@ _Modèle de carte :_
 
 ## Bac à sable
 
-- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
-  - Homme : `testeur` puis `dev` (sonnet)
-  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
-  - Moyens : prototype n° 2, zips de recette
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente
@@ -31,10 +27,14 @@ _Modèle de carte :_
 
 ## Validé
 
-- [010-styles](missions/010-styles.md) · depuis le cycle 0
-  - Homme : `dev` (sonnet)
-  - Mission : Styles du manuel — cycle prévu 4
-  - Moyens : `docs/spec.md` § 5
+- [039-readme](missions/039-readme.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `archiviste` (sonnet)
+  - Mission : README : installer le projet, le plugin, et charger un zip
+  - Moyens : spec, releases, journal
+- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
+  - Moyens : sources de QField 4.3.7, prototype n° 3, Samsung de Pascal
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -54,13 +54,58 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · tests prêts (65a6680) ; dev après la 010 et la 030
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
+  - Moyens : prototype n° 2, zips de recette
+
+## Terminé
+
+- [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · fusionnée (PR #35), plugin 0.3.4
+  - Homme : `dev` (sonnet)
+  - Mission : Compter les entités par un itérateur (plugin 0.3.4)
+  - Moyens : prototype n° 2 (createFeatureIterator), Cerf.qml
+- [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · fusionnée (PR #34), plugin 0.3.3
+  - Homme : `dev` (sonnet)
+  - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)
+  - Moyens : prototype n° 2 (reprojection prouvée), Cerf.qml
+- [036-notes-essai-manuel](missions/036-notes-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #32)
+  - Homme : `dev` (sonnet)
+  - Mission : Notes de la préversion essai-manuel : plugin 0.3.2 ou plus
+  - Moyens : workflow release-essai-manuel.yml
+- [035-essai-manuel-geojson](missions/035-essai-manuel-geojson.md) · depuis le cycle 6 · fusionnée (PR #29)
+  - Homme : `dev` (sonnet)
+  - Mission : Zip de démonstration tout en GeoJSON
+  - Moyens : outil de la mission 033
+- [034-crs-valide](missions/034-crs-valide.md) · depuis le cycle 6 · fusionnée (PR #30), plugin 0.3.2
+  - Homme : `dev` (sonnet)
+  - Mission : Système de coordonnées jugé valide d'après ce que QML voit (plugin 0.3.2)
+  - Moyens : sources de QGIS 3a92eb3, Cerf.qml
+- [033-essai-manuel](missions/033-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #27)
+  - Homme : `dev` (sonnet)
+  - Mission : Zip de démonstration aux noms du manuel
+  - Moyens : spec § 5, outils de zips de recette
+- [031-nettoyage-retrait](missions/031-nettoyage-retrait.md) · depuis le cycle 6 · fusionnée (PR #26), plugin 0.3.1
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Effacer au retrait les fichiers réécrits d'une couche
+  - Moyens : ADR 0007 amendée, ADR 0008, fiche 027 (P3-5)
+- [032-spec-messages](missions/032-spec-messages.md) · depuis le cycle 6 · fusionnée (PR #24)
+  - Homme : `archiviste` (sonnet)
+  - Mission : Spec § 4 et ADR 0008 : messages au chemin complet, GeoPackage, ancien .qml
+  - Moyens : arbitrages du 4 novembre, code de la 010, tests de la 024
+- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · fusionnée (PR #18)
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
 
-## Terminé
-
+- [010-styles](missions/010-styles.md) · depuis le cycle 0 · fusionnée (PR #18), plugin 0.3.0
+  - Homme : `dev` (sonnet)
+  - Mission : Styles du manuel — cycle prévu 4
+  - Moyens : `docs/spec.md` § 5
+- [029-amendements-adr-0008](missions/029-amendements-adr-0008.md) · depuis le cycle 6 · fusionnée (PR #22)
+  - Homme : `archiviste` (sonnet)
+  - Mission : Amender ADR 0003, ADR 0007 et la spec après l'ADR 0008
+  - Moyens : ADR 0008, fiche 010
 - [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML

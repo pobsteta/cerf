@@ -15,9 +15,9 @@ Un seul projet `cerf.qgz` par appareil, pour toutes les forêts de l'agent (§ 9
 | 0 | Une fois par appareil : installer le plugin par son URL et copier `cerf.qgz`. | QField installe le plugin d'application (ADR 0001). | oui |
 | 1 | Au bureau ou la veille : copier le zip sur l'appareil ; ouvrir le projet sur la zone du jour. | Les tuiles XYZ consultées sont mises en cache (ADR 0002). | oui |
 | 2 | Sur le terrain : ouvrir `cerf.qgz`. | Le plugin reconnaît un projet Cerf (`cerf_id`, § 3.3) et recharge les couches de son registre. | non |
-| 3 | Toucher le bouton « Ajouter un zip » (barre d'outils des plugins). | Ouvre le sélecteur de fichiers Android. | non |
+| 3 | Toucher le bouton Cerf (barre d'outils des plugins), puis « Ajouter un zip » dans le panneau Cerf qui s'ouvre. | Ouvre le sélecteur de fichiers Android. | non |
 | 4 | Choisir le zip. | Copie le zip (§ 3.3), en liste le contenu (prototype n° 1). | non |
-| 5 | Cocher les couches à charger (toutes cochées par défaut). | Pour chaque couche : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
+| 5 | Rien à cocher (Pascal, 4 novembre 2026) : toutes les couches du zip sont chargées ; une couche se retire ensuite dans le panneau Cerf (étape 7). | Pour chaque couche du zip : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
 | 6 | Regarder la carte. | Couches aux couleurs du manuel, étiquettes essence/diamètre sur ProdBois. | non |
 | 7 | Retirer une couche, depuis le panneau du plugin (ou le menu de la couche, si QField le permet à un plugin). | Retire la couche de la carte et du registre. La copie du zip est effacée quand plus aucune couche ne s'en sert **si QField le permet** ; sinon elle reste et son nom est affiché (§ 9, n° 2). | non |
 | 8 | Fermer, rouvrir le projet, ou redémarrer l'appareil. | Étape 2 : tout revient. | non |
@@ -97,7 +97,8 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Zip réimporté sous le même nom** : la nouvelle copie remplace l'ancienne ; les couches
   vecteur sont **réécrites** (ADR 0008) ; les GeoTIFF du registre qui en viennent sont
   rechargés. Le sort du dossier `cerf-imports/<nom du zip>/` au réimport reste une question
-  ouverte (mission 014, ADR 0007 amendée).
+  ouverte (mission 014, ADR 0007 amendée). **Ancien `.qml`** : effacé avant l'écriture de la
+  nouvelle copie, voir § 5.
 - **Zip absent à l'ouverture** (carte SD retirée, copie effacée) : ne vaut plus que pour les
   **GeoTIFF** et les anciennes entrées (`chemin_vsi`) : l'entrée **reste** au registre ; un
   message unique dit « 2 couches n'ont pas pu être rechargées : zip absent » ; l'agent peut
@@ -171,10 +172,11 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 
 ## 4. Contrôles à l'import (ADR 0004)
 
-Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
+Dans l'ordre, pour chaque couche du zip ; le premier qui échoue arrête la couche :
 
-1. **Shapefile incomplet** : `.prj` absent → refus « Parcelles.shp : fichier .prj
-   manquant, système de coordonnées inconnu ». `.shx` ou `.dbf` absent → refus
+1. **Shapefile incomplet** : `.prj` absent → refus « Serre EA/réf/Parcelles.shp : fichier .prj
+   manquant, système de coordonnées inconnu » (le nom est le chemin complet dans le zip, voir
+   plus bas). `.shx` ou `.dbf` absent → refus
    « UG.shp : fichier .shx manquant, couche non chargée » (même forme pour `.dbf` ; Pascal,
    4 novembre 2026). `.cpg` absent → chargement avec avertissement « accents peut-être mal
    lus ». Un Shapefile vide sans `.prj` est refusé (contrôle 1 avant le contrôle 4).
@@ -192,10 +194,40 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 
 **Pas de chargement forcé** : l'agent ne peut pas passer outre un refus (§ 9, n° 7).
 
-**Nom de la couche dans les messages** : chaque refus et chaque avertissement commence par
-le nom de la couche **avec son extension**, tel qu'il est dans le zip (« FRT.shp : … »,
-« Parcelles.shp : … ») ; pour une table de GeoPackage, « fichier.gpkg/table : … » ; un zip
-peut en contenir plusieurs (Pascal, 4 novembre 2026).
+**Nom de la couche dans les messages** : chaque refus et chaque avertissement (tous les
+contrôles ci-dessus, tous les avertissements) commence par le **chemin complet de la couche,
+avec son extension, tel qu'il est dans le zip** : « FRT.shp : … » à la racine,
+« Serre EA/réf/Parcelles.shp : … » dans des dossiers ; pour une table de GeoPackage,
+« d/Serre.gpkg/Releves : … » (chemin du `.gpkg`, puis `/table`) ; un zip peut en contenir
+plusieurs et deux dossiers peuvent porter des fichiers de même nom (Pascal, 4 novembre 2026,
+qui précise l'arbitrage du même jour sur le nom avec extension).
+
+**GeoPackage sans table lisible** (Pascal, 4 novembre 2026) :
+- tables illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
+  chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée ») ;
+  *[le cas « tables inconnues » (liste des tables impossible à obtenir) est provisoirement rangé
+  sous ce message : le mot « inconnues » ne vient pas de Pascal ; en attente de Pascal et de la
+  mission 030]* ;
+- aucune table vecteur → refus « `<chemin>.gpkg` : aucune table vecteur, couche non chargée ».
+- Dans les deux cas, le fichier n'est **jamais ouvert sans `layername`** (QGIS ouvrirait la
+  première table en silence) et n'est **jamais ignoré en silence** ; les autres couches du zip
+  sont traitées. Ce n'est pas le contrôle 1 (qui vise le Shapefile incomplet).
+- **À l'étude, non tranché ici** : comment le plugin lit les tables d'un GeoPackage hors ligne
+  (mission 030, prototype n° 4). Tant que ce n'est pas tranché, tout GeoPackage du zip tombe dans
+  le premier cas.
+
+**Deux couches de même nom dans deux dossiers du zip** (`a/UG.geojson`, `b/UG.geojson`) : elles
+donneraient la même copie `cerf-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
+de la seconde (décision n° 4 du plan de la mission 008, validée par Pascal le 3 novembre 2026) qui
+empêche cette collision : « `<chemin de la seconde>` : nom de couche en double dans le zip (déjà
+pris par `<chemin de la première>`) ». Texte : `plugin/cerf-logique.mjs`, fonction `importerZip` ; test : `tests/controles-branchement.test.mjs`.
+
+**Refus à la copie dans `cerf-imports/`** (après les contrôles ci-dessus, avant le `.qml`, § 5).
+Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pas la spec) ; le nom en tête suit la règle ci-dessus :
+- « `<chemin>` : nom non écrivable dans cerf-imports/, couche refusée » ;
+- « `<chemin>` : copie impossible (écriture refusée par QField), couche refusée » ;
+- « `<chemin>` : copie écrite hors de cerf-imports/, couche refusée » ;
+- « `<chemin>` : copie illisible après réécriture, couche refusée ».
 
 ## 5. Styles (annexe de la convention du zip)
 
@@ -209,6 +241,19 @@ retenu** (celui du zip, contrôlé, sinon celui de la règle) **à côté du Geo
 avant le chargement** ; QGIS l'applique alors seul, et le garde à la réouverture. Un `.qml`
 écrit après le chargement serait ignoré. Une table, un `.qml` (`UG.qml` à côté de la table `UG`).
 Un GeoTIFF lu dans le zip n'a pas de style du manuel.
+
+**Ancien `.qml` voisin** (Pascal, 4 novembre 2026) : avant toute écriture, le plugin **efface
+l'ancien `.qml`** à côté de la copie (un `.qml` resté d'un import précédent s'appliquerait en
+silence), **puis vérifie qu'il a disparu**, qu'il y ait ou non un style à poser.
+- Il ne s'efface pas → couche **refusée** : « `<chemin>` : ancien style (.qml) impossible à
+  effacer, couche refusée ».
+- L'écriture rate ou est interrompue → le `.qml` est effacé et la couche est **chargée avec le
+  style par défaut**, avec l'avertissement « style non écrit, couche chargée avec le style par
+  défaut ».
+- Le `.qml` mal écrit ne s'efface pas non plus → couche **refusée** : « `<chemin>` : style (.qml)
+  mal écrit et impossible à effacer, couche refusée ».
+Le nom de ces messages suit la règle du § 4 (chemin complet dans le zip). Les textes sont ceux du
+code de la mission 010 (`plugin/cerf-logique.mjs`, `copierEtStyler`, commit d7f9f2e).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.
@@ -304,6 +349,13 @@ embarqué (sauf échec à J+2).
    Cerf), et l'on demande à QField d'exposer le listage d'un zip aux plugins.
 2. Si l'effacement d'un `.zip` est impossible : la copie reste sur l'appareil, son nom
    est affiché (valeur sacrifiée : la place).
+   Au retrait d'une couche, si un fichier réécrit de la couche (`.gpkg`, `.qml`, `-wal`, `-shm`,
+   `.aux.xml`) ne peut pas être effacé : « Fichiers restés sur l'appareil : <noms>. » (noms des
+   fichiers réellement restés ; arbitrage de Pascal, 4 novembre 2026, mission 031). Même ligne
+   au réimport d'un zip, pour une couche sortie du registre dont un fichier résiste. Si le service
+   `existe` est absent (retrait comme réimport), aucun fichier de couche n'est effacé et le message
+   dit : « Effacement non vérifiable : fichiers peut-être restés. » (la copie du zip garde sa règle :
+   effacée à la dernière couche).
 3. **Un seul `cerf.qgz` par appareil** pour toutes les forêts.
 4. Licence **GPL-3.0-or-later** ; aucune ligne recopiée de `qfield-layer-loader` ni de
    `qfield_addLayer` ; **le code est à Pascal**.

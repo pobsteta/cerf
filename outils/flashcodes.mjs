@@ -6,9 +6,9 @@
 // releases d'essai (pour que Pascal installe l'essai avant fusion), jamais les adresses stables.
 //
 // Usage :
-//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet> <stable|essai>   PNG + SVG dans <dossier>
-//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet> <stable|essai>   décode et compare
-//   node outils/flashcodes.mjs notes    <plugin|projet> <stable|essai> <étiquette> bloc Markdown des notes
+//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet|manuel|manuel-geojson> <stable|essai>   PNG + SVG dans <dossier>
+//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet|manuel|manuel-geojson> <stable|essai>   décode et compare
+//   node outils/flashcodes.mjs notes    <plugin|projet|manuel|manuel-geojson> <stable|essai> <étiquette> bloc Markdown des notes
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,6 +43,28 @@ export function flashcodes(type, mode) {
         url: `${DEPOT}/download/${etiquette}/${PROJET}`,
         titre: 'Projet Cerf, première installation',
         phrase: `Installe le projet Cerf avec sa couche « Saisie terrain » vide, une seule fois par appareil : ${ACCES_PROJET}.`,
+      },
+    ];
+  }
+  if (type === 'manuel') {
+    // Mission 033 : zip de démonstration, une seule adresse (étiquette fixe « essai-manuel »), même en mode stable ou essai.
+    return [
+      {
+        nom: 'flashcode-essai-manuel',
+        url: `${DEPOT}/download/essai-manuel/essai-manuel.zip`,
+        titre: 'Zip de démonstration essai-manuel.zip',
+        phrase: 'Télécharge le zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf.',
+      },
+    ];
+  }
+  if (type === 'manuel-geojson') {
+    // Mission 035 : variante tout en GeoJSON, dans la même préversion « essai-manuel » (même adresse stable, autre fichier).
+    return [
+      {
+        nom: 'flashcode-essai-manuel-geojson',
+        url: `${DEPOT}/download/essai-manuel/essai-manuel-geojson.zip`,
+        titre: 'Zip de démonstration essai-manuel-geojson.zip (tout en GeoJSON)',
+        phrase: 'Télécharge la variante tout en GeoJSON du zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-la dans cerf.qgz avec le plugin Cerf : à prendre tant que le plugin ne lit pas les Shapefile.',
       },
     ];
   }

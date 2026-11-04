@@ -59,3 +59,37 @@ après la fusion de la 010.
 - **En attente de Pascal :** nom affiché d'une couche rangée dans un dossier du zip ; GeoPackage
   sans aucune table vecteur (`[]`) : message ou silence ; texte du refus ; manière de lire les tables
   d'un `.gpkg` hors ligne (technique : prototype ou fiche 027).
+
+## Arbitrages de Pascal (4 novembre 2026, « oui à tout »)
+
+- Nom affiché d'une couche rangée dans un dossier du zip : **chemin complet dans le zip**
+  (ex. `Serre EA/réf/Parcelles.shp`, `d/Serre.gpkg/Releves`).
+- GeoPackage sans aucune table vecteur (`[]`) : **un message**, jamais le silence.
+- Refus d'un GeoPackage aux tables illisibles : « `Serre.gpkg : tables illisibles, couche non
+  chargée` » (avec le nom tel qu'il est dans le zip).
+- Lecture des tables hors ligne : la fiche 027 ne répond pas ; **prototype n° 4 (mission 030)**.
+  Le dev de la 024 part après la 010 et la 030.
+- Note (relecture du 4 novembre) : le cas `[]` n'est pas testé dans `importerZip` tant que le
+  service de lecture des tables (mission 030) n'existe pas ; il le sera avec le dev de la 024.
+- Le chemin complet vaut pour **tous** les messages du § 4 (contrôles et avertissements), pas
+  seulement pour le refus d'un GeoPackage : lecture de l'orchestrateur de l'arbitrage de Pascal, à
+  confirmer par lui.
+- **Confirmé par Pascal (4 novembre) :** chemin complet pour tous les messages du § 4 ;
+  GeoPackage sans table vecteur : « `Serre.gpkg : aucune table vecteur, couche non chargée` »
+  (distinct de « tables illisibles »).
+- **Écart à combler par le dev de la 024 :** les messages de la 010 (contrôles et styles) portent
+  le nom court (`nomDeFichier(c.entree)`) ; la spec amendée (032) exige le chemin complet dans le
+  zip pour tous les messages.
+- **Exigence tirée de la relecture de la 030 (4 novembre) :** si la lecture de `gpkg_contents`
+  ne rend aucune table vecteur alors que les sondes `layerid` ouvrent des couches, ou si un
+  `data_type` manque, c'est « tables illisibles », jamais « aucune table vecteur ». Le testeur
+  l'ajoutera quand la voie de lecture sera fixée par l'essai du prototype n° 4.
+
+## À revoir avec la 024 (Pascal, 4 novembre 2026)
+
+- **Plafond de listage du zip, 10 Mo** (`PLAFOND_LISTAGE_OCTETS`, décision n° 6 de la mission 008,
+  posé pour le squelette) : il porte sur la taille du fichier `.zip` et contredit le zip `lourd`
+  de la recette (spec § 6, critère 7 : GeoTIFF de 200 Mo). À revoir dans la 024, avant de lire les
+  GeoTIFF : mesurer ce que QField lit sans planter, puis proposer une valeur à Pascal.
+- Rappels hérités des missions 037 et 038 : `ouvrirCouche` ouvre tout par `loadVectorLayer`
+  (un GeoTIFF serait refusé au contrôle 2) ; code mort `p.isEmpty` dans `Cerf.qml` à retirer.

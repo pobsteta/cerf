@@ -12,7 +12,64 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.2.1';
+export const VERSION = '0.3.4';
+
+// Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
+// `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
+// expose `LayerUtils.createFeatureIterator(couche)` (qflayerutils.h l. 234), dont l'itérateur a hasNext(), next() et
+// close() invocables (l. 52-75). `creerIterateur` est ce service, passé en paramètre (testable sans QField).
+// Le contrôle 4 n'a besoin que de « vide » (0) ou « non vide » (au moins 1) : on s'arrête à la PREMIÈRE entité
+// (plafond = 1), sans parcourir une grosse couche. nbEntites ne sert qu'à ce contrôle 4 : valeur 0 ou 1, jamais un total.
+// Un itérateur impossible à créer ou qui lève rend { lisible: false } (contrôle 2, « illisible »), jamais « vide ».
+// L'itérateur est toujours fermé.
+export const PLAFOND_COMPTAGE = 1;
+export function compterEntites(couche, creerIterateur) {
+  let it = null;
+  let nbEntites = 0;
+  let lisible = true;
+  try {
+    it = creerIterateur(couche);
+    if (!it) throw new Error('itérateur absent');
+    while (nbEntites < PLAFOND_COMPTAGE && it.hasNext()) {
+      it.next();
+      nbEntites++;
+    }
+  } catch (e) {
+    lisible = false;
+    nbEntites = -1;
+  }
+  if (it) {
+    try { it.close(); } catch (e) { /* fermeture sans effet sur le résultat */ }
+  }
+  return { lisible: lisible, nbEntites: nbEntites };
+}
+
+// Emprise d'une couche { xmin, ymin, xmax, ymax } (mission 037). Dans QGIS 3a92eb3, `extent` est une MÉTHODE
+// (`Q_INVOKABLE virtual QgsRectangle extent() const`, qgsmaplayer.h l. 564), pas une propriété : `couche.extent` vaut
+// alors une fonction, dont xMinimum est undefined. On l'appelle donc si c'est une fonction ; sinon on la lit telle quelle.
+export function lireEmprise(couche) {
+  let x = couche.extent;
+  if (typeof x === 'function') x = couche.extent();
+  return { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+}
+
+// Mission 034 : jugement de validité du système de coordonnées d'une couche, d'après ce que QML voit.
+// QGIS (commit 3a92eb3, embarqué par QField 4.3.7, src/core/proj/qgscoordinatereferencesystem.h, l. 218-223) n'expose
+// à QML que mapUnits, isGeographic, authid et description (Q_PROPERTY) ; isValid() (l. 588) n'est ni Q_PROPERTY ni
+// Q_INVOKABLE : crs.isValid vaut undefined côté QML. Règle : valide si authid non vide, à défaut si description non vide.
+// `crs` est rendu tel quel (reprojection) ; epsg est tiré de authid (0 si pas de forme « EPSG:n »).
+export function decrireSysteme(crs) {
+  let authid = '';
+  let description = '';
+  try {
+    authid = String(crs.authid || '').trim();
+    description = String(crs.description || '').trim();
+  } catch (e) {
+    return { valide: false, epsg: 0, authid: '', crs: crs };
+  }
+  const m = /^EPSG:(\d+)$/.exec(authid);
+  return { valide: authid !== '' || description !== '', epsg: m ? Number(m[1]) : 0, authid: authid, crs: crs };
+}
 
 // Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
 // 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors
@@ -23,8 +80,10 @@ export const NOM_DOSSIER_COPIES = 'cerf-imports';
 // valeur du prototype (prototype/cerf-zip.mjs, SEUIL_LECTURE_OCTETS = 10 000 000 octets).
 export const PLAFOND_LISTAGE_OCTETS = 10000000;
 
-// Style inscrit au registre par le squelette (les styles du manuel viennent à la mission 010).
+// Style inscrit au registre quand aucune règle ne s'applique ; sinon le nom de la règle (UG,
+// Parcelles, FRT, ProdBois) ou 'qml' (mission 010, plugin/cerf-styles.mjs).
 export const STYLE_DEFAUT = 'defaut';
+export const STYLE_QML = 'qml';
 
 // --------------------------------------------------------------------------- octets
 
@@ -106,6 +165,35 @@ function decoderUtf8(octets) {
     i += long;
   }
   return s;
+}
+
+// Texte UTF-8 d'un contenu d'octets (un .json, un .qml lus dans le zip).
+export function texteDe(valeur) {
+  return decoderUtf8(octetsDe(valeur));
+}
+
+// Octets UTF-8 d'un texte (le moteur de QML n'a pas TextEncoder), pour écrire un .qml.
+export function octetsUtf8(texte) {
+  const sortie = [];
+  const t = String(texte);
+  for (let i = 0; i < t.length; i++) {
+    let c = t.charCodeAt(i);
+    if (c >= 0xd800 && c <= 0xdbff && i + 1 < t.length) {
+      const d = t.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d <= 0xdfff) { c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00); i++; }
+    }
+    if (c < 0x80) sortie.push(c);
+    else if (c < 0x800) sortie.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+    else if (c < 0x10000) sortie.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    else sortie.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+  }
+  return new Uint8Array(sortie);
+}
+
+// Un ArrayBuffer de la taille exacte des octets (celui que reçoit FileUtils.writeFileContent).
+export function arrayBufferExact(octets) {
+  const o = octetsDe(octets);
+  return o.buffer.slice(o.byteOffset, o.byteOffset + o.byteLength);
 }
 
 // --------------------------------------------------------------------------- zip
@@ -279,7 +367,8 @@ export function zipDeLaSource(source, dossier) {
 
 // --------------------------------------------------------------------------- couches du zip
 
-// Squelette : GeoJSON par l'extension .geojson (le .json est confié à la mission 010).
+// GeoJSON par l'extension .geojson ; un .json est aussi retenu, marqué `json: true` : c'est
+// importerZip qui lit son contenu pour savoir si c'est du GeoJSON (spec § 3.1, mission 010).
 // Décision n° 7 : __MACOSX/ et les fichiers « ._* » (zips faits sur Mac) ignorés en silence.
 export function couchesDuZip(noms) {
   const couches = [];
@@ -289,10 +378,11 @@ export function couchesDuZip(noms) {
     if (('/' + entree).indexOf('/__MACOSX/') >= 0) continue;
     const fichier = nomDeFichier(entree);
     if (fichier.indexOf('._') === 0) continue;
-    if (!/\.geojson$/i.test(fichier)) continue;
-    const couche = fichier.substring(0, fichier.length - '.geojson'.length);
+    const estJson = /\.json$/i.test(fichier) && !/\.geojson$/i.test(fichier);
+    if (!estJson && !/\.geojson$/i.test(fichier)) continue;
+    const couche = fichier.substring(0, fichier.length - (estJson ? '.json' : '.geojson').length);
     if (couche === '') continue;
-    couches.push({ couche, entree });
+    if (estJson) couches.push({ couche, entree, json: true }); else couches.push({ couche, entree });
   }
   return couches;
 }
@@ -362,11 +452,18 @@ export function zipUtilise(reglages, cerfId, zip) {
   return nombreDeCouchesDuZip(reglages, cerfId, zip) > 0;
 }
 
-// Entrée saine : nom de zip simple, couche nommée, chemin_vsi dans ce zip, sans « .. ».
+// Entrée saine : nom de zip simple, couche nommée, et soit `chemin` (copie GeoPackage, ADR 0008 :
+// « <dossier du zip>/<fichier>.gpkg » sous cerf-imports/), soit `chemin_vsi` dans ce zip (GeoTIFF
+// lus dans le zip, entrées des versions 0.2.x) ; sans « .. ».
 function entreeSaine(e) {
   if (!e || typeof e !== 'object') return false;
   if (!estNomDeZip(e.zip)) return false;
   if (typeof e.couche !== 'string' || e.couche === '') return false;
+  if (typeof e.chemin === 'string') {
+    if (e.chemin.indexOf('|') >= 0 || e.chemin.indexOf('\\') >= 0 || !segmentsSains(e.chemin)) return false;
+    const segs = e.chemin.split('/');
+    return segs.length === 2 && segs[0] === dossierDuZip(e.zip) && /\.gpkg$/.test(segs[1]) && segs[1] !== '.gpkg';
+  }
   if (typeof e.chemin_vsi !== 'string' || e.chemin_vsi.indexOf(e.zip + '/') !== 0) return false;
   return segmentsSains(e.chemin_vsi);
 }
@@ -385,9 +482,9 @@ function nomsDe(liste) {
 
 // --------------------------------------------------------------------------- importer
 
-function chargerSansPlanter(chargerCouche, source, nom) {
+function chargerSansPlanter(chargerCouche, source, nom, zip) {
   try {
-    const c = chargerCouche(source, nom);
+    const c = zip === undefined ? chargerCouche(source, nom) : chargerCouche(source, nom, zip);
     if (!c) return { couche: null, raison: 'illisible' };
     if (!c.isValid) return { couche: null, raison: 'illisible' };
     return { couche: c, raison: '' };
@@ -420,7 +517,7 @@ function controlerSansPlanter(ctx, couche, c, noms) {
   const nom = nomDeFichier(c.entree);
   try {
     const entree = decrireEntree(c.entree, noms);
-    const lue = couche ? ctx.decrireCouche(couche) : { lisible: false };
+    const lue = couche ? ctx.decrireCouche(couche, entree.format) : { lisible: false };
     const description = Object.assign({}, lue, entree);
     if (!couche) description.lisible = false;
     const v = ctx.controlerCouche(description);
@@ -429,6 +526,203 @@ function controlerSansPlanter(ctx, couche, c, noms) {
   } catch (e) {
     return { charge: false, message: nom + ' : contrôle impossible, couche refusée' };
   }
+}
+
+// --------------------------------------------------------------------------- copies et styles (mission 010, ADR 0008)
+
+function messageErreur(e) {
+  return e && e.message ? e.message : String(e);
+}
+
+// Nom du dossier des copies d'un zip : le nom du zip sans « .zip » (il ne peut pas porter le nom
+// du zip lui-même, qui est un fichier du même dossier).
+export function dossierDuZip(nomZip) {
+  return String(nomZip).replace(/\.zip$/i, '');
+}
+
+// Chemins de la copie d'une couche vecteur : relatif à cerf-imports/ ('Serre/UG.gpkg'), absolu.
+export function cheminsDeLaCopie(dossierProjet, nomZip, nomCouche) {
+  const base = dossierCopies(dossierProjet);
+  const relatif = dossierDuZip(nomZip) + '/' + nomCouche + '.gpkg';
+  return { relatif, gpkg: base === '' ? '' : base + '/' + relatif, qml: base === '' ? '' : base + '/' + dossierDuZip(nomZip) + '/' + nomCouche + '.qml' };
+}
+
+// Garde avant toute écriture (saveVectorLayerAs crée les dossiers et écrase sans contrôle de
+// chemin ; writeFileContent aussi) : seul un « .gpkg » ou un « .qml » directement dans
+// <dossier des copies>/<dossier du zip>/ est écrivable. Ne se fie à aucun argument : dossier
+// absolu en « /cerf-imports », segments sains, ni « \ » ni « | » (séparateur d'URI de couche),
+// dossier du zip ne finissant pas par « .zip » (il se confondrait avec la copie du zip).
+export function peutEcrireCopie(chemin, dossier) {
+  if (typeof chemin !== 'string' || typeof dossier !== 'string') return false;
+  if (!peutEffacer(chemin.replace(/\.(gpkg|qml)$/, '.x'), dossier)) return false;
+  if (chemin.indexOf('|') >= 0) return false;
+  for (let i = 0; i < chemin.length; i++) if (chemin.charCodeAt(i) < 0x20) return false;
+  const reste = chemin.substring(dossier.length + 1).split('/');
+  if (reste.length !== 2) return false;
+  if (/\.zip$/i.test(reste[0]) || !/\.(gpkg|qml)$/.test(reste[1]) || /^\.(gpkg|qml)$/.test(reste[1])) return false;
+  return true;
+}
+
+// Choisit le .qml à écrire à côté de la copie : celui du zip s'il est valide (XML, racine <qgis>,
+// <renderer-v2>), sinon celui de la règle du manuel (styleDe puis qmlDe). Rend
+// { style, qml, contenu, avertissements } ; contenu null = rien à écrire (style par défaut).
+// Les avertissements sont des phrases seules (l'appelant ajoute « <fichier> : », spec § 4).
+function choisirStyle(ctx, couche, nomZip, nomCouche, entree, noms) {
+  const rien = { style: STYLE_DEFAUT, qml: '', contenu: null, avertissements: [] };
+  const S = ctx.styles;
+  if (!S || typeof ctx.infosCouche !== 'function') return rien;
+  try {
+    const infos = ctx.infosCouche(couche) || {};
+    const champs = infos.champs || [];
+    const cheminQml = typeof S.trouverQml === 'function' ? S.trouverQml(entree, noms) : null;
+    let texte = null;
+    if (cheminQml) {
+      try { texte = typeof ctx.lireTexte === 'function' ? ctx.lireTexte(nomZip, cheminQml) : null; } catch (e) { texte = null; }
+      texte = typeof texte === 'string' && S.qmlValide(texte) ? texte : '';
+    }
+    const r = S.reconnaitre({ nom: nomCouche, geometrie: infos.geometrie, champs, qml: texte });
+    if (r.source === 'qml') return { style: STYLE_QML, qml: cheminQml, contenu: texte, avertissements: [] };
+    const avertissements = r.avertissement ? [r.avertissement] : [];
+    const attendu = S.champCodeDe(r.regle);
+    const style = S.styleDe(r.regle, {
+      champCode: attendu === null ? undefined : (S.champReel(champs, S.sansCasseNiAccents(attendu)) || attendu),
+      champEssence: S.champReel(champs, 'essence') || undefined,
+      champDiametre: S.champReel(champs, 'diametre') || undefined,
+    });
+    const contenu = style === null ? null : S.qmlDe(style, infos.geometrie);
+    if (contenu === null) return { style: STYLE_DEFAUT, qml: '', contenu: null, avertissements };
+    return { style: r.regle, qml: '', contenu, avertissements };
+  } catch (e) {
+    return { style: STYLE_DEFAUT, qml: '', contenu: null, avertissements: ['style non appliqué (' + messageErreur(e) + ')'] };
+  }
+}
+
+// Vrai seulement s'il est SÛR qu'aucun .qml n'existe à ce chemin (effacé, puis vérifié par `existe` :
+// la valeur rendue par l'effacement n'est pas crue). Chemin non écrivable ou
+// exception : faux. Seule exception : les deux services de fichiers absents (contextes d'essai des tests).
+function qmlAbsent(ctx, chemin, dossier) {
+  try {
+    // Ces deux services sont FACULTATIFS dans importerZip à dessein : les tests du testeur (mission 024) ne
+    // les fournissent pas, et les rendre obligatoires les casserait. Absents, la garde est sautée sans bruit.
+    // Le branchement réel est donc figé ailleurs : tests/plugin-styles.test.mjs vérifie que Cerf.qml les passe.
+    if (typeof ctx.existe !== 'function' || typeof ctx.effacerFichier !== 'function') return true;
+    if (!ctx.existe(chemin)) return true;
+    if (!peutEcrireCopie(chemin, dossier)) return false;
+    ctx.effacerFichier(chemin);
+    return !ctx.existe(chemin);
+  } catch (e) {
+    return false;
+  }
+}
+
+// Réécrit la couche ouverte (contrôlée) en GeoPackage dans cerf-imports/<zip>/, écrit le .qml à
+// côté AVANT le chargement, puis charge la copie. Rend { ok: false, message } ou
+// { ok: true, copie, rendu, relatif, style, qml, avertissements }.
+function copierEtStyler(ctx, couche, c, nomZip, noms) {
+  const fichier = nomDeFichier(c.entree);
+  const dossier = dossierCopies(ctx.dossierProjet);
+  const p = cheminsDeLaCopie(ctx.dossierProjet, nomZip, c.couche);
+  if (!peutEcrireCopie(p.gpkg, dossier) || !peutEcrireCopie(p.qml, dossier)) {
+    return { ok: false, message: `${fichier} : nom non écrivable dans cerf-imports/, couche refusée` };
+  }
+  const st = choisirStyle(ctx, couche, nomZip, c.couche, c.entree, noms);
+  let rendu = '';
+  try { rendu = String(ctx.reecrireCouche(couche, p.gpkg) || ''); } catch (e) { rendu = ''; }
+  if (rendu === '') return { ok: false, message: `${fichier} : copie impossible (écriture refusée par QField), couche refusée` };
+  if (!/\.gpkg$/.test(rendu) || !peutEcrireCopie(rendu, dossier)) {
+    return { ok: false, message: `${fichier} : copie écrite hors de cerf-imports/, couche refusée` };
+  }
+  const avertissements = st.avertissements.slice();
+  const cheminQml = rendu.substring(0, rendu.length - '.gpkg'.length) + '.qml';
+  // Arbitrage de Pascal (4 novembre 2026) : l'ancien .qml voisin est effacé AVANT toute écriture,
+  // qu'il y ait ou non un style à poser (un .qml resté d'un import précédent s'appliquerait en
+  // silence à la copie). Effacement non vérifié = couche refusée : le message ne peut pas dire
+  // vrai sur un style que QGIS appliquerait malgré nous.
+  if (!qmlAbsent(ctx, cheminQml, dossier)) {
+    return { ok: false, message: `${fichier} : ancien style (.qml) impossible à effacer, couche refusée` };
+  }
+  let styleFinal = st.style;
+  let qmlFinal = st.qml;
+  if (st.contenu !== null) {
+    let ecrit = false;
+    try { ecrit = peutEcrireCopie(cheminQml, dossier) && ctx.ecrireFichier(cheminQml, st.contenu) === true; } catch (e) { ecrit = false; }
+    if (!ecrit) {
+      // Écriture ratée ou interrompue : un .qml tronqué peut rester sur le disque et s'appliquer
+      // (ou faire échouer le chargement). On l'efface ; s'il reste, la couche est refusée.
+      if (!qmlAbsent(ctx, cheminQml, dossier)) {
+        return { ok: false, message: `${fichier} : style (.qml) mal écrit et impossible à effacer, couche refusée` };
+      }
+      // La couche reste utilisable, mais sans les couleurs du manuel : on le dit.
+      styleFinal = STYLE_DEFAUT;
+      qmlFinal = '';
+      avertissements.push('style non écrit, couche chargée avec le style par défaut');
+    }
+  }
+  const o = chargerSansPlanter(ctx.ouvrirCouche, rendu + '|layername=' + c.couche, c.couche);
+  if (!o.couche) return { ok: false, message: `${fichier} : copie illisible après réécriture, couche refusée` };
+  return { ok: true, copie: o.couche, rendu, relatif: rendu.substring(dossier.length + 1), style: styleFinal, qml: qmlFinal, avertissements };
+}
+
+// --------------------------------------------------------------------------- fichiers d'une couche (mission 031)
+
+// Suffixes des fichiers réécrits d'une couche vecteur, dans l'ordre où leurs noms sont dits (ADR 0007
+// amendée ; annexes SQLite et GDAL : -wal, -shm, .aux.xml).
+const SUFFIXES_COUCHE = ['.gpkg', '.qml', '.gpkg-wal', '.gpkg-shm', '.gpkg.aux.xml'];
+
+// Chemins protégés : fichiers qu'une autre entrée du registre utilise encore. On ne suit le `chemin`
+// du registre que pour PROTÉGER, jamais pour effacer. Un .gpkg partagé protège aussi ses annexes et son .qml.
+function cheminsProteges(dossier, autres) {
+  const proteges = {};
+  const proteger = (gpkg) => {
+    const base = gpkg.replace(/\.gpkg$/, '');
+    for (let k = 0; k < SUFFIXES_COUCHE.length; k++) proteges[base + SUFFIXES_COUCHE[k]] = true;
+  };
+  for (let i = 0; i < autres.length; i++) {
+    const e = autres[i];
+    if (!e || typeof e !== 'object' || typeof e.chemin !== 'string') continue;
+    proteger(dossier + '/' + e.chemin);
+    if (estNomDeZip(e.zip) && estNomSimple(e.couche)) proteger(dossier + '/' + dossierDuZip(e.zip) + '/' + e.couche + '.gpkg');
+  }
+  return proteges;
+}
+
+// Efface les fichiers réécrits d'une couche vecteur sortie du registre. Rend les noms des fichiers
+// qui existaient et sont restés (ordre de SUFFIXES_COUCHE), et `nonVerifiable` quand le service `existe`
+// manque : rien n'est alors tenté (la réponse de l'effacement n'est jamais crue : on vérifie avant et
+// après). Ne lève jamais.
+const PHRASE_NON_VERIFIABLE = 'Effacement non vérifiable : fichiers peut-être restés.';
+function effacerFichiersDeCouche(ctx, zip, couche, autres) {
+  const restes = [];
+  const bilan = { restes, nonVerifiable: false };
+  try {
+    if (!estNomDeZip(zip) || !estNomSimple(couche) || couche.indexOf('|') >= 0) return bilan;
+    if (/\.zip$/i.test(dossierDuZip(zip))) return bilan;
+    const dossier = dossierCopies(ctx.dossierProjet);
+    if (dossier === '') return bilan;
+    if (typeof ctx.existe !== 'function') { bilan.nonVerifiable = true; return bilan; }
+    let rm = null;
+    if (typeof ctx.effacerFichier === 'function') rm = ctx.effacerFichier;
+    else if (ctx.platformUtilities && typeof ctx.platformUtilities.rmFile === 'function') rm = (c) => ctx.platformUtilities.rmFile(c);
+    const proteges = cheminsProteges(dossier, autres);
+    for (let i = 0; i < SUFFIXES_COUCHE.length; i++) {
+      const chemin = dossier + '/' + dossierDuZip(zip) + '/' + couche + SUFFIXES_COUCHE[i];
+      if (Object.prototype.hasOwnProperty.call(proteges, chemin)) continue;
+      if (!peutEffacer(chemin, dossier)) continue;
+      try { if (!ctx.existe(chemin)) continue; } catch (e) { continue; }
+      if (rm !== null) { try { rm(chemin); } catch (e) { /* vérifié ci-dessous */ } }
+      let reste = true;
+      try { reste = !!ctx.existe(chemin); } catch (e) { reste = true; }
+      if (reste) restes.push(nomDeFichier(chemin));
+    }
+  } catch (e) {
+    /* jamais d'exception : ce qui est connu est rendu */
+  }
+  return bilan;
+}
+
+function noterEffacement(cumul, bilan) {
+  for (let i = 0; i < bilan.restes.length; i++) cumul.restes.push(bilan.restes[i]);
+  if (bilan.nonVerifiable) cumul.nonVerifiable = true;
 }
 
 export function importerZip(ctx) {
@@ -445,7 +739,20 @@ export function importerZip(ctx) {
   } catch (e) {
     return vide(`${nomZip} : ${e.message}`);
   }
-  const couches = couchesDuZip(noms);
+  // Un .json n'est une couche que s'il est du GeoJSON (spec § 3.1) : contenu lu, et ignoré en
+  // silence s'il n'en est pas. Contenu illisible (lecture impossible) : on tente le chargement,
+  // un échec sera alors dit (jamais de GeoJSON perdu en silence).
+  const couches = [];
+  const candidates = couchesDuZip(noms);
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    if (c.json && ctx.styles && typeof ctx.styles.estGeoJson === 'function' && typeof ctx.lireTexte === 'function') {
+      let texte = null;
+      try { texte = ctx.lireTexte(nomZip, c.entree); } catch (e) { texte = null; }
+      if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) continue;
+    }
+    couches.push(c);
+  }
   if (couches.length === 0) {
     // Décision n° 11 : zip réimporté sans aucune couche lisible = import avorté (registre et carte
     // intacts : ce retour précède le retrait de la décision n° 8).
@@ -454,8 +761,9 @@ export function importerZip(ctx) {
     return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
   }
   // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
-  // contrôle = tout passe »).
-  for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte']) {
+  // contrôle = tout passe »). Mission 010 (ADR 0008) : sans de quoi réécrire et écrire le .qml,
+  // aucune couche n'est chargée non plus.
+  for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte', 'reecrireCouche', 'ecrireFichier']) {
     if (typeof ctx[service] !== 'function') {
       return vide(`Contrôles d'import indisponibles (${service} absent) : rien n'est importé.`);
     }
@@ -480,14 +788,19 @@ export function importerZip(ctx) {
   // Retrait de la carte des couches de ce zip (réimport), seulement maintenant.
   if (typeof ctx.retirerLeZipDeLaCarte === 'function') ctx.retirerLeZipDeLaCarte(nomZip);
   // Décision n° 8 : le zip réimporté remplace l'ancien en entier. Les couches de ce zip qui n'y
-  // sont plus sortent du registre (aucun fichier n'est touché ; la copie est écrasée par QField).
+  // sont plus sortent du registre (la copie du zip est écrasée par QField ; les copies des
+  // couches, réécrites par saveVectorLayerAs).
   const presentes = {};
   for (let i = 0; i < couches.length; i++) presentes[couches[i].couche] = true;
+  const bilanEfface = { restes: [], nonVerifiable: false };
   const anciennes = lireRegistre(ctx.reglages, ctx.cerfId);
   for (let i = 0; i < anciennes.length; i++) {
     const e = anciennes[i];
     if (e && typeof e === 'object' && e.zip === nomZip && !Object.prototype.hasOwnProperty.call(presentes, e.couche)) {
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: e.couche });
+      if (typeof e.chemin === 'string') {
+        noterEffacement(bilanEfface, effacerFichiersDeCouche(ctx, nomZip, e.couche, lireRegistre(ctx.reglages, ctx.cerfId)));
+      }
     }
   }
   const chargees = [];
@@ -504,36 +817,44 @@ export function importerZip(ctx) {
     }
     vues[c.couche] = c.entree;
     const source = '/vsizip/' + copie + '/' + c.entree;
-    // Ouvrir (sans ajouter à la carte), contrôler, puis seulement ajouter et inscrire.
+    // Ouvrir (en /vsizip/, sans ajouter à la carte), contrôler, réécrire, styler, charger la copie,
+    // puis seulement ajouter à la carte et inscrire.
     const r = ouvertes[c.couche] || chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
     // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
     // précède « illisible » et que le message porte le nom avec extension.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
-    if (!verdict.charge) {
+    const refuser = (message) => {
       // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
+      const etaitInscrite = lireRegistre(ctx.reglages, ctx.cerfId).some((x) => memeCouche(x, nomZip, c.couche) && typeof x.chemin === 'string');
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
-      refusees.push({ couche: c.couche, entree: c.entree, raison: verdict.message, message: verdict.message });
-      continue;
-    }
-    for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
-    try {
-      r.couche.readOnly = true;
-      ctx.ajouterALaCarte(r.couche, c.couche, source);
-    } catch (e) {
-      const message = nomDeFichier(c.entree) + ' : ajout à la carte impossible';
-      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
+      if (etaitInscrite) noterEffacement(bilanEfface, effacerFichiersDeCouche(ctx, nomZip, c.couche, lireRegistre(ctx.reglages, ctx.cerfId)));
       refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
+    };
+    if (!verdict.charge) { refuser(verdict.message); continue; }
+    // Un verdict d'acceptation ne vaut rien sur une couche qui ne s'est pas ouverte : jamais de copie d'une couche nulle.
+    if (!r.couche) { refuser(nomDeFichier(c.entree) + ' : couche illisible, couche refusée'); continue; }
+    const cp = copierEtStyler(ctx, r.couche, c, nomZip, noms);
+    if (!cp.ok) { refuser(cp.message); continue; }
+    for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
+    for (let k = 0; k < cp.avertissements.length; k++) avertissements.push(nomDeFichier(c.entree) + ' : ' + cp.avertissements[k]);
+    try {
+      cp.copie.readOnly = true;
+      ctx.ajouterALaCarte(cp.copie, c.couche, cp.rendu, nomZip);
+    } catch (e) {
+      refuser(nomDeFichier(c.entree) + ' : ajout à la carte impossible');
       continue;
     }
     // Inscription après chaque couche (spec § 1, geste 5).
-    inscrire(ctx.reglages, ctx.cerfId, {
+    const ligne = {
       zip: nomZip,
       couche: c.couche,
-      chemin_vsi: nomZip + '/' + c.entree,
-      style: STYLE_DEFAUT,
+      chemin: cp.relatif,
+      style: cp.style,
       ajoutee_le: maintenant().toISOString(),
-    });
-    chargees.push({ couche: c.couche, entree: c.entree, source });
+    };
+    if (cp.qml !== '') ligne.qml = cp.qml;
+    inscrire(ctx.reglages, ctx.cerfId, ligne);
+    chargees.push({ couche: c.couche, entree: c.entree, source: cp.rendu, style: cp.style });
   }
   const lignes = [];
   if (chargees.length > 0) {
@@ -543,6 +864,8 @@ export function importerZip(ctx) {
   }
   for (let i = 0; i < refusees.length; i++) lignes.push(refusees[i].message || `${refusees[i].couche} : ${refusees[i].raison}`);
   for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
+  if (bilanEfface.restes.length > 0) lignes.push(`Fichiers restés sur l'appareil : ${bilanEfface.restes.join(', ')}.`);
+  if (bilanEfface.nonVerifiable) lignes.push(PHRASE_NON_VERIFIABLE);
   return { chargees, refusees, avertissements, message: lignes.join('\n') };
 }
 
@@ -574,6 +897,16 @@ export function demarrerProjet(ctx) {
   const illisibles = [];
   for (let i = 0; i < saines.length; i++) {
     const e = saines[i];
+    if (typeof e.chemin === 'string') {
+      // Copie GeoPackage (ADR 0008) : rechargée depuis le disque, le zip n'est pas relu ; son .qml
+      // est à côté, QGIS l'applique seul au chargement.
+      if (!ctx.existe(dossier + '/' + e.chemin)) { absentes.push({ zip: e.zip, couche: e.couche, copie: true }); continue; }
+      const rc = chargerSansPlanter(ctx.chargerCouche, dossier + '/' + e.chemin + '|layername=' + e.couche, e.couche, e.zip);
+      if (!rc.couche) { illisibles.push({ zip: e.zip, couche: e.couche }); continue; }
+      rc.couche.readOnly = true;
+      rechargees.push({ zip: e.zip, couche: e.couche });
+      continue;
+    }
     if (!Object.prototype.hasOwnProperty.call(presence, e.zip)) presence[e.zip] = !!ctx.existe(dossier + '/' + e.zip);
     if (!presence[e.zip]) { absentes.push({ zip: e.zip, couche: e.couche }); continue; }
     const r = chargerSansPlanter(ctx.chargerCouche, '/vsizip/' + dossier + '/' + e.chemin_vsi, e.couche);
@@ -586,10 +919,17 @@ export function demarrerProjet(ctx) {
   if (douteuses > 0) {
     lignes.push(`${douteuses} ${pluriel(douteuses, 'entrée douteuse retirée', 'entrées douteuses retirées')} du registre (aucun fichier effacé)`);
   }
-  if (absentes.length > 0) {
-    lignes.push(absentes.length === 1
+  const zipsAbsents = absentes.filter((a) => !a.copie).length;
+  const copiesAbsentes = absentes.length - zipsAbsents;
+  if (zipsAbsents > 0) {
+    lignes.push(zipsAbsents === 1
       ? "1 couche n'a pas pu être rechargée : zip absent"
-      : `${absentes.length} couches n'ont pas pu être rechargées : zip absent`);
+      : `${zipsAbsents} couches n'ont pas pu être rechargées : zip absent`);
+  }
+  if (copiesAbsentes > 0) {
+    lignes.push(copiesAbsentes === 1
+      ? "1 couche n'a pas pu être rechargée : copie absente (réimporter le zip)"
+      : `${copiesAbsentes} couches n'ont pas pu être rechargées : copie absente (réimporter le zip)`);
   }
   if (illisibles.length > 0) {
     lignes.push(illisibles.length === 1
@@ -643,19 +983,31 @@ export function retirerCouche(ctx) {
   const zip = ctx.zip;
   const couche = ctx.couche;
   if (typeof ctx.retirerDeLaCarte === 'function') ctx.retirerDeLaCarte(couche);
+  const avant = lireRegistre(ctx.reglages, ctx.cerfId);
+  let vectorielle = false;
+  for (let i = 0; i < avant.length; i++) {
+    if (memeCouche(avant[i], zip, couche) && typeof avant[i].chemin === 'string') vectorielle = true;
+  }
   const r = retirer(ctx.reglages, ctx.cerfId, { zip, couche });
   if (!r.retiree) return { efface: false, message: `Couche absente du registre : ${couche}.` };
   const debut = `Couche retirée : ${couche}.`;
+  // Fichiers réécrits de la couche (mission 031) : après la carte et le registre, jamais bloquant.
+  let phrase = '';
+  if (vectorielle) {
+    const b = effacerFichiersDeCouche(ctx, zip, couche, lireRegistre(ctx.reglages, ctx.cerfId));
+    if (b.restes.length > 0) phrase = ` Fichiers restés sur l'appareil : ${b.restes.join(', ')}.`;
+    if (b.nonVerifiable) phrase += ` ${PHRASE_NON_VERIFIABLE}`;
+  }
   if (!r.zipInutile) {
     const n = nombreDeCouchesDuZip(ctx.reglages, ctx.cerfId, zip);
-    return { efface: false, message: `${debut} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };
+    return { efface: false, message: `${debut}${phrase} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };
   }
   if (!estNomDeZip(zip)) {
-    return { efface: false, message: `${debut} Nom de zip douteux au registre : aucun fichier effacé.` };
+    return { efface: false, message: `${debut}${phrase} Nom de zip douteux au registre : aucun fichier effacé.` };
   }
   if (!dossierProjetSain(ctx.dossierProjet)) {
-    return { efface: false, message: `${debut} Dossier du projet inconnu : aucun fichier effacé (${zip}).` };
+    return { efface: false, message: `${debut}${phrase} Dossier du projet inconnu : aucun fichier effacé (${zip}).` };
   }
   const e = effacerCopie(ctx.platformUtilities, cheminCopie(ctx.dossierProjet, zip), dossierCopies(ctx.dossierProjet));
-  return { efface: e.efface, message: `${debut} ${e.message}` };
+  return { efface: e.efface, message: `${debut}${phrase} ${e.message}` };
 }

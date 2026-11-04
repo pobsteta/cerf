@@ -7,6 +7,7 @@ import QtQuick
 import org.qfield
 import "cerf-logique.mjs" as Logique
 import "cerf-controles.mjs" as Controles
+import "cerf-styles.mjs" as Styles
 
 Item {
   id: cerf
@@ -77,8 +78,9 @@ Item {
   // quelle (pas de double chargement). La logique pose readOnly ensuite.
   function chargeur() {
     const dossier = Logique.dossierCopies(dossierProjet());
-    return function (source, nom) {
-      const zip = Logique.zipDeLaSource(source, dossier);
+    return function (source, nom, zipDeLaCopie) {
+      // Copie GeoPackage (ADR 0008) : le zip est donné ; couche en /vsizip/ : il se lit dans la source.
+      const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
       if (deja) return deja;
       const couche = LayerUtils.loadVectorLayer(source, nom);
@@ -91,6 +93,54 @@ Item {
     };
   }
 
+  // Styles du manuel (mission 010). Ce que Cerf.qml sait dire à la logique : la géométrie et les
+  // champs d'une couche (QgsVectorLayer.geometryType() est Q_INVOKABLE, QgsFields expose « names »)
+  // et la lecture d'un fichier du zip (null si impossible). La POSE du style passe par un .qml écrit
+  // à côté de la copie, avant son chargement (ADR 0008) : voir reecrireCouche et ecrireFichier.
+  function infosCouche(couche) {
+    let noms = [];
+    try {
+      noms = couche.fields.names;
+    } catch (e) {
+      noms = [];
+    }
+    let geometrie = null;
+    try {
+      geometrie = Styles.geometrieDe(couche.geometryType());
+    } catch (e) {
+      geometrie = null;
+    }
+    return { geometrie: geometrie, champs: noms };
+  }
+
+  function lireTexte(zip, chemin) {
+    try {
+      const octets = Logique.octetsDe(FileUtils.readFileContent("/vsizip/" + Logique.cheminCopie(dossierProjet(), zip) + "/" + chemin));
+      return octets.length === 0 ? null : Logique.texteDe(octets);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ---- ADR 0008, prouvé sur le Samsung par le prototype n° 3 (fiche 027).
+  // Réécrit la couche ouverte (/vsizip/) en GeoPackage ; rend le chemin écrit, ou "" si QField a
+  // refusé (échec muet : la raison n'est que dans le journal de QField). saveVectorLayerAs crée les
+  // dossiers et écrase sans contrôle de chemin : la garde est dans la logique (peutEcrireCopie).
+  function reecrireCouche(couche, cible) {
+    return String(LayerUtils.saveVectorLayerAs(couche, cible, "GPKG") || "");
+  }
+
+  // Écrit un texte en UTF-8 (le .qml), le relit pour comparer la taille. true si écrit.
+  function ecrireFichier(chemin, texte) {
+    const octets = Logique.octetsUtf8(texte);
+    FileUtils.writeFileContent(chemin, Logique.arrayBufferExact(octets));
+    return Logique.octetsDe(FileUtils.readFileContent(chemin)).length === octets.length;
+  }
+
+  function effacerFichier(chemin) {
+    return !!platformUtilities.rmFile(chemin);
+  }
+
   // ---- Mission 012 : ouvrir, contrôler, puis seulement ajouter (spec § 4).
   // NON PROUVÉ (aucun accès aux sources de QField pour la mission 012) : chaque appel marqué
   // « à vérifier » ci-dessous est à confirmer sur le Samsung ; un appel absent ou en erreur
@@ -101,40 +151,41 @@ Item {
     return LayerUtils.loadVectorLayer(source, nom);
   }
 
-  // Ajoute à la carte une couche acceptée, marquée (zip, couche).
-  function ajouterALaCarte(couche, nom, source) {
-    const zip = Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
+  // Ajoute à la carte une couche acceptée, marquée (zip, couche). `zipDonne` : le zip de la copie
+  // GeoPackage (ADR 0008) ; à défaut il se lit dans une source /vsizip/.
+  function ajouterALaCarte(couche, nom, source, zipDonne) {
+    const zip = zipDonne ? String(zipDonne) : Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
     couche.setCustomProperty("cerf/zip", zip);
     couche.setCustomProperty("cerf/couche", nom);
     ProjectUtils.addMapLayer(qgisProject, couche);
   }
 
   // Lectures de la couche pour les contrôles ; chaque lecture est protégée (échec = valeur
-  // « mauvaise », donc refus). À vérifier : crs, featureCount(), extent.
-  function decrireCouche(couche) {
+  // « mauvaise », donc refus). Comptage par itérateur (mission 038) : featureCount() n'est pas invocable.
+  function decrireCouche(couche, format) {
     let lisible = false;
     let systeme = { valide: false, epsg: 0 };
     let nbEntites = -1;
     let emprise = null;
     try { lisible = !!(couche && couche.isValid); } catch (e) { lisible = false; }
     try {
-      const crs = couche.crs;
-      // Validité = celle de QGIS ; un système valide sans code EPSG (.prj ESRI, IGNF) reste valide.
-      // `authid` ne sert qu'au diagnostic ; l'objet crs est passé tel quel à la reprojection.
-      const auth = String(crs.authid || "");
-      const m = /^EPSG:(\d+)$/.exec(auth);
-      const valide = typeof crs.isValid === "function" ? !!crs.isValid() : !!crs.isValid;
-      systeme = { valide: valide, epsg: m ? Number(m[1]) : 0, authid: auth, crs: crs };
+      // QML ne voit de crs que mapUnits, isGeographic, authid, description (mission 034) : la règle est dans
+      // Logique.decrireSysteme. L'objet crs est passé tel quel à la reprojection.
+      systeme = Logique.decrireSysteme(couche.crs);
     } catch (e) { /* système inconnu */ }
-    try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
+    if (format !== "tif") {
+      // Un raster n'a pas d'entités (jamais « vide ») ; pour un vecteur, un itérateur qui échoue = illisible (contrôle 2).
+      const c = Logique.compterEntites(couche, function (l) { return LayerUtils.createFeatureIterator(l); });
+      nbEntites = c.nbEntites;
+      if (!c.lisible) lisible = false;
+    }
     try {
-      const x = couche.extent;
-      emprise = { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+      emprise = Logique.lireEmprise(couche);
     } catch (e) { emprise = null; }
     return { lisible: lisible, systeme: systeme, nbEntites: nbEntites, emprise: emprise };
   }
 
-  // Reprojette un point (x, y) du système `crs` de la couche (objet rendu tel quel) vers EPSG:2154. À vérifier dans QField v4.3.7 :
+  // Reprojette un point (x, y) du système source `crs` (construit par construireSource) vers EPSG:2154. À vérifier dans QField v4.3.7 :
   // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
   // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
   function reprojeterPoint(x, y, epsg, crs) {
@@ -148,9 +199,11 @@ Item {
   }
 
   function controlerCouche(description) {
-    return Controles.controlerCouche(description, {
-      reprojeter: function (emprise, epsg, crs) {
-        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, crs);
+    return Controles.controlerAvecDetail(description, {
+      reprojeter: function (emprise, epsg, crs, authid) {
+        // Système source reconstruit par son nom (fromDescription), repli : l'objet de la couche (mission 037).
+        const s = Controles.construireSource(authid, crs, function (d) { return CoordinateReferenceSystemUtils.fromDescription(d); });
+        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, s.source);
       }
     });
   }
@@ -278,6 +331,13 @@ Item {
       nomZip: nom,
       octets: octets,
       reglages: reglages,
+      styles: Styles,
+      infosCouche: infosCouche,
+      lireTexte: lireTexte,
+      reecrireCouche: reecrireCouche,
+      ecrireFichier: ecrireFichier,
+      effacerFichier: effacerFichier,
+      existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,
@@ -310,6 +370,8 @@ Item {
       couche: couche,
       reglages: reglages,
       retirerDeLaCarte: function (nom) { cerf.retirerDeLaCarte(zip, nom); },
+      existe: function (chemin) { return FileUtils.fileExists(chemin); },
+      effacerFichier: effacerFichier,
       platformUtilities: platformUtilities
     });
     message(r.message);

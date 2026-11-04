@@ -31,6 +31,7 @@ test('main : lancement manuel -> publier même sans changement', () => {
 });
 test('branche de mission : toujours publier (préversion), quels que soient les fichiers', () => {
   assert.equal(push(['tests/a.mjs'], 'mission/008-squelette-plugin').action, 'publier');
+  assert.equal(push(['tests/a.mjs'], 'mission/010-styles').action, 'publier');
 });
 test('fichiersChanges : avant nul (40 zéros), vide ou git en échec -> null ; sinon la liste', () => {
   const git = () => 'plugin/a\0tests/b\0';

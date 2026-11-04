@@ -104,3 +104,24 @@ contrôlée (012) depuis `/vsizip/`, réécrite en GeoPackage (une table par fic
 gardée. La mission 026 (décompresseur) est **abandonnée**. Valeur sacrifiée ajoutée : la
 fidélité au format d'origine (un Shapefile devient un GeoPackage). À faire : amender l'ADR 0003,
 l'ADR 0007 (effacement des `.gpkg`, `.qml` et annexes dans `cerf-imports/`) et la spec § 3.3.
+
+## Arbitrages du 4 novembre 2026 (mission 032 : messages et ancien .qml)
+
+Ajout daté ; rien ci-dessus n'est modifié. Source de vérité des textes côté produit : spec § 4
+et § 5 ; les phrases ci-dessous sont celles du code de la mission 010 (`plugin/cerf-logique.mjs`,
+branche `mission/010-styles`, commit d7f9f2e) et des tests de la mission 024.
+
+1. **Ancien `.qml` voisin effacé avant l'écriture**, puis on vérifie qu'il a disparu, qu'il y
+   ait ou non un style à poser (sinon un `.qml` d'un import précédent s'appliquerait en silence).
+2. **Il ne s'efface pas** : couche refusée, « ancien style (.qml) impossible à effacer, couche
+   refusée ».
+3. **L'écriture rate ou est interrompue** : le `.qml` est effacé, la couche est chargée avec le
+   style par défaut, avertissement « style non écrit, couche chargée avec le style par défaut ».
+4. **Le `.qml` mal écrit ne s'efface pas non plus** : couche refusée, « style (.qml) mal écrit
+   et impossible à effacer, couche refusée ».
+5. **Nom dans les messages** : le chemin complet tel qu'il est dans le zip, pour tous les
+   contrôles et tous les avertissements (y compris ceux des points 2 à 4).
+6. **GeoPackage** : tables inconnues ou illisibles → « `<chemin>.gpkg` : tables illisibles,
+   couche non chargée » ; aucune table vecteur → « `<chemin>.gpkg` : aucune table vecteur,
+   couche non chargée ». Jamais ouvert sans `layername`, jamais ignoré en silence. La façon de
+   lire les tables hors ligne reste à l'étude (mission 030) ; elle n'est pas tranchée ici.

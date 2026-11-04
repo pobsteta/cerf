@@ -173,8 +173,9 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 
 Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
 
-1. **Shapefile incomplet** : `.prj` absent → refus « Parcelles.shp : fichier .prj
-   manquant, système de coordonnées inconnu ». `.shx` ou `.dbf` absent → refus
+1. **Shapefile incomplet** : `.prj` absent → refus « Serre EA/réf/Parcelles.shp : fichier .prj
+   manquant, système de coordonnées inconnu » (le nom est le chemin complet dans le zip, voir
+   plus bas). `.shx` ou `.dbf` absent → refus
    « UG.shp : fichier .shx manquant, couche non chargée » (même forme pour `.dbf` ; Pascal,
    4 novembre 2026). `.cpg` absent → chargement avec avertissement « accents peut-être mal
    lus ». Un Shapefile vide sans `.prj` est refusé (contrôle 1 avant le contrôle 4).
@@ -192,10 +193,24 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 
 **Pas de chargement forcé** : l'agent ne peut pas passer outre un refus (§ 9, n° 7).
 
-**Nom de la couche dans les messages** : chaque refus et chaque avertissement commence par
-le nom de la couche **avec son extension**, tel qu'il est dans le zip (« FRT.shp : … »,
-« Parcelles.shp : … ») ; pour une table de GeoPackage, « fichier.gpkg/table : … » ; un zip
-peut en contenir plusieurs (Pascal, 4 novembre 2026).
+**Nom de la couche dans les messages** : chaque refus et chaque avertissement (tous les
+contrôles ci-dessus, tous les avertissements) commence par le **chemin complet de la couche,
+avec son extension, tel qu'il est dans le zip** : « FRT.shp : … » à la racine,
+« Serre EA/réf/Parcelles.shp : … » dans des dossiers ; pour une table de GeoPackage,
+« d/Serre.gpkg/Releves : … » (chemin du `.gpkg`, puis `/table`) ; un zip peut en contenir
+plusieurs et deux dossiers peuvent porter des fichiers de même nom (Pascal, 4 novembre 2026,
+qui précise l'arbitrage du même jour sur le nom avec extension).
+
+**GeoPackage dont on ne peut pas lister les tables** (Pascal, 4 novembre 2026) :
+- tables inconnues ou illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
+  chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée ») ;
+- aucune table vecteur → refus « `<chemin>.gpkg` : aucune table vecteur, couche non chargée ».
+- Dans les deux cas, le fichier n'est **jamais ouvert sans `layername`** (QGIS ouvrirait la
+  première table en silence) et n'est **jamais ignoré en silence** ; les autres couches du zip
+  sont traitées. Ce n'est pas le contrôle 1 (qui vise le Shapefile incomplet).
+- **À l'étude, non tranché ici** : comment le plugin lit les tables d'un GeoPackage hors ligne
+  (mission 030, prototype n° 4). Tant que ce n'est pas tranché, tout GeoPackage du zip tombe dans
+  le premier cas.
 
 ## 5. Styles (annexe de la convention du zip)
 
@@ -209,6 +224,19 @@ retenu** (celui du zip, contrôlé, sinon celui de la règle) **à côté du Geo
 avant le chargement** ; QGIS l'applique alors seul, et le garde à la réouverture. Un `.qml`
 écrit après le chargement serait ignoré. Une table, un `.qml` (`UG.qml` à côté de la table `UG`).
 Un GeoTIFF lu dans le zip n'a pas de style du manuel.
+
+**Ancien `.qml` voisin** (Pascal, 4 novembre 2026) : avant toute écriture, le plugin **efface
+l'ancien `.qml`** à côté de la copie (un `.qml` resté d'un import précédent s'appliquerait en
+silence), **puis vérifie qu'il a disparu**, qu'il y ait ou non un style à poser.
+- Il ne s'efface pas → couche **refusée** : « `<chemin>` : ancien style (.qml) impossible à
+  effacer, couche refusée ».
+- L'écriture rate ou est interrompue → le `.qml` est effacé et la couche est **chargée avec le
+  style par défaut**, avec l'avertissement « style non écrit, couche chargée avec le style par
+  défaut ».
+- Le `.qml` mal écrit ne s'efface pas non plus → couche **refusée** : « `<chemin>` : style (.qml)
+  mal écrit et impossible à effacer, couche refusée ».
+Le nom de ces messages suit la règle du § 4 (chemin complet dans le zip). Les textes sont ceux du
+code de la mission 010 (voir l'ADR 0008, section du 4 novembre 2026).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.

@@ -57,6 +57,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [036-notes-essai-manuel](missions/036-notes-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #32)
+  - Homme : `dev` (sonnet)
+  - Mission : Notes de la préversion essai-manuel : plugin 0.3.2 ou plus
+  - Moyens : workflow release-essai-manuel.yml
 - [035-essai-manuel-geojson](missions/035-essai-manuel-geojson.md) · depuis le cycle 6 · fusionnée (PR #29)
   - Homme : `dev` (sonnet)
   - Mission : Zip de démonstration tout en GeoJSON

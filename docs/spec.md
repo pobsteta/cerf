@@ -168,6 +168,10 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 
 **Pas de chargement forcé** : l'agent ne peut pas passer outre un refus (§ 9, n° 7).
 
+**Nom de la couche dans les messages** : chaque refus et chaque avertissement commence par
+le nom de la couche (« FRT : … ») ; un zip peut en contenir plusieurs (Pascal,
+4 novembre 2026).
+
 ## 5. Styles (annexe de la convention du zip)
 
 Ordre de priorité : `.qml` de même nom que la couche dans le zip → règle par nom → règle
@@ -176,6 +180,12 @@ lui-même (QGIS ne le trouve pas seul derrière `/vsizip/`).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.
+
+**Règles par nom réservées aux polygones** : une couche nommée UG, Parcelles ou FRT mais
+ponctuelle ou linéaire garde le style par défaut, avec l'avertissement « nom reconnu mais
+pas un polygone » (Pascal, 4 novembre 2026). **Champs `essence` et `diametre`** reconnus
+sans tenir compte de la casse (`ESSENCE`, `Diametre`…) ; l'étiquette utilise le nom réel
+du champ (Pascal, 4 novembre 2026).
 
 | Règle | Motif | Géométrie | Symbole | Étiquette |
 |---|---|---|---|---|

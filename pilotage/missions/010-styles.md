@@ -70,3 +70,23 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 ## Comment saura-t-on que ça marche ?
 
 couleurs et tailles conformes au mail, sans réglage.
+
+## Précisions de l'orchestrateur (4 novembre 2026, après la relecture de la 009)
+
+- Module **`plugin/cerf-styles.mjs`**, à ajouter à `FICHIERS_PLUGIN` de
+  `plugin/empaqueter.mjs`, fonctions pures :
+  - `reconnaitre({ nom, geometrie: 'polygone'|'point'|'ligne', champs, qml })` →
+    `{ regle: 'UG'|'Parcelles'|'FRT'|'ProdBois'|null, source: 'qml'|'nom'|'champs'|'defaut' }` ;
+    `nom` sans extension (retirée par l'appelant) ; avec un `.qml`, `{ regle: null, source: 'qml' }` ;
+  - `styleDe(regle, { champCode })` → `{ symbole, etiquette }` ou `null`, avec
+    `symbole = { type: 'contour'|'cercle', couleur, epaisseur_mm | taille_mm, opacite_pct, remplissage }`
+    et `etiquette = { champ | expression, taille_pt, couleur, lisere: { couleur } }` ;
+    **aucune autre clé** (les tests comparent l'objet entier) : l'épaisseur du liseré et la
+    famille de police restent hors de l'objet ;
+  - `trouverQml(cheminCouche, cheminsDuZip)` → chemin du `.qml` de même dossier et même nom,
+    ou `null`.
+- Décisions de Pascal du 4 novembre 2026 (spec § 5) : règles par nom réservées aux
+  polygones, avec l'avertissement « nom reconnu mais pas un polygone » ; `essence` et
+  `diametre` sans tenir compte de la casse. Les tests de la 009 seront amendés en ce sens.
+- Restent ouverts : `.qml` vide ou illisible ; nom d'une couche GeoPackage (fichier ou
+  table) ; champs de code provisoires `CODE_UG`, `CODE_PARC`, `CODE_FRT`.

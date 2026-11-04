@@ -32,7 +32,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Harnais
 
-- **Peut :** écrire `plugin/controles.mjs` et son appel.
+- **Peut :** écrire `plugin/cerf-controles.mjs` et son appel.
 - **Ne doit pas :** sortir du périmètre, inventer une donnée ou un code, toucher à `main`,
   modifier `docs/brief.md`, `docs/spec.md` ou une ADR (il signale l'écart à
   l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
@@ -64,3 +64,14 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 ## Comment saura-t-on que ça marche ?
 
 un message clair par piège, aucune couche hors de France.
+
+## Précisions de l'orchestrateur (4 novembre 2026, après la relecture de la 011)
+
+- Module : **`plugin/cerf-controles.mjs`** (nom des tests de la 011, aligné sur
+  `cerf-logique.mjs`), à ajouter à `FICHIERS_PLUGIN` de `plugin/empaqueter.mjs`.
+- Contrat proposé par les tests de la 011 (en tête de `tests/controles.test.mjs`) :
+  `controlerCouche(couche, services)`, synchrone, sans réseau ; `services.reprojeter` est
+  appelé **même en EPSG:2154** ; résultat `{ charge, controle, message, avertissements }`.
+- Le plan dit comment une couche QGIS devient l'objet `couche` (non testé par la 011).
+- Messages : nom de la couche en tête de chaque refus et avertissement (spec § 4, Pascal,
+  4 novembre 2026).

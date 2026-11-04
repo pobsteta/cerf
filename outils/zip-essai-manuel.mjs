@@ -7,7 +7,7 @@
 // fictifs, posés côte à côte, sans emboîtement) et un export ProdBois (GeoJSON, membre `crs` = CRS84,
 // points avec `essence` et `diametre`). Tous les fichiers sont compressés (deflate).
 //
-// Usage : node outils/zip-essai-manuel.mjs <dossier-de-sortie>   (écrit essai-manuel.zip ; rien dans le dépôt)
+// Usage : node outils/zip-essai-manuel.mjs <dossier-de-sortie>   (écrit essai-manuel.zip et essai-manuel-geojson.zip ; rien dans le dépôt)
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -150,6 +150,37 @@ export function entreesManuel() {
   return entrees.sort((a, b) => Buffer.compare(a.nom, b.nom));
 }
 
+// ---------- Mission 035 : variante tout en GeoJSON ----------
+// UG, Parcelles et FRT : mêmes entités, champs et libellés que les Shapefile, en CRS84 (lon, lat) avec un membre
+// `crs` explicite comme le ProdBois (un GeoJSON sans `crs` serait lu en WGS84 de toute façon). Anneau extérieur
+// en sens ANTIHORAIRE (RFC 7946 § 3.1.6) ; mêmes sommets que le Shapefile (converti avec lambert93VersWgs84).
+export const NOM_ZIP_GEOJSON = 'essai-manuel-geojson.zip';
+export function geojsonPolygones(nom, champCode, entites) {
+  const features = entites.map((en) => ({
+    type: 'Feature',
+    properties: { [champCode]: en[champCode], LIBELLE: en.LIBELLE },
+    geometry: { type: 'Polygon', coordinates: [anneau(en.rect).reverse().map(([x, y]) => lambert93VersWgs84(x, y))] },
+  }));
+  return JSON.stringify({
+    type: 'FeatureCollection', name: nom,
+    crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:OGC:1.3:CRS84' } },
+    features,
+  }) + '\n';
+}
+
+export function entreesManuelGeojson() {
+  const entrees = [e(NOM_PRODBOIS, geojsonProdBois())];
+  for (const c of COUCHES_SHP) entrees.push(e(`${c.nom}.geojson`, geojsonPolygones(c.nom, c.champCode, c.entites)));
+  return entrees.sort((a, b) => Buffer.compare(a.nom, b.nom));
+}
+
+export function fabriquerManuelGeojson(dossier) {
+  mkdirSync(dossier, { recursive: true });
+  const chemin = join(dossier, NOM_ZIP_GEOJSON);
+  writeFileSync(chemin, ecrireZip(entreesManuelGeojson()));
+  return chemin;
+}
+
 export function fabriquerManuel(dossier) {
   mkdirSync(dossier, { recursive: true });
   const chemin = join(dossier, NOM_ZIP);
@@ -161,4 +192,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const [, , dossier] = process.argv;
   if (!dossier) { console.error('Usage : node outils/zip-essai-manuel.mjs <dossier-de-sortie>'); process.exit(2); }
   console.log(`écrit : ${fabriquerManuel(dossier)}`);
+  console.log(`écrit : ${fabriquerManuelGeojson(dossier)}`);
 }

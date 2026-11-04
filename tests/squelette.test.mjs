@@ -117,6 +117,13 @@ function faussesCouches({ echecs = [], leve = [] } = {}) {
 function fausseTelephonie({ rend = true } = {}) {
   return { appels: [], rmFile(chemin) { this.appels.push(chemin); return rend; } };
 }
+// Mission 031 : rmFile qui efface vraiment dans `disque` (Set) et répond faux pour un fichier absent, comme QFile::remove.
+function telephonieSurDisque(disque) {
+  const tel = fausseTelephonie();
+  const brut = tel.rmFile;
+  tel.rmFile = function (chemin) { brut.call(this, chemin); return disque.delete(chemin); };
+  return tel;
+}
 const attendre = async (v) => await v;
 
 // Mission 012 : importerZip n'appelle plus chargerCouche mais quatre services obligatoires (six depuis la mission 010).
@@ -554,14 +561,21 @@ test('retirerCouche : retire de la carte et du registre ; la copie reste tant qu
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
-  const tel = fausseTelephonie();
+  // Mission 031 (ADR 0007 amendée, spec § 3.3) : le retrait efface aussi les fichiers réécrits de la couche (jamais la copie du zip ici).
+  const disque = new Set([`${COPIES}/deux/a.gpkg`, `${COPIES}/deux/a.qml`, `${COPIES}/deux/b.gpkg`, `${COPIES}/deux.zip`]);
+  const tel = telephonieSurDisque(disque);
   const retirees = [];
   const r = await attendre(m.retirerCouche({
     cerfId: ID, dossierProjet: PROJET, zip: 'deux.zip', couche: 'a', reglages,
     retirerDeLaCarte: (nom) => retirees.push(nom), platformUtilities: tel,
+    existe: (c) => disque.has(c), effacerFichier: (c) => tel.rmFile(c),
   }));
   assert.deepEqual(retirees, ['a']);
-  assert.deepEqual(tel.appels, []);
+  assert.ok(!tel.appels.includes(`${COPIES}/deux.zip`), 'la copie du zip reste');
+  assert.ok(tel.appels.every((c) => c.startsWith(`${COPIES}/deux/a.`)), `seuls les fichiers de la couche a : ${tel.appels}`);
+  assert.equal(disque.has(`${COPIES}/deux/a.gpkg`), false);
+  assert.equal(disque.has(`${COPIES}/deux/a.qml`), false);
+  assert.equal(disque.has(`${COPIES}/deux/b.gpkg`), true);
   assert.equal(r.efface, false);
   assert.deepEqual(m.lireRegistre(reglages, ID).map((x) => x.couche), ['b']);
 });
@@ -570,12 +584,17 @@ test('ADR 0007 : la dernière couche retirée -> la copie est effacée par rmFil
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
-  const tel = fausseTelephonie();
+  // Mission 031 : les fichiers réécrits de la couche sont effacés en plus de la copie du zip (qui l'est exactement une fois).
+  const disque = new Set([`${COPIES}/essai/points_essai.gpkg`, `${COPIES}/essai/points_essai.qml`, `${COPIES}/essai.zip`]);
+  const tel = telephonieSurDisque(disque);
   const r = await attendre(m.retirerCouche({
     cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: tel,
+    existe: (c) => disque.has(c), effacerFichier: (c) => tel.rmFile(c),
   }));
-  assert.deepEqual(tel.appels, [`${COPIES}/essai.zip`]);
+  assert.deepEqual(tel.appels.filter((c) => c.endsWith('.zip')), [`${COPIES}/essai.zip`]);
+  assert.ok(tel.appels.every((c) => c.startsWith(`${COPIES}/essai/points_essai.`) || c === `${COPIES}/essai.zip`), `${tel.appels}`);
+  assert.deepEqual([...disque], [], 'copie, .gpkg et .qml effacés');
   assert.equal(r.efface, true);
   assert.deepEqual(m.lireRegistre(reglages, ID), []);
 });

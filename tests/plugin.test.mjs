@@ -328,13 +328,13 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin (dont cerf-controles.mjs)', async () => {
+test('empaquetage : plugin-cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin (dont cerf-controles.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
   try {
     const r = empaqueter(sortie);
-    assert.equal(r.chemin, join(sortie, 'cerf.zip'));
+    assert.equal(r.chemin, join(sortie, 'plugin-cerf.zip'));
     const noms = m.nomsDuZip(readFileSync(r.chemin));
     assert.deepEqual([...noms].sort(), [...FICHIERS].sort());
     assert.ok(noms.includes('main.qml'));
@@ -379,5 +379,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.2\.0$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.2\.1$/m);
 });

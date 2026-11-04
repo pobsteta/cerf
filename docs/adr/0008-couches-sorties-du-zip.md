@@ -72,3 +72,23 @@ manuel), puis la charge depuis le disque ; QGIS applique alors ce style tout seu
 On saura que la décision tient quand le zip `Serre_EA2026` de JFC, compressé, importé hors
 ligne, montre UG, Parcelles et FRT aux couleurs du mail de JFC en 2 minutes au plus, et les
 garde à la réouverture du projet.
+
+## Critique du contradicteur et arbitrages de Pascal (4 novembre 2026)
+
+Critique : voie plus simple vue dans QField 4.3.7, `LayerUtils.saveVectorLayerAs(layer,
+filePath, driverName, filterExpression)` : ouvrir la couche en `/vsizip/` (GDAL décompresse),
+la contrôler (012), la réécrire dans `cerf-imports/`, écrire le `.qml` à côté, la charger ;
+`.qml` voisin inopérant pour un GeoPackage à plusieurs tables (QGIS cherche `<fichier>.qml`) ;
+retrait et réimport sans listage ni renommage dans l'API des plugins (dossier neuf par import,
+liste des fichiers au registre, ADR 0007 à étendre à `.qml`, `-wal`, `-shm`, `.aux.xml`) ;
+`.qml` du zip à contrôler par le plugin avant de l'écrire (QGIS le charge en silence) ; `.qml`
+à côté du zip : voie vue, non retenue (un style par zip).
+
+Arbitrages de Pascal :
+1. **Essai court d'abord** de la voie `saveVectorLayerAs` sur le Samsung (prototype n° 3,
+   mission 027) ; la mission 026 (inflate) attend son résultat.
+2. **Garder la copie du zip** dans `cerf-imports/` (réparation, réimport).
+3. **GeoTIFF : restent lus dans le zip**, style par défaut, en tranche 1.
+4. **GeoPackage à plusieurs tables : une table par fichier**, chacune avec son `.qml` voisin.
+
+L'ADR reste **proposée** jusqu'au résultat du prototype n° 3.

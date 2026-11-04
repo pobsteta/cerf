@@ -20,6 +20,10 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · à valider
+  - Homme : `testeur` puis `dev` (opus)
+  - Mission : Décompresseur deflate en JavaScript pour les zips de JFC
+  - Moyens : RFC 1951, node:zlib comme oracle
 - [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip

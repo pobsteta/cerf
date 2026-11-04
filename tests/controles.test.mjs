@@ -17,6 +17,11 @@
 //     services = { reprojeter(emprise, epsg) -> { xmin, ymin, xmax, ymax } en EPSG:2154 }
 //       (la densification des bords est faite DANS reprojeter : non testable ici, voir fin de fichier)
 //       peut lever une exception ou rendre des valeurs non finies : cela vaut refus.
+//       reprojeter est appelé MÊME en EPSG:2154 (identité côté test, vraie transformation côté QGIS) et pour
+//       un raster ; il n'est pas appelé quand un contrôle 1, 2 ou 3 refuse, ni pour une couche vide (4).
+//     Messages (spec § 4, « Nom de la couche dans les messages », Pascal, 4 novembre 2026) : chaque refus et
+//       chaque avertissement commence par `couche.nom + ' : '` (ex. « FRT : … »). Égalité stricte quand la spec
+//       donne le texte entier ; pour « illisible », « couche vide » et l'erreur de reprojection : préfixe + mot.
 //     resultat = { charge: boolean, controle: 1..5 | null (numéro du contrôle qui refuse),
 //                  message: string | null (refus), avertissements: string[] }
 //   Le premier contrôle qui échoue arrête la couche (reprojeter n'est alors pas appelé).
@@ -93,6 +98,10 @@ const SHP = (o = {}) => Sain({
 const REFUS_PRJ = 'Parcelles.shp : fichier .prj manquant, système de coordonnées inconnu';
 const MSG_SYSTEME = 'système de coordonnées inconnu';
 const MSG_EMPRISE = 'Coordonnées incohérentes : système mal déclaré ?';
+const P = (nom) => `${nom} : `; // préfixe imposé par la spec § 4 (nom de la couche en tête)
+// Refus du contrôle 3 / 5 : texte entier donné par la spec, donc égalité stricte.
+const eqSysteme = (r, nom) => assert.equal(r.message, `${P(nom)}${MSG_SYSTEME}`);
+const eqEmprise = (r, nom) => assert.equal(r.message, `${P(nom)}${MSG_EMPRISE}`);
 
 // ---------- cas nominal ----------
 test('nominal : couche saine en Lambert 93, chargée sans refus ni avertissement', async () => {
@@ -132,8 +141,7 @@ test('1 : .prj absent prime sur une source illisible (ordre)', async () => {
 test('1 : .cpg absent -> chargé avec l\'avertissement « accents peut-être mal lus »', async () => {
   const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'] }), espion());
   assert.equal(r.charge, true); assert.equal(r.message, null);
-  assert.equal(r.avertissements.length, 1);
-  assert.ok(r.avertissements[0].includes('accents peut-être mal lus'), r.avertissements[0]);
+  assert.deepEqual(r.avertissements, ['Parcelles.shp : accents peut-être mal lus']);
 });
 test('1 : .cpg absent mais emprise incohérente -> refus, et pas de chargement', async () => {
   const r = await controler(SHP({ fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'], systeme: { valide: true, epsg: 4326 }, emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 } }), espion());
@@ -149,7 +157,7 @@ test('2 : source qui ne s\'ouvre pas -> refus « illisible », avec le nom de la
   const s = espion();
   const r = await controler(Sain({ lisible: false }), s);
   assert.equal(r.charge, false); assert.equal(r.controle, 2);
-  assert.ok(r.message.includes('illisible') && r.message.includes('UG.geojson'), r.message);
+  assert.ok(r.message.startsWith('UG.geojson : ') && r.message.includes('illisible'), r.message);
   assert.equal(s.appels, 0);
 });
 test('2 : illisible prime sur système invalide et emprise (ordre)', async () => {
@@ -162,16 +170,42 @@ test('3 : GeoTIFF sans géoréférencement -> refus « système de coordonnées 
   const s = espion();
   const r = await controler({ nom: 'FRT.tif', format: 'tif', fichiers: ['FRT.tif'], lisible: true, systeme: { valide: false, epsg: null }, nbEntites: 0, emprise: { xmin: 0, ymin: 0, xmax: 8, ymax: 8 } }, s);
   assert.equal(r.charge, false); assert.equal(r.controle, 3);
-  assert.ok(r.message.includes(MSG_SYSTEME), r.message);
+  eqSysteme(r, 'FRT.tif');
   assert.equal(s.appels, 0);
 });
 test('3 : .prj illisible -> refus « système de coordonnées inconnu »', async () => {
   const r = await controler(SHP({ systeme: { valide: false, epsg: null } }), espion());
-  assert.equal(r.controle, 3); assert.ok(r.message.includes(MSG_SYSTEME), r.message);
+  assert.equal(r.controle, 3); eqSysteme(r, 'Parcelles.shp');
 });
 test('3 : système invalide prime sur couche vide (ordre)', async () => {
   const r = await controler(Sain({ systeme: { valide: false, epsg: null }, nbEntites: 0 }), espion());
   assert.equal(r.controle, 3);
+});
+
+// ---------- GeoTIFF géoréférencé (nbEntites n'a pas de sens pour un raster : ignoré) ----------
+const TIF = (o = {}) => ({
+  nom: 'FRT.tif', format: 'tif', fichiers: ['FRT.tif'], lisible: true,
+  systeme: { valide: true, epsg: 2154 }, nbEntites: 0,
+  emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 }, ...o,
+});
+for (const [nom, nb] of [['0', 0], ['5', 5], ['undefined', undefined], ['null', null]]) {
+  test(`raster : GeoTIFF Lambert 93 dans l'emprise (nbEntites = ${nom}) -> chargé, sans avertissement « vide », reprojeter appelé`, async () => {
+    const s = espion();
+    const r = await controler(TIF({ nbEntites: nb }), s);
+    assert.deepEqual(r, { charge: true, controle: null, message: null, avertissements: [] });
+    assert.equal(s.appels, 1, 'le contrôle d\'emprise a eu lieu : un raster n\'est pas une couche vide');
+  });
+}
+test('raster : GeoTIFF Lambert 93 hors de France avec nbEntites = 0 -> refus 5 (pas pris pour une couche vide)', async () => {
+  const r = await controler(TIF({ emprise: { xmin: 0, ymin: 0, xmax: 8, ymax: 8 } }), espion());
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'FRT.tif');
+});
+test('raster : GeoTIFF déclaré en 4326 avec des valeurs Lambert 93 -> refus du contrôle 5', async () => {
+  const s = espion();
+  const r = await controler(TIF({ systeme: { valide: true, epsg: 4326 } }), s);
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'FRT.tif');
+  assert.deepEqual(r.avertissements, []);
+  assert.equal(s.appels, 1);
 });
 
 // ---------- contrôle 4 : couche vide ----------
@@ -180,7 +214,7 @@ test('4 : couche vide -> chargée, avertissement, et reprojeter n\'est pas appel
   const r = await controler(Sain({ nbEntites: 0, emprise: null }), s);
   assert.equal(r.charge, true); assert.equal(r.message, null);
   assert.equal(r.avertissements.length, 1);
-  assert.ok(r.avertissements[0].includes('vide'), r.avertissements[0]);
+  assert.ok(r.avertissements[0].startsWith('UG.geojson : ') && r.avertissements[0].includes('vide'), r.avertissements[0]);
   assert.equal(s.appels, 0, 'pas de contrôle d\'emprise sur une couche vide');
 });
 test('4 : couche vide chargée même si son emprise (fantôme) serait hors de France', async () => {
@@ -190,6 +224,9 @@ test('4 : couche vide chargée même si son emprise (fantôme) serait hors de Fr
 test('4 : .cpg absent et couche vide -> chargée avec deux avertissements', async () => {
   const r = await controler(SHP({ nbEntites: 0, emprise: null, fichiers: ['Parcelles.shp', 'Parcelles.shx', 'Parcelles.dbf', 'Parcelles.prj'] }), espion());
   assert.equal(r.charge, true); assert.equal(r.avertissements.length, 2);
+  for (const a of r.avertissements) assert.ok(a.startsWith('Parcelles.shp : '), a);
+  assert.ok(r.avertissements.some((a) => a.includes('accents peut-être mal lus')));
+  assert.ok(r.avertissements.some((a) => a.includes('vide')));
 });
 
 // ---------- contrôle 5 : vraisemblance ----------
@@ -210,7 +247,7 @@ for (const [nom, e] of [
   test(`5 : dépassement d'un mètre (${nom}) -> refus, message de la spec`, async () => {
     const r = await controler(L93(...e), espion());
     assert.equal(r.charge, false); assert.equal(r.controle, 5);
-    assert.ok(r.message.includes(MSG_EMPRISE), r.message);
+    eqEmprise(r, 'UG.geojson');
   });
 }
 test('5 : emprise à cheval sur le bord (une partie dedans) -> refus : contenue, pas intersectée', async () => {
@@ -223,15 +260,16 @@ test('5 : Genève (942025 ; 6572608) acceptée : limite connue de l\'ADR 0004 (r
 });
 test('5 : GeoJSON en Lambert 93 lu en WGS84 (668000 ; 6826000 « degrés ») -> refus', async () => {
   const r = await controler(Sain({ systeme: { valide: true, epsg: 4326 }, emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 } }), espion());
-  assert.equal(r.charge, false); assert.equal(r.controle, 5); assert.ok(r.message.includes(MSG_EMPRISE), r.message);
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'UG.geojson');
 });
 test('5 : axes inversés (Strasbourg lu lat/lon) -> refus', async () => {
   const r = await controler(Sain({ systeme: { valide: true, epsg: 4326 }, emprise: { xmin: 48.569065, ymin: 7.761895, xmax: 48.569065, ymax: 7.761895 } }), espion());
-  assert.equal(r.charge, false); assert.equal(r.controle, 5); assert.ok(r.message.includes(MSG_EMPRISE), r.message);
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'UG.geojson');
 });
 test('5 : toute erreur de reprojection vaut refus (exception)', async () => {
   const r = await controler(Sain({ systeme: { valide: true, epsg: 4326 } }), { reprojeter() { throw new Error('PROJ : échec'); } });
-  assert.equal(r.charge, false); assert.equal(r.controle, 5); assert.ok(r.message && r.message.length > 0);
+  assert.equal(r.charge, false); assert.equal(r.controle, 5);
+  assert.ok(r.message.startsWith('UG.geojson : ') && r.message.length > 'UG.geojson : '.length, r.message);
 });
 for (const [nom, v] of [['NaN', NaN], ['Infinity', Infinity], ['null', null], ['undefined', undefined]]) {
   test(`5 : reprojection qui rend ${nom} -> refus`, async () => {
@@ -253,7 +291,7 @@ test('piège UG_sans_crs.geojson (Lambert 93 sans crs, donc lu en WGS84) -> refu
   const g = JSON.parse(piege['UG_sans_crs.geojson'].toString('utf8'));
   const xs = g.features[0].geometry.coordinates[0].map((p) => p[0]); const ys = g.features[0].geometry.coordinates[0].map((p) => p[1]);
   const r = await controler({ nom: 'UG_sans_crs.geojson', format: 'geojson', fichiers: fichiersDe('UG_sans_crs.geojson'), lisible: true, systeme: { valide: true, epsg: 4326 }, nbEntites: 1, emprise: { xmin: Math.min(...xs), ymin: Math.min(...ys), xmax: Math.max(...xs), ymax: Math.max(...ys) } }, espion());
-  assert.equal(r.charge, false); assert.equal(r.controle, 5); assert.ok(r.message.includes(MSG_EMPRISE));
+  assert.equal(r.charge, false); assert.equal(r.controle, 5); eqEmprise(r, 'UG_sans_crs.geojson');
 });
 test('piège Parcelles_sans_prj (Shapefile sans .prj) -> refus du contrôle 1', async () => {
   const r = await controler({ nom: 'Parcelles_sans_prj.shp', format: 'shp', fichiers: fichiersDe('Parcelles_sans_prj.shp'), lisible: true, systeme: { valide: true, epsg: 2154 }, nbEntites: 1, emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 } }, espion());
@@ -262,11 +300,12 @@ test('piège Parcelles_sans_prj (Shapefile sans .prj) -> refus du contrôle 1', 
 });
 test('piège FRT_sans_georef.tif (GeoTIFF sans géoréférencement) -> refus du contrôle 3', async () => {
   const r = await controler({ nom: 'FRT_sans_georef.tif', format: 'tif', fichiers: fichiersDe('FRT_sans_georef.tif'), lisible: true, systeme: { valide: false, epsg: null }, nbEntites: 0, emprise: { xmin: 0, ymin: 0, xmax: 8, ymax: 8 } }, espion());
-  assert.equal(r.charge, false); assert.equal(r.controle, 3); assert.ok(r.message.includes(MSG_SYSTEME));
+  assert.equal(r.charge, false); assert.equal(r.controle, 3); eqSysteme(r, 'FRT_sans_georef.tif');
 });
 test('piège UG_vide.geojson (couche vide) -> chargée avec avertissement', async () => {
   const r = await controler({ nom: 'UG_vide.geojson', format: 'geojson', fichiers: fichiersDe('UG_vide.geojson'), lisible: true, systeme: { valide: true, epsg: 4326 }, nbEntites: 0, emprise: null }, espion());
   assert.equal(r.charge, true); assert.equal(r.avertissements.length, 1);
+  assert.ok(r.avertissements[0].startsWith('UG_vide.geojson : ') && r.avertissements[0].includes('vide'), r.avertissements[0]);
 });
 test('piège Zone_inconnue.geojson (nom non reconnu) : le contrôle ne le refuse pas (style par défaut : § 5)', async () => {
   const r = await controler({ nom: 'Zone_inconnue.geojson', format: 'geojson', fichiers: fichiersDe('Zone_inconnue.geojson'), lisible: true, systeme: { valide: true, epsg: 2154 }, nbEntites: 1, emprise: { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 } }, espion());

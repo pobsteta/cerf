@@ -6,6 +6,7 @@
 import QtQuick
 import org.qfield
 import "cerf-logique.mjs" as Logique
+import "cerf-styles.mjs" as Styles
 
 Item {
   id: cerf
@@ -90,6 +91,38 @@ Item {
     };
   }
 
+  // Styles du manuel (mission 010). Ce que Cerf.qml sait dire à la logique : le module des règles,
+  // la géométrie et les champs d'une couche (QgsVectorLayer.geometryType() est Q_INVOKABLE,
+  // QgsFields expose « names »), la lecture d'un fichier du zip (null si impossible).
+  // CE QUI MANQUE : poser le style sur la couche (appliquerStyle, appliquerQml). QField 4.3.7
+  // n'expose à QML ni setRenderer, ni setLabeling, ni loadNamedStyle (aucun Q_INVOKABLE : vérifié
+  // dans qgsvectorlayer.h, qgsmaplayer.h, qflayerutils.h). Tant que ces deux fonctions ne sont pas
+  // fournies, la logique ne pose aucun style et ne dit aucun avertissement de style.
+  function infosCouche(couche) {
+    let noms = [];
+    try {
+      noms = couche.fields.names;
+    } catch (e) {
+      noms = [];
+    }
+    let geometrie = null;
+    try {
+      geometrie = Styles.geometrieDe(couche.geometryType());
+    } catch (e) {
+      geometrie = null;
+    }
+    return { geometrie: geometrie, champs: noms };
+  }
+
+  function lireTexte(zip, chemin) {
+    try {
+      const octets = Logique.octetsDe(FileUtils.readFileContent("/vsizip/" + Logique.cheminCopie(dossierProjet(), zip) + "/" + chemin));
+      return octets.length === 0 ? null : Logique.texteDe(octets);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function retirerDeLaCarte(zip, nom) {
     const l = coucheMarquee(zip, nom);
     if (l) ProjectUtils.removeMapLayer(qgisProject, String(l.id));
@@ -138,7 +171,10 @@ Item {
       reglages: reglages,
       dossierProjet: dossierProjet(),
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
-      chargerCouche: id ? chargeur() : function () { return null; }
+      chargerCouche: id ? chargeur() : function () { return null; },
+      styles: Styles,
+      infosCouche: infosCouche,
+      lireTexte: lireTexte
     });
     registreChange();
     return r;
@@ -214,6 +250,9 @@ Item {
       octets: octets,
       reglages: reglages,
       chargerCouche: chargeur(),
+      styles: Styles,
+      infosCouche: infosCouche,
+      lireTexte: lireTexte,
       maintenant: function () { return new Date(); }
     });
     let texte = r.message;

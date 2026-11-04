@@ -14,7 +14,7 @@ import { ecrireZip } from '../tests/recette/essai/zip-ecrire.mjs';
 
 const ici = dirname(fileURLToPath(import.meta.url));
 
-export const FICHIERS_PLUGIN = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'metadata.txt', 'icon.svg'];
+export const FICHIERS_PLUGIN = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'cerf-styles.mjs', 'metadata.txt', 'icon.svg'];
 
 const entree = (nom) => ({ nom: Buffer.from(nom, 'utf8'), donnees: readFileSync(join(ici, nom)), stocke: false, utf8: true });
 

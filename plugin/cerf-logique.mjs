@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 
 // Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
 // 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors
@@ -23,8 +23,10 @@ export const NOM_DOSSIER_COPIES = 'cerf-imports';
 // valeur du prototype (prototype/cerf-zip.mjs, SEUIL_LECTURE_OCTETS = 10 000 000 octets).
 export const PLAFOND_LISTAGE_OCTETS = 10000000;
 
-// Style inscrit au registre par le squelette (les styles du manuel viennent à la mission 010).
+// Style inscrit au registre quand aucune règle ne s'applique ; sinon le nom de la règle (UG,
+// Parcelles, FRT, ProdBois) ou 'qml' (mission 010, plugin/cerf-styles.mjs).
 export const STYLE_DEFAUT = 'defaut';
+export const STYLE_QML = 'qml';
 
 // --------------------------------------------------------------------------- octets
 
@@ -106,6 +108,11 @@ function decoderUtf8(octets) {
     i += long;
   }
   return s;
+}
+
+// Texte UTF-8 d'un contenu d'octets (un .json, un .qml lus dans le zip).
+export function texteDe(valeur) {
+  return decoderUtf8(octetsDe(valeur));
 }
 
 // --------------------------------------------------------------------------- zip
@@ -279,7 +286,8 @@ export function zipDeLaSource(source, dossier) {
 
 // --------------------------------------------------------------------------- couches du zip
 
-// Squelette : GeoJSON par l'extension .geojson (le .json est confié à la mission 010).
+// GeoJSON par l'extension .geojson ; un .json est aussi retenu, marqué `json: true` : c'est
+// importerZip qui lit son contenu pour savoir si c'est du GeoJSON (spec § 3.1, mission 010).
 // Décision n° 7 : __MACOSX/ et les fichiers « ._* » (zips faits sur Mac) ignorés en silence.
 export function couchesDuZip(noms) {
   const couches = [];
@@ -289,10 +297,11 @@ export function couchesDuZip(noms) {
     if (('/' + entree).indexOf('/__MACOSX/') >= 0) continue;
     const fichier = nomDeFichier(entree);
     if (fichier.indexOf('._') === 0) continue;
-    if (!/\.geojson$/i.test(fichier)) continue;
-    const couche = fichier.substring(0, fichier.length - '.geojson'.length);
+    const estJson = /\.json$/i.test(fichier) && !/\.geojson$/i.test(fichier);
+    if (!estJson && !/\.geojson$/i.test(fichier)) continue;
+    const couche = fichier.substring(0, fichier.length - (estJson ? '.json' : '.geojson').length);
     if (couche === '') continue;
-    couches.push({ couche, entree });
+    if (estJson) couches.push({ couche, entree, json: true }); else couches.push({ couche, entree });
   }
   return couches;
 }
@@ -396,6 +405,52 @@ function chargerSansPlanter(chargerCouche, source, nom) {
   }
 }
 
+// --------------------------------------------------------------------------- styles (mission 010)
+
+function messageErreur(e) {
+  return e && e.message ? e.message : String(e);
+}
+
+// Choisit puis pose le style d'une couche chargée. Rend { style, qml, avertissements } ; les
+// avertissements sont des phrases seules (l'appelant ajoute « <fichier> : », spec § 4).
+// Le style est posé par ctx.appliquerStyle / ctx.appliquerQml (Cerf.qml, API de QGIS) ; sans
+// ctx.styles, rien n'est fait. Un échec de style ne fait jamais refuser la couche.
+//   cheminQml : chemin du .qml dans le zip, ou null ; lireTexte(nom du zip, chemin dans le zip) -> texte|null
+function styler(ctx, couche, nomZip, nomCouche, cheminQml) {
+  const rien = { style: STYLE_DEFAUT, qml: '', avertissements: [] };
+  const S = ctx.styles;
+  if (!S || typeof ctx.appliquerStyle !== 'function' || typeof ctx.infosCouche !== 'function') return rien;
+  try {
+    const infos = ctx.infosCouche(couche) || {};
+    const champs = infos.champs || [];
+    let qml = null;
+    if (cheminQml) {
+      let texte = null;
+      try { texte = typeof ctx.lireTexte === 'function' ? ctx.lireTexte(nomZip, cheminQml) : null; } catch (e) { texte = null; }
+      qml = typeof texte === 'string' ? texte : '';
+    }
+    let r = S.reconnaitre({ nom: nomCouche, geometrie: infos.geometrie, champs, qml });
+    if (r.source === 'qml') {
+      let ok = false;
+      try { ok = typeof ctx.appliquerQml === 'function' && ctx.appliquerQml(couche, qml) === true; } catch (e) { ok = false; }
+      if (!ok) r = S.reconnaitre({ nom: nomCouche, geometrie: infos.geometrie, champs, qml: '' });
+      else return { style: STYLE_QML, qml: cheminQml, avertissements: [] };
+    }
+    const avertissements = r.avertissement ? [r.avertissement] : [];
+    const attendu = S.champCodeDe(r.regle);
+    const style = S.styleDe(r.regle, {
+      champCode: attendu === null ? undefined : (S.champReel(champs, S.sansCasseNiAccents(attendu)) || attendu),
+      champEssence: S.champReel(champs, 'essence') || undefined,
+      champDiametre: S.champReel(champs, 'diametre') || undefined,
+    });
+    if (style === null) return { style: STYLE_DEFAUT, qml: '', avertissements };
+    ctx.appliquerStyle(couche, style);
+    return { style: r.regle, qml: '', avertissements };
+  } catch (e) {
+    return { style: STYLE_DEFAUT, qml: '', avertissements: ['style non appliqué (' + messageErreur(e) + ')'] };
+  }
+}
+
 export function importerZip(ctx) {
   const vide = (message) => ({ chargees: [], refusees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
@@ -410,13 +465,27 @@ export function importerZip(ctx) {
   } catch (e) {
     return vide(`${nomZip} : ${e.message}`);
   }
-  const couches = couchesDuZip(noms);
-  if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
+  // Un .json n'est une couche que s'il est du GeoJSON (spec § 3.1) : contenu lu, et ignoré en
+  // silence s'il n'en est pas. Contenu illisible (lecture impossible) : on tente le chargement,
+  // un échec sera alors dit (jamais de GeoJSON perdu en silence).
+  const couches = [];
+  const candidates = couchesDuZip(noms);
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    if (c.json && ctx.styles && typeof ctx.styles.estGeoJson === 'function' && typeof ctx.lireTexte === 'function') {
+      let texte = null;
+      try { texte = ctx.lireTexte(nomZip, c.entree); } catch (e) { texte = null; }
+      if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) continue;
+    }
+    couches.push(c);
+  }
+  if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
   const chargees = [];
   const refusees = [];
   const vues = {};
+  const avertissements = [];
   for (let i = 0; i < couches.length; i++) {
     const c = couches[i];
     if (Object.prototype.hasOwnProperty.call(vues, c.couche)) {
@@ -432,15 +501,20 @@ export function importerZip(ctx) {
       continue;
     }
     r.couche.readOnly = true;
+    const cheminQml = ctx.styles && typeof ctx.styles.trouverQml === 'function' ? ctx.styles.trouverQml(c.entree, noms) : null;
+    const st = styler(ctx, r.couche, nomZip, c.couche, cheminQml);
+    for (let k = 0; k < st.avertissements.length; k++) avertissements.push(nomDeFichier(c.entree) + ' : ' + st.avertissements[k]);
     // Inscription après chaque couche (spec § 1, geste 5).
-    inscrire(ctx.reglages, ctx.cerfId, {
+    const ligne = {
       zip: nomZip,
       couche: c.couche,
       chemin_vsi: nomZip + '/' + c.entree,
-      style: STYLE_DEFAUT,
+      style: st.style,
       ajoutee_le: maintenant().toISOString(),
-    });
-    chargees.push({ couche: c.couche, entree: c.entree, source });
+    };
+    if (st.qml !== '') ligne.qml = st.qml;
+    inscrire(ctx.reglages, ctx.cerfId, ligne);
+    chargees.push({ couche: c.couche, entree: c.entree, source, style: st.style });
   }
   const lignes = [];
   if (chargees.length > 0) {
@@ -449,7 +523,8 @@ export function importerZip(ctx) {
     lignes.push(`Aucune couche chargée depuis ${nomZip}`);
   }
   for (let i = 0; i < refusees.length; i++) lignes.push(`${refusees[i].couche} : ${refusees[i].raison}`);
-  return { chargees, refusees, message: lignes.join('\n') };
+  for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
+  return { chargees, refusees, avertissements, message: lignes.join('\n') };
 }
 
 // --------------------------------------------------------------------------- ouvrir
@@ -485,6 +560,10 @@ export function demarrerProjet(ctx) {
     const r = chargerSansPlanter(ctx.chargerCouche, '/vsizip/' + dossier + '/' + e.chemin_vsi, e.couche);
     if (!r.couche) { illisibles.push({ zip: e.zip, couche: e.couche }); continue; }
     r.couche.readOnly = true;
+    // Le style revient avec la couche (règles du manuel, ou .qml du zip si l'import l'a retenu).
+    // Les avertissements ont été dits à l'import : pas répétés à chaque ouverture.
+    const chemin = typeof e.qml === 'string' && e.qml !== '' && segmentsSains(e.zip + '/' + e.qml) ? e.qml : null;
+    styler(ctx, r.couche, e.zip, e.couche, chemin);
     rechargees.push({ zip: e.zip, couche: e.couche });
   }
   const lignes = [];

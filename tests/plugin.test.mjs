@@ -271,10 +271,10 @@ test('retirerCouche : message quand la copie sert encore', async () => {
 });
 
 // ============================================================================ forme du plugin
-const FICHIERS = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'metadata.txt', 'icon.svg'];
+const FICHIERS = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'cerf-styles.mjs', 'metadata.txt', 'icon.svg'];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
 
-test('forme : les six fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
+test('forme : les sept fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
   for (const f of FICHIERS) assert.ok(existsSync(join(PLUGIN, f)), `absent : plugin/${f}`);
   const meta = lire('metadata.txt');
   assert.match(meta, /^\[general\]$/m);
@@ -317,7 +317,7 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : cerf.zip a main.qml à sa racine et exactement les six fichiers du plugin', async () => {
+test('empaquetage : cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
@@ -367,5 +367,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.1\.1$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.2\.0$/m);
 });

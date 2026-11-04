@@ -93,3 +93,11 @@ après la fusion de la 010.
   GeoTIFF : mesurer ce que QField lit sans planter, puis proposer une valeur à Pascal.
 - Rappels hérités des missions 037 et 038 : `ouvrirCouche` ouvre tout par `loadVectorLayer`
   (un GeoTIFF serait refusé au contrôle 2) ; code mort `p.isEmpty` dans `Cerf.qml` à retirer.
+
+## Arbitrages de Pascal sur la 0.4.0 (4 novembre 2026, « oui aux trois »)
+
+- Plafond du zip : mesurer d'abord sur le Samsung (lourd.zip avec un plafond provisoire), puis
+  décider ; 250 Mo proposés par le dev.
+- Message validé : « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans x.zip. » (à porter
+  dans la spec § 4).
+- GeoPackage qui ne contient qu'une table attributaire : « tables illisibles » (prudence).

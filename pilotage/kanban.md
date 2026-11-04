@@ -27,6 +27,10 @@ _Modèle de carte :_
 
 ## Validé
 
+- [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+  - Homme : `dev` (sonnet)
+  - Mission : Publier piege.zip dans la préversion essai-manuel
+  - Moyens : outils/zips-recette.mjs, release-essai-manuel.yml
 - [039-readme](missions/039-readme.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `archiviste` (sonnet)
   - Mission : README : installer le projet, le plugin, et charger un zip

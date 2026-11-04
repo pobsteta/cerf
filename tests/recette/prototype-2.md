@@ -404,7 +404,9 @@ une capture lisible de l'écran la remplace (défiler si le bloc est long).
 1. **Avec le réseau, avant le mode avion** : télécharger le zip d'essai **compressé**
    `essai-styles-z.zip`
    (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-styles-z.zip) dans
-   « Téléchargements », sans le décompresser ni le renommer. Il a **8 entrées, toutes
+   « Téléchargements », sans le décompresser ni le renommer (son sha256 et le sha du commit
+   empaqueté sont écrits dans les notes de la préversion : les relever dans l'en-tête de ce
+   protocole si l'on veut dater l'essai). Il a **8 entrées, toutes
    compressées** (méthode 8) : `FRT_q7.shp`, `.shx`, `.dbf`, `.prj`, `.cpg` (champ `nom` :
    « Étang », « Forêt »), `UG_q1.geojson`, `essai-gpkg2.gpkg` (tables `Parcelles` et `Zones`, sans
    `layer_styles`), `ProdBois_2000.geojson` (2 000 polygones).

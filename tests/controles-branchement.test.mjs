@@ -268,3 +268,75 @@ test('importerZip : zip réimporté sans aucune couche lisible -> import avorté
   assert.deepEqual(retraits, []);
   assert.equal(premier.journal.filter((j) => j.startsWith('ajouter')).length, 2);
 });
+
+// ---- Passage supplémentaire : décision n° 13 (réimport tout illisible) et point 14 (point vide)
+
+test('décision n° 13 : zip réimporté dont tous les GeoJSON sont illisibles -> avorté, registre, carte et copie intacts', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const premier = contexte({ 'a.geojson': ok, 'b.geojson': ok });
+  L.importerZip(premier.ctx);
+  const avant = JSON.stringify(L.lireRegistre(premier.ctx.reglages, ID));
+  const retraits = [];
+  const ajouts = [];
+  for (const ouvrir of [() => null, () => ({ isValid: false }), () => { throw new Error('GDAL'); }]) {
+    const r = L.importerZip({ ...premier.ctx, octets: zip(['a.geojson']), ouvrirCouche: ouvrir,
+      retirerLeZipDeLaCarte: (z) => retraits.push(z), ajouterALaCarte: (c, n) => ajouts.push(n) });
+    assert.equal(r.message, 'aucune couche lisible dans essai.zip, rien changé');
+    assert.deepEqual(r.chargees, []);
+    assert.equal(JSON.stringify(L.lireRegistre(premier.ctx.reglages, ID)), avant);
+  }
+  assert.deepEqual(retraits, []);
+  assert.deepEqual(ajouts, []);
+});
+
+test('décision n° 13 : une seule couche lisible -> décision n° 8 (retrait de la carte puis rechargement), la lisible est chargée', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const premier = contexte({ 'a.geojson': ok, 'b.geojson': ok });
+  L.importerZip(premier.ctx);
+  const ordre = [];
+  const r = L.importerZip({ ...premier.ctx,
+    ouvrirCouche: (s, nom) => { ordre.push('ouvrir ' + nom); return nom === 'a' ? null : { isValid: true, nom }; },
+    controlerCouche: (d) => (d.nom === 'b.geojson' ? ok : { charge: false, message: 'a.geojson : illisible' }),
+    retirerLeZipDeLaCarte: (z) => ordre.push('retrait carte ' + z),
+    ajouterALaCarte: (c, n) => ordre.push('ajouter ' + n) });
+  assert.deepEqual(r.chargees.map((c) => c.couche), ['b']);
+  assert.deepEqual(L.lireRegistre(premier.ctx.reglages, ID).map((e) => e.couche), ['b']);
+  // Toutes ouvertes avant tout retrait ; chaque couche ouverte une seule fois.
+  assert.deepEqual(ordre, ['ouvrir a', 'ouvrir b', 'retrait carte essai.zip', 'ajouter b']);
+});
+
+test('décision n° 13 : premier import tout illisible (pas de réimport) -> messages de refus habituels', () => {
+  const { ctx } = contexte({}, { ouvrirCouche: () => null, controlerCouche: () => ({ charge: false, message: 'x : illisible' }) });
+  const r = L.importerZip(ctx);
+  assert.match(r.message, /^Aucune couche chargée depuis essai\.zip/);
+});
+
+test('point 14 : un point vide rendu par la reprojection (QgsPoint() de QField) est un refus 5', () => {
+  const vides = [
+    { x: NaN, y: NaN, isEmpty: () => true },
+    { x: 600000, y: 6500000, isEmpty: () => true },
+    { x: 600000, y: 6500000, isEmpty: true },
+    { x: 600000, y: 6500000, isNull: () => true },
+    { x: 600000, y: 6500000, isNull: true },
+    {}, { x: 600000 }, { y: 6500000 },
+  ];
+  for (const v of vides) {
+    assert.throws(() => C.reprojeterEmprise({ xmin: 600000, ymin: 6500000, xmax: 600100, ymax: 6500100 }, 4326, () => v));
+    const r = C.controlerCouche(geojson2154({ xmin: 600000, ymin: 6500000, xmax: 600100, ymax: 6500100 }),
+      { reprojeter: (e, epsg, crs) => C.reprojeterEmprise(e, epsg, () => v, crs) });
+    assert.equal(r.charge, false);
+    assert.equal(r.controle, 5);
+  }
+});
+
+test('point 14 : source déjà en 2154 (entrée rendue telle quelle, non vide) reste acceptée', () => {
+  const rendu = (x, y) => ({ x, y, isEmpty: () => false, isNull: () => false });
+  const r = C.controlerCouche(geojson2154({ xmin: 600000, ymin: 6500000, xmax: 600100, ymax: 6500100 }),
+    { reprojeter: (e, epsg, crs) => C.reprojeterEmprise(e, epsg, rendu, crs) });
+  assert.equal(r.charge, true);
+});
+
+test('point 14 : Cerf.qml refuse un point vide (garde présente dans reprojeterPoint)', () => {
+  const qml = readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8');
+  assert.match(qml, /isEmpty[\s\S]{0,120}throw new Error\("reprojection : point vide"\)/);
+});

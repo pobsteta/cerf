@@ -115,7 +115,9 @@ export function reprojeterEmprise(emprise, epsg, reprojeterPoint, crs) {
       const x = emprise.xmin + (emprise.xmax - emprise.xmin) * i / n;
       const y = emprise.ymin + (emprise.ymax - emprise.ymin) * j / n;
       const p = reprojeterPoint(x, y, epsg, crs);
-      if (!p || !fini(p.x) || !fini(p.y)) throw new Error('reprojection : valeur non finie');
+      // Point vide (QgsPoint() rendu par QField sur échec) : refus, même si x et y existaient.
+      if (!p || p.isEmpty === true || (typeof p.isEmpty === 'function' && p.isEmpty()) || p.isNull === true ||
+        (typeof p.isNull === 'function' && p.isNull()) || !fini(p.x) || !fini(p.y)) throw new Error('reprojection : valeur non finie');
       if (p.x < xmin) xmin = p.x;
       if (p.x > xmax) xmax = p.x;
       if (p.y < ymin) ymin = p.y;

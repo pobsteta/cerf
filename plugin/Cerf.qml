@@ -141,6 +141,9 @@ Item {
     const source = crs;
     const but = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154");
     const p = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), source, but);
+    // QField 4.3.7 ne lève rien sur échec : il rend un QgsPoint() vide. Vide = échec = refus.
+    // Source déjà en 2154 : l'entrée est rendue telle quelle (non vide), donc acceptée.
+    if (!p || (typeof p.isEmpty === "function" ? p.isEmpty() : p.isEmpty === true)) throw new Error("reprojection : point vide");
     return { x: Number(p.x), y: Number(p.y) };
   }
 
@@ -267,8 +270,8 @@ Item {
       message(Logique.messageLectureRefusee(nom, versionQField(), FileUtils.isWithinProjectDirectory(chemin)));
       return;
     }
-    // Zip réimporté sous le même nom : ses couches sont retirées de la carte puis rechargées.
-    retirerLeZipDeLaCarte(nom);
+    // Zip réimporté sous le même nom : ses couches sont retirées de la carte (par importerZip,
+    // une fois sûr qu'au moins une couche est lisible) puis rechargées.
     const r = Logique.importerZip({
       cerfId: id,
       dossierProjet: dossierProjet(),
@@ -276,6 +279,7 @@ Item {
       octets: octets,
       reglages: reglages,
       ouvrirCouche: ouvrirCouche,
+      retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,
       controlerCouche: controlerCouche,
       ajouterALaCarte: ajouterALaCarte,

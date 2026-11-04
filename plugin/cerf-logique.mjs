@@ -462,6 +462,23 @@ export function importerZip(ctx) {
   }
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
+  // Ouverture de toutes les couches AVANT de toucher au registre ou à la carte (décision n° 13) :
+  // un zip réimporté dont aucune couche ne s'ouvre est un import avorté, rien n'est retiré.
+  const ouvertes = {};
+  const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
+  if (dejaImporte) {
+    let nbLisibles = 0;
+    for (let i = 0; i < couches.length; i++) {
+      const c = couches[i];
+      if (Object.prototype.hasOwnProperty.call(ouvertes, c.couche)) continue; // doublon : refusé plus bas
+      const o = chargerSansPlanter(ctx.ouvrirCouche, '/vsizip/' + copie + '/' + c.entree, c.couche);
+      ouvertes[c.couche] = o;
+      if (o.couche) nbLisibles++;
+    }
+    if (nbLisibles === 0) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
+  }
+  // Retrait de la carte des couches de ce zip (réimport), seulement maintenant.
+  if (typeof ctx.retirerLeZipDeLaCarte === 'function') ctx.retirerLeZipDeLaCarte(nomZip);
   // Décision n° 8 : le zip réimporté remplace l'ancien en entier. Les couches de ce zip qui n'y
   // sont plus sortent du registre (aucun fichier n'est touché ; la copie est écrasée par QField).
   const presentes = {};
@@ -488,7 +505,7 @@ export function importerZip(ctx) {
     vues[c.couche] = c.entree;
     const source = '/vsizip/' + copie + '/' + c.entree;
     // Ouvrir (sans ajouter à la carte), contrôler, puis seulement ajouter et inscrire.
-    const r = chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
+    const r = ouvertes[c.couche] || chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
     // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
     // précède « illisible » et que le message porte le nom avec extension.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);

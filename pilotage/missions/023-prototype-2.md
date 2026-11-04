@@ -78,3 +78,14 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 Sept réponses oui/non vues sur le Samsung, qui suffisent à écrire l'ADR des styles et à
 dire si la 012 peut reprojeter.
+
+## Décisions de Pascal sur le plan (4 novembre 2026)
+
+Plan `prototype-2/PLAN.md` (2025707) **validé avec les dix réponses proposées** : zip d'essai
+stocké (mission « inflate » si les questions 1 et 3 passent) ; projet d'essai à part
+`cerf-essai-2.zip` ; données fictives autour de Strasbourg (point 7,76189 ; 48,56906) ;
+question 5 par les réglages de QField ; ligne « Shapefile sans .prj » à la question 7 ;
+GeoPackage aussi publié seul ; fichiers d'essai ouverts par Pascal dans QGIS avant l'essai
+(`ogrinfo` dans le workflow si rapide) ; `cerf-prototype-2.zip`, préversion `prototype-2`,
+Cerf 0.1.1 et prototype n° 1 désactivés pendant l'essai ; deux réponses (couleurs,
+étiquettes) aux questions 1 et 3 ; protocole écrit par le dev, relu par le testeur.

@@ -90,3 +90,21 @@ couleurs et tailles conformes au mail, sans réglage.
   `diametre` sans tenir compte de la casse. Les tests de la 009 seront amendés en ce sens.
 - Restent ouverts : `.qml` vide ou illisible ; nom d'une couche GeoPackage (fichier ou
   table) ; champs de code provisoires `CODE_UG`, `CODE_PARC`, `CODE_FRT`.
+
+### Contrat mis à jour (amendement de la 009, 24c8530, 4 novembre 2026)
+
+```
+reconnaitre({ nom, geometrie, champs, qml }) -> { regle, source, avertissement }
+  nom : sans extension ; geometrie : 'polygone'|'point'|'ligne' ;
+  champs : noms réels (absent ou vide possible) ; essence et diametre sans tenir compte de la casse ;
+  qml : contenu du .qml ou null/absent.
+  avertissement : toujours présent ; « nom reconnu mais pas un polygone » quand le nom est
+  UG, Parcelles ou FRT, la couche ponctuelle ou linéaire, et qu'elle garde le style par
+  défaut ({ regle: null, source: 'defaut', avertissement }) ; null sinon (un point nommé UG
+  avec essence et diametre devient ProdBois sans avertissement).
+  Avec un .qml : { regle: null, source: 'qml', avertissement: null }.
+styleDe(regle, { champCode, champEssence, champDiametre }) -> { symbole, etiquette } | null
+  ProdBois : expression "<champEssence>" || '\n' || "<champDiametre>" (noms réels trouvés
+  par l'appelant ; à défaut 'essence' et 'diametre').
+trouverQml : inchangé.
+```

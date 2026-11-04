@@ -84,3 +84,12 @@ après la fusion de la 010.
   ne rend aucune table vecteur alors que les sondes `layerid` ouvrent des couches, ou si un
   `data_type` manque, c'est « tables illisibles », jamais « aucune table vecteur ». Le testeur
   l'ajoutera quand la voie de lecture sera fixée par l'essai du prototype n° 4.
+
+## À revoir avec la 024 (Pascal, 4 novembre 2026)
+
+- **Plafond de listage du zip, 10 Mo** (`PLAFOND_LISTAGE_OCTETS`, décision n° 6 de la mission 008,
+  posé pour le squelette) : il porte sur la taille du fichier `.zip` et contredit le zip `lourd`
+  de la recette (spec § 6, critère 7 : GeoTIFF de 200 Mo). À revoir dans la 024, avant de lire les
+  GeoTIFF : mesurer ce que QField lit sans planter, puis proposer une valeur à Pascal.
+- Rappels hérités des missions 037 et 038 : `ouvrirCouche` ouvre tout par `loadVectorLayer`
+  (un GeoTIFF serait refusé au contrôle 2) ; code mort `p.isEmpty` dans `Cerf.qml` à retirer.

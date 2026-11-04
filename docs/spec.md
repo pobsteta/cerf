@@ -351,6 +351,9 @@ embarqué (sauf échec à J+2).
    Cerf), et l'on demande à QField d'exposer le listage d'un zip aux plugins.
 2. Si l'effacement d'un `.zip` est impossible : la copie reste sur l'appareil, son nom
    est affiché (valeur sacrifiée : la place).
+   Au retrait d'une couche, si un fichier réécrit de la couche (`.gpkg`, `.qml`, `-wal`, `-shm`,
+   `.aux.xml`) ne peut pas être effacé : « Fichiers restés sur l'appareil : <noms>. » (noms des
+   fichiers réellement restés ; arbitrage de Pascal, 4 novembre 2026, mission 031).
 3. **Un seul `cerf.qgz` par appareil** pour toutes les forêts.
 4. Licence **GPL-3.0-or-later** ; aucune ligne recopiée de `qfield-layer-loader` ni de
    `qfield_addLayer` ; **le code est à Pascal**.

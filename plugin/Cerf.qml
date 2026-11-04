@@ -368,6 +368,8 @@ Item {
       couche: couche,
       reglages: reglages,
       retirerDeLaCarte: function (nom) { cerf.retirerDeLaCarte(zip, nom); },
+      existe: function (chemin) { return FileUtils.fileExists(chemin); },
+      effacerFichier: effacerFichier,
       platformUtilities: platformUtilities
     });
     message(r.message);

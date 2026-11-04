@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.3.1';
 
 // Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
 // 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors
@@ -606,6 +606,59 @@ function copierEtStyler(ctx, couche, c, nomZip, noms) {
   return { ok: true, copie: o.couche, rendu, relatif: rendu.substring(dossier.length + 1), style: styleFinal, qml: qmlFinal, avertissements };
 }
 
+// --------------------------------------------------------------------------- fichiers d'une couche (mission 031)
+
+// Suffixes des fichiers réécrits d'une couche vecteur, dans l'ordre où leurs noms sont dits (ADR 0007
+// amendée ; annexes SQLite et GDAL : -wal, -shm, .aux.xml).
+const SUFFIXES_COUCHE = ['.gpkg', '.qml', '.gpkg-wal', '.gpkg-shm', '.gpkg.aux.xml'];
+
+// Chemins protégés : fichiers qu'une autre entrée du registre utilise encore. On ne suit le `chemin`
+// du registre que pour PROTÉGER, jamais pour effacer. Un .gpkg partagé protège aussi ses annexes et son .qml.
+function cheminsProteges(dossier, autres) {
+  const proteges = {};
+  const proteger = (gpkg) => {
+    const base = gpkg.replace(/\.gpkg$/, '');
+    for (let k = 0; k < SUFFIXES_COUCHE.length; k++) proteges[base + SUFFIXES_COUCHE[k]] = true;
+  };
+  for (let i = 0; i < autres.length; i++) {
+    const e = autres[i];
+    if (!e || typeof e !== 'object' || typeof e.chemin !== 'string') continue;
+    proteger(dossier + '/' + e.chemin);
+    if (estNomDeZip(e.zip) && estNomSimple(e.couche)) proteger(dossier + '/' + dossierDuZip(e.zip) + '/' + e.couche + '.gpkg');
+  }
+  return proteges;
+}
+
+// Efface les fichiers réécrits d'une couche vecteur sortie du registre. Rend les noms des fichiers
+// qui existaient et sont restés (ordre de SUFFIXES_COUCHE). Ne lève jamais. Sans `existe`, rien n'est
+// tenté (la réponse de l'effacement n'est jamais crue : on vérifie avant et après).
+function effacerFichiersDeCouche(ctx, zip, couche, autres) {
+  const restes = [];
+  try {
+    if (!estNomDeZip(zip) || !estNomSimple(couche) || couche.indexOf('|') >= 0) return restes;
+    if (/\.zip$/i.test(dossierDuZip(zip))) return restes;
+    const dossier = dossierCopies(ctx.dossierProjet);
+    if (dossier === '' || typeof ctx.existe !== 'function') return restes;
+    let rm = null;
+    if (typeof ctx.effacerFichier === 'function') rm = ctx.effacerFichier;
+    else if (ctx.platformUtilities && typeof ctx.platformUtilities.rmFile === 'function') rm = (c) => ctx.platformUtilities.rmFile(c);
+    const proteges = cheminsProteges(dossier, autres);
+    for (let i = 0; i < SUFFIXES_COUCHE.length; i++) {
+      const chemin = dossier + '/' + dossierDuZip(zip) + '/' + couche + SUFFIXES_COUCHE[i];
+      if (Object.prototype.hasOwnProperty.call(proteges, chemin)) continue;
+      if (!peutEffacer(chemin, dossier)) continue;
+      try { if (!ctx.existe(chemin)) continue; } catch (e) { continue; }
+      if (rm !== null) { try { rm(chemin); } catch (e) { /* vérifié ci-dessous */ } }
+      let reste = true;
+      try { reste = !!ctx.existe(chemin); } catch (e) { reste = true; }
+      if (reste) restes.push(nomDeFichier(chemin));
+    }
+  } catch (e) {
+    /* jamais d'exception : ce qui est connu est rendu */
+  }
+  return restes;
+}
+
 export function importerZip(ctx) {
   const vide = (message) => ({ chargees: [], refusees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
@@ -678,6 +731,9 @@ export function importerZip(ctx) {
     const e = anciennes[i];
     if (e && typeof e === 'object' && e.zip === nomZip && !Object.prototype.hasOwnProperty.call(presentes, e.couche)) {
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: e.couche });
+      if (typeof e.chemin === 'string') {
+        effacerFichiersDeCouche(ctx, nomZip, e.couche, lireRegistre(ctx.reglages, ctx.cerfId));
+      }
     }
   }
   const chargees = [];
@@ -702,7 +758,9 @@ export function importerZip(ctx) {
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
     const refuser = (message) => {
       // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
+      const etaitInscrite = lireRegistre(ctx.reglages, ctx.cerfId).some((x) => memeCouche(x, nomZip, c.couche) && typeof x.chemin === 'string');
       retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
+      if (etaitInscrite) effacerFichiersDeCouche(ctx, nomZip, c.couche, lireRegistre(ctx.reglages, ctx.cerfId));
       refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
     };
     if (!verdict.charge) { refuser(verdict.message); continue; }
@@ -856,19 +914,28 @@ export function retirerCouche(ctx) {
   const zip = ctx.zip;
   const couche = ctx.couche;
   if (typeof ctx.retirerDeLaCarte === 'function') ctx.retirerDeLaCarte(couche);
+  const avant = lireRegistre(ctx.reglages, ctx.cerfId);
+  let vectorielle = false;
+  for (let i = 0; i < avant.length; i++) {
+    if (memeCouche(avant[i], zip, couche) && typeof avant[i].chemin === 'string') vectorielle = true;
+  }
   const r = retirer(ctx.reglages, ctx.cerfId, { zip, couche });
   if (!r.retiree) return { efface: false, message: `Couche absente du registre : ${couche}.` };
   const debut = `Couche retirée : ${couche}.`;
+  // Fichiers réécrits de la couche (mission 031) : après la carte et le registre, jamais bloquant.
+  let restes = [];
+  if (vectorielle) restes = effacerFichiersDeCouche(ctx, zip, couche, lireRegistre(ctx.reglages, ctx.cerfId));
+  const phrase = restes.length > 0 ? ` Fichiers restés sur l'appareil : ${restes.join(', ')}.` : '';
   if (!r.zipInutile) {
     const n = nombreDeCouchesDuZip(ctx.reglages, ctx.cerfId, zip);
-    return { efface: false, message: `${debut} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };
+    return { efface: false, message: `${debut}${phrase} La copie ${zip} sert encore à ${n} ${pluriel(n, 'couche', 'couches')}.` };
   }
   if (!estNomDeZip(zip)) {
-    return { efface: false, message: `${debut} Nom de zip douteux au registre : aucun fichier effacé.` };
+    return { efface: false, message: `${debut}${phrase} Nom de zip douteux au registre : aucun fichier effacé.` };
   }
   if (!dossierProjetSain(ctx.dossierProjet)) {
-    return { efface: false, message: `${debut} Dossier du projet inconnu : aucun fichier effacé (${zip}).` };
+    return { efface: false, message: `${debut}${phrase} Dossier du projet inconnu : aucun fichier effacé (${zip}).` };
   }
   const e = effacerCopie(ctx.platformUtilities, cheminCopie(ctx.dossierProjet, zip), dossierCopies(ctx.dossierProjet));
-  return { efface: e.efface, message: `${debut} ${e.message}` };
+  return { efface: e.efface, message: `${debut}${phrase} ${e.message}` };
 }

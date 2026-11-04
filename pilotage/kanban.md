@@ -20,6 +20,10 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
+  - Moyens : prototype n° 2, zips de recette
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente
@@ -31,10 +35,6 @@ _Modèle de carte :_
   - Homme : `dev` (sonnet)
   - Mission : Styles du manuel — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [012-controles](missions/012-controles.md) · depuis le cycle 0
-  - Homme : `dev` (opus)
-  - Mission : Contrôles d'import — cycle prévu 5
-  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -58,17 +58,37 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 6 · lancée au cycle 6
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests des contrôles d'import — cycle prévu 4
-  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
-- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · lancée au cycle 6
-  - Homme : `dev` (sonnet)
-  - Mission : Rangement des workflows de publication
-  - Moyens : workflows de release, relectures de la 021
 
 ## Terminé
 
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
+  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
+- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · essai réussi sur le Samsung
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
+  - Moyens : prototype n° 2, sources QField
+- [028-noms-des-fichiers](missions/028-noms-des-fichiers.md) · depuis le cycle 6 · PR #21 fusionnée, plugin 0.2.1
+  - Homme : `dev` (sonnet)
+  - Mission : Fichiers publiés nommés plugin-… et projet-…
+  - Moyens : workflows de release, flashcodes
+- [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0
+  - Homme : `dev` (opus)
+  - Mission : Contrôles d'import — cycle prévu 5
+  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
+- [011-tests-controles](missions/011-tests-controles.md) · depuis le cycle 6 · PR #19 fusionnée
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests des contrôles d'import — cycle prévu 4
+  - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
+- [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · PR #20 fusionnée, éprouvée sur le Samsung
+  - Homme : `dev` (sonnet)
+  - Mission : Flashcodes des adresses stables dans les releases
+  - Moyens : qrencode dans le workflow, sources QField
+- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · PR #17 fusionnée
+  - Homme : `dev` (sonnet)
+  - Mission : Rangement des workflows de publication
+  - Moyens : workflows de release, relectures de la 021
 - [016-zips-recette](missions/016-zips-recette.md) · depuis le cycle 6 · PR #11 fusionnée (zips piege et lourd)
   - Homme : `testeur` (sonnet)
   - Mission : Zips de recette piege et lourd — cycle prévu 3
@@ -128,6 +148,10 @@ _Modèle de carte :_
 
 ## Abandonné
 
+- [026-inflate](missions/026-inflate.md) · depuis le cycle 6 · abandonnée : saveVectorLayerAs suffit (prototype n° 3)
+  - Homme : `testeur` puis `dev` (opus)
+  - Mission : Décompresseur deflate en JavaScript pour les zips de JFC
+  - Moyens : RFC 1951, node:zlib comme oracle
 _Avec la raison, en une ligne._
 
 ## Livraisons

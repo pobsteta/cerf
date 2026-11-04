@@ -77,7 +77,7 @@ plugin/
                      leurs aides internes. ECMAScript pur, aucun import (ni ES, ni .import,
                      ni .pragma) : un .mjs qui en importe un autre n'est pas prouvé dans QML
   icon.svg           l'icône du prototype (dessinée pour Cerf), reprise
-  empaqueter.mjs     fabrique <sortie>/cerf.zip, main.qml à la racine
+  empaqueter.mjs     fabrique <sortie>/plugin-cerf.zip, main.qml à la racine
                      (src/app/qfpluginmanager.cpp L441-448), avec l'écrivain de zip du dépôt
                      (tests/recette/essai/zip-ecrire.mjs). Dossier de sortie obligatoire en
                      argument : rien n'est écrit dans le dépôt, .gitignore n'est pas touché
@@ -180,7 +180,7 @@ du `zip` en cours ; `platformUtilities` passé tel quel.
 
 ## 6. Empaquetage et mise en ligne
 
-`node plugin/empaqueter.mjs <sortie>` écrit `<sortie>/cerf.zip` : `main.qml`, `Cerf.qml`,
+`node plugin/empaqueter.mjs <sortie>` écrit `<sortie>/plugin-cerf.zip` : `main.qml`, `Cerf.qml`,
 `Panneau.qml`, `cerf-logique.mjs`, `metadata.txt`, `icon.svg` (ni `PLAN.md` ni
 `empaqueter.mjs`).
 
@@ -240,8 +240,8 @@ jobs:
 ```
 
 URL à coller dans QField : pour l'essai,
-`https://github.com/pobsteta/cerf/releases/download/plugin-essai/cerf.zip` ; après fusion,
-`https://github.com/pobsteta/cerf/releases/latest/download/cerf.zip` (stable d'une version à
+`https://github.com/pobsteta/cerf/releases/download/plugin-essai/plugin-cerf.zip` ; après fusion,
+`https://github.com/pobsteta/cerf/releases/latest/download/plugin-cerf.zip` (stable d'une version à
 l'autre). L'étiquette est créée par la release elle-même (le proxy de la session a refusé la
 poussée d'étiquette au cycle 4). `cerf.qgz` est pris dans le même commit (il est sur `main`
 depuis la 006). Tant que la 007 n'est pas fusionnée, le passage « Tests » n'est vert que si
@@ -255,7 +255,7 @@ la branche de la 008 contient la 007 (ordre de fusion 007 → 008, § 9).
   Rouge d'abord : je lance la suite sans `plugin/cerf-logique.mjs` et je note les
   46 rouges, puis vert ; toute la suite (`node --test`) reste verte.
 - **Mes tests** (`tests/plugin.test.mjs`, sous réserve de la question n° 1) :
-  - forme : `metadata.txt` porte `name`, `version`, `icon` présent ; `cerf.zip` fabriqué a
+  - forme : `metadata.txt` porte `name`, `version`, `icon` présent ; `plugin-cerf.zip` fabriqué a
     `main.qml` à sa racine et exactement les six fichiers ; chaque QML ne crée ou n'importe
     que des fichiers présents ; `main.qml` n'importe aucun `.mjs` ; aucun `.pragma`, aucun
     `.import`, aucune instruction `import` dans `cerf-logique.mjs` ; étiquette SPDX dans
@@ -290,7 +290,7 @@ la branche de la 008 contient la 007 (ordre de fusion 007 → 008, § 9).
 
 ## 9. Essai sur le Samsung (critères 4, 8, 9 de la spec § 6)
 
-Préalables, **avec réseau** : désinstaller le plugin du prototype ; installer `cerf.zip` par
+Préalables, **avec réseau** : désinstaller le plugin du prototype ; installer `plugin-cerf.zip` par
 l'URL de la préversion ; avoir `cerf.qgz` (release, ou celui déjà installé) ; copier
 `essai.zip` (release) dans Téléchargements ; noter le modèle et la **version de QField**
 (affichée au pied du panneau). Puis **mode avion** pour tout le reste.
@@ -343,7 +343,7 @@ et ce qu'il a vu autrement.
 
 Qui fait quoi d'ici quand, et comment saura-t-on que ça marche ? — Le `dev` écrit les
 tests puis le squelette dès l'accord de Pascal sur ce plan et la retouche de la 007
-poussée ; l'orchestrateur fait publier la préversion `cerf.zip` ; Pascal suit le § 9 sur
+poussée ; l'orchestrateur fait publier la préversion `plugin-cerf.zip` ; Pascal suit le § 9 sur
 son Samsung en mode avion ; on saura que ça marche quand les 46 tests de la 007 seront
 verts sans modification et que `points_essai` sera revenue, en lecture seule, après le
 redémarrage du téléphone.

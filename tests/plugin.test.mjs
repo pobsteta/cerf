@@ -64,7 +64,15 @@ function ctxImport(extra = {}) {
     couches, reglages,
     ctx: {
       cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe('a.geojson'),
-      reglages, chargerCouche: (s, n) => couches.charger(s, n),
+      reglages,
+      // Mission 012 : quatre services obligatoires à la place de chargerCouche (le contrôle accepte).
+      ouvrirCouche: (s, n) => couches.charger(s, n),
+      decrireCouche: (c) => ({ lisible: c.isValid, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
+      controlerCouche: () => ({ charge: true, controle: 'ok', message: '', avertissements: [] }),
+      ajouterALaCarte: () => {},
+      // Mission 010 (ADR 0008) : réécriture en GeoPackage et écriture du .qml, simulées (le chemin demandé est rendu).
+      reecrireCouche: (c, cible) => cible,
+      ecrireFichier: () => true,
       maintenant: () => new Date('2026-11-03T10:00:00Z'),
       ...extra.ctx,
     },
@@ -175,11 +183,15 @@ test('décision 4 : deux GeoJSON de même nom dans deux dossiers -> la seconde r
   const m = await M();
   const { ctx, couches, reglages } = ctxImport({ ctx: { octets: zipDe('a/UG.geojson', 'b/UG.geojson', 'c.geojson') } });
   const r = m.importerZip(ctx);
-  assert.deepEqual(couches.appels.map((a) => a.source), [`/vsizip/${COPIES}/x.zip/a/UG.geojson`, `/vsizip/${COPIES}/x.zip/c.geojson`]);
+  // Mission 010 (ADR 0008) : chaque couche acceptée est ouverte en /vsizip/ puis sa copie GeoPackage chargée.
+  assert.deepEqual(couches.appels.map((a) => a.source), [
+    `/vsizip/${COPIES}/x.zip/a/UG.geojson`, `${COPIES}/x/UG.gpkg|layername=UG`,
+    `/vsizip/${COPIES}/x.zip/c.geojson`, `${COPIES}/x/c.gpkg|layername=c`,
+  ]);
   assert.deepEqual(r.refusees.map((x) => x.couche), ['UG']);
   assert.equal(r.refusees[0].entree, 'b/UG.geojson');
   assert.match(r.refusees[0].raison, /double/);
-  assert.deepEqual(m.lireRegistre(reglages, ID).map((x) => x.chemin_vsi), ['x.zip/a/UG.geojson', 'x.zip/c.geojson']);
+  assert.deepEqual(m.lireRegistre(reglages, ID).map((x) => x.chemin), ['x/UG.gpkg', 'x/c.gpkg']);
 });
 
 // ============================================================================ import : messages, dates
@@ -194,7 +206,7 @@ test('importerZip : message de bilan (singulier, pluriel, refus) et date par dé
   const couches = faussesCouches({ echecs: [`/vsizip/${COPIES}/x.zip/b.geojson`] });
   const r2 = m.importerZip(ctxImport({ couches, ctx: { octets: zipDe('a.geojson', 'b.geojson', 'c.geojson') } }).ctx);
   assert.match(r2.message, /^2 couches chargées : a, c/);
-  assert.match(r2.message, /b : /);
+  assert.match(r2.message, /b\.geojson : /);
 });
 
 test('importerZip : zip sans GeoJSON -> message qui le dit', async () => {
@@ -271,10 +283,15 @@ test('retirerCouche : message quand la copie sert encore', async () => {
 });
 
 // ============================================================================ forme du plugin
-const FICHIERS = ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'cerf-styles.mjs', 'metadata.txt', 'icon.svg'];
+// Liste explicite (mission 012 : cerf-controles.mjs ; mission 010 : cerf-styles.mjs).
+const FICHIERS = [
+  'main.qml', 'Cerf.qml', 'Panneau.qml',
+  'cerf-logique.mjs', 'cerf-controles.mjs', 'cerf-styles.mjs',
+  'metadata.txt', 'icon.svg',
+];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
 
-test('forme : les sept fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
+test('forme : les huit fichiers du plugin existent ; metadata.txt porte name, version, icon (src/app/qfpluginmodel.cpp L368-392)', async () => {
   for (const f of FICHIERS) assert.ok(existsSync(join(PLUGIN, f)), `absent : plugin/${f}`);
   const meta = lire('metadata.txt');
   assert.match(meta, /^\[general\]$/m);
@@ -317,16 +334,17 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : cerf.zip a main.qml à sa racine et exactement les sept fichiers du plugin', async () => {
+test('empaquetage : plugin-cerf.zip a main.qml à sa racine et exactement les huit fichiers du plugin (dont cerf-controles.mjs et cerf-styles.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
   try {
     const r = empaqueter(sortie);
-    assert.equal(r.chemin, join(sortie, 'cerf.zip'));
+    assert.equal(r.chemin, join(sortie, 'plugin-cerf.zip'));
     const noms = m.nomsDuZip(readFileSync(r.chemin));
     assert.deepEqual([...noms].sort(), [...FICHIERS].sort());
     assert.ok(noms.includes('main.qml'));
+    assert.ok(noms.includes('cerf-controles.mjs'));
   } finally {
     rmSync(sortie, { recursive: true, force: true });
   }
@@ -367,5 +385,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.2\.0$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.3\.0$/m);
 });

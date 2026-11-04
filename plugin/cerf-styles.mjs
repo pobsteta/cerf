@@ -174,3 +174,121 @@ export function estGeoJson(texte) {
   if (!o || typeof o !== 'object' || Array.isArray(o)) return false;
   return TYPES_GEOJSON.indexOf(o.type) >= 0;
 }
+
+// --------------------------------------------------------------------------- .qml (ADR 0008)
+// Depuis l'ADR 0008, la pose du style passe par un .qml écrit à côté de la copie de la couche,
+// avant son chargement : QGIS le lit seul au chargement. Ces deux fonctions sont pures.
+
+// Un .qml du zip n'est écrit que s'il a l'air d'un style QGIS : du XML dont la racine est <qgis>
+// et qui contient un <renderer-v2 (QGIS charge en silence un .qml quelconque : on filtre ici).
+// Contrôle volontairement léger (pas d'analyseur XML dans le moteur de QML).
+export function qmlValide(texte) {
+  if (typeof texte !== 'string') return false;
+  const t = texte.replace(/^﻿/, '');
+  const sansProlog = t.replace(/^\s*(<\?xml[^>]*\?>\s*)?(<!DOCTYPE[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*/, '');
+  if (!/^<qgis[\s>]/.test(sansProlog)) return false;
+  if (!/<renderer-v2[\s>/]/.test(sansProlog)) return false;
+  return /<\/qgis>\s*$/.test(sansProlog);
+}
+
+function echapper(t) {
+  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function rvba(hex, opacitePct) {
+  const h = String(hex).replace('#', '');
+  const alpha = Math.round((opacitePct === undefined ? 100 : opacitePct) * 255 / 100);
+  return parseInt(h.substring(0, 2), 16) + ',' + parseInt(h.substring(2, 4), 16) + ',' + parseInt(h.substring(4, 6), 16) + ',' + alpha;
+}
+
+const PROPRIETES_VIDES = `<data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>`;
+
+function symboleQml(s) {
+  if (s.type === 'cercle') {
+    const c = rvba(s.couleur, 100);
+    return `<symbol type="marker" name="0" alpha="1" force_rhr="0" clip_to_extent="1">
+        ${PROPRIETES_VIDES}
+        <layer class="SimpleMarker" enabled="1" locked="0" pass="0">
+          <Option type="Map">
+            <Option type="QString" name="angle" value="0"/>
+            <Option type="QString" name="color" value="${c}"/>
+            <Option type="QString" name="name" value="circle"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="outline_color" value="${c}"/>
+            <Option type="QString" name="outline_style" value="solid"/>
+            <Option type="QString" name="outline_width" value="0"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="size" value="${s.taille_mm}"/>
+            <Option type="QString" name="size_unit" value="MM"/>
+          </Option>
+        </layer>
+      </symbol>`;
+  }
+  const trait = rvba(s.couleur, s.opacite_pct);
+  const fond = rvba(s.couleur, 0);
+  return `<symbol type="fill" name="0" alpha="1" force_rhr="0" clip_to_extent="1">
+        ${PROPRIETES_VIDES}
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="${s.remplissage ? trait : fond}"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="${trait}"/>
+            <Option type="QString" name="outline_style" value="solid"/>
+            <Option type="QString" name="outline_width" value="${s.epaisseur_mm}"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="${s.remplissage ? 'solid' : 'no'}"/>
+          </Option>
+        </layer>
+      </symbol>`;
+}
+
+// Le .qml (texte) d'un style de `styleDe`, pour une couche de géométrie 'polygone' ou 'point'.
+// `null` si le style est nul ou la géométrie non prise en charge. L'épaisseur du liseré (1 mm) et
+// la police (celle de QField par défaut) ne sont pas dans l'objet de style (spec § 5).
+export function qmlDe(style, geometrie) {
+  if (!style || !style.symbole || !style.etiquette) return null;
+  if (geometrie !== 'polygone' && geometrie !== 'point') return null;
+  const e = style.etiquette;
+  const expression = typeof e.expression === 'string' && e.expression !== '';
+  const champ = echapper(expression ? e.expression : e.champ);
+  const couleur = rvba(e.couleur, 100);
+  const lisere = e.lisere
+    ? `<text-buffer bufferDraw="1" bufferSize="1" bufferSizeUnits="MM" bufferColor="${rvba(e.lisere.couleur, 100)}" bufferOpacity="1" bufferBlendMode="0" bufferJoinStyle="128" bufferNoFill="1"/>`
+    : '<text-buffer bufferDraw="0" bufferSize="1" bufferSizeUnits="MM" bufferColor="255,255,255,255" bufferOpacity="1" bufferBlendMode="0" bufferJoinStyle="128" bufferNoFill="1"/>';
+  const placement = geometrie === 'polygone'
+    ? '<placement placement="1" placementFlags="10" polygonPlacementFlags="2" dist="0" distUnits="MM" priority="5" overlapHandling="PreventOverlap"/>'
+    : '<placement placement="0" placementFlags="10" dist="0" distUnits="MM" priority="5" overlapHandling="PreventOverlap"/>';
+  return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis version="3.34.0-Prizren" styleCategories="Symbology|Labeling" labelsEnabled="1" hasScaleBasedVisibilityFlag="0" minScale="100000000" maxScale="0">
+  <renderer-v2 type="singleSymbol" symbollevels="0" enableorderby="0" forceraster="0" referencescale="-1">
+    <symbols>
+      ${symboleQml(style.symbole)}
+    </symbols>
+    <rotation/>
+    <sizescale/>
+  </renderer-v2>
+  <labeling type="simple">
+    <settings calloutType="simple">
+      <text-style fieldName="${champ}" isExpression="${expression ? 1 : 0}" fontSize="${e.taille_pt}" fontSizeUnit="Point" textColor="${couleur}" textOpacity="1" fontWeight="50" fontItalic="0" fontUnderline="0" fontStrikeout="0" fontLetterSpacing="0" fontWordSpacing="0" blendMode="0" multilineHeight="1" previewBkgrdColor="255,255,255,255" namedStyle="Regular">
+        <families/>
+        ${lisere}
+        <background shapeDraw="0"/>
+        <shadow shadowDraw="0"/>
+      </text-style>
+      ${placement}
+      <rendering scaleVisibility="0" scaleMin="0" scaleMax="0" fontMinPixelSize="3" fontMaxPixelSize="10000" fontLimitPixelSize="0" obstacle="1" obstacleFactor="1" obstacleType="1" labelPerPart="0" upsidedownLabels="0" limitNumLabels="0" maxNumLabels="2000" displayAll="1" mergeLines="0" minFeatureSize="0" zIndex="0"/>
+    </settings>
+  </labeling>
+  <layerGeometryType>${geometrie === 'polygone' ? 2 : 0}</layerGeometryType>
+</qgis>
+`;
+}

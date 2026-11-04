@@ -122,3 +122,23 @@ trouverQml : inchangé.
 - Décisions de Pascal du 4 novembre 2026 (suite) : un point nommé selon un motif UG avec
   `essence` et `diametre` prend le style **ProdBois** sans avertissement ; `essence` et
   `diametre` reconnus sans tenir compte de la casse **ni des accents** (`diamètre`).
+
+## Reprise après l'ADR 0008 (Pascal, 4 novembre 2026)
+
+La pose réelle du style passe par la voie de l'ADR 0008, éprouvée par le prototype n° 3 (fiche
+027) : pour chaque couche **vecteur** acceptée par les contrôles (012, sur la source
+`/vsizip/`), le plugin la **réécrit** par `LayerUtils.saveVectorLayerAs` dans
+`<projet>/cerf-imports/<nom du zip>/<nom de couche>.gpkg` (une table par fichier), écrit **avant
+le chargement** le `.qml` voisin (celui du zip s'il est valide, sinon celui de la règle du
+manuel, produit à partir de `styleDe`), puis charge la copie en lecture seule. Le registre
+enregistre le chemin de la copie (relatif à `cerf-imports/`) et garde `zip`. Les GeoTIFF restent
+en `/vsizip/`, style par défaut. Plugin en **0.3.0**.
+
+- Base de travail : la branche `mission/010-styles` (PR #18), à remettre à jour avec `main`
+  (contrôles de la 012, plugin 0.2.1, noms `plugin-cerf.zip`).
+- Les tests de la 009 restent la cible pour la logique pure ; le dev ajoute les tests du
+  branchement (ordre ouvrir, contrôler, réécrire, `.qml`, charger, inscrire ; garde d'écriture
+  limitée à `cerf-imports/` ; `saveVectorLayerAs` qui rend une chaîne vide = refus avec message
+  préfixé ; `.qml` du zip contrôlé avant d'être écrit : XML, racine `<qgis>`, `renderer-v2`).
+- Ce que la 010 ne fait pas : lire les Shapefile et les tables de GeoPackage dans
+  `couchesDuZip` (mission 024).

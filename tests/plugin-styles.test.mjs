@@ -52,10 +52,10 @@ function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants 
 }
 const QML_ZIP = '<!DOCTYPE qgis PUBLIC \'http://mrcc.com/qgis.dtd\' \'SYSTEM\'>\n<qgis version="3.34"><renderer-v2 type="singleSymbol"/></qgis>';
 
-test('couchesDuZip : un .json est retenu et marqué json ; .geojson inchangé (sans clé en plus)', () => {
+test('couchesDuZip : un .json est retenu et marqué json ; .geojson sans marque json (champs format et nom de la mission 024)', () => {
   assert.deepEqual(L.couchesDuZip(['a.geojson', 'd/b.JSON', 'c.txt']), [
-    { couche: 'a', entree: 'a.geojson' },
-    { couche: 'b', entree: 'd/b.JSON', json: true },
+    { couche: 'a', entree: 'a.geojson', nom: 'a.geojson', format: 'geojson' },
+    { couche: 'b', entree: 'd/b.JSON', nom: 'd/b.JSON', format: 'geojson', json: true },
   ]);
 });
 
@@ -84,7 +84,8 @@ test('importerZip : zip avec seulement un .json non GeoJSON -> « Aucune couche 
   ctx.octets = zipDe('config.json');
   const r = L.importerZip(ctx);
   assert.equal(r.chargees.length, 0);
-  assert.match(r.message, /^Aucune couche GeoJSON dans x\.zip\./);
+  // Mission 024 : le message nomme les quatre formats lus.
+  assert.match(r.message, /^Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans x\.zip\./);
 });
 
 test('importerZip : contenu du .json illisible (lireTexte rend null) -> chargement tenté, jamais écarté en silence', () => {
@@ -229,24 +230,24 @@ test('réimport sans .qml à écrire : le .qml resté d\'un import précédent e
   assert.deepEqual(w.effaces, [`${COPIES}/x/zones.qml`]);
 });
 
-test('point nommé UG sans essence/diametre : défaut, aucun .qml, avertissement préfixé « UG.geojson : » (spec § 4)', () => {
+test('point nommé UG sans essence/diametre : défaut, aucun .qml, avertissement préfixé « dossier/UG.geojson : » (spec § 4, chemin complet, mission 024)', () => {
   const w = monde({ infos: { UG: { geometrie: 'point', champs: ['id'] } } });
   w.ctx.octets = zipDe('dossier/UG.geojson');
   const r = L.importerZip(w.ctx);
   assert.deepEqual(w.ecrits, []);
-  assert.deepEqual(r.avertissements, ['UG.geojson : nom reconnu mais pas un polygone']);
-  assert.ok(r.message.includes('UG.geojson : nom reconnu mais pas un polygone'));
+  assert.deepEqual(r.avertissements, ['dossier/UG.geojson : nom reconnu mais pas un polygone']);
+  assert.ok(r.message.split('\n').includes('dossier/UG.geojson : nom reconnu mais pas un polygone'), r.message);
   assert.equal(L.lireRegistre(w.ctx.reglages, ID)[0].style, 'defaut');
 });
 
-test('saveVectorLayerAs rend une chaîne vide : couche refusée, message préfixé du nom avec extension, ni .qml, ni carte, ni registre', () => {
+test('saveVectorLayerAs rend une chaîne vide : couche refusée, message préfixé du chemin complet dans le zip, ni .qml, ni carte, ni registre', () => {
   const w = monde({ rendu: '' });
   w.ctx.octets = zipDe('d/UG.geojson');
   const r = L.importerZip(w.ctx);
   assert.deepEqual(r.chargees, []);
   assert.equal(r.refusees.length, 1);
-  assert.match(r.refusees[0].message, /^UG\.geojson : copie impossible/);
-  assert.ok(r.message.split('\n').some((l) => l.startsWith('UG.geojson : copie impossible')), r.message);
+  assert.match(r.refusees[0].message, /^d\/UG\.geojson : copie impossible/);
+  assert.ok(r.message.split('\n').some((l) => l.startsWith('d/UG.geojson : copie impossible')), r.message);
   assert.deepEqual(w.ecrits, []);
   assert.ok(!w.journal.some((l) => l.startsWith('ajouter')));
   assert.deepEqual(L.lireRegistre(w.ctx.reglages, ID), []);

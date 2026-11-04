@@ -25,7 +25,7 @@
 //   cheminCopie(dossierProjet, nomZip) -> '<dossierCopies>/<nomZip>'
 //   (dossierProjet : chemin absolu donné par QField ; dans les contextes, la propriété s'appelle dossierProjet)
 //   nomsDuZip(octets) -> string[]                    noms des entrées, dans l'ordre du zip
-//   couchesDuZip(noms) -> [{ couche, entree }]       couches GeoJSON seulement (squelette)
+//   couchesDuZip(noms) -> [{ couche, entree }]       couches GeoJSON seulement (squelette) ; mission 024 : + format, nom, Shapefile, GeoPackage, GeoTIFF
 //   lireRegistre(reglages, cerfId) -> entrée[]
 //   inscrire(reglages, cerfId, entrée) -> void       remplace l'entrée de même (zip, couche)
 //   retirer(reglages, cerfId, { zip, couche }) -> { retiree, zipInutile }
@@ -254,13 +254,21 @@ test('saisie incomplète : octets qui ne sont pas un zip, ou zip tronqué -> err
   await assert.rejects(async () => { await m.nomsDuZip(tronque); }, (err) => err instanceof Error && err.message.length > 0);
 });
 
-test('couches du zip (squelette) : seul le GeoJSON, nom sans extension, casse ignorée (spec § 3.1)', async () => {
+test('couches du zip : le GeoJSON et le Shapefile complet, nom sans extension, casse ignorée (spec § 3.1)', async () => {
   const m = await M();
-  // essai.zip contient aussi un Shapefile, un .qml, un .qmd, un .txt : ignorés dans le squelette (008).
-  assert.deepEqual(m.couchesDuZip(NOMS_ESSAI), [{ couche: 'points_essai', entree: 'points_essai.geojson' }]);
+  // essai.zip contient aussi un .qml, un .qmd, un .txt : ignorés. Mission 024 : son Shapefile complet
+  // (sous-dossier/shape_essai.*) est une couche ; champs `format` et `nom` (chemin complet dans le zip).
+  assert.deepEqual(m.couchesDuZip(NOMS_ESSAI), [
+    { couche: 'points_essai', entree: 'points_essai.geojson', nom: 'points_essai.geojson', format: 'geojson' },
+    { couche: 'shape_essai', entree: 'sous-dossier/shape_essai.shp', nom: 'sous-dossier/shape_essai.shp', format: 'shp',
+      fichiers: ['sous-dossier/shape_essai.shp', 'sous-dossier/shape_essai.shx', 'sous-dossier/shape_essai.dbf', 'sous-dossier/shape_essai.prj', 'sous-dossier/shape_essai.cpg'] },
+  ]);
   assert.deepEqual(
     m.couchesDuZip(['x/Parcelles.GeoJSON', 'lisez-moi.txt', 'a.tif']),
-    [{ couche: 'Parcelles', entree: 'x/Parcelles.GeoJSON' }],
+    [
+      { couche: 'Parcelles', entree: 'x/Parcelles.GeoJSON', nom: 'x/Parcelles.GeoJSON', format: 'geojson' },
+      { couche: 'a', entree: 'a.tif', nom: 'a.tif', format: 'tif' },
+    ],
   );
   assert.deepEqual(m.couchesDuZip([]), []);
 });
@@ -274,7 +282,8 @@ test('nominal : une couche GeoJSON du zip est ouverte par /vsizip/ sur la copie,
   const m = await M();
   const { ctx, couches } = ctxImport();
   const r = await attendre(m.importerZip(ctx));
-  assert.equal(couches.appels.length, 2);
+  // Mission 024 : essai.zip porte aussi le Shapefile complet sous-dossier/shape_essai.*, ouvert par son .shp.
+  assert.equal(couches.appels.length, 4);
   assert.deepEqual(couches.appels[0], {
     source: `/vsizip/${COPIES}/essai.zip/points_essai.geojson`,
     nom: 'points_essai',
@@ -283,8 +292,17 @@ test('nominal : une couche GeoJSON du zip est ouverte par /vsizip/ sur la copie,
     source: `${COPIES}/essai/points_essai.gpkg|layername=points_essai`,
     nom: 'points_essai',
   });
+  assert.deepEqual(couches.appels[2], {
+    source: `/vsizip/${COPIES}/essai.zip/sous-dossier/shape_essai.shp`,
+    nom: 'shape_essai',
+  });
+  assert.deepEqual(couches.appels[3], {
+    source: `${COPIES}/essai/shape_essai.gpkg|layername=shape_essai`,
+    nom: 'shape_essai',
+  });
   assert.equal(couches.couches[1].readOnly, true, 'couche importée : lecture seule (CLAUDE.md, Terrain)');
-  assert.equal(r.chargees.length, 1);
+  assert.equal(couches.couches[3].readOnly, true, 'Shapefile importé : lecture seule (CLAUDE.md, Terrain)');
+  assert.equal(r.chargees.length, 2);
   assert.deepEqual(r.refusees, []);
 });
 
@@ -295,7 +313,8 @@ test('nominal : l\'entrée du registre a la forme de la spec § 3.3, chemin rela
   const brut = reglages.magasin.get(`cerf/${ID}`);
   assert.equal(typeof brut, 'string', 'la valeur est du JSON (texte), comme dans QSettings');
   const liste = JSON.parse(brut);
-  assert.equal(liste.length, 1);
+  assert.equal(liste.length, 2);
+  assert.deepEqual(liste.map((x) => x.chemin), ['essai/points_essai.gpkg', 'essai/shape_essai.gpkg'], 'mission 024 : le Shapefile aussi');
   const [en] = liste;
   assert.deepEqual(Object.keys(en).sort(), ['ajoutee_le', 'chemin', 'couche', 'style', 'zip']);
   assert.equal(en.zip, 'essai.zip');
@@ -382,8 +401,10 @@ test('doublon : zip réimporté sous le même nom -> une seule entrée par couch
   await attendre(m.importerZip(ctxImport({ reglages, couches }).ctx));
   await attendre(m.importerZip(ctxImport({ reglages, couches, ctx: { maintenant: () => new Date('2026-11-04T08:00:00Z') } }).ctx));
   const liste = JSON.parse(reglages.magasin.get(`cerf/${ID}`));
-  assert.equal(liste.length, 1);
+  assert.equal(liste.length, 2);
+  assert.deepEqual(liste.map((x) => x.couche), ['points_essai', 'shape_essai'], 'une entrée par couche (mission 024 : le Shapefile aussi)');
   assert.equal(new Date(liste[0].ajoutee_le).getTime(), new Date('2026-11-04T08:00:00Z').getTime(), 'la nouvelle remplace l\'ancienne');
+  assert.equal(new Date(liste[1].ajoutee_le).getTime(), new Date('2026-11-04T08:00:00Z').getTime(), 'la nouvelle remplace l\'ancienne (Shapefile)');
 });
 
 test('registre : l\'ajout d\'un second zip s\'accumule, sans toucher au premier (§ 3.3)', async () => {
@@ -393,7 +414,7 @@ test('registre : l\'ajout d\'un second zip s\'accumule, sans toucher au premier 
   await attendre(m.importerZip(ctxImport({ reglages, couches }).ctx));
   await attendre(m.importerZip(ctxImport({ reglages, couches, ctx: { nomZip: 'deux.zip', octets: octetsDeux } }).ctx));
   const liste = JSON.parse(reglages.magasin.get(`cerf/${ID}`));
-  assert.deepEqual(liste.map((x) => `${x.zip}:${x.couche}`), ['essai.zip:points_essai', 'deux.zip:a', 'deux.zip:b']);
+  assert.deepEqual(liste.map((x) => `${x.zip}:${x.couche}`), ['essai.zip:points_essai', 'essai.zip:shape_essai', 'deux.zip:a', 'deux.zip:b']);
 });
 
 test('registre : un autre cerf_id a son propre registre (clé cerf/<cerf_id>)', async () => {
@@ -401,7 +422,7 @@ test('registre : un autre cerf_id a son propre registre (clé cerf/<cerf_id>)', 
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   assert.deepEqual(m.lireRegistre(reglages, ID_AUTRE), []);
-  assert.equal(m.lireRegistre(reglages, ID).length, 1);
+  assert.equal(m.lireRegistre(reglages, ID).length, 2, 'points_essai et shape_essai (mission 024)');
 });
 
 test('registre : lireRegistre rend [] quand la clé n\'existe pas encore', async () => {
@@ -425,8 +446,12 @@ test('critère 4 (logique) : après « redémarrage » (nouveaux objets, mêmes 
   }));
   assert.equal(r.actif, true);
   // ADR 0008 : rechargée depuis la copie GeoPackage ; le zip n'est plus relu.
-  assert.deepEqual(couches2.appels, [{ source: `${COPIES}/essai/points_essai.gpkg|layername=points_essai`, nom: 'points_essai' }]);
+  assert.deepEqual(couches2.appels, [
+    { source: `${COPIES}/essai/points_essai.gpkg|layername=points_essai`, nom: 'points_essai' },
+    { source: `${COPIES}/essai/shape_essai.gpkg|layername=shape_essai`, nom: 'shape_essai' },
+  ]);
   assert.equal(couches2.couches[0].readOnly, true);
+  assert.equal(couches2.couches[1].readOnly, true, 'Shapefile rechargé : lecture seule (mission 024)');
   assert.deepEqual(reglagesRelus.ecritures, [], 'recharger ne réécrit pas le registre');
   assert.equal(r.absentes?.length ?? 0, 0);
 });
@@ -440,7 +465,7 @@ test('« existe » est interrogé avec le chemin de la copie GeoPackage de la co
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => { vus.push(c); return true; },
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
   }));
-  assert.deepEqual([...new Set(vus)], [`${COPIES}/essai/points_essai.gpkg`]);
+  assert.deepEqual([...new Set(vus)], [`${COPIES}/essai/points_essai.gpkg`, `${COPIES}/essai/shape_essai.gpkg`]);
 });
 
 test('copie absente à l\'ouverture : l\'entrée reste au registre, un message unique « N couches … copie absente » (§ 3.3, ADR 0008)', async () => {
@@ -461,7 +486,9 @@ test('copie absente à l\'ouverture : l\'entrée reste au registre, un message u
 test('copie absente pour une seule couche : « 1 couche n\'a pas pu être rechargée : copie absente (réimporter le zip) » (singulier)', async () => {
   const m = await M();
   const reglages = faussesReglages();
-  await attendre(m.importerZip(ctxImport({ reglages }).ctx));
+  // Mission 024 : essai.zip a deux couches (GeoJSON et Shapefile) ; un zip au seul GeoJSON garde le cas singulier.
+  await attendre(m.importerZip(ctxImport({ reglages, ctx: { octets: zipDe('points_essai.geojson') } }).ctx));
+  assert.equal(m.lireRegistre(reglages, ID).length, 1, 'une seule couche importée');
   const r = await attendre(m.demarrerProjet({
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => false,
     chargerCouche: (s, n) => faussesCouches().charger(s, n),
@@ -500,9 +527,9 @@ test('une copie absente ne bloque pas les couches d\'un autre zip présent', asy
     variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: (c) => c.includes('/essai/'),
     chargerCouche: (s, n) => couches.charger(s, n),
   }));
-  assert.deepEqual(couches.appels.map((a) => a.nom), ['points_essai']);
+  assert.deepEqual(couches.appels.map((a) => a.nom), ['points_essai', 'shape_essai']);
   assert.equal(r.message, "2 couches n'ont pas pu être rechargées : copie absente (réimporter le zip)");
-  assert.equal(m.lireRegistre(reglages, ID).length, 3, 'les trois entrées restent au registre');
+  assert.equal(m.lireRegistre(reglages, ID).length, 4, 'les quatre entrées restent au registre (mission 024 : shape_essai en plus)');
 });
 
 test('couche du registre qui ne se charge plus : message, entrée conservée, autres couches rechargées', async () => {
@@ -585,15 +612,21 @@ test('ADR 0007 : la dernière couche retirée -> la copie est effacée par rmFil
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   // Mission 031 : les fichiers réécrits de la couche sont effacés en plus de la copie du zip (qui l'est exactement une fois).
-  const disque = new Set([`${COPIES}/essai/points_essai.gpkg`, `${COPIES}/essai/points_essai.qml`, `${COPIES}/essai.zip`]);
+  // Mission 024 : essai.zip a deux couches (points_essai, shape_essai) ; la copie part avec la seconde retirée.
+  const disque = new Set([`${COPIES}/essai/points_essai.gpkg`, `${COPIES}/essai/points_essai.qml`,
+    `${COPIES}/essai/shape_essai.gpkg`, `${COPIES}/essai/shape_essai.qml`, `${COPIES}/essai.zip`]);
   const tel = telephonieSurDisque(disque);
-  const r = await attendre(m.retirerCouche({
-    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
+  const retirer = (couche) => attendre(m.retirerCouche({
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche, reglages,
     retirerDeLaCarte: () => {}, platformUtilities: tel,
     existe: (c) => disque.has(c), effacerFichier: (c) => tel.rmFile(c),
   }));
+  const r1 = await retirer('points_essai');
+  assert.equal(r1.efface, false, 'pas la dernière : la copie du zip reste');
+  assert.deepEqual(tel.appels.filter((c) => c.endsWith('.zip')), [], 'copie du zip pas encore effacée');
+  const r = await retirer('shape_essai');
   assert.deepEqual(tel.appels.filter((c) => c.endsWith('.zip')), [`${COPIES}/essai.zip`]);
-  assert.ok(tel.appels.every((c) => c.startsWith(`${COPIES}/essai/points_essai.`) || c === `${COPIES}/essai.zip`), `${tel.appels}`);
+  assert.ok(tel.appels.every((c) => c.startsWith(`${COPIES}/essai/points_essai.`) || c.startsWith(`${COPIES}/essai/shape_essai.`) || c === `${COPIES}/essai.zip`), `${tel.appels}`);
   assert.deepEqual([...disque], [], 'copie, .gpkg et .qml effacés');
   assert.equal(r.efface, true);
   assert.deepEqual(m.lireRegistre(reglages, ID), []);
@@ -604,10 +637,17 @@ test('§ 9 n° 2 : rmFile échoue -> la copie reste, son nom est affiché, le re
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
   const tel = fausseTelephonie({ rend: false });
-  const r = await attendre(m.retirerCouche({
+  // Mission 024 : essai.zip a deux couches ; c'est au retrait de la seconde que la copie doit partir.
+  await attendre(m.retirerCouche({
     cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: tel,
   }));
+  assert.deepEqual(tel.appels, [], 'première couche retirée : la copie sert encore, rmFile non appelé');
+  const r = await attendre(m.retirerCouche({
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'shape_essai', reglages,
+    retirerDeLaCarte: () => {}, platformUtilities: tel,
+  }));
+  assert.deepEqual(tel.appels, [`${COPIES}/essai.zip`], 'rmFile appelé une fois, sur la copie');
   assert.equal(r.efface, false);
   assert.ok(r.message.includes('essai.zip'), 'le nom de la copie restante est affiché');
   assert.deepEqual(m.lireRegistre(reglages, ID), []);
@@ -617,12 +657,18 @@ test('§ 9 n° 2 : platformUtilities.rmFile absent (QField l\'a déplacé) -> m�
   const m = await M();
   const reglages = faussesReglages();
   await attendre(m.importerZip(ctxImport({ reglages }).ctx));
-  const r = await attendre(m.retirerCouche({
+  // Mission 024 : essai.zip a deux couches ; sans cela, le message citerait essai.zip parce que la copie sert encore.
+  await attendre(m.retirerCouche({
     cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'points_essai', reglages,
+    retirerDeLaCarte: () => {}, platformUtilities: {},
+  }));
+  const r = await attendre(m.retirerCouche({
+    cerfId: ID, dossierProjet: PROJET, zip: 'essai.zip', couche: 'shape_essai', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: {},
   }));
   assert.equal(r.efface, false);
   assert.ok(r.message.includes('essai.zip'));
+  assert.ok(r.message.includes("Copie conservée sur l'appareil"), r.message);
 });
 
 // ---- Garde de chemin avant rmFile (ADR 0007, rubrique « Responsable ») -------------------------

@@ -302,6 +302,23 @@ test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fic
 // par aucune interface écrite, et un nom inventé ici rendrait le test insatisfiable. Le test viendra avec la mission 030,
 // dans ce fichier, juste ici : contexteGpkg(['Serre.gpkg', 'b.geojson'], { <service de tables> renvoyant { 'Serre.gpkg': [] } }),
 // ligne exacte, rien ouvert pour Serre.gpkg, voisin chargé. D'ici là, la marque `vide: true` de couchesDuZip est le seul garde.
+// 2026-11-04, dev de la mission 024 : le service de tables existe (voie 1 du prototype n° 4). Son nom dans le contexte
+// d'importerZip est `tablesGpkg(source, entree)` ; il rend la liste des tables vecteur, [] si aucune, null si illisibles
+// (plugin/Cerf.qml, sur Logique.tablesDuGpkg). Le test annoncé ci-dessus suit, tel qu'il était décrit.
+test('importerZip : GeoPackage sans table vecteur (service de tables : []) -> ligne exacte « aucune table vecteur », rien ouvert pour lui, voisin chargé', () => {
+  const lus = [];
+  const { ctx, ouvertes, ajoutees } = contexteGpkg(['Serre.gpkg', 'b.geojson'], {
+    tablesGpkg: (src, entree) => { lus.push(entree); return { 'Serre.gpkg': [] }[entree]; },
+  });
+  const r = lire('importerZip', ctx);
+  assert.deepEqual(lus, ['Serre.gpkg'], `${ROUGE} : le service de tables est interrogé pour Serre.gpkg`);
+  assert.ok(r.message.split('\n').includes('Serre.gpkg : aucune table vecteur, couche non chargée'), `${ROUGE} : ligne exacte : ${r.message}`);
+  assert.ok(!r.message.includes('tables illisibles'), `${ROUGE} : distinct de « tables illisibles » : ${r.message}`);
+  assert.deepEqual(ouvertes.filter((s) => /Serre\.gpkg/i.test(s)), [], `${ROUGE} : Serre.gpkg jamais ouvert`);
+  assert.deepEqual(ajoutees, ['b'], `${ROUGE} : le voisin est chargé`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
+});
+
 test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouvert, rien chargé, rien inscrit, message nommant le fichier', () => {
   const { ctx, ouvertes, ajoutees } = contexteGpkg(['dossier/a.gpkg']);
   const r = lire('importerZip', ctx);

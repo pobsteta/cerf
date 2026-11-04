@@ -32,3 +32,9 @@ fixe, pour que Pascal voie sur le Samsung les couleurs du plugin 0.3.0 sans atte
 ## Qui veille, qui tranche
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
+
+## Arbitrage de Pascal (4 novembre 2026)
+
+- Retirer l'emboîtement UG > Parcelles > FRT (et le test qui le fige) et le libellé « Fréquentation
+  touristique » : nomenclature non définie par le brief ni la spec. Les couches restent fictives et
+  côte à côte ; les points ProdBois restent dans les parcelles 12 et 14.

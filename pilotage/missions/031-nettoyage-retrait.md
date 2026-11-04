@@ -39,3 +39,9 @@ l'appareil ne garde pas de fichiers orphelins.
 ## Qui veille, qui tranche
 
 - **Relecteur :** `relecteur`, puis Pascal. 3 allers-retours. **Qui tranche :** Pascal.
+
+## Arbitrages de Pascal (4 novembre 2026)
+
+- Effacement raté au retrait : « `Fichiers restés sur l'appareil : a.gpkg, a.qml.` » (noms
+  réellement restés). À porter dans la spec § 9 n° 2 avec la PR de la mission.
+- Annexes : `<couche>.gpkg-wal`, `<couche>.gpkg-shm`, `<couche>.gpkg.aux.xml` (relevé P3-5 non noté).

@@ -58,6 +58,10 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · lancée
+  - Homme : `dev` (sonnet)
+  - Mission : Flashcodes des adresses stables dans les releases
+  - Moyens : qrencode dans le workflow, sources QField
 - [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · validée, lancée (plan)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML

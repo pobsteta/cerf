@@ -183,9 +183,10 @@ Le motif s'applique au nom de la couche sans extension, sans tenir compte de la 
 des accents.
 
 **Règles par nom réservées aux polygones** : une couche nommée UG, Parcelles ou FRT mais
-ponctuelle ou linéaire garde le style par défaut, avec l'avertissement « nom reconnu mais
+ponctuelle ou linéaire, sans les champs `essence` et `diametre` (sinon elle prend le style
+ProdBois, sans avertissement), garde le style par défaut, avec l'avertissement « nom reconnu mais
 pas un polygone » (Pascal, 4 novembre 2026). **Champs `essence` et `diametre`** reconnus
-sans tenir compte de la casse (`ESSENCE`, `Diametre`…) ; l'étiquette utilise le nom réel
+sans tenir compte de la casse ni des accents (`diamètre`, Pascal, 4 novembre 2026) (`ESSENCE`, `Diametre`…) ; l'étiquette utilise le nom réel
 du champ (Pascal, 4 novembre 2026). **GeoPackage** : le nom comparé aux motifs est celui de
 la **table** (un `Serre.gpkg` avec les tables `UG` et `Parcelles` donne deux couches
 stylées ; le `.qml` d'une table porte son nom, `UG.qml`). **`.qml` vide ou illisible** : il

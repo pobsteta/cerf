@@ -5,9 +5,9 @@
 // Interface PROPOSÉE (à confirmer par l'orchestrateur ; la 1re est une extension de la signature
 // publique de plugin/cerf-logique.mjs, seule partie du plugin lue) :
 //   couchesDuZip(noms, tables?) -> [{ couche, entree, nom, format, ... }], dans l'ordre des noms
-//     - nom : nom d'AFFICHAGE pour les messages du § 4, avec extension (« FRT.shp », « Serre.gpkg/Releves »).
-//       Pour une couche rangée dans un dossier du zip, la spec ne dit pas si le dossier en fait partie :
-//       les tests exigent seulement que nom FINISSE par « FRT.shp » (ou « Serre.gpkg/Releves »).
+//     - nom : nom d'AFFICHAGE pour les messages du § 4 = CHEMIN COMPLET DANS LE ZIP, avec extension
+//       (« FRT.shp », « Serre EA/réf/Parcelles.shp », « d/Serre.gpkg/Releves ») ; arbitrage de Pascal
+//       du 4 novembre 2026. Égalité stricte dans les tests.
 //     - format : 'geojson' | 'shp' | 'gpkg' | 'tif'
 //     - couche : nom du fichier sans dossier ni extension ; pour un GeoPackage : le NOM DE LA TABLE
 //     - GeoJSON, GeoTIFF : { couche, entree, format }
@@ -20,11 +20,18 @@
 //       perdu en silence : il sort comme une entrée { format: 'gpkg', table: null }. Le plugin la REFUSE
 //       (ce n'est pas le contrôle 1, qui vise le Shapefile incomplet, spec § 4) avec un message qui commence
 //       par le nom du fichier, sans l'ouvrir ni la charger, et sans jamais en faire une source sans
-//       `layername` (QGIS ouvrirait la première table en silence). Texte exact du refus : en attente de Pascal.
-//       Liste VIDE ([]) = tables connues, aucune : aucune couche (message ou silence : en attente de Pascal).
+//       `layername` (QGIS ouvrirait la première table en silence). Texte exact du refus (Pascal, 4 nov. 2026) :
+//       « <nom dans le zip> : tables illisibles, couche non chargée », en ligne entière du message d'importerZip.
+//       Liste VIDE ([]) = tables connues, aucune : JAMAIS le silence (Pascal). CHOIX RETENU : couchesDuZip rend
+//       la même entrée marquée { format: 'gpkg', table: null } que pour les tables inconnues ; le plugin la
+//       refuse avec un message qui commence par le nom du fichier (texte libre pour ce cas ; un champ de plus,
+//       par exemple `vide: true`, est permis mais non exigé). Testé au niveau de couchesDuZip, car le service
+//       qui fournit les tables à importerZip n'existe pas encore (mission 030).
 //       Comment le plugin trouve les tables hors ligne n'est pas tranché ici (question pour Pascal).
-//   decrireEntree(entree, noms) (mission 010) : UNE SEULE source pour `fichiers` avec couchesDuZip
-//     (voir le dernier groupe de tests) : mêmes fichiers, même ordre, en noms sans dossier.
+//   decrireEntree(entree, noms) (mission 010, tel que livré : TOUS les fichiers du même dossier, dans l'ordre du zip,
+//     annexes et .qml compris ; tests/controles-branchement.test.mjs le fixe) : pas de second calcul divergent
+//     (voir le dernier groupe de tests) : chaque fichier de `fichiers` de couchesDuZip y figure, en nom sans dossier ;
+//     son `nom` court reste sans dossier = dernier segment du `nom` de couchesDuZip (pour un fichier non GeoPackage).
 //   sourceDeLaCouche(copie, c) -> source /vsizip/ :
 //     Shapefile : '/vsizip/<copie>/<entrée .shp>' ; GeoTIFF, GeoJSON : '/vsizip/<copie>/<entrée>' ;
 //     GeoPackage : '/vsizip/<copie>/<fichier.gpkg>|layername=<table>'
@@ -151,8 +158,16 @@ test('GeoPackage : deux .gpkg, chacun ses tables ; .gpkg-wal et .gpkg-shm : igno
   ], 'deux fichiers');
 });
 
-test('GeoPackage sans table vecteur (liste vide) : aucune couche', () => {
-  egal(noms(['a.gpkg'], { 'a.gpkg': [] }), [], 'aucune table');
+test('GeoPackage sans table vecteur (liste vide) : jamais le silence (entrée table: null qui nomme le fichier)', () => {
+  const cas = [['a.gpkg', 'a.gpkg'], ['d/a.gpkg', 'd/a.gpkg']];
+  for (const [entree, nom] of cas) {
+    const r = lire('couchesDuZip', [entree, 'b.geojson'], { [entree]: [] });
+    const vide = r.filter((c) => c.format === 'gpkg' && c.entree === entree);
+    assert.equal(vide.length, 1, `${ROUGE} : ${entree} sans table doit sortir une fois, pas disparaître`);
+    assert.equal(vide[0].table, null, `${ROUGE} : table: null pour ${entree}`);
+    assert.ok(String(vide[0].nom).startsWith(nom), `${ROUGE} : le nom commence par « ${nom} » : ${vide[0].nom}`);
+    assert.deepEqual(r.filter((c) => c !== vide[0]).map((c) => c.entree), ['b.geojson'], `${ROUGE} : le voisin est intact`);
+  }
 });
 
 test('GeoPackage dont les tables sont inconnues : jamais perdu en silence (entrée table: null, refusée par le plugin)', () => {
@@ -166,7 +181,7 @@ test('GeoPackage dont les tables sont inconnues : jamais perdu en silence (entr�
     const inconnu = r.filter((c) => c.format === 'gpkg' && c.entree === 'a.gpkg');
     assert.equal(inconnu.length, 1, `${ROUGE} : a.gpkg (${quoi}) doit sortir une fois, pas disparaître`);
     assert.equal(inconnu[0].table, null, `${ROUGE} : table: null (${quoi})`);
-    assert.ok(String(inconnu[0].nom).includes('a.gpkg'), `${ROUGE} : le nom nomme le fichier (${quoi}) : ${inconnu[0].nom}`);
+    assert.ok(String(inconnu[0].nom).startsWith('a.gpkg'), `${ROUGE} : le nom commence par le fichier (${quoi}) : ${inconnu[0].nom}`);
   }
   // Le .gpkg connu voisin reste normal, dans l'ordre du zip.
   egal(noms(['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }).map((c) => `${c.entree}:${c.table}`), ['a.gpkg:null', 'b.gpkg:T'], 'inconnu puis connu');
@@ -186,12 +201,10 @@ test('nom d\'affichage à la racine : nom du fichier avec extension, casse du zi
     ['Serre.gpkg/Releves', 'Serre.gpkg/Zones humides'], 'tables de GeoPackage');
 });
 
-test('nom d\'affichage d\'une couche rangée dans un dossier : finit par le nom attendu (le dossier n\'est pas tranché par la spec)', () => {
+test('nom d\'affichage d\'une couche rangée dans un dossier : le chemin complet dans le zip (Pascal, 4 nov. 2026)', () => {
   const r = lire('couchesDuZip', [...SHP('Serre EA/réf/', 'Parcelles'), 'a/b/UG.geojson', 'o/ortho.tif', 'd/Serre.gpkg'],
     { 'd/Serre.gpkg': ['Releves'] }).map((c) => c.nom);
-  assert.equal(r.length, 4, `${ROUGE} : 4 couches`);
-  const fins = ['Parcelles.shp', 'UG.geojson', 'ortho.tif', 'Serre.gpkg/Releves'];
-  r.forEach((n, i) => assert.ok(typeof n === 'string' && n.endsWith(fins[i]), `${ROUGE} : « ${n} » doit finir par « ${fins[i]} »`));
+  egal(r, ['Serre EA/réf/Parcelles.shp', 'a/b/UG.geojson', 'o/ortho.tif', 'd/Serre.gpkg/Releves'], 'chemins complets');
 });
 
 test('nom d\'affichage : jamais vide ni sans extension, y compris dans le zip piege et le zip lourd', async () => {
@@ -225,17 +238,19 @@ test('aucun format reconnu, zip vide, entrées vides : liste vide sans exception
 });
 
 // ============================================================================ GeoPackage aux tables inconnues : refus
-test('sourceDeLaCouche : GeoPackage table: null -> jamais de source sans layername (refus ou rien, pas de source)', () => {
-  const c = lire('couchesDuZip', ['d/a.gpkg']).find((x) => x.entree === 'd/a.gpkg');
-  assert.ok(c, `${ROUGE} : d/a.gpkg doit sortir (table: null)`);
-  assert.equal(c.table, null, `${ROUGE} : table: null`);
-  assert.equal(typeof m.sourceDeLaCouche, 'function', `${ROUGE} : sourceDeLaCouche doit exister`);
-  let s;
-  try { s = m.sourceDeLaCouche(COPIE, c); } catch (e) {
-    if (e instanceof assert.AssertionError) throw e;
-    return; // une exception levée par sourceDeLaCouche elle-même est un refus acceptable
+test('sourceDeLaCouche : GeoPackage table: null (tables inconnues ou liste vide) -> jamais de source sans layername', () => {
+  for (const [quoi, tables] of [['inconnues', undefined], ['liste vide', { 'd/a.gpkg': [] }]]) {
+    const c = lire('couchesDuZip', ['d/a.gpkg'], tables).find((x) => x.entree === 'd/a.gpkg');
+    assert.ok(c, `${ROUGE} : d/a.gpkg doit sortir (table: null, ${quoi})`);
+    assert.equal(c.table, null, `${ROUGE} : table: null (${quoi})`);
+    assert.equal(typeof m.sourceDeLaCouche, 'function', `${ROUGE} : sourceDeLaCouche doit exister`);
+    let s;
+    try { s = m.sourceDeLaCouche(COPIE, c); } catch (e) {
+      if (e instanceof assert.AssertionError) throw e;
+      continue; // une exception levée par sourceDeLaCouche elle-même est un refus acceptable
+    }
+    assert.ok(!s, `${ROUGE} : pas de source pour table: null (${quoi}), reçu « ${s} »`);
   }
-  assert.ok(!s, `${ROUGE} : pas de source pour table: null, reçu « ${s} »`);
 });
 
 const zipDe = (noms) => ecrireZip(noms.map((n) => ({ nom: Buffer.from(n), donnees: Buffer.from('x'), stocke: true, utf8: true })));
@@ -264,6 +279,7 @@ test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fic
   const { ctx, ouvertes, ajoutees } = contexteGpkg(['a.gpkg', 'b.geojson']);
   const r = lire('importerZip', ctx);
   assert.ok(r.message.split('\n').some((l) => l.startsWith('a.gpkg')), `${ROUGE} : une ligne du message commence par a.gpkg : ${r.message}`);
+  assert.ok(r.message.split('\n').includes('a.gpkg : tables illisibles, couche non chargée'), `${ROUGE} : ligne exacte du refus : ${r.message}`);
   assert.ok(r.refusees.some((x) => String(x.message).startsWith('a.gpkg')), `${ROUGE} : refusees contient a.gpkg`);
   assert.deepEqual(ouvertes.filter((s) => /a\.gpkg/i.test(s)), [], `${ROUGE} : a.gpkg jamais ouvert`);
   assert.ok(ouvertes.every((s) => !/\.gpkg/i.test(s) || /layername=/.test(s)), `${ROUGE} : aucune source .gpkg sans layername : ${ouvertes}`);
@@ -279,7 +295,8 @@ test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouv
   assert.deepEqual(ajoutees, [], `${ROUGE} : rien ajouté à la carte`);
   assert.deepEqual(r.chargees, [], `${ROUGE} : rien chargé`);
   assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId), [], `${ROUGE} : registre vide`);
-  assert.ok(/(^|\n)(dossier\/)?a\.gpkg/.test(r.message), `${ROUGE} : le message nomme a.gpkg : ${r.message}`);
+  assert.ok(r.message.split('\n').includes('dossier/a.gpkg : tables illisibles, couche non chargée'),
+    `${ROUGE} : ligne exacte du refus, nom tel que dans le zip : ${r.message}`);
 });
 
 // ============================================================================ sources /vsizip/
@@ -357,7 +374,7 @@ test('Serre_EA2026 (liste décrite par le brief) : GeoJSON ProdBois + UG, Parcel
 // ============================================================================ une seule source pour `fichiers` (010 / 024)
 const base = (e) => e.substring(e.lastIndexOf('/') + 1);
 
-test('decrireEntree (010) et couchesDuZip (024) : mêmes fichiers, même ordre, même nom, pour chaque Shapefile (une seule source)', () => {
+test('decrireEntree (010) et couchesDuZip (024) : chaque fichier du Shapefile figure dans decrireEntree, même nom court (cohérence)', () => {
   const zips = [
     // désordre + annexes + .qml + un autre dossier de même nom + casse mêlée
     ['sous/Parcelles.cpg', 'sous/Parcelles.prj', 'sous/Parcelles.dbf', 'sous/Parcelles.shx', 'sous/Parcelles.SHP',
@@ -371,9 +388,13 @@ test('decrireEntree (010) et couchesDuZip (024) : mêmes fichiers, même ordre, 
     assert.ok(couches.length >= 1, `${ROUGE} : au moins un Shapefile reconnu`);
     for (const c of couches) {
       const d = lire('decrireEntree', c.entree, noms);
-      assert.deepEqual(d.fichiers, c.fichiers.map(base), `${ROUGE} : fichiers de ${c.entree} identiques dans les deux fonctions`);
+      // decrireEntree (010) liste tous les fichiers du dossier : on exige l'inclusion, pas l'égalité.
+      for (const f of c.fichiers.map(base)) {
+        assert.ok(d.fichiers.includes(f), `${ROUGE} : « ${f} » (fichiers de ${c.entree}) figure dans decrireEntree : ${d.fichiers}`);
+      }
       assert.equal(d.nom, base(c.entree), `${ROUGE} : nom de ${c.entree}`);
-      assert.ok(String(c.nom).endsWith(d.nom), `${ROUGE} : le nom d'affichage « ${c.nom} » finit par « ${d.nom} »`);
+      assert.equal(c.nom, c.entree, `${ROUGE} : nom d'affichage = chemin dans le zip`);
+      assert.equal(d.nom, base(c.nom), `${ROUGE} : nom court = dernier segment du nom d'affichage`);
     }
   }
 });
@@ -382,6 +403,7 @@ test('decrireEntree et couchesDuZip : nom d\'affichage cohérent pour GeoJSON et
   const noms = ['d/UG.geojson', 'o/ortho.TIF'];
   for (const c of lire('couchesDuZip', noms)) {
     const d = lire('decrireEntree', c.entree, noms);
-    assert.ok(String(c.nom).endsWith(d.nom), `${ROUGE} : « ${c.nom} » finit par « ${d.nom} »`);
+    assert.equal(c.nom, c.entree, `${ROUGE} : nom d'affichage = chemin dans le zip`);
+    assert.equal(d.nom, base(c.nom), `${ROUGE} : nom court = dernier segment de « ${c.nom} »`);
   }
 });

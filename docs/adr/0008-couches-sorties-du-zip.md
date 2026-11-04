@@ -1,8 +1,8 @@
 # ADR 0008 — Couches sorties du zip, avec leur style écrit à côté
 
 - **Date :** 2026-11-04
-- **Statut :** **proposée** — décidée sur le principe par Pascal le 4 novembre 2026 après
-  l'essai du prototype n° 2 ; à critiquer par le `contradicteur`, puis à accepter par Pascal
+- **Statut :** **acceptée par Pascal le 4 novembre 2026**, après la critique du
+  `contradicteur` et l'essai du prototype n° 3 (voie `saveVectorLayerAs`)
 - **Proposée par :** Claude (orchestrateur)
 - **Tranchée par :** Pascal
 - **Amende :** ADR 0003 (lecture dans le zip par `/vsizip/`)
@@ -92,3 +92,15 @@ Arbitrages de Pascal :
 4. **GeoPackage à plusieurs tables : une table par fichier**, chacune avec son `.qml` voisin.
 
 L'ADR reste **proposée** jusqu'au résultat du prototype n° 3.
+
+## Décision finale (Pascal, 4 novembre 2026, après le prototype n° 3)
+
+Prototype n° 3 sur le Samsung (fiche 027) : Shapefile, GeoPackage à deux tables et GeoJSON
+**compressés**, ouverts en `/vsizip/`, réécrits par `LayerUtils.saveVectorLayerAs` dans
+`cerf-imports/…`, `.qml` écrit à côté avant le chargement : couleurs, étiquettes et accents
+justes ; annexes effaçables. **La voie retenue est celle-ci** pour les vecteurs : la couche est
+contrôlée (012) depuis `/vsizip/`, réécrite en GeoPackage (une table par fichier), stylée par son
+`.qml` voisin, chargée en lecture seule. Les GeoTIFF restent lus dans le zip. La copie du zip est
+gardée. La mission 026 (décompresseur) est **abandonnée**. Valeur sacrifiée ajoutée : la
+fidélité au format d'origine (un Shapefile devient un GeoPackage). À faire : amender l'ADR 0003,
+l'ADR 0007 (effacement des `.gpkg`, `.qml` et annexes dans `cerf-imports/`) et la spec § 3.3.

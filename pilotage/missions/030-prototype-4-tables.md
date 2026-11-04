@@ -46,3 +46,8 @@ que la mission 024 sache comment le plugin obtiendra ces tables.
 
 - **Relecteur :** `relecteur`, puis Pascal (essai sur le Samsung). 3 allers-retours.
   **Qui tranche :** Pascal.
+
+## Ajout demandé par Pascal (4 novembre 2026)
+
+- Fonds IGN (Plan IGN v2 coché, BD ORTHO décochée, groupe « Fonds de carte » sous les couches
+  d'essai) ajoutés au projet d'essai `cerf-essai-2.qgs`, avec les mêmes sources XYZ que `cerf.qgz`.

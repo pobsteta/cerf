@@ -405,6 +405,8 @@ test('workflow : essai-styles-z.zip empaqueté, publié (create et upload) et so
   const wf = lire('.github/workflows/release-prototype-2.yml').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
   assert.match(wf, /sha256sum cerf-prototype-2\.zip cerf-essai-2\.zip essai-styles\.zip essai-styles-z\.zip essai-q3\.gpkg/);
   assert.match(wf, /gh release upload prototype-2 .*dist\/essai-styles-z\.zip .*dist\/flashcodes\/\* --clobber/);
+  assert.match(wf, /avec_reprise\(\) \{ for essai in 1 2 3;/);
+  assert.match(wf, /avec_reprise gh release upload prototype-2 /);
   assert.match(wf, /gh release create prototype-2 .*dist\/essai-styles-z\.zip .*dist\/flashcodes\/\*/);
   assert.match(wf, /node outils\/flashcodes\.mjs generer dist\/flashcodes prototype-2 essai/);
   assert.match(wf, /node outils\/flashcodes\.mjs notes prototype-2 essai prototype-2/);

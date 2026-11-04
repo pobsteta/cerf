@@ -121,8 +121,10 @@ jobs:
             echo
             node outils/flashcodes.mjs notes prototype-2 essai prototype-2
           } > notes.md
+          # GitHub répond parfois HTTP 500 sur un envoi de fichier (vu le 4 novembre 2026) : trois essais.
+          avec_reprise() { for essai in 1 2 3; do "$@" && return 0; echo "essai $essai échoué : $*"; sleep 15; done; return 1; }
           if gh release view prototype-2 >/dev/null 2>&1; then
-            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
+            avec_reprise gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
             gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
           else
             gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* \

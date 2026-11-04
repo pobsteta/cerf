@@ -38,7 +38,7 @@ _Rempli par Pascal seul, avant de lire le travail de l'agent._
 
 ## Harnais
 
-- **Peut :** écrire `plugin/styles.mjs` et son appel dans le plugin.
+- **Peut :** écrire `plugin/cerf-styles.mjs` et son appel dans le plugin.
 - **Ne doit pas :** sortir du périmètre, inventer une donnée ou un code, toucher à `main`,
   modifier `docs/brief.md`, `docs/spec.md` ou une ADR (il signale l'écart à
   l'orchestrateur), effacer une ligne de `pilotage/journal.md`.
@@ -73,7 +73,7 @@ couleurs et tailles conformes au mail, sans réglage.
 
 ## Précisions de l'orchestrateur (4 novembre 2026, après la relecture de la 009)
 
-- Module **`plugin/cerf-styles.mjs`**, à ajouter à `FICHIERS_PLUGIN` de
+- _(Contrat initial, **remplacé par le « Contrat mis à jour » ci-dessous**.)_ Module **`plugin/cerf-styles.mjs`**, à ajouter à `FICHIERS_PLUGIN` de
   `plugin/empaqueter.mjs`, fonctions pures :
   - `reconnaitre({ nom, geometrie: 'polygone'|'point'|'ligne', champs, qml })` →
     `{ regle: 'UG'|'Parcelles'|'FRT'|'ProdBois'|null, source: 'qml'|'nom'|'champs'|'defaut' }` ;
@@ -108,3 +108,14 @@ styleDe(regle, { champCode, champEssence, champDiametre }) -> { symbole, etiquet
   par l'appelant ; à défaut 'essence' et 'diametre').
 trouverQml : inchangé.
 ```
+
+### Précisions après la relecture de l'amendement (4 novembre 2026)
+
+- `reconnaitre` rend la **phrase seule** de l'avertissement ; c'est l'appelant qui ajoute
+  le préfixe « <nom de la couche avec extension> : » (spec § 4).
+- L'avertissement « nom reconnu mais pas un polygone » vaut dès que le nom **correspond à un
+  motif** UG, Parcelles ou FRT du § 5 (casse et accents ignorés : `ug_serre`, `frt-2026`,
+  `Parcellés`), pas seulement pour une égalité stricte.
+- Décisions de Pascal du 4 novembre 2026 (spec § 5) : nom de **table** pour un GeoPackage ;
+  `.qml` vide ou illisible ignoré, règle par nom appliquée avec l'avertissement « .qml
+  illisible, style du manuel appliqué ».

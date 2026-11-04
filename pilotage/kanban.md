@@ -35,10 +35,6 @@ _Modèle de carte :_
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
   - Moyens : sources de QField 4.3.7, prototype n° 3, Samsung de Pascal
-- [031-nettoyage-retrait](missions/031-nettoyage-retrait.md) · depuis le cycle 6 · validée par Pascal le 4 novembre, après la 010
-  - Homme : `testeur` puis `dev` (sonnet)
-  - Mission : Effacer au retrait les fichiers réécrits d'une couche
-  - Moyens : ADR 0007 amendée, ADR 0008, fiche 027 (P3-5)
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -65,6 +61,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [031-nettoyage-retrait](missions/031-nettoyage-retrait.md) · depuis le cycle 6 · fusionnée (PR #26), plugin 0.3.1
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Effacer au retrait les fichiers réécrits d'une couche
+  - Moyens : ADR 0007 amendée, ADR 0008, fiche 027 (P3-5)
 - [032-spec-messages](missions/032-spec-messages.md) · depuis le cycle 6 · fusionnée (PR #24)
   - Homme : `archiviste` (sonnet)
   - Mission : Spec § 4 et ADR 0008 : messages au chemin complet, GeoPackage, ancien .qml

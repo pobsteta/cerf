@@ -545,7 +545,9 @@ function choisirStyle(ctx, couche, nomZip, nomCouche, entree, noms) {
 // exception : faux. Seule exception : les deux services de fichiers absents (contextes d'essai des tests).
 function qmlAbsent(ctx, chemin, dossier) {
   try {
-    // Services de fichiers absents (contextes d'essai) : rien à effacer ni à vérifier. Cerf.qml les fournit toujours.
+    // Ces deux services sont FACULTATIFS dans importerZip à dessein : les tests du testeur (mission 024) ne
+    // les fournissent pas, et les rendre obligatoires les casserait. Absents, la garde est sautée sans bruit.
+    // Le branchement réel est donc figé ailleurs : tests/plugin-styles.test.mjs vérifie que Cerf.qml les passe.
     if (typeof ctx.existe !== 'function' || typeof ctx.effacerFichier !== 'function') return true;
     if (!ctx.existe(chemin)) return true;
     if (!peutEcrireCopie(chemin, dossier)) return false;

@@ -361,6 +361,9 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   // Toute branche autre que main = préversion : jamais « latest », flashcode d'essai.
   assert.match(wf, /gh release edit plugin-essai --notes-file notes\.md --latest=false/);
   assert.match(wf, /--prerelease --latest=false/);
+  // L'étiquette plugin-essai suit le commit poussé (gh release edit ne la déplace pas) ; jamais plugin-v*.
+  assert.match(wf, /gh api --method PATCH "repos\/\$GITHUB_REPOSITORY\/git\/refs\/tags\/plugin-essai" -f sha="\$GITHUB_SHA" -F force=true/);
+  assert.ok(!/git\/refs\/tags\/plugin-v/.test(wf), 'aucune étiquette de version stable déplacée');
   assert.match(wf, /\[ "\$GITHUB_REF_NAME" = "main" \]; then mode=stable; else mode=essai/);
 });
 

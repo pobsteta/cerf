@@ -100,6 +100,9 @@ jobs:
             gh release create "plugin-v$version" dist/plugin-cerf.zip dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Cerf $version" --notes-file notes.md --latest
           elif gh release view plugin-essai >/dev/null 2>&1; then
+            # `gh release edit --target` ne déplace pas une étiquette existante (l'API ignore target_commitish
+            # quand l'étiquette existe) : on la déplace par l'API Git, sur ce commit. Jamais une étiquette plugin-v*.
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/plugin-essai" -f sha="$GITHUB_SHA" -F force=true
             gh release upload plugin-essai dist/plugin-cerf.zip dist/essai.zip dist/flashcodes/* --clobber
             gh release edit plugin-essai --notes-file notes.md --latest=false
           else

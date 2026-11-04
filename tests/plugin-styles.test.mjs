@@ -481,6 +481,9 @@ test('Cerf.qml : branche saveVectorLayerAs (GPKG) et writeFileContent ; plus auc
   assert.match(qml, /FileUtils\.writeFileContent\(chemin, Logique\.arrayBufferExact\(octets\)\)/);
   assert.match(qml, /reecrireCouche: reecrireCouche/);
   assert.match(qml, /ecrireFichier: ecrireFichier/);
+  // Services facultatifs dans importerZip (qmlAbsent saute la garde sans eux) : seul ce test fige leur branchement.
+  assert.match(qml, /existe: function \(chemin\) \{ return FileUtils\.fileExists\(chemin\); \}/);
+  assert.match(qml, /effacerFichier: effacerFichier/);
   assert.ok(!/appliquerStyle|appliquerQml|setRenderer|setLabeling|loadNamedStyle/.test(qml.replace(/\/\/[^\n]*/g, '')), 'aucune pose directe de style');
 });
 

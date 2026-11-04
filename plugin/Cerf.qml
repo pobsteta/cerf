@@ -175,13 +175,12 @@ Item {
     } catch (e) { /* système inconnu */ }
     try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
     try {
-      const x = couche.extent;
-      emprise = { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+      emprise = Logique.lireEmprise(couche);
     } catch (e) { emprise = null; }
     return { lisible: lisible, systeme: systeme, nbEntites: nbEntites, emprise: emprise };
   }
 
-  // Reprojette un point (x, y) du système `crs` de la couche (objet rendu tel quel) vers EPSG:2154. À vérifier dans QField v4.3.7 :
+  // Reprojette un point (x, y) du système source `crs` (construit par construireSource) vers EPSG:2154. À vérifier dans QField v4.3.7 :
   // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
   // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
   function reprojeterPoint(x, y, epsg, crs) {
@@ -195,9 +194,11 @@ Item {
   }
 
   function controlerCouche(description) {
-    return Controles.controlerCouche(description, {
-      reprojeter: function (emprise, epsg, crs) {
-        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, crs);
+    return Controles.controlerAvecDetail(description, {
+      reprojeter: function (emprise, epsg, crs, authid) {
+        // Système source reconstruit par son nom (fromDescription), repli : l'objet de la couche (mission 037).
+        const s = Controles.construireSource(authid, crs, function (d) { return CoordinateReferenceSystemUtils.fromDescription(d); });
+        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint, s.source);
       }
     });
   }

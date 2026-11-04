@@ -46,6 +46,16 @@ Item {
     return qgisProject ? String(qgisProject.fileName || "") : "";
   }
 
+  // Garde (relecture 2) : le prototype n'agit que dans le projet d'essai cerf-essai-2.qgs. Dans
+  // tout autre projet, il refuse et n'écrit ni ne charge rien.
+  function projetOk(titre) {
+    if (Zip.estProjetEssai(nomProjet())) return true;
+    afficher(titre, ["REFUSÉ : le projet ouvert n'est pas « " + Zip.PROJET_ESSAI + " ».",
+      "Projet ouvert : " + (nomProjet() || "aucun"),
+      "Ouvrir le projet cerf-essai-2, puis recommencer. Rien n'a été écrit ni chargé."]);
+    return false;
+  }
+
   function existe(chemin) {
     try {
       return FileUtils.fileExists(chemin);
@@ -92,10 +102,20 @@ Item {
     return typeof v === "function" ? v.call(objet) : v;
   }
 
+  // isNull d'un rectangle (propriété ou méthode) ; undefined si illisible : jamais d'exception.
+  function estNul(rect) {
+    try {
+      return lire(rect, "isNull");
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   // -------------------------------------------------------------- zip (bouton 0)
 
   function preparerZip() {
     const titre = Zip.BOUTONS.B0;
+    if (!projetOk(titre)) return;
     let dossier = "";
     try {
       dossier = Zip.dossierImports(dossierProjet());
@@ -279,6 +299,7 @@ Item {
   function question1() {
     const titre = Zip.BOUTONS.B1;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
     let chemin = "";
     try {
@@ -300,6 +321,7 @@ Item {
   function question2() {
     const titre = Zip.BOUTONS.B2;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
     lignes.push("Le .qml est dans le zip, nulle part ailleurs.");
     charger(Zip.cheminVsizip(copie, "UG_q2.geojson"), "UG_q2", lignes, true);
@@ -310,6 +332,7 @@ Item {
   function question3() {
     const titre = Zip.BOUTONS.B3;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
     let uri = "";
     let chemin = "";
@@ -332,11 +355,27 @@ Item {
   function question4() {
     const titre = Zip.BOUTONS.B4;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
     const qml = Zip.cheminSortie(dossierProjet(), "q4", "UG_q4.qml");
+    // Rejouable : l'ancienne couche A est retirée, l'ancien .qml effacé par rmFile (ADR 0007,
+    // seulement dans <projet>/cerf-imports/ : l'effacement de FileUtils refuse les .qml).
+    if (coucheQ4) {
+      lignes.push("Ancienne couche A " + retirerDeLaCarte(coucheQ4) + " (essai rejoué).");
+      coucheQ4 = null;
+    }
     if (existe(qml)) {
-      const r = tenter(lignes, "UG_q4.qml déjà présent d'un essai précédent, effacé", function () { return JSON.stringify(FileUtils.deleteFiles([qml])); });
-      if (existe(qml)) lignes.push("ATTENTION : UG_q4.qml est TOUJOURS là, l'essai serait faussé : " + r);
+      if (!Zip.peutEffacerQml(qml, dossierProjet())) {
+        lignes.push("REFUSÉ d'effacer " + qml + " : hors de cerf-imports/ du projet. Essai arrêté.");
+        afficher(titre, lignes);
+        return;
+      }
+      tenter(lignes, "UG_q4.qml déjà présent d'un essai précédent, effacé par rmFile", function () { return platformUtilities.rmFile(qml); });
+      if (existe(qml)) {
+        lignes.push("ATTENTION : UG_q4.qml est TOUJOURS là, l'essai serait faussé. Essai arrêté (voir le protocole, question 4).");
+        afficher(titre, lignes);
+        return;
+      }
     }
     let chemin = "";
     try {
@@ -348,12 +387,13 @@ Item {
     }
     lignes.push("UG_q4.qml absent du dossier : " + (existe(qml) ? "NON, il est présent" : "oui"));
     coucheQ4 = charger(chemin, "UG_q4", lignes, true);
-    lignes.push("CAPTURE A MAINTENANT (style par défaut attendu : remplissage plein, sans étiquette). Puis toucher « " + Zip.BOUTONS.B4B + " ».");
+    lignes.push("FERMER la fenêtre du plugin, CAPTURE A (style par défaut attendu : remplissage plein, sans étiquette), rouvrir le plugin. Puis toucher « " + Zip.BOUTONS.B4B + " ».");
     afficher(titre, lignes);
   }
 
   function question4b() {
     const titre = Zip.BOUTONS.B4B;
+    if (!projetOk(titre)) return;
     const lignes = [];
     if (!coucheQ4) { afficher(titre, ["Aucune couche A : toucher d'abord « " + Zip.BOUTONS.B4 + " »."]); return; }
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
@@ -364,13 +404,14 @@ Item {
       afficher(titre, lignes);
       return;
     }
-    lignes.push("La couche A n'a PAS été rechargée. CAPTURE B MAINTENANT : la couche A a-t-elle changé ?");
+    lignes.push("La couche A n'a PAS été rechargée. FERMER la fenêtre du plugin, DÉPLACER un peu la carte (pour forcer le redessin), CAPTURE B : la couche A a-t-elle changé ?");
     lignes.push("Puis, si l'on veut : « " + Zip.BOUTONS.B4C + " », puis « " + Zip.BOUTONS.B4D + " ».");
     afficher(titre, lignes);
   }
 
   function question4c() {
     const titre = Zip.BOUTONS.B4C;
+    if (!projetOk(titre)) return;
     const lignes = [];
     if (!coucheQ4) { afficher(titre, ["Aucune couche A : toucher d'abord « " + Zip.BOUTONS.B4 + " »."]); return; }
     tenter(lignes, "typeof couche.reload", function () { return typeof coucheQ4.reload; });
@@ -382,18 +423,31 @@ Item {
     } catch (e) {
       lignes.push("couche.triggerRepaint() : ERREUR " + e);
     }
-    lignes.push("La couche A a-t-elle changé de style (vert-bleu avec étiquettes) ? Dire oui ou non au protocole (note 4c).");
+    lignes.push("La couche A a-t-elle changé de style (vert-bleu avec étiquettes) ? Dire oui ou non au protocole (note 4c) ; fermer la fenêtre du plugin pour regarder la carte.");
     afficher(titre, lignes);
   }
 
   function question4d() {
     const titre = Zip.BOUTONS.B4D;
+    if (!projetOk(titre)) return;
     const lignes = [];
     if (!coucheQ4) { afficher(titre, ["Aucune couche A : toucher d'abord « " + Zip.BOUTONS.B4 + " »."]); return; }
     const chemin = Zip.cheminSortie(dossierProjet(), "q4", "UG_q4.geojson");
+    const idA = String(coucheQ4.id);
     lignes.push("Couche A " + retirerDeLaCarte(coucheQ4) + " (pour ne voir que la nouvelle).");
+    let encore = true;
+    try {
+      encore = false;
+      const couches = ProjectUtils.mapLayers(qgisProject);
+      for (const id in couches) if (String(id) === idA) encore = true;
+    } catch (e) {
+      lignes.push("Vérification du retrait : ERREUR " + e);
+      encore = true;
+    }
+    lignes.push("Couche A retirée : " + (encore ? "NON (toujours dans le projet)" : "oui"));
+    coucheQ4 = null;
     charger(chemin, "UG_q4_bis", lignes, true);
-    lignes.push("CAPTURE D MAINTENANT : attendu, contour vert-bleu (008B8B) sans remplissage, étiquettes code_ug.");
+    lignes.push("FERMER la fenêtre du plugin, puis CAPTURE D : attendu, contour vert-bleu (008B8B) sans remplissage, étiquettes code_ug.");
     afficher(titre, lignes);
   }
 
@@ -410,9 +464,29 @@ Item {
     return null;
   }
 
+  // Sources (chemins) de toutes les couches du projet ouvert.
+  function sourcesDuProjet(lignes) {
+    const sources = [];
+    if (!qgisProject) return sources;
+    const couches = ProjectUtils.mapLayers(qgisProject);
+    for (const id in couches) {
+      const l = couches[id];
+      if (!l) continue;
+      try {
+        let src = l.source;
+        if (src === undefined || src === null || typeof src === "function") src = lire(l, "publicSource");
+        sources.push(String(src));
+      } catch (e) {
+        lignes.push("source d'une couche du projet : ERREUR " + e);
+      }
+    }
+    return sources;
+  }
+
   function memoriser() {
     const titre = Zip.BOUTONS.B5M;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (suivies.length === 0) {
       afficher(titre, ["Aucune couche des questions 1 et 3 chargée : faire d'abord « " + Zip.BOUTONS.B1 + " » et « " + Zip.BOUTONS.B3 + " »."]);
       return;
@@ -434,6 +508,8 @@ Item {
         lignes.push(nom + " : recherche de la couche : ERREUR " + e);
       }
     }
+    const trouvees = Zip.compterParSource(suivies, sourcesDuProjet(lignes));
+    lignes.push("Couches retrouvées par leur source (chemin) : " + trouvees.nombre + " sur " + suivies.length);
     lignes.push("MAINTENANT : fermer le projet puis le rouvrir (sans rien d'autre). Le plugin recharge les couches tout seul ; sinon toucher « " + Zip.BOUTONS.B5R + " ».");
     afficher(titre, lignes);
   }
@@ -441,6 +517,11 @@ Item {
   // Appelé à la réouverture du projet (automatique) ou par le bouton « 5. Après réouverture ».
   function reouverture(automatique) {
     const titre = Zip.BOUTONS.B5R;
+    // Relecture 2 : rien dans un autre projet que cerf-essai-2.qgs.
+    if (!Zip.estProjetEssai(nomProjet())) {
+      if (!automatique) projetOk(titre);
+      return;
+    }
     const lignes = [automatique ? "Réouverture détectée (loadProjectEnded)." : "Bouton touché."];
     let liste = [];
     try {
@@ -449,25 +530,14 @@ Item {
       lignes.push("Réglages : ERREUR " + e);
     }
     lignes.push("Couches mémorisées : " + liste.length);
-    let dedans = 0;
+    // Compté par la source (chemin), avant tout rechargement.
+    const avant = Zip.compterParSource(liste, sourcesDuProjet(lignes));
+    lignes.push("Présentes dans le projet à l'ouverture (par la source) : n = " + avant.nombre + " sur " + liste.length
+      + (avant.nombre > 0 ? " (le style vu peut venir du projet enregistré)" : ""));
     for (let i = 0; i < liste.length; i++) {
-      let l = null;
-      try {
-        l = coucheMarquee(liste[i].nom);
-      } catch (e) {
-        lignes.push("Recherche de " + liste[i].nom + " : ERREUR " + e);
-      }
-      if (l) dedans++;
-    }
-    lignes.push("Présentes dans le projet : " + dedans + " (si " + liste.length + ", le style vu peut venir du projet enregistré)");
-    for (let i = 0; i < liste.length; i++) {
-      let presente = null;
-      try {
-        presente = coucheMarquee(liste[i].nom);
-      } catch (e) {
-        presente = null;
-      }
-      if (presente) {
+      let dedans = false;
+      for (let k = 0; k < avant.noms.length; k++) if (avant.noms[k] === liste[i].nom) dedans = true;
+      if (dedans) {
         lignes.push(liste[i].nom + " : déjà dans le projet, non rechargée");
         continue;
       }
@@ -475,7 +545,7 @@ Item {
       const couche = charger(liste[i].chemin, liste[i].nom, lignes, true);
       if (couche && couche.isValid) marquer(couche, liste[i].nom, lignes);
     }
-    lignes.push("À répondre : les deux couches sont-elles revenues avec leur style (bleu, orange) ?");
+    lignes.push("À répondre, couche par couche : UG_q1 (bleu, étiquettes) et Parcelles_q3 (orange, étiquettes) sont-elles revenues avec leur style ?");
     afficher(titre, lignes);
   }
 
@@ -498,6 +568,7 @@ Item {
   function reprojection() {
     const titre = Zip.BOUTONS.B6;
     const lignes = [];
+    if (!projetOk(titre)) return;
     let l93 = null;
     let wgs = null;
     tenter(lignes, "fromDescription(EPSG:2154).isValid", function () { l93 = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154"); return l93.isValid; });
@@ -533,8 +604,9 @@ Item {
     lignes.push("--- Ligne 3 : l'emprise est-elle dans X " + Zip.EMPRISE_L93.xmin + " à " + Zip.EMPRISE_L93.xmax + ", Y " + Zip.EMPRISE_L93.ymin + " à " + Zip.EMPRISE_L93.ymax + " ?");
     tenter(lignes, "Ligne 3", function () {
       if (!rr) return "pas d'emprise (ligne 2 en échec) : NON";
-      const e = { xMinimum: lire(rr, "xMinimum"), xMaximum: lire(rr, "xMaximum"), yMinimum: lire(rr, "yMinimum"), yMaximum: lire(rr, "yMaximum") };
-      return Zip.empriseVraisemblable(e) ? "OUI, vraisemblable" : "NON";
+      const e = { xMinimum: lire(rr, "xMinimum"), xMaximum: lire(rr, "xMaximum"), yMinimum: lire(rr, "yMinimum"), yMaximum: lire(rr, "yMaximum"), isNull: estNul(rr) };
+      lignes.push("  " + texteEmprise(e) + " ; isNull " + e.isNull);
+      return Zip.empriseVraisemblable(e) ? "OUI, vraisemblable" : "NON (vide, inversée, nulle ou hors emprise)";
     });
 
     lignes.push("--- Ligne 4 : noms qui existent (typeof)");
@@ -575,6 +647,7 @@ Item {
   function metadonnees() {
     const titre = Zip.BOUTONS.B7;
     const lignes = [];
+    if (!projetOk(titre)) return;
     if (!chargerZip(lignes, false)) { afficher(titre, lignes); return; }
     let l93 = null;
     tenter(lignes, "fromDescription(EPSG:2154)", function () { l93 = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154"); return l93.isValid; });
@@ -593,6 +666,7 @@ Item {
       tenter(lignes, "isValid", function () { return couche.isValid; });
       const authid = String(tenter(lignes, "crs.authid", function () { return couche.crs.authid; }));
       tenter(lignes, "crs.isValid", function () { return couche.crs.isValid; });
+      if (nom === "Sans_crs.geojson") lignes.push("Lu en WGS84 (EPSG:4326 ou OGC:CRS84 admis) : " + (Zip.estWgs84(authid) ? "oui" : "NON"));
       tenter(lignes, "crs.description", function () { return couche.crs.description; });
       let e = null;
       try {
@@ -608,8 +682,8 @@ Item {
         tenter(lignes, "emprise reprojetée en EPSG:2154", function () {
           const rect = couche.extent();
           const rr = GeometryUtils.reprojectRectangle(rect, couche.crs, l93);
-          const er = { xMinimum: lire(rr, "xMinimum"), xMaximum: lire(rr, "xMaximum"), yMinimum: lire(rr, "yMinimum"), yMaximum: lire(rr, "yMaximum") };
-          lignes.push("  " + texteEmprise(er));
+          const er = { xMinimum: lire(rr, "xMinimum"), xMaximum: lire(rr, "xMaximum"), yMinimum: lire(rr, "yMinimum"), yMaximum: lire(rr, "yMaximum"), isNull: estNul(rr) };
+          lignes.push("  " + texteEmprise(er) + " ; isNull " + er.isNull);
           lignes.push("  " + Zip.verdictSansCrs(authid, er));
           return "fait";
         });

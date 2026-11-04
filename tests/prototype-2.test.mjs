@@ -447,3 +447,119 @@ test('prototype 2 ne touche pas à plugin/ : aucun fichier de plugin/ n\'est imp
     assert.doesNotMatch(lire(f), /\.\.\/plugin\//, f);
   }
 });
+
+// ---------------------------------------------------------------- aller-retour 1 (relecture)
+
+const DBL_MAX = Number.MAX_VALUE;
+
+test('relecture 1 (bloquant) : le rectangle vide de QGIS >= 3.34 (±DBL_MAX) n\'est pas vraisemblable', () => {
+  const vide = { xMinimum: DBL_MAX, xMaximum: -DBL_MAX, yMinimum: DBL_MAX, yMaximum: -DBL_MAX };
+  assert.equal(L.empriseVraisemblable(vide), false);
+  assert.match(L.verdictSansCrs('EPSG:4326', vide), /refus/i);
+  assert.doesNotMatch(L.verdictSansCrs('EPSG:4326', vide), /chargée/i);
+});
+
+test('emprise : min > max, valeurs proches de DBL_MAX et isNull vrai sont refusés ; une bonne emprise passe', () => {
+  const bonne = { xMinimum: 1050000, xMaximum: 1052000, yMinimum: 6839000, yMaximum: 6842000 };
+  assert.equal(L.empriseVraisemblable(bonne), true);
+  assert.equal(L.empriseVraisemblable({ ...bonne, isNull: false }), true);
+  assert.equal(L.empriseVraisemblable({ ...bonne, isNull: true }), false);
+  assert.equal(L.empriseVraisemblable({ ...bonne, xMinimum: 1053000 }), false, 'xMin > xMax');
+  assert.equal(L.empriseVraisemblable({ ...bonne, yMinimum: 6843000 }), false, 'yMin > yMax');
+  assert.equal(L.empriseVraisemblable({ ...bonne, xMaximum: DBL_MAX }), false);
+  assert.equal(L.empriseVraisemblable({ ...bonne, yMinimum: -DBL_MAX }), false);
+  assert.equal(L.empriseVraisemblable({ xMinimum: DBL_MAX, xMaximum: DBL_MAX, yMinimum: DBL_MAX, yMaximum: DBL_MAX }), false);
+});
+
+test('Sans_crs : EPSG:4326 et OGC:CRS84 sont tous deux admis comme WGS84', () => {
+  assert.equal(L.estWgs84('EPSG:4326'), true);
+  assert.equal(L.estWgs84('OGC:CRS84'), true);
+  assert.equal(L.estWgs84('EPSG:2154'), false);
+  assert.equal(L.estWgs84(''), false);
+  assert.match(L.ecrirePosition(7.76189, 48.56906, 'OGC:CRS84'), /OGC:CRS84, longitude = 7,76189 ; latitude = 48,56906/);
+});
+
+test('relecture 2 : garde « projet ouvert = cerf-essai-2.qgs »', () => {
+  assert.equal(L.PROJET_ESSAI, 'cerf-essai-2.qgs');
+  assert.equal(L.estProjetEssai('/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/cerf-essai-2/cerf-essai-2.qgs'), true);
+  assert.equal(L.estProjetEssai('cerf-essai-2.qgs'), true);
+  assert.equal(L.estProjetEssai('/sdcard/Cerf/cerf.qgz'), false, 'le vrai projet de terrain');
+  assert.equal(L.estProjetEssai('/sdcard/x/cerf-essai-2.qgs.bak'), false);
+  assert.equal(L.estProjetEssai('/sdcard/x/ancien-cerf-essai-2.qgs'), false);
+  assert.equal(L.estProjetEssai('/sdcard/cerf-essai-2.qgs/autre.qgs'), false);
+  assert.equal(L.estProjetEssai(''), false);
+  assert.equal(L.estProjetEssai(undefined), false);
+  assert.equal(L.estProjetEssai(null), false);
+});
+
+test('relecture 2 : Essai.qml garde chaque bouton et le rechargement de la réouverture', () => {
+  const essai = lire('Essai.qml');
+  const gardes = (essai.match(/projetOk\(titre\)/g) || []).length;
+  // 0, 1, 2, 3, 4, 4b, 4c, 4d, 5 mémoriser, 6, 7 = 11 boutons gardés (5 réouverture : garde propre)
+  assert.ok(gardes >= 11, `${gardes} gardes projetOk`);
+  assert.match(essai, /function reouverture[\s\S]*?if \(!Zip\.estProjetEssai\(nomProjet\(\)\)\)/);
+});
+
+test('relecture 3 : la question 5 compte les couches par leur source (chemin), non par une marque', () => {
+  const registre = [
+    { chemin: '/p/cerf-imports/q1/UG_q1.geojson', nom: 'UG_q1' },
+    { chemin: '/p/cerf-imports/q3/Parcelles_q3.gpkg|layername=Parcelles_q3', nom: 'Parcelles_q3' },
+  ];
+  assert.deepEqual(L.compterParSource(registre, []), { nombre: 0, noms: [] });
+  assert.deepEqual(L.compterParSource(registre, ['/p/cerf-imports/q1/UG_q1.geojson']), { nombre: 1, noms: ['UG_q1'] });
+  assert.equal(L.compterParSource(registre, ['/p/cerf-imports/q1/UG_q1.geojson', '/p/cerf-imports/q3/Parcelles_q3.gpkg|layername=Parcelles_q3']).nombre, 2);
+  // une autre table du même GeoPackage n'est pas la bonne couche
+  assert.equal(L.compterParSource(registre, ['/p/cerf-imports/q3/Parcelles_q3.gpkg|layername=autre']).nombre, 0);
+  // même nom dans un autre dossier : non
+  assert.equal(L.compterParSource(registre, ['/autre/UG_q1.geojson']).nombre, 0);
+  // options OGR après le chemin : le chemin seul compte
+  assert.equal(L.compterParSource(registre, ['/p/cerf-imports/q1/UG_q1.geojson|option:X=1']).nombre, 1);
+  assert.equal(L.cheminDeSource('/a/b.gpkg|layername=t'), '/a/b.gpkg');
+  const essai = lire('Essai.qml');
+  assert.match(essai, /function reouverture[\s\S]*compterParSource/);
+  assert.doesNotMatch(essai.slice(essai.indexOf('function reouverture')), /coucheMarquee\(liste/, 'plus de comptage par la marque à la réouverture');
+});
+
+test('relecture 4 : rmFile n\'efface que dans <projet>/cerf-imports/ (garde peutEffacerQml)', () => {
+  const projet = '/storage/emulated/0/Cerf';
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/q4/UG_q4.qml', projet), true);
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/q4/UG_q4.qml', projet + '/'), true);
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/UG.qml', projet), true);
+  for (const mauvais of [
+    projet + '/cerf.qgz', projet + '/cerf-imports/q4/UG_q4.geojson', projet + '/cerf-imports/essai-styles.zip',
+    projet + '/UG_q4.qml', projet + '/cerf-imports/../cerf.qml', projet + '/cerf-imports/../../x.qml',
+    projet + '/cerf-imports//q4/x.qml', projet + '/cerf-imports/', projet + '/cerf-imports',
+    '/storage/emulated/0/Autre/cerf-imports/q4/x.qml', projet + '-autre/cerf-imports/x.qml',
+    'cerf-imports/q4/x.qml', '', projet + '/cerf-imports/q4\\x.qml', projet + '/cerf-imports/.qml',
+  ]) assert.equal(L.peutEffacerQml(mauvais, projet), false, mauvais);
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/q4/UG_q4.qml', ''), false);
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/q4/UG_q4.qml', '/'), false);
+  assert.equal(L.peutEffacerQml('/cerf-imports/x.qml', '/'), false);
+  assert.equal(L.peutEffacerQml(undefined, projet), false);
+  assert.equal(L.peutEffacerQml(projet + '/cerf-imports/x.qml', undefined), false);
+  const essai = lire('Essai.qml');
+  assert.match(essai, /platformUtilities\.rmFile\(qml\)/);
+  assert.doesNotMatch(essai, /deleteFiles/);
+  assert.match(essai, /peutEffacerQml\(qml, dossierProjet\(\)\)[\s\S]*rmFile/, 'garde avant rmFile');
+  assert.match(essai, /Couche A retirée : /);
+});
+
+test('relecture 5 : axes inversés détectés à la ligne 1 de la question 6', () => {
+  const j = L.jugerPoint(6840462, 1051113);
+  assert.equal(j.conforme, false);
+  assert.match(j.texte, /AXES INVERSÉS/);
+  assert.equal(L.jugerPoint(1051113, 6840462).conforme, true);
+  assert.doesNotMatch(L.jugerPoint(1051120, 6840462).texte, /AXES/);
+});
+
+test('relecture 5 : layer_styles déclarée dans gpkg_contents (attributes), sans emprise ni système', () => {
+  const { db, nettoyer } = ouvrirGpkg();
+  try {
+    const c = db.prepare("SELECT * FROM gpkg_contents WHERE table_name='layer_styles'").get();
+    assert.equal(c.data_type, 'attributes');
+    assert.equal(c.identifier, 'layer_styles');
+    assert.equal(c.srs_id, null);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM gpkg_contents').get().n, 2);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM gpkg_geometry_columns WHERE table_name='layer_styles'").get().n, 0);
+  } finally { nettoyer(); }
+});

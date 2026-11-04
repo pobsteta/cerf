@@ -54,6 +54,12 @@ jobs:
           ogrinfo -ro -al -so FRT_q7.shp | tee frt.txt
           grep -q 'Feature Count: 2' frt.txt
           grep -q '2154' frt.txt
+          ogrinfo -ro -al -so UG_q2.geojson | tee ug2.txt
+          grep -q 'Feature Count: 2' ug2.txt
+          ogrinfo -ro -al -so UG_q4.geojson | tee ug4.txt
+          grep -q 'Feature Count: 2' ug4.txt
+          ogrinfo -ro -al -so FRT_sansprj.shp | tee sansprj.txt
+          grep -q 'Feature Count: 2' sansprj.txt
           ogrinfo -ro -al -so Sans_crs.geojson | tee sans.txt
           grep -q 'Feature Count: 2' sans.txt
           cd .. && rm -rf ctl

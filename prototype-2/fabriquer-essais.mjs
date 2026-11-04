@@ -189,6 +189,10 @@ CREATE TABLE layer_styles (id INTEGER PRIMARY KEY AUTOINCREMENT, f_table_catalog
       const e = emprise(anneaux);
       db.prepare('INSERT INTO gpkg_contents (table_name, data_type, identifier, description, last_change, min_x, min_y, max_x, max_y, srs_id) VALUES (?,?,?,?,?,?,?,?,?,?)')
         .run(TABLE_Q3, 'features', TABLE_Q3, '', DATE_FIXE, e.xmin, e.ymin, e.xmax, e.ymax, 2154);
+      // layer_styles déclarée comme table non spatiale (data_type « attributes »), comme le fait
+      // QGIS : sans cela, un lecteur strict du GeoPackage la signale hors du contenu.
+      db.prepare('INSERT INTO gpkg_contents (table_name, data_type, identifier, description, last_change, srs_id) VALUES (?,?,?,?,?,?)')
+        .run('layer_styles', 'attributes', 'layer_styles', '', DATE_FIXE, null);
       db.prepare('INSERT INTO gpkg_geometry_columns VALUES (?,?,?,?,0,0)').run(TABLE_Q3, 'geom', 'POLYGON', 2154);
       const ins = db.prepare(`INSERT INTO ${TABLE_Q3} (geom, ${CHAMP}) VALUES (?, ?)`);
       anneaux.forEach((a, i) => ins.run(blobPolygone(a), codes[i]));

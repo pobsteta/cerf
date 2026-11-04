@@ -31,6 +31,16 @@ export const BOUTONS = {
 
 export const NOM_ZIP = 'essai-styles.zip';
 
+// Le seul projet où le prototype agit (relecture 1 : il ne doit rien écrire ni recharger dans
+// un autre projet de l'appareil, en particulier le vrai projet de terrain).
+export const PROJET_ESSAI = 'cerf-essai-2.qgs';
+
+// Vrai si le fichier du projet ouvert (chemin complet ou nom) est cerf-essai-2.qgs.
+export function estProjetEssai(fichierProjet) {
+  if (typeof fichierProjet !== 'string' || fichierProjet === '') return false;
+  return nomDeFichier(fichierProjet) === PROJET_ESSAI;
+}
+
 // Point de la question 6 : Strasbourg, WGS84, longitude puis latitude (décision de Pascal,
 // 4 novembre 2026). Attendu en Lambert 93 : X (est) 1 051 113 ; Y (nord) 6 840 462 ; pyproj
 // 3.8.0 donne 1 051 112,70 ; 6 840 461,54.
@@ -215,6 +225,19 @@ export function uriGpkg(chemin, table) {
   return chemin + '|layername=' + table;
 }
 
+// Garde avant platformUtilities.rmFile (ADR 0007, qui n'a aucun contrôle de chemin) : seul un
+// .qml DANS <dossier du projet>/cerf-imports/ peut être effacé ; chemin absolu, sans « .. »,
+// sans « // », sans antislash. Ne se fie à aucun argument.
+export function peutEffacerQml(chemin, dossierProjet) {
+  if (typeof chemin !== 'string' || typeof dossierProjet !== 'string') return false;
+  if (dossierProjet.charAt(0) !== '/' || sansBarreFinale(dossierProjet) === '/') return false;
+  if (chemin.charAt(0) !== '/' || chemin.indexOf('..') >= 0 || chemin.indexOf('//') >= 0 || chemin.indexOf('\\') >= 0) return false;
+  const base = dossierImports(dossierProjet);
+  if (chemin.indexOf(base) !== 0) return false;
+  const reste = chemin.substring(base.length);
+  return /^[A-Za-z0-9_.-]+(\/[A-Za-z0-9_.-]+)*\.qml$/.test(reste);
+}
+
 export function nomDeFichier(chemin) {
   return chemin.substring(chemin.lastIndexOf('/') + 1);
 }
@@ -244,20 +267,36 @@ export function jugerPoint(x, y) {
   if (typeof x !== 'number' || typeof y !== 'number' || !isFinite(x) || !isFinite(y)) {
     return { conforme: false, ecartMetres: null, texte: 'valeur absente ou non numérique : non' };
   }
+  // Piège des axes : X et Y échangés (X ≈ 6 840 462 ; Y ≈ 1 051 113) = non, et on le dit.
+  const ecartInverse = Math.sqrt((x - POINT_ATTENDU_L93.y) * (x - POINT_ATTENDU_L93.y) + (y - POINT_ATTENDU_L93.x) * (y - POINT_ATTENDU_L93.x));
+  if (ecartInverse <= TOLERANCE_METRES) {
+    return { conforme: false, ecartMetres: null, texte: 'AXES INVERSÉS : X et Y sont échangés (X lu ≈ 6 840 462, Y lu ≈ 1 051 113) : non' };
+  }
   const ecart = Math.sqrt((x - POINT_ATTENDU_L93.x) * (x - POINT_ATTENDU_L93.x) + (y - POINT_ATTENDU_L93.y) * (y - POINT_ATTENDU_L93.y));
   const conforme = ecart <= TOLERANCE_METRES;
   return { conforme: conforme, ecartMetres: ecart, texte: 'écart à 1 051 113 ; 6 840 462 : ' + nombreFr(ecart, 2) + ' m ; à ' + TOLERANCE_METRES + ' m près : ' + (conforme ? 'oui' : 'non') };
 }
 
 // Question 6, ligne 3 : tous les coins de l'emprise dans l'emprise de la spec § 4 ?
-// Une emprise nulle, vide, à 0 ou à valeurs non finies n'est pas vraisemblable.
+// Une emprise nulle (isNull vrai), vide, à 0, inversée (min > max) ou à valeurs non finies
+// n'est pas vraisemblable. Le rectangle « vide » de QGIS >= 3.34 (QgsRectangle()) vaut
+// xMin = yMin = +DBL_MAX et xMax = yMax = -DBL_MAX : min > max, et valeurs de l'ordre de 1e308,
+// qui passeraient sinon les deux bornes de l'emprise (relecture 1, bloquant).
 export function empriseVraisemblable(r) {
   if (!r) return false;
+  if (r.isNull === true) return false;
   const v = [r.xMinimum, r.xMaximum, r.yMinimum, r.yMaximum];
-  for (let i = 0; i < 4; i++) if (typeof v[i] !== 'number' || !isFinite(v[i])) return false;
+  for (let i = 0; i < 4; i++) if (typeof v[i] !== 'number' || !isFinite(v[i]) || Math.abs(v[i]) >= 1e300) return false;
+  if (r.xMinimum > r.xMaximum || r.yMinimum > r.yMaximum) return false;
   if (r.xMinimum === 0 && r.xMaximum === 0 && r.yMinimum === 0 && r.yMaximum === 0) return false;
   return r.xMinimum >= EMPRISE_L93.xmin && r.xMaximum <= EMPRISE_L93.xmax
     && r.yMinimum >= EMPRISE_L93.ymin && r.yMaximum <= EMPRISE_L93.ymax;
+}
+
+// Un GeoJSON sans membre crs est lu en WGS84 (RFC 7946) : GDAL/QGIS le nomme EPSG:4326 ou,
+// selon la version, OGC:CRS84 (même système, longitude puis latitude). Les deux sont admis.
+export function estWgs84(authid) {
+  return authid === 'EPSG:4326' || authid === 'OGC:CRS84';
 }
 
 // Question 7, Sans_crs : verdict du contrôle de vraisemblance de la spec § 4, appliqué à
@@ -293,6 +332,40 @@ export function lireRegistre(texte) {
     }
   }
   return sortie;
+}
+
+// Partie « fichier » d'une source de couche QGIS : avant le premier « | » (options OGR).
+export function cheminDeSource(source) {
+  const s = String(source || '');
+  const i = s.indexOf('|');
+  return i < 0 ? s : s.substring(0, i);
+}
+
+function nomDeTable(source) {
+  const m = /\|layername=([^|]*)/.exec(String(source || ''));
+  return m ? m[1] : '';
+}
+
+// Vrai si la source d'une couche du projet est celle du registre (même fichier ; même table si
+// le registre en nomme une). Compte par la SOURCE (chemin), pas par une marque posée par le
+// plugin : une marque survit mal à un enregistrement du projet (relecture 3).
+export function memeSource(sourceCouche, cheminRegistre) {
+  const a = cheminDeSource(sourceCouche);
+  const b = cheminDeSource(cheminRegistre);
+  if (a === '' || a !== b) return false;
+  const t = nomDeTable(cheminRegistre);
+  return t === '' || nomDeTable(sourceCouche) === t;
+}
+
+// Parmi le registre, les couches dont une source du projet correspond : { nombre, noms }.
+export function compterParSource(registre, sourcesDuProjet) {
+  const noms = [];
+  for (let i = 0; i < registre.length; i++) {
+    for (let k = 0; k < sourcesDuProjet.length; k++) {
+      if (memeSource(sourcesDuProjet[k], registre[i].chemin)) { noms.push(registre[i].nom); break; }
+    }
+  }
+  return { nombre: noms.length, noms: noms };
 }
 
 // --------------------------------------------------------------------------- affichage

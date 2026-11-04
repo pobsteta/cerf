@@ -1,7 +1,7 @@
 # ADR 0007 — Effacer les copies de zip par platformUtilities.rmFile
 
 - **Date :** 2026-11-03
-- **Statut :** acceptée par Pascal le 3 novembre 2026 (sur la proposition de l'orchestrateur, après l'essai du prototype n° 1) ; critique du `contradicteur` à faire au prochain passage d'ADR
+- **Statut :** acceptée par Pascal le 3 novembre 2026 (sur la proposition de l'orchestrateur, après l'essai du prototype n° 1) ; **amendée par l'ADR 0008 (4 novembre 2026)** ; critique du `contradicteur` à faire au prochain passage d'ADR
 - **Proposée par :** Claude (orchestrateur)
 - **Tranchée par :** Pascal
 
@@ -38,3 +38,22 @@ d'accepter les `.zip` dans `deleteFiles`.
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?
+
+## Amendée par l'ADR 0008 (4 novembre 2026)
+
+Décision de Pascal après le prototype n° 3 (voir [ADR 0008](0008-couches-sorties-du-zip.md)).
+La décision ci-dessus tient ; son champ s'étend. Le plugin efface par `rmFile`, en plus de la
+copie du zip :
+
+- les **`.gpkg` des couches réécrites** (une table par fichier) et leurs **`.qml`** voisins ;
+- leurs **annexes** : `-wal`, `-shm`, `.aux.xml` (le prototype n° 3 les a trouvées
+  effaçables) ;
+
+La limite ne change pas : **rien n'est effacé hors de `<dossier du projet>/cerf-imports/`**,
+chemin vérifié avant chaque appel. La liste des fichiers à effacer **se déduit du nom de la couche** (`<couche>.gpkg`,
+`<couche>.qml`, `-wal`, `-shm`, `.aux.xml`) : le registre n'a pas de champ « fichiers »
+(ADR 0003 amendée).
+
+**Question ouverte (mission 014)** : effacement du dossier `cerf-imports/<nom du zip>/` une
+fois vide, et remplacement du dossier du zip à un réimport, ne sont pas décidés pour la voie
+`saveVectorLayerAs` (l'API des plugins n'offre ni listage ni renommage). À trancher par Pascal.

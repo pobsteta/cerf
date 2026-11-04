@@ -3,7 +3,7 @@
 > Fiche rédigée par Claude (orchestrateur) le 4 novembre 2026, à la demande de Pascal :
 > « Il est possible dans QField d'ouvrir un projet à partir d'une URL qui se présente sous
 > flashcode, peut-on ajouter dans les releases ce flashcode pour le projet et le plugin ? »
-> **Statut : demandée par Pascal le 4 novembre 2026.** Une mission = une phrase = une branche = une PR.
+> **Statut : demandée et validée par Pascal le 4 novembre 2026 (trois flashcodes confirmés).** Une mission = une phrase = une branche = une PR.
 
 ## Mission
 
@@ -34,7 +34,7 @@
   « latest », le décideur `outils/decider-release.mjs` ; ajouter une dépendance fermée ;
   toucher à `main`.
 
-## Ce qui est attendu (proposé par l'orchestrateur, à confirmer par Pascal)
+## Ce qui est attendu (confirmé par Pascal le 4 novembre 2026)
 
 - Trois flashcodes, en PNG (assez grands pour un écran de PC) et en SVG :
   - plugin : `https://github.com/pobsteta/cerf/releases/latest/download/cerf.zip` ;

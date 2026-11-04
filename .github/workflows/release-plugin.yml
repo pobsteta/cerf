@@ -10,6 +10,9 @@
 #  - Mission 022 : cette release ne porte QUE le plugin (cerf.zip) et l'essai de recette (essai.zip) ;
 #    le projet modèle (cerf-projet-modele.zip) n'a qu'une adresse, celle de release-projet-modele.yml
 #    (.../releases/download/projet-modele/...). Seule « plugin-v<version> » devient « latest ».
+#  - Mission 025 : le flashcode (PNG et SVG) de l'adresse du plugin est joint à la release et affiché dans
+#    ses notes (outils/flashcodes.mjs ; qrencode pour générer, zbarimg pour décoder et contrôler l'URL).
+#    Sur main : adresse stable (latest/download/cerf.zip) ; préversion d'essai : adresse de « plugin-essai ».
 # Les zips sont fabriqués ici (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans
 # les notes de la release. L'étiquette est créée par la release elle-même.
 name: Release du plugin
@@ -51,14 +54,25 @@ jobs:
       - name: Dépendances Python des outils (pyproj, mission 002)
         if: steps.decision.outputs.action == 'publier'
         run: pip install -r outils/requirements.txt
+      - name: Outils des flashcodes (qrencode, zbar-tools ; mission 025)
+        if: steps.decision.outputs.action == 'publier'
+        run: sudo apt-get update && sudo apt-get install -y qrencode zbar-tools
       - name: Tests
         if: steps.decision.outputs.action == 'publier'
+        env:
+          CERF_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: Zips
         if: steps.decision.outputs.action == 'publier'
         run: |
           node plugin/empaqueter.mjs dist
           cp tests/recette/essai/essai.zip dist/
+      - name: Flashcodes (génération et contrôle par décodage)
+        if: steps.decision.outputs.action == 'publier'
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then mode=stable; else mode=essai; fi
+          node outils/flashcodes.mjs generer dist/flashcodes plugin "$mode"
+          node outils/flashcodes.mjs verifier dist/flashcodes plugin "$mode"
       - name: Release
         if: steps.decision.outputs.action == 'publier'
         env:
@@ -75,13 +89,19 @@ jobs:
             sha256sum dist/*.zip
             echo '```'
           } > notes.md
+          echo >> notes.md
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            gh release create "plugin-v$version" dist/cerf.zip \
+            node outils/flashcodes.mjs notes plugin stable "plugin-v$version" >> notes.md
+          else
+            node outils/flashcodes.mjs notes plugin essai plugin-essai >> notes.md
+          fi
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            gh release create "plugin-v$version" dist/cerf.zip dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Cerf $version" --notes-file notes.md --latest
           elif gh release view plugin-essai >/dev/null 2>&1; then
-            gh release upload plugin-essai dist/cerf.zip dist/essai.zip --clobber
+            gh release upload plugin-essai dist/cerf.zip dist/essai.zip dist/flashcodes/* --clobber
             gh release edit plugin-essai --notes-file notes.md --latest=false
           else
-            gh release create plugin-essai dist/cerf.zip dist/essai.zip \
+            gh release create plugin-essai dist/cerf.zip dist/essai.zip dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Cerf, essai avant fusion" --notes-file notes.md --prerelease --latest=false
           fi

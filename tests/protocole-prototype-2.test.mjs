@@ -122,3 +122,18 @@ test('aller-retour 1 : préalables (avant le mode avion), téléchargement, capt
   assert.match(t, /capture lisible de l'écran d'erreur/);
   assert.match(t, /## Après l'essai[\s\S]*Désactiver « Cerf, prototype n° 2 »/);
 });
+
+test('aller-retour 2 : « essai raté », règle par couche en 5, NaN ou infinies en 7, repli de zoom, installation par URL', () => {
+  assert.match(t, /essai raté/);
+  assert.ok((t.match(/essai raté/g) || []).length >= 3);
+  assert.match(t, /si ce n'est pas 2 sur 2 par la source : s'arrêter, capture/);
+  assert.match(t, /sur la ligne de chaque couche/);
+  assert.match(t, /pas sur le n global/);
+  assert.doesNotMatch(t, /\(n < 2 pour elle\)|non rechargée » \(n = 2\)/);
+  assert.match(t, /bornes NaN ou infinies/);
+  assert.match(t, /appui long sur la couche dans le panneau des couches/);
+  assert.match(t, /deux entiers séparés par une espace/);
+  assert.match(t, /1051113 6840462/);
+  assert.match(t, /déjà éprouvée par Pascal au prototype n° 1/);
+  assert.match(t, /le dire avant d'aller plus loin/);
+});

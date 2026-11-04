@@ -72,6 +72,7 @@ jobs:
             echo "Prototype n° 2 de Cerf (mission 023), plugin QField jetable et fichiers d'essai, à installer par URL."
             echo
             echo "Ne pas renommer cerf-prototype-2.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Commit empaqueté : $GITHUB_SHA (l'étiquette prototype-2 peut rester sur un commit plus ancien : upload --clobber ne la déplace pas ; c'est ce sha qui fait foi)."
             echo "Protocole d'essai : tests/recette/prototype-2.md. Données fictives, sans valeur métier."
             if [ -f ogrinfo.txt ]; then cat ogrinfo.txt; else echo "ogrinfo : non exécuté (gdal-bin non installé en 90 s) ; contrôle par QGIS sur le poste, voir le protocole."; fi
             echo

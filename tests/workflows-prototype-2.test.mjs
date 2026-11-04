@@ -42,3 +42,7 @@ test('prototype 2 : ogrinfo seulement si gdal-bin est installé, sans bloquer la
   assert.match(wf, /ogrinfo -ro -al -so Parcelles_q3\.gpkg/);
   assert.match(wf, /grep -q 'layer_styles'/);
 });
+
+test('prototype 2 : les notes écrivent le sha du commit empaqueté', () => {
+  assert.match(wf, /Commit empaqueté : \$GITHUB_SHA/);
+});

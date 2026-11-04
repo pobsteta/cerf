@@ -199,7 +199,7 @@ test('importerZip : message de bilan (singulier, pluriel, refus) et date par dé
   const couches = faussesCouches({ echecs: [`/vsizip/${COPIES}/x.zip/b.geojson`] });
   const r2 = m.importerZip(ctxImport({ couches, ctx: { octets: zipDe('a.geojson', 'b.geojson', 'c.geojson') } }).ctx);
   assert.match(r2.message, /^2 couches chargées : a, c/);
-  assert.match(r2.message, /b : /);
+  assert.match(r2.message, /b\.geojson : /);
 });
 
 test('importerZip : zip sans GeoJSON -> message qui le dit', async () => {

@@ -38,3 +38,19 @@ d'accepter les `.zip` dans `deleteFiles`.
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?
+
+## Amendée par l'ADR 0008 (4 novembre 2026)
+
+Décision de Pascal après le prototype n° 3 (voir [ADR 0008](0008-couches-sorties-du-zip.md)).
+La décision ci-dessus tient ; son champ s'étend. Le plugin efface par `rmFile`, en plus de la
+copie du zip :
+
+- les **`.gpkg` des couches réécrites** (une table par fichier) et leurs **`.qml`** voisins ;
+- leurs **annexes** : `-wal`, `-shm`, `.aux.xml` (le prototype n° 3 les a trouvées
+  effaçables) ;
+- le dossier `cerf-imports/<nom du zip>/` une fois vide, si l'API le permet.
+
+La limite ne change pas : **rien n'est effacé hors de `<dossier du projet>/cerf-imports/`**,
+chemin vérifié avant chaque appel. La liste des fichiers d'une couche est tenue par le
+plugin (registre, ADR 0003 amendée), faute de listage ni de renommage dans l'API des plugins.
+Un réimport réussi remplace le dossier du zip en entier.

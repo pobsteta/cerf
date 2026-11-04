@@ -57,8 +57,12 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
   ne sont pas des styles : ignorés en silence. Les fichiers annexes (`.tfw`, `.aux.xml`, `.sbn`,
   `.sbx`, `.qix`) sont lus avec leur couche, sans message. Tout autre fichier est ignoré
   en silence.
-- Lu sans décompression, par `/vsizip/` (ADR 0003). Une couche illisible ne fait pas
-  échouer les autres.
+- Les vecteurs sont ouverts dans le zip par `/vsizip/`, contrôlés, puis réécrits en
+  GeoPackage dans `cerf-imports/` (§ 3.3, ADR 0003 amendée par l'ADR 0008, 4 novembre 2026) ;
+  les GeoTIFF restent lus dans le zip. Une couche illisible ne fait pas échouer les autres.
+  **Format affiché** : quel que soit le format d'entrée (GeoJSON, Shapefile, GeoPackage), la
+  couche chargée est un **GeoPackage** en lecture seule, une table par fichier ; seul le
+  GeoTIFF garde son format.
 - Noms accentués dans un zip fait par l'explorateur Windows (codage CP437) : à tester au
   prototype n° 1 ; la notice conseille un zip fait par QGIS ou 7-Zip.
 
@@ -79,8 +83,9 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
   `cerf.qgz` par QGIS ; le plugin la lit, ne l'écrit jamais. Le plugin n'agit que si elle
   existe. **Un seul `cerf.qgz` par appareil** : pas de consigne de changer `cerf_id`.
 - **Registre** : dans les réglages de QField (`Settings`), clé `cerf/<cerf_id>`, valeur
-  JSON : liste de `{ zip, couche, chemin_vsi, style, ajoutee_le }`, **chemins relatifs** au
-  dossier des copies. Écrit après chaque couche chargée. Le registre s'accumule d'une forêt
+  JSON : liste de `{ zip, couche, chemin, style, ajoutee_le }` (vecteur : `chemin` = copie
+  réécrite ; GeoTIFF : `chemin_vsi`, lu dans le zip), **chemins relatifs** au dossier des
+  copies. Écrit après chaque couche chargée. Le registre s'accumule d'une forêt
   à l'autre ; l'agent retire ce qui ne sert plus.
 - **Copies** : dans **`<dossier du projet>/cerf-imports/`** (repli § 9 n° 1, appliqué par
   Pascal le 3 novembre 2026 : QField 4.3.7 refuse à un plugin de lire un fichier hors du
@@ -95,6 +100,22 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Zip absent à l'ouverture** (carte SD retirée, copie effacée) : l'entrée **reste** au
   registre ; un message unique dit « 2 couches n'ont pas pu être rechargées : zip absent » ;
   l'agent peut les retirer.
+- **Amendement du 4 novembre 2026 (ADR 0008, décision de Pascal)** :
+  - **Vecteurs réécrits** : à l'import, chaque couche vecteur est ouverte en `/vsizip/`,
+    contrôlée (§ 4), réécrite par `saveVectorLayerAs` en GeoPackage dans
+    `cerf-imports/<nom du zip>/` (une table par fichier), son `.qml` écrit à côté (§ 5), puis
+    chargée. **Pour l'agent** : un Shapefile (ou un GeoJSON) apparaît comme un GeoPackage, en
+    lecture seule ; les couleurs et étiquettes du manuel sont posées par ce `.qml`. Un
+    GeoPackage à plusieurs tables donne un fichier par table.
+  - **Copie du zip gardée**, avec les fichiers réécrits : la **place prise** est celle du zip
+    plus celle des couches (à peu près le double pour les vecteurs). Le zip réimporté remplace
+    le dossier `cerf-imports/<nom du zip>/` en entier. Les GeoTIFF restent lus dans le zip, style
+    par défaut.
+  - **Retrait** : efface aussi les `.gpkg`, `.qml` et annexes (`-wal`, `-shm`, `.aux.xml`) de
+    la couche, toujours et seulement dans `cerf-imports/` (ADR 0007 amendée).
+  - **Mise à jour du projet** : une nouvelle version de `cerf.qgz` se **copie à la main** sur
+    l'appareil (§ 3.5, décision du 4 novembre 2026) ; le dossier `cerf-imports/` et le registre
+    sont conservés, `cerf_id` reste le même.
 - **QField désinstallé ou appareil perdu** : registre et copies disparaissent. Accepté :
   les couches sont en lecture seule, le zip d'origine reste chez JFC.
 
@@ -180,6 +201,12 @@ peut en contenir plusieurs (Pascal, 4 novembre 2026).
 Ordre de priorité : `.qml` de même nom que la couche dans le zip → règle par nom → règle
 par champs → style par défaut de QGIS. Le `.qml` posé dans le zip est lu par le plugin
 lui-même (QGIS ne le trouve pas seul derrière `/vsizip/`).
+
+**Amendement du 4 novembre 2026 (ADR 0008)** : pour un vecteur, le plugin **écrit le `.qml`
+retenu** (celui du zip, contrôlé, sinon celui de la règle) **à côté du GeoPackage réécrit,
+avant le chargement** ; QGIS l'applique alors seul, et le garde à la réouverture. Un `.qml`
+écrit après le chargement serait ignoré. Une table, un `.qml` (`UG.qml` à côté de la table `UG`).
+Un GeoTIFF lu dans le zip n'a pas de style du manuel.
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.

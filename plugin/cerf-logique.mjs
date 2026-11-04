@@ -12,7 +12,25 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.3.1';
+export const VERSION = '0.3.2';
+
+// Mission 034 : jugement de validité du système de coordonnées d'une couche, d'après ce que QML voit.
+// QGIS (commit 3a92eb3, embarqué par QField 4.3.7, src/core/proj/qgscoordinatereferencesystem.h, l. 218-223) n'expose
+// à QML que mapUnits, isGeographic, authid et description (Q_PROPERTY) ; isValid() (l. 588) n'est ni Q_PROPERTY ni
+// Q_INVOKABLE : crs.isValid vaut undefined côté QML. Règle : valide si authid non vide, à défaut si description non vide.
+// `crs` est rendu tel quel (reprojection) ; epsg est tiré de authid (0 si pas de forme « EPSG:n »).
+export function decrireSysteme(crs) {
+  let authid = '';
+  let description = '';
+  try {
+    authid = String(crs.authid || '').trim();
+    description = String(crs.description || '').trim();
+  } catch (e) {
+    return { valide: false, epsg: 0, authid: '', crs: crs };
+  }
+  const m = /^EPSG:(\d+)$/.exec(authid);
+  return { valide: authid !== '' || description !== '', epsg: m ? Number(m[1]) : 0, authid: authid, crs: crs };
+}
 
 // Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
 // 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors

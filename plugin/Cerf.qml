@@ -161,7 +161,7 @@ Item {
   }
 
   // Lectures de la couche pour les contrôles ; chaque lecture est protégée (échec = valeur
-  // « mauvaise », donc refus). À vérifier : crs, featureCount(), extent.
+  // « mauvaise », donc refus). À vérifier : featureCount(), extent.
   function decrireCouche(couche) {
     let lisible = false;
     let systeme = { valide: false, epsg: 0 };
@@ -169,13 +169,9 @@ Item {
     let emprise = null;
     try { lisible = !!(couche && couche.isValid); } catch (e) { lisible = false; }
     try {
-      const crs = couche.crs;
-      // Validité = celle de QGIS ; un système valide sans code EPSG (.prj ESRI, IGNF) reste valide.
-      // `authid` ne sert qu'au diagnostic ; l'objet crs est passé tel quel à la reprojection.
-      const auth = String(crs.authid || "");
-      const m = /^EPSG:(\d+)$/.exec(auth);
-      const valide = typeof crs.isValid === "function" ? !!crs.isValid() : !!crs.isValid;
-      systeme = { valide: valide, epsg: m ? Number(m[1]) : 0, authid: auth, crs: crs };
+      // QML ne voit de crs que mapUnits, isGeographic, authid, description (mission 034) : la règle est dans
+      // Logique.decrireSysteme. L'objet crs est passé tel quel à la reprojection.
+      systeme = Logique.decrireSysteme(couche.crs);
     } catch (e) { /* système inconnu */ }
     try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
     try {

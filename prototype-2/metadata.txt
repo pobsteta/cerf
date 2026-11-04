@@ -1,7 +1,7 @@
 [general]
 name=Cerf, prototype n° 2
-description=Plugin jetable de la mission 023 : styles par .qml voisin ou layer_styles, reprojection depuis QML, métadonnées de couche, pour le protocole tests/recette/prototype-2.md. Sans valeur métier.
+description=Plugin jetable des missions 023, 027 et 030 : styles par .qml voisin ou layer_styles, reprojection depuis QML, métadonnées de couche, réécriture par saveVectorLayerAs, tables d'un GeoPackage du zip, pour le protocole tests/recette/prototype-2.md. Sans valeur métier.
 author=Pascal Obstétar
-version=2.3.0
+version=2.4.0
 icon=icon.svg
 homepage=https://github.com/pobsteta/cerf

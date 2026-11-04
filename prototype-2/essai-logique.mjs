@@ -11,7 +11,7 @@
 // (méthode 0) sont extraites : un décompresseur « inflate » n'est pas dans ce prototype
 // (décision de Pascal du 4 novembre 2026, question 1 du plan).
 
-export const VERSION = '2.3.0';
+export const VERSION = '2.4.0';
 
 // Noms des boutons, à reporter tels quels dans tests/recette/prototype-2.md.
 export const BOUTONS = {
@@ -35,12 +35,17 @@ export const BOUTONS = {
   B10: '10. GeoPackage à deux tables',
   B11: '11. Fichiers annexes',
   B12: '12. Tout enchaîner : coût fixe par couche',
+  // Prototype n° 4 (mission 030) : lister hors ligne les tables d'un GeoPackage du zip.
+  B0C: '0c. Préparer le zip des tables',
+  B13: '13. Tables des GeoPackage',
 };
 
 export const NOM_ZIP = 'essai-styles.zip';
 // Prototype n° 3 : le zip ENTIÈREMENT compressé (méthode 8), lu en /vsizip/ par GDAL, jamais extrait.
 export const NOM_ZIP_Z = 'essai-styles-z.zip';
 export const NOM_GPKG2 = 'essai-gpkg2.gpkg';
+// Prototype n° 4 : le zip ENTIÈREMENT compressé des GeoPackage dont on cherche les tables.
+export const NOM_ZIP_T = 'essai-tables-z.zip';
 
 // Le seul projet où le prototype agit (relecture 1 : il ne doit rien écrire ni recharger dans
 // un autre projet de l'appareil, en particulier le vrai projet de terrain).
@@ -629,4 +634,149 @@ export function bilanChrono(totaux) {
 // Résultat de la sonde d'un fichier : taille en octets, ou « absent ».
 export function ligneSonde(chemin, octets, existe) {
   return nomDeFichier(chemin) + ' : ' + ((octets > 0 || existe) ? (octets + ' octets') : 'absent');
+}
+
+// =========================================================================== prototype n° 4
+// Mission 030 : connaître, hors ligne et depuis QML, les tables vecteur d'un GeoPackage lu en
+// /vsizip/ dans un zip compressé. Aucune fonction de QField 4.3.7 ne rend la liste des sous-couches
+// (voir tests/recette/prototype-2.md, « Prototype n° 4 », pour les sources lues). Voies essayées :
+//   1. (principale) une couche OGR dont le filtre est une requête : « <gpkg>|subset=SELECT … FROM
+//      gpkg_contents ». Le fournisseur OGR de QGIS passe un filtre qui commence par « SELECT » à
+//      GDALDatasetExecuteSQL (requête SQLite du GeoPackage) : chaque ligne de gpkg_contents devient
+//      une entité, avec ses champs table_name et data_type.
+//   2. (secours, et contrôle du nombre) « <gpkg>|layerid=0 », « |layerid=1 »… jusqu'à la première
+//      couche invalide : dit combien de couches GDAL ouvre, sans leur nom.
+// Puis chaque table vecteur listée est ouverte par son nom (« |layername= ») et comptée ; et, si
+// rien ne s'ouvre en vecteur, un essai en raster dit si le GeoPackage est lisible.
+
+// Les GeoPackage de essai-tables-z.zip et ce que la lecture des sources de GDAL et de QGIS prédit.
+// genre : « liste » (tables vecteur nommées), « aucune » (GeoPackage lu, sans table vecteur),
+// « echec » (erreur visible, jamais « aucune table »).
+export const GPKG_TABLES = {
+  q3: { nom: 'essai-q3.gpkg', attendu: { genre: 'liste', tables: ['Parcelles_q3'] },
+    note: 'une table vecteur (Parcelles_q3) et une table d\'attributs (layer_styles), qui n\'est pas vecteur' },
+  deux: { nom: 'essai-gpkg2.gpkg', attendu: { genre: 'liste', tables: ['Parcelles', 'Zones'] }, note: 'deux tables vecteur' },
+  raster: { nom: 'raster-seul.gpkg', attendu: { genre: 'aucune', tables: [] }, note: 'une table de tuiles, aucune table vecteur' },
+  vide: { nom: 'vide.gpkg', attendu: { genre: 'echec', tables: [] },
+    note: 'aucun contenu : GDAL refuse d\'ouvrir en lecture seule un GeoPackage sans contenu vecteur, on ne peut pas le distinguer d\'un fichier illisible' },
+  tronqueDebut: { nom: 'tronque-debut.gpkg', attendu: { genre: 'echec', tables: [] }, note: 'essai-gpkg2.gpkg coupé après sa première page : gpkg_contents perdu' },
+  tronqueFin: { nom: 'tronque-fin.gpkg', attendu: { genre: 'echec', tables: [] },
+    note: 'essai-gpkg2.gpkg privé de sa seule dernière page (données de Zones) : l\'en-tête annonce plus de pages que le fichier n\'en a, SQLite refuse dès l\'ouverture' },
+};
+export const ORDRE_GPKG_TABLES = ['q3', 'deux', 'raster', 'vide', 'tronqueDebut', 'tronqueFin'];
+
+// Requête de la voie 1 : toutes les lignes de gpkg_contents (le tri par nom rend la liste stable).
+export const SQL_TABLES = 'SELECT table_name, data_type FROM gpkg_contents ORDER BY table_name';
+// data_type d'une table vecteur dans gpkg_contents (OGC 12-128, « features »).
+export const TYPE_VECTEUR = 'features';
+// Au plus tant de layerid sondés (voie 2).
+export const MAX_SONDES = 20;
+
+export function uriTablesSql(cheminGpkg) {
+  return cheminGpkg + '|subset=' + SQL_TABLES;
+}
+
+export function uriLayerId(cheminGpkg, n) {
+  return cheminGpkg + '|layerid=' + n;
+}
+
+// Garde du nom d'une table avant de le mettre dans « |layername= » : lettres, chiffres, « _ », « - »,
+// espace, accents ; jamais « | » (séparateur des options de la source), ni retour à la ligne.
+export function nomDeTableSur(nom) {
+  return typeof nom === 'string' && nom !== '' && nom.length <= 200 && !/[|\r\n\u0000]/.test(nom);
+}
+
+// Entités d'une table relue : compteDirect = featureCount() (null s'il n'a pas pu être appelé) ;
+// compteIterateur = entités rendues par l'itérateur (-1 s'il a levé une erreur). L'itérateur de
+// QGIS s'arrête sans rien dire sur une page illisible : 0 entité n'est donc jamais une preuve de
+// table vide. Rend { ok, texte }.
+export function jugerTableRelue(t) {
+  if (!t || t.valide !== true) return { ok: false, texte: 'ne s\'ouvre pas (isValid faux)' };
+  const d = t.compteDirect; const i = t.compteIterateur;
+  const texteD = d === null || d === undefined ? 'featureCount() non appelable' : 'featureCount() = ' + d;
+  const base = texteD + ', itérateur : ' + (i < 0 ? 'ERREUR' : i + ' entité(s)');
+  if (typeof i !== 'number' || i < 0) return { ok: false, texte: base + ' : lecture en échec' };
+  if (typeof d === 'number' && d < 0) return { ok: false, texte: base + ' : nombre d\'entités illisible' };
+  if (typeof d === 'number' && d !== i) return { ok: false, texte: base + ' : les deux comptes diffèrent' };
+  if (i === 0) return { ok: false, texte: base + ' : 0 entité lue (table vide ou illisible : indiscernable)' };
+  return { ok: true, texte: base };
+}
+
+function joindre(liste) {
+  return liste.length === 0 ? '(aucune)' : liste.join(', ');
+}
+
+// Verdict d'un GeoPackage. m = {
+//   sql: { valide, lu, erreur, lignes: [{ table, type }] }   (voie 1)
+//   relues: { <table>: { valide, compteDirect, compteIterateur } }   (chaque table vecteur rouverte)
+//   sondes: { nombre }   (voie 2 : couches valides par layerid)
+//   raster: { valide }   (true, false, ou null si non essayé)
+// }. Rend { genre, tables, texte, alertes } ; texte commence par « ÉCHEC » pour toute erreur, et
+// une erreur ne rend JAMAIS le genre « aucune ».
+export function verdictTables(m) {
+  const sql = m.sql || {};
+  const sondes = m.sondes && typeof m.sondes.nombre === 'number' ? m.sondes.nombre : 0;
+  const alertes = [];
+  if (sql.valide === true && sql.lu === true) {
+    const lignes = sql.lignes || [];
+    const vect = [];
+    const autres = [];
+    for (let i = 0; i < lignes.length; i++) {
+      if (lignes[i].type === TYPE_VECTEUR) vect.push(lignes[i].table); else autres.push(lignes[i].table + ' (' + lignes[i].type + ')');
+    }
+    const nonVecteur = lignes.length - vect.length;
+    const attributs = lignes.filter(function (l) { return l.type === 'attributes'; }).length;
+    if (sondes !== vect.length + attributs) {
+      alertes.push('ATTENTION : la voie 2 ouvre ' + sondes + ' couche(s) par layerid, gpkg_contents en nomme ' + (vect.length + attributs) + ' (vecteur et attributs)');
+    }
+    if (lignes.length === 0) {
+      return { genre: 'echec', tables: [], alertes: alertes,
+        texte: 'ÉCHEC : la requête a ouvert le GeoPackage mais gpkg_contents est lu vide (incohérent : GDAL y a ouvert une couche)' };
+    }
+    if (vect.length === 0) {
+      return { genre: 'aucune', tables: [], alertes: alertes,
+        texte: 'Aucune table vecteur : gpkg_contents lu, ' + lignes.length + ' ligne(s), aucune de type « features » : ' + joindre(autres) };
+    }
+    const malLues = [];
+    for (let i = 0; i < vect.length; i++) {
+      const r = m.relues ? m.relues[vect[i]] : null;
+      if (!jugerTableRelue(r).ok) malLues.push(vect[i]);
+    }
+    if (malLues.length > 0) {
+      return { genre: 'echec', tables: vect, alertes: alertes,
+        texte: 'ÉCHEC : gpkg_contents nomme ' + vect.length + ' table(s) vecteur (' + joindre(vect) + '), mais illisible(s) : ' + joindre(malLues) };
+    }
+    return { genre: 'liste', tables: vect, alertes: alertes,
+      texte: 'Tables vecteur (' + vect.length + ') : ' + joindre(vect) + (nonVecteur > 0 ? ' ; autres tables, non vecteur : ' + joindre(autres) : '') };
+  }
+  if (sql.valide === true) {
+    return { genre: 'echec', tables: [], alertes: alertes,
+      texte: 'ÉCHEC : la requête a ouvert, mais la lecture de ses lignes a échoué' + (sql.erreur ? ' : ' + sql.erreur : '') };
+  }
+  if (sondes > 0) {
+    return { genre: 'echec', tables: [], alertes: alertes,
+      texte: 'ÉCHEC de la voie 1 : la requête sur gpkg_contents ne charge pas, alors que GDAL ouvre ' + sondes + ' couche(s) par layerid' };
+  }
+  if (m.raster && m.raster.valide === true) {
+    return { genre: 'aucune', tables: [], alertes: alertes,
+      texte: 'Aucune table vecteur : rien ne s\'ouvre en vecteur, mais le GeoPackage est lu en raster (GeoPackage lisible, raster seul)' };
+  }
+  return { genre: 'echec', tables: [], alertes: alertes,
+    texte: 'ÉCHEC : GeoPackage illisible, ou sans aucun contenu : GDAL ne l\'ouvre ni en vecteur ni en raster. Ce n\'est pas « aucune table ».' };
+}
+
+// Le verdict est-il celui que prédisait la lecture des sources ? (genre, et liste exacte s'il y en a une)
+export function conformeAttendu(verdict, attendu) {
+  if (!verdict || !attendu || verdict.genre !== attendu.genre) return false;
+  if (attendu.genre !== 'liste') return true;
+  if (verdict.tables.length !== attendu.tables.length) return false;
+  const a = verdict.tables.slice().sort(); const b = attendu.tables.slice().sort();
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+export function texteAttendu(attendu) {
+  if (attendu.genre === 'liste') return 'Tables vecteur (' + attendu.tables.length + ') : ' + attendu.tables.join(', ');
+  if (attendu.genre === 'aucune') return 'Aucune table vecteur';
+  return 'ÉCHEC visible';
 }

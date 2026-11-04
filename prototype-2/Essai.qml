@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, prototype n° 2 (mission 023, puis 027) : l'écran aux gros boutons (gants, soleil), un bouton
+// Cerf, prototype n° 2 (mission 023, puis 027 et 030) : l'écran aux gros boutons (gants, soleil), un bouton
 // par question du protocole tests/recette/prototype-2.md. Écrit pour Cerf (ADR 0006).
 // La logique pure est dans essai-logique.mjs (testée sous Node) ; ce fichier n'appelle que
 // l'API de QField lue dans son code (prototype-2/PLAN.md § 3). Il ne prouve rien par
@@ -32,6 +32,8 @@ Item {
   property int compteurQ3: 0           // dernier N de q3-<N> utilisé
   property var dernierQ3: null         // { dossier, bases, couches } du dernier essai écrit
   property var totaux12: []            // durées totales du bouton 12 (ms)
+  // Prototype n° 4 (mission 030).
+  property string copieT: ""           // chemin du zip des tables copié dans cerf-imports
 
   component GrosBouton: Button {
     Layout.fillWidth: true
@@ -77,12 +79,13 @@ Item {
     } catch (e) {
       imports = "ERREUR : " + e.message;
     }
-    return "Cerf, prototype n° 2 (et n° 3), version " + Zip.VERSION + "\n"
+    return "Cerf, prototype n° 2 (et n° 3, n° 4), version " + Zip.VERSION + "\n"
       + "Projet : " + (nomProjet() || "aucun projet ouvert") + "\n"
       + "Dossier du projet : " + (dossierProjet() || "inconnu") + "\n"
       + "Dossier cerf-imports : " + imports + "\n"
       + "Dernier zip copié : " + (copie || "aucun") + (copie ? (existe(copie) ? " (présent)" : " (ABSENT)") : "") + "\n"
-      + "Zip compressé copié : " + (copieZ || "aucun") + (copieZ ? (existe(copieZ) ? " (présent)" : " (ABSENT)") : "");
+      + "Zip compressé copié : " + (copieZ || "aucun") + (copieZ ? (existe(copieZ) ? " (présent)" : " (ABSENT)") : "") + "\n"
+      + "Zip des tables copié : " + (copieT || "aucun") + (copieT ? (existe(copieT) ? " (présent)" : " (ABSENT)") : "");
   }
 
   function afficher(titre, lignes) {
@@ -132,6 +135,10 @@ Item {
     preparerZipNomme(Zip.BOUTONS.B0B, Zip.NOM_ZIP_Z);
   }
 
+  function preparerZipTables() {
+    preparerZipNomme(Zip.BOUTONS.B0C, Zip.NOM_ZIP_T);
+  }
+
   function preparerZipNomme(titre, nomZip) {
     if (!projetOk(titre)) return;
     let dossier = "";
@@ -155,6 +162,7 @@ Item {
 
   function zipRecu(recu) {
     if (zipEnCours === Zip.NOM_ZIP_Z) { zipCompresseRecu(recu); return; }
+    if (zipEnCours === Zip.NOM_ZIP_T) { zipTablesRecu(recu); return; }
     const titre = Zip.BOUTONS.B0;
     if (!recu) {
       afficher(titre, ["Copie annulée ou échouée : aucun chemin reçu de QField."]);
@@ -176,10 +184,26 @@ Item {
       return;
     }
     copieZ = Zip.cheminRecu(prefixeEnCours, String(recu));
-    const lignes = ["Chemin reçu de QField : " + String(recu), "Copie : " + copieZ];
-    if (Zip.nomDeFichier(copieZ) !== Zip.NOM_ZIP_Z) lignes.push("ATTENTION : le fichier choisi ne s'appelle pas « " + Zip.NOM_ZIP_Z + " ».");
+    afficher(titre, decrireZipCompresse(String(recu), copieZ, Zip.NOM_ZIP_Z));
+  }
+
+  // Bouton 0c (prototype n° 4) : même chose pour le zip des tables, lui aussi jamais extrait.
+  function zipTablesRecu(recu) {
+    const titre = Zip.BOUTONS.B0C;
+    if (!recu) {
+      afficher(titre, ["ÉCHEC : copie annulée ou échouée, aucun chemin reçu de QField."]);
+      return;
+    }
+    copieT = Zip.cheminRecu(prefixeEnCours, String(recu));
+    afficher(titre, decrireZipCompresse(String(recu), copieT, Zip.NOM_ZIP_T));
+  }
+
+  // Lignes du bloc des boutons 0b et 0c : chemin, répertoire central lu par le plugin.
+  function decrireZipCompresse(recu, chemin, nomAttendu) {
+    const lignes = ["Chemin reçu de QField : " + recu, "Copie : " + chemin];
+    if (Zip.nomDeFichier(chemin) !== nomAttendu) lignes.push("ATTENTION : le fichier choisi ne s'appelle pas « " + nomAttendu + " ».");
     try {
-      const octets = Zip.octetsDe(FileUtils.readFileContent(copieZ));
+      const octets = Zip.octetsDe(FileUtils.readFileContent(chemin));
       if (octets.length === 0) {
         lignes.unshift("ÉCHEC : 0 octet rendu par QField (copie absente ou hors du projet ?).");
       } else {
@@ -194,7 +218,7 @@ Item {
     } catch (e) {
       lignes.unshift("ÉCHEC : lecture du zip : " + e.message);
     }
-    afficher(titre, lignes);
+    return lignes;
   }
 
   // Lit le zip copié et son répertoire central. Rend vrai si prêt.
@@ -1074,6 +1098,213 @@ Item {
     afficher(titre, lignes);
   }
 
+  // -------------------------------------------------------------- prototype n° 4 (mission 030)
+
+  // Garde du bouton 13 : projet d'essai ouvert, zip des tables copié.
+  function pretTables(titre, lignes) {
+    if (!projetOk(titre)) return false;
+    if (copieT === "") {
+      let defaut = "";
+      try {
+        defaut = Zip.dossierImports(dossierProjet()) + Zip.NOM_ZIP_T;
+      } catch (e) {
+        lignes.push("ÉCHEC : " + e.message);
+        return false;
+      }
+      if (existe(defaut)) copieT = defaut;
+    }
+    if (copieT === "" || !existe(copieT)) {
+      lignes.push("ÉCHEC, essai raté : le zip des tables n'est pas là. Toucher d'abord « " + Zip.BOUTONS.B0C + " ».");
+      return false;
+    }
+    return true;
+  }
+
+  // Les couches de sonde ne vont jamais sur la carte : on les détruit dès qu'elles sont lues.
+  function liberer(couche) {
+    try {
+      if (couche) couche.deleteLater();
+    } catch (e) {
+      // rien : une couche non détruite ne fausse pas la mesure
+    }
+  }
+
+  // Voie 1 : une couche dont le filtre est une requête SQL sur gpkg_contents. Rend
+  // { valide, lu, erreur, lignes: [{ table, type }], ms }.
+  function voieSql(chemin, lignes) {
+    const r = { valide: false, lu: false, erreur: "", lignes: [], ms: 0 };
+    const t = Date.now();
+    let couche = null;
+    try {
+      couche = LayerUtils.loadVectorLayer(Zip.uriTablesSql(chemin), "cerf_tables");
+    } catch (e) {
+      r.erreur = "loadVectorLayer : ERREUR " + e;
+    }
+    if (!couche && r.erreur === "") r.erreur = "loadVectorLayer a rendu null";
+    if (couche) {
+      try {
+        r.valide = couche.isValid === true;
+      } catch (e) {
+        r.erreur = "isValid : ERREUR " + e;
+      }
+    }
+    if (r.valide) {
+      try {
+        const it = LayerUtils.createFeatureIterator(couche);
+        while (it.hasNext()) {
+          const f = it.next();
+          const nom = f.attribute("table_name");
+          const type = f.attribute("data_type");
+          if (nom === undefined || nom === null) throw new Error("champ table_name absent de l'entité rendue");
+          r.lignes.push({ table: String(nom), type: String(type) });
+        }
+        it.close();
+        r.lu = true;
+      } catch (e) {
+        r.erreur = "lecture des lignes : ERREUR " + e;
+      }
+    }
+    r.ms = Date.now() - t;
+    liberer(couche);
+    lignes.push("Voie 1, requête « " + Zip.SQL_TABLES + " » : isValid " + r.valide
+      + (r.lu ? ", " + r.lignes.length + " ligne(s) lue(s)" : "") + (r.erreur !== "" ? ", " + r.erreur : "")
+      + " ; durée " + Zip.texteDuree(r.ms));
+    for (let i = 0; i < r.lignes.length; i++) lignes.push("  gpkg_contents : " + r.lignes[i].table + " (" + r.lignes[i].type + ")");
+    return r;
+  }
+
+  // Contrôle : une table vecteur listée, rouverte par son nom et comptée.
+  function relireTable(chemin, table, lignes) {
+    const r = { valide: false, compteDirect: null, compteIterateur: -1 };
+    if (!Zip.nomDeTableSur(table)) {
+      lignes.push("  " + table + " : nom refusé (caractère interdit dans une source), non rouverte");
+      return r;
+    }
+    let couche = null;
+    try {
+      couche = LayerUtils.loadVectorLayer(Zip.uriGpkg(chemin, table), "cerf_" + table);
+      r.valide = couche ? couche.isValid === true : false;
+    } catch (e) {
+      lignes.push("  " + table + " : loadVectorLayer : ERREUR " + e);
+    }
+    if (r.valide) {
+      try {
+        const d = Number(couche.featureCount());
+        r.compteDirect = isFinite(d) ? d : null;
+      } catch (e) {
+        r.compteDirect = null;
+      }
+      try {
+        r.compteIterateur = compterObjets(couche);
+      } catch (e) {
+        r.compteIterateur = -1;
+      }
+    }
+    liberer(couche);
+    lignes.push("  Relue par « |layername=" + table + " » : " + Zip.jugerTableRelue(r).texte);
+    return r;
+  }
+
+  // Voie 2 (secours) : layerid 0, 1, 2… jusqu'à la première couche invalide. Rend { nombre, ms }.
+  function voieLayerId(chemin, lignes) {
+    const t = Date.now();
+    let n = 0;
+    const details = [];
+    for (let i = 0; i < Zip.MAX_SONDES; i++) {
+      let couche = null;
+      let ok = false;
+      try {
+        couche = LayerUtils.loadVectorLayer(Zip.uriLayerId(chemin, i), "cerf_sonde_" + i);
+        ok = couche ? couche.isValid === true : false;
+      } catch (e) {
+        details.push("  layerid=" + i + " : ERREUR " + e);
+      }
+      if (ok) {
+        n++;
+        let d = "  layerid=" + i + " : valide";
+        try {
+          d += ", crs " + String(couche.crs.authid || "vide");
+        } catch (e) {
+          d += ", crs illisible";
+        }
+        try {
+          d += ", géométrie (code) " + couche.geometryType();
+        } catch (e) {
+          d += ", géométrie illisible";
+        }
+        try {
+          d += ", champs : " + couche.fields.names.join(" ; ");
+        } catch (e) {
+          d += ", champs illisibles";
+        }
+        details.push(d);
+      }
+      liberer(couche);
+      if (!ok) break;
+    }
+    const ms = Date.now() - t;
+    lignes.push("Voie 2, sondes |layerid=0, 1… : " + n + " couche(s) valide(s), sans leur nom ; durée " + Zip.texteDuree(ms));
+    for (let i = 0; i < details.length; i++) lignes.push(details[i]);
+    return { nombre: n, ms: ms };
+  }
+
+  // Un GeoPackage du zip : les deux voies, la relecture des tables, le raster si rien en vecteur.
+  // Rend { verdict, conforme, msVoie1, msTotal }.
+  function tablesDUnGpkg(cle, lignes) {
+    const g = Zip.GPKG_TABLES[cle];
+    const chemin = Zip.cheminVsizip(copieT, g.nom);
+    const debut = Date.now();
+    lignes.push("=== " + g.nom + " : " + g.note);
+    lignes.push("Attendu : " + Zip.texteAttendu(g.attendu));
+    lignes.push("Source : " + chemin);
+    const sql = voieSql(chemin, lignes);
+    const relues = {};
+    if (sql.valide && sql.lu) {
+      for (let i = 0; i < sql.lignes.length; i++) {
+        if (sql.lignes[i].type === Zip.TYPE_VECTEUR) relues[sql.lignes[i].table] = relireTable(chemin, sql.lignes[i].table, lignes);
+      }
+    }
+    const sondes = voieLayerId(chemin, lignes);
+    let raster = null;
+    if (!sql.valide && sondes.nombre === 0) {
+      let couche = null;
+      try {
+        couche = LayerUtils.loadRasterLayer(chemin, "cerf_raster");
+        raster = couche ? couche.isValid === true : false;
+      } catch (e) {
+        raster = false;
+        lignes.push("loadRasterLayer : ERREUR " + e);
+      }
+      liberer(couche);
+      lignes.push("Essai en raster (loadRasterLayer) : isValid " + raster);
+    }
+    const v = Zip.verdictTables({ sql: sql, relues: relues, sondes: sondes, raster: { valide: raster } });
+    for (let i = 0; i < v.alertes.length; i++) lignes.push(v.alertes[i]);
+    const conforme = Zip.conformeAttendu(v, g.attendu);
+    lignes.push("Verdict : " + v.texte);
+    lignes.push("Conforme à l'attendu : " + (conforme ? "oui" : "NON"));
+    return { verdict: v, conforme: conforme, msVoie1: sql.ms, msTotal: Date.now() - debut };
+  }
+
+  function tablesDesGpkg() {
+    const titre = Zip.BOUTONS.B13;
+    const lignes = [];
+    if (!pretTables(titre, lignes)) { afficher(titre, lignes); return; }
+    const resume = ["Voie 1 : requête sur gpkg_contents ; voie 2 (secours) : sondes layerid ; puis relecture de chaque table.",
+      "Résumé, un GeoPackage par ligne (détail plus bas) :"];
+    const details = [];
+    let conformes = 0;
+    for (let i = 0; i < Zip.ORDRE_GPKG_TABLES.length; i++) {
+      const cle = Zip.ORDRE_GPKG_TABLES[i];
+      const r = tablesDUnGpkg(cle, details);
+      if (r.conforme) conformes++;
+      resume.push((r.conforme ? "" : "ÉCHEC, non conforme à l'attendu : ") + Zip.GPKG_TABLES[cle].nom + " : " + r.verdict.texte
+        + " (voie 1 : " + Zip.texteDuree(r.msVoie1) + " ; tout : " + Zip.texteDuree(r.msTotal) + ")");
+    }
+    resume.push("Conformes à l'attendu : " + conformes + " sur " + Zip.ORDRE_GPKG_TABLES.length);
+    afficher(titre, resume.concat(["--- Détail"], details));
+  }
+
   // -------------------------------------------------------------- écran
 
   Connections {
@@ -1144,6 +1375,8 @@ Item {
       GrosBouton { text: Zip.BOUTONS.B10; onClicked: essai.geopackageDeuxTables() }
       GrosBouton { text: Zip.BOUTONS.B11; onClicked: essai.fichiersAnnexes() }
       GrosBouton { text: Zip.BOUTONS.B12; onClicked: essai.toutEnchainer() }
+      GrosBouton { text: Zip.BOUTONS.B0C; onClicked: essai.preparerZipTables() }
+      GrosBouton { text: Zip.BOUTONS.B13; onClicked: essai.tablesDesGpkg() }
 
       Item { Layout.preferredHeight: 48 }
     }

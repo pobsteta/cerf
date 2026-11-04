@@ -1,5 +1,6 @@
-# Publie le prototype n° 2 (mission 023, puis le prototype n° 3, mission 027, même préversion et
-# même plugin : zip d'essai compressé essai-styles-z.zip en plus) en préversion GitHub « prototype-2 » à chaque push
+# Publie le prototype n° 2 (mission 023, puis le prototype n° 3, mission 027, et le n° 4, mission 030,
+# même préversion et même plugin : zips d'essai compressés essai-styles-z.zip et essai-tables-z.zip
+# en plus) en préversion GitHub « prototype-2 » à chaque push
 # sur la branche du prototype (l'étiquette est créée par la release ; le proxy de la session
 # refuse le push d'étiquettes). Les fichiers sont fabriqués ici par prototype-2/empaqueter.mjs
 # (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans les notes.
@@ -101,6 +102,28 @@ jobs:
             echo 'ogrinfo en /vsizip/ du zip compressé : au moins une lecture a échoué (non bloquant, c est la question de l essai)' > vsizip.txt
           fi
           rm -rf ctlz
+          # Prototype n° 4 : essai-tables-z.zip décompressé ici ; les GeoPackage lisibles doivent l'être
+          # (ce contrôle-là bloque) ; la requête sur gpkg_contents EN /vsizip/ (voie 1 du bouton 13) et
+          # le refus attendu du vide et des tronqués ne bloquent pas : ils sont dits dans les notes.
+          mkdir ctlt && cd ctlt && unzip -q ../dist/essai-tables-z.zip
+          ogrinfo -ro -sql 'SELECT table_name, data_type FROM gpkg_contents' essai-gpkg2.gpkg | tee t2.txt
+          grep -q 'table_name (String) = Parcelles' t2.txt
+          grep -q 'table_name (String) = Zones' t2.txt
+          ogrinfo -ro -sql 'SELECT table_name, data_type FROM gpkg_contents' essai-q3.gpkg | tee tq3.txt
+          grep -q 'table_name (String) = Parcelles_q3' tq3.txt
+          gdalinfo raster-seul.gpkg | tee tr.txt
+          grep -q 'Size is 256, 256' tr.txt
+          cd ..
+          rm -rf ctlt
+          Z=/vsizip/dist/essai-tables-z.zip
+          if ogrinfo -ro -sql 'SELECT table_name FROM gpkg_contents' $Z/essai-gpkg2.gpkg | grep -q 'Zones' \
+            && ! ogrinfo -ro $Z/vide.gpkg >/dev/null 2>&1 \
+            && ! ogrinfo -ro $Z/tronque-debut.gpkg >/dev/null 2>&1 \
+            && ! ogrinfo -ro $Z/tronque-fin.gpkg >/dev/null 2>&1; then
+            echo 'ogrinfo en /vsizip/ de essai-tables-z.zip : requête gpkg_contents lue ; vide et tronqués refusés, comme prévu' > tables.txt
+          else
+            echo 'ogrinfo en /vsizip/ de essai-tables-z.zip : un résultat diffère de la prévision (non bloquant, voir le journal du job)' > tables.txt
+          fi
           echo 'ogrinfo : lecture des fichiers d essai par GDAL : ok' > ogrinfo.txt
       - name: Release
         env:
@@ -113,10 +136,11 @@ jobs:
             echo "Commit empaqueté : $GITHUB_SHA (l'étiquette prototype-2 peut rester sur un commit plus ancien : upload --clobber ne la déplace pas ; c'est ce sha qui fait foi)."
             echo "Protocole d'essai : tests/recette/prototype-2.md. Données fictives, sans valeur métier."
             if [ -f vsizip.txt ]; then cat vsizip.txt; fi
+            if [ -f tables.txt ]; then cat tables.txt; fi
             if [ -f ogrinfo.txt ]; then cat ogrinfo.txt; else echo "ogrinfo : non exécuté (gdal-bin non installé en 90 s) ; contrôle par QGIS sur le poste, voir le protocole."; fi
             echo
             echo '```'
-            (cd dist && sha256sum plugin-cerf-prototype-2.zip projet-cerf-essai-2.zip essai-styles.zip essai-styles-z.zip essai-q3.gpkg)
+            (cd dist && sha256sum plugin-cerf-prototype-2.zip projet-cerf-essai-2.zip essai-styles.zip essai-styles-z.zip essai-q3.gpkg essai-tables-z.zip)
             echo '```'
             echo
             node outils/flashcodes.mjs notes prototype-2 essai prototype-2
@@ -124,9 +148,9 @@ jobs:
           # GitHub répond parfois HTTP 500 sur un envoi de fichier (vu le 4 novembre 2026) : trois essais.
           avec_reprise() { for essai in 1 2 3; do "$@" && return 0; echo "essai $essai échoué : $*"; sleep 15; done; return 1; }
           if gh release view prototype-2 >/dev/null 2>&1; then
-            avec_reprise gh release upload prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* --clobber
+            avec_reprise gh release upload prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/essai-tables-z.zip dist/flashcodes/* --clobber
             gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
           else
-            gh release create prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/flashcodes/* \
+            gh release create prototype-2 dist/plugin-cerf-prototype-2.zip dist/projet-cerf-essai-2.zip dist/essai-styles.zip dist/essai-styles-z.zip dist/essai-q3.gpkg dist/essai-tables-z.zip dist/flashcodes/* \
               --target "$GITHUB_SHA" --title "Prototype n° 2" --notes-file notes.md --prerelease --latest=false
           fi

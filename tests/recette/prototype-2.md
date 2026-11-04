@@ -583,6 +583,121 @@ c'est cette réponse qui décide de l'ADR 0008.
 
 **Vu autrement :**
 
+## Prototype n° 4 (mission 030) : lister hors ligne les tables d'un GeoPackage du zip
+
+> Rédigé par le `dev` le 4 novembre 2026 (fiche `pilotage/missions/030-prototype-4-tables.md`).
+> **Statut : proposé, pas encore suivi.** Les noms de boutons sont ceux de `BOUTONS` dans
+> `prototype-2/essai-logique.mjs` (même test de concordance que plus haut).
+
+**But.** Dire, sur le Samsung et **hors réseau**, comment le plugin connaîtra les tables vecteur
+d'un GeoPackage lu en `/vsizip/` dans un zip **compressé**, sans les écrire en dur (le prototype
+n° 3 les écrivait en dur), et si une erreur reste une erreur (jamais « aucune table »). La
+réponse dit à la mission 024 comment le plugin obtiendra ces tables.
+
+**Ce que disent les sources (QField 4.3.7, QGIS 3a92eb3 qu'il embarque).** Aucune fonction offerte
+à un plugin ne rend la liste des sous-couches : ni `LayerUtils`, ni `ProjectUtils`, ni `FileUtils`
+(`qflayerutils.h`, `qfprojectutils.h`, `qffileutils.h`) ; `subLayers()` et `querySublayers()` de
+QGIS ne sont pas appelables depuis QML. Le bouton 13 essaie donc :
+
+- **voie 1** (principale) : une couche dont le **filtre est une requête**,
+  `…/x.gpkg|subset=SELECT table_name, data_type FROM gpkg_contents ORDER BY table_name` ; QGIS
+  passe un filtre qui commence par `SELECT` à GDAL, qui l'exécute sur le GeoPackage ; chaque ligne
+  de `gpkg_contents` devient une entité ; une table vecteur y a le type `features` ;
+- **voie 2** (secours, et contrôle du nombre) : `…/x.gpkg|layerid=0`, `|layerid=1`… jusqu'à la
+  première couche invalide : dit **combien** de couches GDAL ouvre, **sans leur nom** ;
+- puis chaque table vecteur listée est **rouverte par son nom** (`|layername=`) et comptée ; et si
+  rien ne s'ouvre en vecteur, un **essai en raster** dit si le fichier est un GeoPackage lisible.
+
+Le bouton 13 **n'écrit rien** et n'ajoute rien à la carte : on peut le rejouer, la réponse est
+celle du premier appui. Même lecture que le reste du protocole (« Conforme ☐ », « Noté ☐ »,
+réponses dans le tableau final). **« Essai raté » n'est pas « non »** : il vaut seulement quand le
+zip des tables n'est pas là (le bloc dit « ÉCHEC, essai raté : le zip des tables n'est pas là ») ou
+que le bouton 0c a échoué.
+
+### Avant de commencer (prototype n° 4)
+
+1. **Avec le réseau, avant le mode avion** : télécharger
+   `essai-tables-z.zip`
+   (https://github.com/pobsteta/cerf/releases/download/prototype-2/essai-tables-z.zip) dans
+   « Téléchargements », sans le décompresser ni le renommer (sha256 dans les notes de la
+   préversion). Il a **6 entrées, toutes compressées** (méthode 8) : `essai-q3.gpkg` (une table
+   vecteur `Parcelles_q3` et la table d'attributs `layer_styles`), `essai-gpkg2.gpkg` (tables
+   vecteur `Parcelles` et `Zones`), `raster-seul.gpkg` (une table de tuiles, aucune table
+   vecteur), `vide.gpkg` (aucun contenu), `tronque-debut.gpkg` et `tronque-fin.gpkg` (deux copies
+   coupées de `essai-gpkg2.gpkg`).
+2. **Mettre à jour le plugin** : `plugin-cerf-prototype-2.zip` de la même préversion (version
+   **2.4.0** à l'écran, en-tête ; sinon le plugin n'est pas à jour : le dire et s'arrêter). Le
+   projet `cerf-essai-2` est inchangé.
+3. Mode avion, Wi-Fi coupé, projet `cerf-essai-2` ouvert, fenêtre du plugin ouverte, **dérouler
+   jusqu'aux boutons 0c et 13** (sous le bouton « 12. Tout enchaîner : coût fixe par couche »).
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 0c | Toucher « 0c. Préparer le zip des tables », accepter la permission de stockage si Android la demande, choisir `essai-tables-z.zip` dans Téléchargements (en cas d'échec : « essai raté » à P4-1, P4-2, P4-3, capture, s'arrêter) | l'en-tête dit « Zip des tables copié : …/cerf-imports/essai-tables-z.zip (présent) » ; le bloc liste **6 entrées**, « stockées : 0, compressées : 6 » ; « Le zip n'est pas extrait » | ☐ |
+
+Capture : `p4-q0-ecran.png`.
+
+Puis toucher **une fois** « 13. Tables des GeoPackage » et **redescendre au bas de l'écran**. Le
+bloc commence par un **résumé**, une ligne par GeoPackage, puis la ligne « Conformes à l'attendu :
+N sur 6 », puis « --- Détail » (pour chaque GeoPackage : « Attendu », la voie 1 et les lignes de
+`gpkg_contents`, la relecture de chaque table, la voie 2, l'essai en raster s'il a lieu, « Verdict »,
+« Conforme à l'attendu »). Le fond du bloc devient **rouge pâle** si une ligne du résumé commence
+par « ÉCHEC, non conforme à l'attendu » : le téléphone ne fait pas ce que les sources prédisent.
+Captures : `p4-resume.png` (le résumé entier), puis le détail en défilant : `p4-detail-1.png`,
+`p4-detail-2.png`… (autant qu'il en faut pour que chaque « === » soit lisible).
+
+### Question P4-1 : la liste exacte des tables vecteur, et en combien de temps
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Lire la ligne du résumé de `essai-q3.gpkg` | « essai-q3.gpkg : Tables vecteur (1) : Parcelles_q3 ; autres tables, non vecteur : layer_styles (attributes) » | ☐ |
+| 2 | Lire la ligne du résumé de `essai-gpkg2.gpkg` | « essai-gpkg2.gpkg : Tables vecteur (2) : Parcelles, Zones » | ☐ |
+| 3 | Dans le détail de ces deux GeoPackage | « Voie 1 … isValid true » ; une ligne « Relue par « \|layername=… » » par table, avec « itérateur : 2 entité(s) » ; « Voie 2 … 2 couche(s) valide(s) » ; **aucune ligne « ATTENTION »** ; « Conforme à l'attendu : oui » | ☐ |
+
+Relevé, sans résultat attendu :
+
+| À relever | Valeur à écrire | Noté ☐ |
+|---|---|---|
+| Durée de la voie 1, `essai-q3.gpkg` (« voie 1 : … » du résumé) | | ☐ |
+| Durée de la voie 1, `essai-gpkg2.gpkg` | | ☐ |
+| Durée « tout » de ces deux GeoPackage | | ☐ |
+| Ce que dit « featureCount() » dans les lignes « Relue par » (un nombre, ou « non appelable ») | | ☐ |
+
+**Réponse P4-1** : **oui, par la voie 1** si les cases 1, 2 et 3 sont cochées ; **non** sinon,
+en disant ce qu'on lit : si le résumé dit « ÉCHEC de la voie 1 : la requête sur gpkg_contents ne
+charge pas, alors que GDAL ouvre 2 couche(s) par layerid », la voie 1 ne marche pas sur
+l'appareil et **seule la voie 2** répond (le nombre de couches, sans les noms) : l'écrire tel
+quel ; **essai raté** si le bouton 0c a échoué. Plus les durées relevées.
+
+### Question P4-2 : un GeoPackage sans table vecteur (raster seul, ou vide)
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Lire la ligne du résumé de `raster-seul.gpkg` | « Aucune table vecteur : rien ne s'ouvre en vecteur, mais le GeoPackage est lu en raster (GeoPackage lisible, raster seul) » ; dans le détail : « Essai en raster (loadRasterLayer) : isValid true » | ☐ |
+| 2 | Lire la ligne du résumé de `vide.gpkg` | « ÉCHEC : GeoPackage illisible, ou sans aucun contenu : GDAL ne l'ouvre ni en vecteur ni en raster. Ce n'est pas « aucune table ». » (attendu : GDAL refuse d'ouvrir en lecture seule un GeoPackage sans contenu vecteur ; le plugin ne peut pas le distinguer d'un fichier abîmé) | ☐ |
+
+**Réponse P4-2** : recopier ce que disent les deux lignes du résumé (le **raster seul** : « aucune
+table vecteur », lu en raster ; le **vide** : un ÉCHEC, et non « aucune table »), et **oui** si les
+deux cases sont cochées, **non** sinon (dire laquelle) ; **essai raté** si le bouton 0c a échoué.
+
+### Question P4-3 : un `.gpkg` tronqué donne-t-il une erreur visible, ou une liste vide ?
+
+| N° | Geste | Résultat attendu | Conforme ☐ |
+|---|---|---|---|
+| 1 | Lire les lignes du résumé de `tronque-debut.gpkg` et `tronque-fin.gpkg` | les deux : « ÉCHEC : GeoPackage illisible, ou sans aucun contenu : GDAL ne l'ouvre ni en vecteur ni en raster. Ce n'est pas « aucune table ». » ; **ni** « Aucune table vecteur », **ni** « Tables vecteur » | ☐ |
+| 2 | La dernière ligne du résumé | « Conformes à l'attendu : 6 sur 6 », fond du bloc **non rouge** | ☐ |
+
+**Réponse P4-3**, pour chacun des deux tronqués : **erreur visible** si sa ligne commence par
+« ÉCHEC » ; **liste vide** si elle dit « Aucune table vecteur » (c'est le défaut que la mission
+cherche : le dire en gros) ; **liste** si elle nomme des tables (pire encore : le dire en gros) ;
+**essai raté** si le bouton 0c a échoué.
+
+**Si non (P4-1 à P4-3)** : la mission 024 ne peut pas compter sur cette voie pour connaître les
+tables ; il faudra une autre source (par exemple les noms écrits dans le zip par JFC), à trancher
+par Pascal.
+
+**Vu autrement :**
+
 ## Après l'essai
 
 1. **Désactiver « Cerf, prototype n° 2 »** (QField, Paramètres, Plugins) : il n'agit que dans
@@ -612,6 +727,9 @@ c'est cette réponse qui décide de l'ADR 0008.
 | P3-4b : GeoJSON, style pris | | `p3-q4-carte.png` | | |
 | P3-5 : annexes vues (liste) et tout effacé (oui / non) | | `p3-q5-ecran.png` | | |
 | P3-6 : durées, médiane de trois (oui / non / essai raté) | | `p3-duree-9b.png`, `p3-duree-12.png` | | |
+| P4-1 : tables vecteur de `essai-q3.gpkg` et `essai-gpkg2.gpkg` (oui par la voie 1 / non / essai raté), durées de la voie 1 | | `p4-q0-ecran.png`, `p4-resume.png`, `p4-detail-1.png` | | |
+| P4-2 : raster seul et vide (ce que dit le résumé ; oui / non / essai raté) | | `p4-resume.png`, `p4-detail-…png` | | |
+| P4-3 : tronqués (erreur visible / liste vide / liste / essai raté, pour chacun) | | `p4-resume.png` | | |
 
 **Qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal passe les sept
 questions sur le Samsung en mode avion, une capture par réponse ; on saura que ça marche
@@ -623,3 +741,9 @@ les questions P3-1 à P3-6 sur le Samsung en mode avion, une capture par répons
 P3-3), et note les trois totaux du bouton 12 ; on saura que ça marche quand les réponses P3-1 à P3-6 sont écrites, « essai
 raté » dit en toutes lettres quand une source ne charge pas : c'est ce qui décide si la
 mission 026 (décompresseur) reste nécessaire.
+
+**Prototype n° 4 : qui fait quoi d'ici quand, et comment saura-t-on que ça marche ?** Pascal touche
+0c puis 13 sur le Samsung en mode avion, fait les captures du résumé et du détail, et écrit P4-1 à
+P4-3 ; on saura que ça marche quand le résumé dit « Conformes à l'attendu : 6 sur 6 » et que les
+tronqués et le vide donnent un « ÉCHEC » visible, jamais « aucune table » : la mission 024 saura
+alors par quelle voie le plugin lit les tables.

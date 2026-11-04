@@ -369,9 +369,9 @@ test('ligneSonde : taille ou « absent »', () => {
 
 // ---------------------------------------------------------------- Essai.qml, version, noms
 
-test('version 2.3.0 dans le module et metadata.txt ; boutons 0b et 8 à 12 présents, numérotés, uniques', () => {
-  assert.equal(L.VERSION, '2.3.0');
-  assert.match(lire('prototype-2/metadata.txt'), /^version=2\.3\.0$/m);
+test('version 2.4.0 (prototype n° 4, mission 030) dans le module et metadata.txt ; boutons 0b et 8 à 12 présents, numérotés, uniques', () => {
+  assert.equal(L.VERSION, '2.4.0');
+  assert.match(lire('prototype-2/metadata.txt'), /^version=2\.4\.0$/m);
   const essai = lire('prototype-2/Essai.qml');
   for (const k of ['B0B', 'B8', 'B9', 'B9B', 'B10', 'B11', 'B12']) assert.ok(essai.includes(`text: Zip.BOUTONS.${k};`), k);
   assert.equal(L.NOM_ZIP_Z, 'essai-styles-z.zip');

@@ -1,0 +1,82 @@
+# Publie le prototype n° 2 (mission 023) en préversion GitHub « prototype-2 » à chaque push
+# sur la branche du prototype (l'étiquette est créée par la release ; le proxy de la session
+# refuse le push d'étiquettes). Les fichiers sont fabriqués ici par prototype-2/empaqueter.mjs
+# (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans les notes.
+# Jamais « latest » : seule plugin-v<version> l'est (mission 022). Groupe concurrency propre :
+# une publication ne casse pas les autres.
+name: Release du prototype n° 2
+on:
+  push:
+    branches: ['mission/023-prototype-2']
+    paths: ['prototype-2/**', 'outils/**', 'tests/recette/**', 'tests/prototype-2.test.mjs', '.github/workflows/release-prototype-2.yml']
+permissions:
+  contents: write
+concurrency:
+  group: release-prototype-2
+  cancel-in-progress: false
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dépendances Python des outils (pyproj, mission 002)
+        run: pip install -r outils/requirements.txt
+      - name: Tests
+        run: node --test
+      - name: Zips et GeoPackage d'essai
+        run: node prototype-2/empaqueter.mjs dist
+      # Contrôle des fichiers d'essai par GDAL (ogrinfo), seulement si gdal-bin s'installe vite
+      # (90 s au plus) : l'étape d'installation ne bloque pas la publication, mais si GDAL est
+      # là, un fichier d'essai que GDAL ne lit pas bloque. Le résultat est dit dans les notes.
+      - name: Installer gdal-bin (90 s au plus)
+        id: gdal
+        continue-on-error: true
+        run: timeout 90 sudo apt-get install -y --no-install-recommends gdal-bin
+      - name: Contrôle ogrinfo des fichiers d'essai
+        if: steps.gdal.outcome == 'success'
+        run: |
+          set -e
+          mkdir ctl && cd ctl && unzip -q ../dist/essai-styles.zip
+          ogrinfo -ro -al -so UG_q1.geojson | tee ug.txt
+          grep -q 'Feature Count: 2' ug.txt
+          grep -q '2154' ug.txt
+          ogrinfo -ro -al -so Parcelles_q3.gpkg Parcelles_q3 | tee parcelles.txt
+          grep -q 'Feature Count: 2' parcelles.txt
+          grep -q '2154' parcelles.txt
+          ogrinfo -ro Parcelles_q3.gpkg | tee couches.txt
+          grep -q 'layer_styles' couches.txt
+          ogrinfo -ro -al -so FRT_q7.shp | tee frt.txt
+          grep -q 'Feature Count: 2' frt.txt
+          grep -q '2154' frt.txt
+          ogrinfo -ro -al -so Sans_crs.geojson | tee sans.txt
+          grep -q 'Feature Count: 2' sans.txt
+          cd .. && rm -rf ctl
+          echo 'ogrinfo : lecture des fichiers d essai par GDAL : ok' > ogrinfo.txt
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Prototype n° 2 de Cerf (mission 023), plugin QField jetable et fichiers d'essai, à installer par URL."
+            echo
+            echo "Ne pas renommer cerf-prototype-2.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Protocole d'essai : tests/recette/prototype-2.md. Données fictives, sans valeur métier."
+            if [ -f ogrinfo.txt ]; then cat ogrinfo.txt; else echo "ogrinfo : non exécuté (gdal-bin non installé en 90 s) ; contrôle par QGIS sur le poste, voir le protocole."; fi
+            echo
+            echo '```'
+            (cd dist && sha256sum cerf-prototype-2.zip cerf-essai-2.zip essai-styles.zip essai-q3.gpkg)
+            echo '```'
+          } > notes.md
+          if gh release view prototype-2 >/dev/null 2>&1; then
+            gh release upload prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg --clobber
+            gh release edit prototype-2 --notes-file notes.md --prerelease --latest=false
+          else
+            gh release create prototype-2 dist/cerf-prototype-2.zip dist/cerf-essai-2.zip dist/essai-styles.zip dist/essai-q3.gpkg \
+              --target "$GITHUB_SHA" --title "Prototype n° 2" --notes-file notes.md --prerelease --latest=false
+          fi

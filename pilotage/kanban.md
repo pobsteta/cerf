@@ -39,10 +39,6 @@ _Modèle de carte :_
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Effacer au retrait les fichiers réécrits d'une couche
   - Moyens : ADR 0007 amendée, ADR 0008, fiche 027 (P3-5)
-- [010-styles](missions/010-styles.md) · depuis le cycle 0
-  - Homme : `dev` (sonnet)
-  - Mission : Styles du manuel — cycle prévu 4
-  - Moyens : `docs/spec.md` § 5
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -73,6 +69,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [010-styles](missions/010-styles.md) · depuis le cycle 0 · fusionnée (PR #18), plugin 0.3.0
+  - Homme : `dev` (sonnet)
+  - Mission : Styles du manuel — cycle prévu 4
+  - Moyens : `docs/spec.md` § 5
 - [029-amendements-adr-0008](missions/029-amendements-adr-0008.md) · depuis le cycle 6 · fusionnée (PR #22)
   - Homme : `archiviste` (sonnet)
   - Mission : Amender ADR 0003, ADR 0007 et la spec après l'ADR 0008

@@ -27,14 +27,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5
-  - Homme : `testeur` (sonnet)
-  - Mission : Tests de la couche de saisie du projet modèle
-  - Moyens : `docs/spec.md` § 3.5, § 5, § 6 n° 10
-- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5
-  - Homme : `dev` (opus)
-  - Mission : Couche « Saisie terrain » et saisie.gpkg dans le projet modèle
-  - Moyens : `outils/projet-modele.mjs`, `node:sqlite`, spec § 3.5
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 0
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -76,6 +68,14 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026
+  - Homme : `testeur` (sonnet)
+  - Mission : Tests de la couche de saisie du projet modèle
+  - Moyens : `docs/spec.md` § 3.5, § 5, § 6 n° 10
+- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026 ; recette § 6 n° 10 à faire
+  - Homme : `dev` (opus)
+  - Mission : Couche « Saisie terrain » et saisie.gpkg dans le projet modèle
+  - Moyens : `outils/projet-modele.mjs`, `node:sqlite`, spec § 3.5
 - [007-tests-squelette](missions/007-tests-squelette.md) · depuis le cycle 5 · fusionnée avec la 008 (PR #12, #13), 3 novembre 2026
   - Homme : `testeur` (sonnet)
   - Mission : Tests du squelette du plugin — cycle prévu 3

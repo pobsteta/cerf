@@ -20,6 +20,10 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · à valider, après la 023
+  - Homme : `testeur` puis `dev` (sonnet)
+  - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
+  - Moyens : prototype n° 2, zips de recette
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente
@@ -54,6 +58,14 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · lancée
+  - Homme : `dev` (sonnet)
+  - Mission : Flashcodes des adresses stables dans les releases
+  - Moyens : qrencode dans le workflow, sources QField
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · validée, lancée (plan)
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
+  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -62,13 +74,13 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Tests des contrôles d'import — cycle prévu 4
   - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
-- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · lancée au cycle 6
-  - Homme : `dev` (sonnet)
-  - Mission : Rangement des workflows de publication
-  - Moyens : workflows de release, relectures de la 021
 
 ## Terminé
 
+- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · PR #17 fusionnée
+  - Homme : `dev` (sonnet)
+  - Mission : Rangement des workflows de publication
+  - Moyens : workflows de release, relectures de la 021
 - [016-zips-recette](missions/016-zips-recette.md) · depuis le cycle 6 · PR #11 fusionnée (zips piege et lourd)
   - Homme : `testeur` (sonnet)
   - Mission : Zips de recette piege et lourd — cycle prévu 3

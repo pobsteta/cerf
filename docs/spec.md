@@ -152,8 +152,10 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la couche :
 
 1. **Shapefile incomplet** : `.prj` absent → refus « Parcelles.shp : fichier .prj
-   manquant, système de coordonnées inconnu ». `.cpg` absent → chargement avec
-   avertissement « accents peut-être mal lus ».
+   manquant, système de coordonnées inconnu ». `.shx` ou `.dbf` absent → refus
+   « UG.shp : fichier .shx manquant, couche non chargée » (même forme pour `.dbf` ; Pascal,
+   4 novembre 2026). `.cpg` absent → chargement avec avertissement « accents peut-être mal
+   lus ». Un Shapefile vide sans `.prj` est refusé (contrôle 1 avant le contrôle 4).
 2. **Lecture** : la source ne s'ouvre pas → refus « illisible ».
 3. **Système invalide** (GeoTIFF sans géoréférencement, `.prj` illisible) → refus
    « système de coordonnées inconnu ».
@@ -168,6 +170,11 @@ Dans l'ordre, pour chaque couche cochée ; le premier qui échoue arrête la cou
 
 **Pas de chargement forcé** : l'agent ne peut pas passer outre un refus (§ 9, n° 7).
 
+**Nom de la couche dans les messages** : chaque refus et chaque avertissement commence par
+le nom de la couche **avec son extension**, tel qu'il est dans le zip (« FRT.shp : … »,
+« Parcelles.shp : … ») ; pour une table de GeoPackage, « fichier.gpkg/table : … » ; un zip
+peut en contenir plusieurs (Pascal, 4 novembre 2026).
+
 ## 5. Styles (annexe de la convention du zip)
 
 Ordre de priorité : `.qml` de même nom que la couche dans le zip → règle par nom → règle
@@ -176,6 +183,17 @@ lui-même (QGIS ne le trouve pas seul derrière `/vsizip/`).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.
+
+**Règles par nom réservées aux polygones** : une couche nommée UG, Parcelles ou FRT mais
+ponctuelle ou linéaire, sans les champs `essence` et `diametre` (sinon elle prend le style
+ProdBois, sans avertissement), garde le style par défaut, avec l'avertissement « nom reconnu mais
+pas un polygone » (Pascal, 4 novembre 2026). **Champs `essence` et `diametre`** reconnus
+sans tenir compte de la casse ni des accents (`diamètre`, Pascal, 4 novembre 2026) (`ESSENCE`, `Diametre`…) ; l'étiquette utilise le nom réel
+du champ (Pascal, 4 novembre 2026). **GeoPackage** : le nom comparé aux motifs est celui de
+la **table** (un `Serre.gpkg` avec les tables `UG` et `Parcelles` donne deux couches
+stylées ; le `.qml` d'une table porte son nom, `UG.qml`). **`.qml` vide ou illisible** : il
+est ignoré, la règle par nom (ou le style par défaut) s'applique, avec l'avertissement
+« .qml illisible, style du manuel appliqué » (Pascal, 4 novembre 2026).
 
 | Règle | Motif | Géométrie | Symbole | Étiquette |
 |---|---|---|---|---|

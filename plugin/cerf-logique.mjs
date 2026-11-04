@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 
 // Dossier des copies, sous le dossier du projet : repli de la spec § 9 n° 1 appliqué par Pascal le
 // 3 novembre 2026 (spec § 3.3, ADR 0003 et 0007) : QField 4.3.7 refuse à un plugin de lire hors
@@ -396,6 +396,41 @@ function chargerSansPlanter(chargerCouche, source, nom) {
   }
 }
 
+// Description d'une entrée du zip pour les contrôles (spec § 4) : nom avec extension,
+// format d'après l'extension, noms du zip dans le même dossier (pour .prj, .shx, .dbf, .cpg).
+export function decrireEntree(entree, noms) {
+  const fichier = nomDeFichier(entree);
+  const m = /\.([^.]*)$/.exec(fichier);
+  const ext = m ? m[1].toLowerCase() : '';
+  const format = { geojson: 'geojson', json: 'geojson', gpkg: 'gpkg', shp: 'shp', tif: 'tif', tiff: 'tif' }[ext] || ext;
+  const dossier = dossierDe(entree);
+  const fichiers = [];
+  for (let i = 0; i < noms.length; i++) {
+    const n = String(noms[i]);
+    if (dossierDe(n) === dossier) fichiers.push(nomDeFichier(n));
+  }
+  return { nom: fichier, format, fichiers };
+}
+
+// Décrit puis contrôle une couche ; toute exception vaut refus (spec § 4). Si l'ouverture a
+// échoué (`couche` nulle), on contrôle quand même avec `lisible: false` : le contrôle 1
+// (Shapefile incomplet) passe avant le 2 (« illisible »), et le message porte le nom avec
+// extension, sans erreur technique.
+function controlerSansPlanter(ctx, couche, c, noms) {
+  const nom = nomDeFichier(c.entree);
+  try {
+    const entree = decrireEntree(c.entree, noms);
+    const lue = couche ? ctx.decrireCouche(couche) : { lisible: false };
+    const description = Object.assign({}, lue, entree);
+    if (!couche) description.lisible = false;
+    const v = ctx.controlerCouche(description);
+    if (v && v.charge === true) return { charge: true, avertissements: Array.isArray(v.avertissements) ? v.avertissements : [] };
+    return { charge: false, message: v && v.message ? String(v.message) : nom + ' : couche refusée' };
+  } catch (e) {
+    return { charge: false, message: nom + ' : contrôle impossible, couche refusée' };
+  }
+}
+
 export function importerZip(ctx) {
   const vide = (message) => ({ chargees: [], refusees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
@@ -411,27 +446,85 @@ export function importerZip(ctx) {
     return vide(`${nomZip} : ${e.message}`);
   }
   const couches = couchesDuZip(noms);
-  if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+  if (couches.length === 0) {
+    // Décision n° 11 : zip réimporté sans aucune couche lisible = import avorté (registre et carte
+    // intacts : ce retour précède le retrait de la décision n° 8).
+    const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
+    if (dejaImporte) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
+    return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+  }
+  // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
+  // contrôle = tout passe »).
+  for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte']) {
+    if (typeof ctx[service] !== 'function') {
+      return vide(`Contrôles d'import indisponibles (${service} absent) : rien n'est importé.`);
+    }
+  }
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
+  // Ouverture de toutes les couches AVANT de toucher au registre ou à la carte (décision n° 13) :
+  // un zip réimporté dont aucune couche ne s'ouvre est un import avorté, rien n'est retiré.
+  const ouvertes = {};
+  const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
+  if (dejaImporte) {
+    let nbLisibles = 0;
+    for (let i = 0; i < couches.length; i++) {
+      const c = couches[i];
+      if (Object.prototype.hasOwnProperty.call(ouvertes, c.couche)) continue; // doublon : refusé plus bas
+      const o = chargerSansPlanter(ctx.ouvrirCouche, '/vsizip/' + copie + '/' + c.entree, c.couche);
+      ouvertes[c.couche] = o;
+      if (o.couche) nbLisibles++;
+    }
+    if (nbLisibles === 0) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
+  }
+  // Retrait de la carte des couches de ce zip (réimport), seulement maintenant.
+  if (typeof ctx.retirerLeZipDeLaCarte === 'function') ctx.retirerLeZipDeLaCarte(nomZip);
+  // Décision n° 8 : le zip réimporté remplace l'ancien en entier. Les couches de ce zip qui n'y
+  // sont plus sortent du registre (aucun fichier n'est touché ; la copie est écrasée par QField).
+  const presentes = {};
+  for (let i = 0; i < couches.length; i++) presentes[couches[i].couche] = true;
+  const anciennes = lireRegistre(ctx.reglages, ctx.cerfId);
+  for (let i = 0; i < anciennes.length; i++) {
+    const e = anciennes[i];
+    if (e && typeof e === 'object' && e.zip === nomZip && !Object.prototype.hasOwnProperty.call(presentes, e.couche)) {
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: e.couche });
+    }
+  }
   const chargees = [];
   const refusees = [];
+  const avertissements = [];
   const vues = {};
   for (let i = 0; i < couches.length; i++) {
     const c = couches[i];
     if (Object.prototype.hasOwnProperty.call(vues, c.couche)) {
       // Décision n° 4 : même nom dans deux dossiers du zip, la seconde est refusée.
-      refusees.push({ couche: c.couche, entree: c.entree, raison: `nom de couche en double dans le zip (déjà pris par ${vues[c.couche]})` });
+      const raison = `nom de couche en double dans le zip (déjà pris par ${vues[c.couche]})`;
+      refusees.push({ couche: c.couche, entree: c.entree, raison, message: `${c.entree} : ${raison}` });
       continue;
     }
     vues[c.couche] = c.entree;
     const source = '/vsizip/' + copie + '/' + c.entree;
-    const r = chargerSansPlanter(ctx.chargerCouche, source, c.couche);
-    if (!r.couche) {
-      refusees.push({ couche: c.couche, entree: c.entree, raison: r.raison });
+    // Ouvrir (sans ajouter à la carte), contrôler, puis seulement ajouter et inscrire.
+    const r = ouvertes[c.couche] || chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
+    // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
+    // précède « illisible » et que le message porte le nom avec extension.
+    const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
+    if (!verdict.charge) {
+      // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
+      refusees.push({ couche: c.couche, entree: c.entree, raison: verdict.message, message: verdict.message });
       continue;
     }
-    r.couche.readOnly = true;
+    for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
+    try {
+      r.couche.readOnly = true;
+      ctx.ajouterALaCarte(r.couche, c.couche, source);
+    } catch (e) {
+      const message = nomDeFichier(c.entree) + ' : ajout à la carte impossible';
+      retirer(ctx.reglages, ctx.cerfId, { zip: nomZip, couche: c.couche });
+      refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
+      continue;
+    }
     // Inscription après chaque couche (spec § 1, geste 5).
     inscrire(ctx.reglages, ctx.cerfId, {
       zip: nomZip,
@@ -448,8 +541,9 @@ export function importerZip(ctx) {
   } else {
     lignes.push(`Aucune couche chargée depuis ${nomZip}`);
   }
-  for (let i = 0; i < refusees.length; i++) lignes.push(`${refusees[i].couche} : ${refusees[i].raison}`);
-  return { chargees, refusees, message: lignes.join('\n') };
+  for (let i = 0; i < refusees.length; i++) lignes.push(refusees[i].message || `${refusees[i].couche} : ${refusees[i].raison}`);
+  for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
+  return { chargees, refusees, avertissements, message: lignes.join('\n') };
 }
 
 // --------------------------------------------------------------------------- ouvrir

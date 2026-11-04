@@ -8,7 +8,7 @@
 
 **En une phrase (quoi, et pourquoi) :** Écrire les tests des cinq contrôles du § 4 dans leur ordre (.prj, lecture, système, couche vide, emprise) et de leurs messages, pour qu'aucune couche ne soit chargée de travers.
 
-**Redite par l'agent :** _à compléter par l'agent avant d'agir — s'il n'y arrive pas, il s'arrête._
+**Redite par l'agent :** Je dois écrire les tests des cinq contrôles du § 4 (.prj, lecture, système, couche vide, emprise), dans leur ordre, avec leurs messages précédés du nom de la couche, pour qu'une couche mal placée ou mal lue ne soit jamais chargée sans que l'agent en soit prévenu.
 
 ## Les trois questions (règle de staffing)
 

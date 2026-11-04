@@ -62,12 +62,12 @@ _Modèle de carte :_
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
   - Moyens : prototype n° 2, zips de recette
-- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
+## Terminé
+
+- [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · fusionnée (PR #18)
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-
-## Terminé
 
 - [010-styles](missions/010-styles.md) · depuis le cycle 0 · fusionnée (PR #18), plugin 0.3.0
   - Homme : `dev` (sonnet)

@@ -27,10 +27,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [033-essai-manuel](missions/033-essai-manuel.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
-  - Homme : `dev` (sonnet)
-  - Mission : Zip de démonstration aux noms du manuel
-  - Moyens : spec § 5, outils de zips de recette
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
@@ -61,6 +57,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [033-essai-manuel](missions/033-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #27)
+  - Homme : `dev` (sonnet)
+  - Mission : Zip de démonstration aux noms du manuel
+  - Moyens : spec § 5, outils de zips de recette
 - [031-nettoyage-retrait](missions/031-nettoyage-retrait.md) · depuis le cycle 6 · fusionnée (PR #26), plugin 0.3.1
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Effacer au retrait les fichiers réécrits d'une couche

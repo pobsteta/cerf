@@ -104,3 +104,7 @@ Plan `plugin/PLAN-012.md` (1aab609) **validé**.
 14. Passage supplémentaire du dev autorisé par Pascal (au-delà des 3 allers-retours) pour le
     point 13 et pour refuser toute reprojection qui rend un point ou un rectangle **vide**
     (QField 4.3.7 ne lève pas d'exception sur échec, lecture des sources par la 023).
+15. Réimport dont toutes les couches s'ouvrent mais sont refusées aux contrôles : la décision 8
+    s'applique (voulu, Pascal, 4 novembre 2026).
+16. Copie du zip réimporté sous un **nom provisoire**, qui ne remplace l'ancienne qu'après un
+    import réussi : confiée à la mission 014 (registre complet), si QField le permet.

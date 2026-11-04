@@ -234,3 +234,4 @@
 2026-11-04 · dev · 028 · version du plugin en 0.2.1 (ca73407 ; 1cd3af4 rouge, corrigé) ; 487/487. Relecture lancée. Pascal : « on va reprendre les tests à partir des nouveaux noms et pas à pas ».
 2026-11-04 · relecteur · 028 · prête pour Pascal (487/487, flashcodes décodés exacts, version 0.2.1) ; à signaler : anciens fichiers restés dans les préversions plugin-essai et projet-modele-essai (upload --clobber), PLAN.md l. 92 ; fichiers du plugin touchés pour la version et les adresses.
 2026-11-04 · Pascal · 028 · fusion de #21 demandée.
+2026-11-04 · Claude (orchestrateur) · 028 · PR #21 fusionnée (21c1a3b) ; plugin-v0.2.1 « latest » avec plugin-cerf.zip et son flashcode ; projet-modele recréée avec projet-cerf.zip, projet-cerf-mise-a-jour.zip et un flashcode ; adresses vérifiées (200). Renommage du prototype confié au dev de la 023.

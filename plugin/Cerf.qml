@@ -6,6 +6,7 @@
 import QtQuick
 import org.qfield
 import "cerf-logique.mjs" as Logique
+import "cerf-controles.mjs" as Controles
 
 Item {
   id: cerf
@@ -88,6 +89,64 @@ Item {
       }
       return couche;
     };
+  }
+
+  // ---- Mission 012 : ouvrir, contrôler, puis seulement ajouter (spec § 4).
+  // NON PROUVÉ (aucun accès aux sources de QField pour la mission 012) : chaque appel marqué
+  // « à vérifier » ci-dessous est à confirmer sur le Samsung ; un appel absent ou en erreur
+  // donne un REFUS de la couche (jamais « contrôle sauté »).
+
+  // Ouvre la couche sans l'ajouter au projet.
+  function ouvrirCouche(source, nom) {
+    return LayerUtils.loadVectorLayer(source, nom);
+  }
+
+  // Ajoute à la carte une couche acceptée, marquée (zip, couche).
+  function ajouterALaCarte(couche, nom, source) {
+    const zip = Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
+    couche.setCustomProperty("cerf/zip", zip);
+    couche.setCustomProperty("cerf/couche", nom);
+    ProjectUtils.addMapLayer(qgisProject, couche);
+  }
+
+  // Lectures de la couche pour les contrôles ; chaque lecture est protégée (échec = valeur
+  // « mauvaise », donc refus). À vérifier : crs, featureCount(), extent.
+  function decrireCouche(couche) {
+    let lisible = false;
+    let systeme = { valide: false, epsg: 0 };
+    let nbEntites = -1;
+    let emprise = null;
+    try { lisible = !!(couche && couche.isValid); } catch (e) { lisible = false; }
+    try {
+      const crs = couche.crs;
+      const auth = String(crs.authid || "");
+      const m = /^EPSG:(\d+)$/.exec(auth);
+      systeme = { valide: !!crs.isValid && m !== null, epsg: m ? Number(m[1]) : 0 };
+    } catch (e) { /* système inconnu */ }
+    try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
+    try {
+      const x = couche.extent;
+      emprise = { xmin: Number(x.xMinimum), ymin: Number(x.yMinimum), xmax: Number(x.xMaximum), ymax: Number(x.yMaximum) };
+    } catch (e) { emprise = null; }
+    return { lisible: lisible, systeme: systeme, nbEntites: nbEntites, emprise: emprise };
+  }
+
+  // Reprojette un point (x, y) de EPSG:<epsg> vers EPSG:2154. À vérifier dans QField v4.3.7 :
+  // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
+  // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
+  function reprojeterPoint(x, y, epsg) {
+    const source = CoordinateReferenceSystemUtils.fromDescription("EPSG:" + epsg);
+    const but = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154");
+    const p = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), source, but);
+    return { x: Number(p.x), y: Number(p.y) };
+  }
+
+  function controlerCouche(description) {
+    return Controles.controlerCouche(description, {
+      reprojeter: function (emprise, epsg) {
+        return Controles.reprojeterEmprise(emprise, epsg, reprojeterPoint);
+      }
+    });
   }
 
   function retirerDeLaCarte(zip, nom) {
@@ -214,6 +273,10 @@ Item {
       octets: octets,
       reglages: reglages,
       chargerCouche: chargeur(),
+      ouvrirCouche: ouvrirCouche,
+      decrireCouche: decrireCouche,
+      controlerCouche: controlerCouche,
+      ajouterALaCarte: ajouterALaCarte,
       maintenant: function () { return new Date(); }
     });
     let texte = r.message;

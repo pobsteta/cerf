@@ -396,6 +396,35 @@ function chargerSansPlanter(chargerCouche, source, nom) {
   }
 }
 
+// Description d'une entrée du zip pour les contrôles (spec § 4) : nom avec extension,
+// format d'après l'extension, noms du zip dans le même dossier (pour .prj, .shx, .dbf, .cpg).
+export function decrireEntree(entree, noms) {
+  const fichier = nomDeFichier(entree);
+  const m = /\.([^.]*)$/.exec(fichier);
+  const ext = m ? m[1].toLowerCase() : '';
+  const format = { geojson: 'geojson', json: 'geojson', gpkg: 'gpkg', shp: 'shp', tif: 'tif', tiff: 'tif' }[ext] || ext;
+  const dossier = dossierDe(entree);
+  const fichiers = [];
+  for (let i = 0; i < noms.length; i++) {
+    const n = String(noms[i]);
+    if (dossierDe(n) === dossier) fichiers.push(nomDeFichier(n));
+  }
+  return { nom: fichier, format, fichiers };
+}
+
+// Décrit puis contrôle une couche ouverte ; toute exception vaut refus (spec § 4).
+function controlerSansPlanter(ctx, couche, c, noms) {
+  const nom = nomDeFichier(c.entree);
+  try {
+    const description = Object.assign({}, ctx.decrireCouche(couche), decrireEntree(c.entree, noms));
+    const v = ctx.controlerCouche(description);
+    if (v && v.charge === true) return { charge: true, avertissements: Array.isArray(v.avertissements) ? v.avertissements : [] };
+    return { charge: false, message: v && v.message ? String(v.message) : nom + ' : couche refusée' };
+  } catch (e) {
+    return { charge: false, message: nom + ' : contrôle impossible, couche refusée' };
+  }
+}
+
 export function importerZip(ctx) {
   const vide = (message) => ({ chargees: [], refusees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
@@ -412,10 +441,18 @@ export function importerZip(ctx) {
   }
   const couches = couchesDuZip(noms);
   if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+  // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
+  // contrôle = tout passe »).
+  for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte']) {
+    if (typeof ctx[service] !== 'function') {
+      return vide(`Contrôles d'import indisponibles (${service} absent) : rien n'est importé.`);
+    }
+  }
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
   const chargees = [];
   const refusees = [];
+  const avertissements = [];
   const vues = {};
   for (let i = 0; i < couches.length; i++) {
     const c = couches[i];
@@ -426,12 +463,25 @@ export function importerZip(ctx) {
     }
     vues[c.couche] = c.entree;
     const source = '/vsizip/' + copie + '/' + c.entree;
-    const r = chargerSansPlanter(ctx.chargerCouche, source, c.couche);
+    // Ouvrir (sans ajouter à la carte), contrôler, puis seulement ajouter et inscrire.
+    const r = chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
     if (!r.couche) {
       refusees.push({ couche: c.couche, entree: c.entree, raison: r.raison });
       continue;
     }
-    r.couche.readOnly = true;
+    const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
+    if (!verdict.charge) {
+      refusees.push({ couche: c.couche, entree: c.entree, raison: verdict.message, message: verdict.message });
+      continue;
+    }
+    for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
+    try {
+      r.couche.readOnly = true;
+      ctx.ajouterALaCarte(r.couche, c.couche, source);
+    } catch (e) {
+      refusees.push({ couche: c.couche, entree: c.entree, raison: 'ajout à la carte impossible' });
+      continue;
+    }
     // Inscription après chaque couche (spec § 1, geste 5).
     inscrire(ctx.reglages, ctx.cerfId, {
       zip: nomZip,
@@ -448,8 +498,9 @@ export function importerZip(ctx) {
   } else {
     lignes.push(`Aucune couche chargée depuis ${nomZip}`);
   }
-  for (let i = 0; i < refusees.length; i++) lignes.push(`${refusees[i].couche} : ${refusees[i].raison}`);
-  return { chargees, refusees, message: lignes.join('\n') };
+  for (let i = 0; i < refusees.length; i++) lignes.push(refusees[i].message || `${refusees[i].couche} : ${refusees[i].raison}`);
+  for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
+  return { chargees, refusees, avertissements, message: lignes.join('\n') };
 }
 
 // --------------------------------------------------------------------------- ouvrir

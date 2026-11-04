@@ -23,8 +23,9 @@ function reglages() {
 // L'API de QField est simulée : `journal` garde l'ordre des appels. La couche ouverte en /vsizip/ et
 // sa copie portent le même nom ; la géométrie et les champs viennent d'une table par nom de couche.
 const COPIES = `${PROJET}/cerf-imports`;
-function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants = [] } = {}) {
+function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants = [], effacementRate = false, ecritureInterrompue = false } = {}) {
   const journal = [];
+  const sur_disque = new Set(existants);
   const ecrits = [];
   const effaces = [];
   const reecrites = [];
@@ -35,15 +36,19 @@ function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants 
     decrireCouche: () => ({ lisible: true }),
     controlerCouche: (d) => { journal.push('controler ' + d.nom); return { charge: true, avertissements: [] }; },
     reecrireCouche: (couche, cible) => { journal.push('reecrire ' + cible); reecrites.push({ source: couche.source, cible }); return rendu === null ? cible : rendu; },
-    ecrireFichier: (chemin, texte) => { journal.push('ecrire ' + chemin); ecrits.push({ chemin, texte }); return ecrit; },
-    existe: (chemin) => existants.includes(chemin),
-    effacerFichier: (chemin) => { journal.push('effacer ' + chemin); effaces.push(chemin); return true; },
+    ecrireFichier: (chemin, texte) => {
+      journal.push('ecrire ' + chemin); ecrits.push({ chemin, texte });
+      if (ecrit || ecritureInterrompue) sur_disque.add(chemin); // interrompue : un fichier tronqué reste
+      return ecrit;
+    },
+    existe: (chemin) => sur_disque.has(chemin),
+    effacerFichier: (chemin) => { journal.push('effacer ' + chemin); effaces.push(chemin); if (effacementRate) return false; sur_disque.delete(chemin); return true; },
     ajouterALaCarte: (couche, nom, source, zip) => { journal.push('ajouter ' + source); },
     styles: S,
     infosCouche: (couche) => infos[couche.name] || { geometrie: 'polygone', champs: [] },
     lireTexte: (zip, chemin) => (Object.prototype.hasOwnProperty.call(textes, chemin) ? textes[chemin] : null),
   };
-  return { ctx, journal, ecrits, effaces, reecrites };
+  return { ctx, journal, ecrits, effaces, reecrites, sur_disque };
 }
 const QML_ZIP = '<!DOCTYPE qgis PUBLIC \'http://mrcc.com/qgis.dtd\' \'SYSTEM\'>\n<qgis version="3.34"><renderer-v2 type="singleSymbol"/></qgis>';
 
@@ -314,6 +319,93 @@ test('écriture du .qml impossible : la copie est chargée sans les couleurs, et
   assert.equal(r.chargees.length, 1);
   assert.deepEqual(r.avertissements, ['UG.geojson : style non écrit, couche chargée avec le style par défaut']);
   assert.equal(L.lireRegistre(w.ctx.reglages, ID)[0].style, 'defaut');
+});
+
+const QML_UG = `${COPIES}/x/UG.qml`;
+const UG = { UG: { geometrie: 'polygone', champs: [] } };
+
+test('ancien .qml présent puis écriture réussie : effacé AVANT l\'écriture, le nouveau est en place, style du manuel', () => {
+  const w = monde({ infos: UG, existants: [QML_UG] });
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  const i = w.journal.indexOf('effacer ' + QML_UG);
+  assert.ok(i >= 0 && w.journal.indexOf('ecrire ' + QML_UG) > i, w.journal.join('\n'));
+  assert.deepEqual(w.effaces, [QML_UG]);
+  assert.equal(w.sur_disque.has(QML_UG), true);
+  assert.equal(ecritSur(w, 'UG.qml').texte.includes('<renderer-v2'), true);
+  assert.equal(r.chargees.length, 1);
+  assert.deepEqual(r.avertissements, []);
+  assert.equal(L.lireRegistre(w.ctx.reglages, ID)[0].style, 'UG');
+});
+
+test('ancien .qml présent puis écriture ratée : « style par défaut » dit, aucun .qml ne reste', () => {
+  const w = monde({ infos: UG, existants: [QML_UG], ecrit: false });
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.equal(r.chargees.length, 1);
+  assert.deepEqual(r.avertissements, ['UG.geojson : style non écrit, couche chargée avec le style par défaut']);
+  assert.match(r.message, /style par défaut/);
+  assert.equal(w.sur_disque.has(QML_UG), false);
+  assert.equal(L.lireRegistre(w.ctx.reglages, ID)[0].style, 'defaut');
+});
+
+test('écriture interrompue (fichier tronqué laissé) : le .qml tronqué est effacé, style par défaut dit', () => {
+  const w = monde({ infos: UG, ecrit: false, ecritureInterrompue: true });
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.equal(r.chargees.length, 1);
+  assert.deepEqual(r.avertissements, ['UG.geojson : style non écrit, couche chargée avec le style par défaut']);
+  assert.deepEqual(w.effaces, [QML_UG]);
+  assert.equal(w.sur_disque.has(QML_UG), false);
+  assert.equal(L.lireRegistre(w.ctx.reglages, ID)[0].style, 'defaut');
+});
+
+test('écriture qui lève après avoir laissé un fichier : effacé, style par défaut dit', () => {
+  const w = monde({ infos: UG });
+  const ecrire = w.ctx.ecrireFichier;
+  w.ctx.ecrireFichier = (c, t) => { ecrire(c, t); throw new Error('disque plein'); };
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.equal(r.chargees.length, 1);
+  assert.match(r.message, /style par défaut/);
+  assert.equal(w.sur_disque.has(QML_UG), false);
+});
+
+test('effacement raté de l\'ancien .qml : couche refusée, rien n\'est écrit ni chargé, message vrai', () => {
+  const w = monde({ infos: UG, existants: [QML_UG], effacementRate: true });
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.deepEqual(r.chargees, []);
+  assert.equal(r.refusees[0].message, 'UG.geojson : ancien style (.qml) impossible à effacer, couche refusée');
+  assert.deepEqual(w.ecrits, []);
+  assert.ok(!w.journal.some((l) => l.startsWith('ajouter ')));
+  assert.deepEqual(L.lireRegistre(w.ctx.reglages, ID), []);
+});
+
+test('effacement qui lève : couche refusée de même', () => {
+  const w = monde({ infos: UG, existants: [QML_UG] });
+  w.ctx.effacerFichier = () => { throw new Error('refusé'); };
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.deepEqual(r.chargees, []);
+  assert.match(r.refusees[0].message, /impossible à effacer, couche refusée$/);
+});
+
+test('effacement raté d\'un .qml tronqué après écriture ratée : couche refusée (un .qml périmé s\'appliquerait)', () => {
+  const w = monde({ infos: UG, ecrit: false, ecritureInterrompue: true, effacementRate: true });
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.deepEqual(r.chargees, []);
+  assert.equal(r.refusees[0].message, 'UG.geojson : style (.qml) mal écrit et impossible à effacer, couche refusée');
+});
+
+test('effacement qui répond vrai mais le fichier reste : couche refusée (on ne croit pas la réponse)', () => {
+  const w = monde({ infos: UG, existants: [QML_UG] });
+  w.ctx.effacerFichier = () => true;
+  w.ctx.octets = zipDe('UG.geojson');
+  const r = L.importerZip(w.ctx);
+  assert.deepEqual(r.chargees, []);
+  assert.match(r.refusees[0].message, /impossible à effacer/);
 });
 
 test('copie illisible après réécriture : couche refusée, retirée du registre', () => {

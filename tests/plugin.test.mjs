@@ -357,6 +357,11 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   assert.match(wf, /plugin-essai/);
   assert.match(wf, /plugin-v\$version/);
   assert.match(wf, /mission\/008-squelette-plugin/);
+  assert.match(wf, /mission\/010-styles/);
+  // Toute branche autre que main = préversion : jamais « latest », flashcode d'essai.
+  assert.match(wf, /gh release edit plugin-essai --notes-file notes\.md --latest=false/);
+  assert.match(wf, /--prerelease --latest=false/);
+  assert.match(wf, /\[ "\$GITHUB_REF_NAME" = "main" \]; then mode=stable; else mode=essai/);
 });
 
 // ============================================================================ aides du pont QML (Cerf.qml)

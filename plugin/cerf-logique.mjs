@@ -540,6 +540,22 @@ function choisirStyle(ctx, couche, nomZip, nomCouche, entree, noms) {
   }
 }
 
+// Vrai seulement s'il est SÛR qu'aucun .qml n'existe à ce chemin (effacé, puis vérifié par `existe` :
+// la valeur rendue par l'effacement n'est pas crue). Chemin non écrivable ou
+// exception : faux. Seule exception : les deux services de fichiers absents (contextes d'essai des tests).
+function qmlAbsent(ctx, chemin, dossier) {
+  try {
+    // Services de fichiers absents (contextes d'essai) : rien à effacer ni à vérifier. Cerf.qml les fournit toujours.
+    if (typeof ctx.existe !== 'function' || typeof ctx.effacerFichier !== 'function') return true;
+    if (!ctx.existe(chemin)) return true;
+    if (!peutEcrireCopie(chemin, dossier)) return false;
+    ctx.effacerFichier(chemin);
+    return !ctx.existe(chemin);
+  } catch (e) {
+    return false;
+  }
+}
+
 // Réécrit la couche ouverte (contrôlée) en GeoPackage dans cerf-imports/<zip>/, écrit le .qml à
 // côté AVANT le chargement, puis charge la copie. Rend { ok: false, message } ou
 // { ok: true, copie, rendu, relatif, style, qml, avertissements }.
@@ -559,20 +575,29 @@ function copierEtStyler(ctx, couche, c, nomZip, noms) {
   }
   const avertissements = st.avertissements.slice();
   const cheminQml = rendu.substring(0, rendu.length - '.gpkg'.length) + '.qml';
+  // Arbitrage de Pascal (4 novembre 2026) : l'ancien .qml voisin est effacé AVANT toute écriture,
+  // qu'il y ait ou non un style à poser (un .qml resté d'un import précédent s'appliquerait en
+  // silence à la copie). Effacement non vérifié = couche refusée : le message ne peut pas dire
+  // vrai sur un style que QGIS appliquerait malgré nous.
+  if (!qmlAbsent(ctx, cheminQml, dossier)) {
+    return { ok: false, message: `${fichier} : ancien style (.qml) impossible à effacer, couche refusée` };
+  }
   let styleFinal = st.style;
   let qmlFinal = st.qml;
   if (st.contenu !== null) {
     let ecrit = false;
     try { ecrit = peutEcrireCopie(cheminQml, dossier) && ctx.ecrireFichier(cheminQml, st.contenu) === true; } catch (e) { ecrit = false; }
     if (!ecrit) {
+      // Écriture ratée ou interrompue : un .qml tronqué peut rester sur le disque et s'appliquer
+      // (ou faire échouer le chargement). On l'efface ; s'il reste, la couche est refusée.
+      if (!qmlAbsent(ctx, cheminQml, dossier)) {
+        return { ok: false, message: `${fichier} : style (.qml) mal écrit et impossible à effacer, couche refusée` };
+      }
       // La couche reste utilisable, mais sans les couleurs du manuel : on le dit.
       styleFinal = STYLE_DEFAUT;
       qmlFinal = '';
       avertissements.push('style non écrit, couche chargée avec le style par défaut');
     }
-  } else if (typeof ctx.effacerFichier === 'function' && typeof ctx.existe === 'function') {
-    // Pas de .qml pour cette couche : un .qml resté d'un import précédent ne doit pas s'appliquer.
-    try { if (ctx.existe(cheminQml) && peutEcrireCopie(cheminQml, dossier)) ctx.effacerFichier(cheminQml); } catch (e) { /* conservé */ }
   }
   const o = chargerSansPlanter(ctx.ouvrirCouche, rendu + '|layername=' + c.couche, c.couche);
   if (!o.couche) return { ok: false, message: `${fichier} : copie illisible après réécriture, couche refusée` };

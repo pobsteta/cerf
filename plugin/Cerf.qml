@@ -134,7 +134,7 @@ Item {
     return { lisible: lisible, systeme: systeme, nbEntites: nbEntites, emprise: emprise };
   }
 
-  // Reprojette un point (x, y) de EPSG:<epsg> vers EPSG:2154. À vérifier dans QField v4.3.7 :
+  // Reprojette un point (x, y) du système `crs` de la couche (objet rendu tel quel) vers EPSG:2154. À vérifier dans QField v4.3.7 :
   // GeometryUtils.reprojectPoint et CoordinateReferenceSystemUtils.fromDescription. Si l'API
   // manque, on lève : toute erreur de reprojection vaut refus (spec § 4), aucun contournement.
   function reprojeterPoint(x, y, epsg, crs) {

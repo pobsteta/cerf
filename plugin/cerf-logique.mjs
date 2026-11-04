@@ -446,7 +446,13 @@ export function importerZip(ctx) {
     return vide(`${nomZip} : ${e.message}`);
   }
   const couches = couchesDuZip(noms);
-  if (couches.length === 0) return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+  if (couches.length === 0) {
+    // Décision n° 11 : zip réimporté sans aucune couche lisible = import avorté (registre et carte
+    // intacts : ce retour précède le retrait de la décision n° 8).
+    const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
+    if (dejaImporte) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
+    return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+  }
   // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
   // contrôle = tout passe »).
   for (const service of ['ouvrirCouche', 'decrireCouche', 'controlerCouche', 'ajouterALaCarte']) {
@@ -475,7 +481,8 @@ export function importerZip(ctx) {
     const c = couches[i];
     if (Object.prototype.hasOwnProperty.call(vues, c.couche)) {
       // Décision n° 4 : même nom dans deux dossiers du zip, la seconde est refusée.
-      refusees.push({ couche: c.couche, entree: c.entree, raison: `nom de couche en double dans le zip (déjà pris par ${vues[c.couche]})` });
+      const raison = `nom de couche en double dans le zip (déjà pris par ${vues[c.couche]})`;
+      refusees.push({ couche: c.couche, entree: c.entree, raison, message: `${c.entree} : ${raison}` });
       continue;
     }
     vues[c.couche] = c.entree;

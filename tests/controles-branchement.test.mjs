@@ -247,3 +247,24 @@ test('empaquetage : cerf-controles.mjs est dans la liste des fichiers du plugin 
   assert.ok(FICHIERS_PLUGIN.includes('cerf-controles.mjs'));
   assert.match(readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8'), /import "cerf-controles\.mjs" as Controles/);
 });
+
+test('importerZip : doublon de nom -> message commençant par l\'entrée avec son extension', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const { ctx } = contexte({ 'a/UG.geojson': ok, 'b/UG.geojson': ok }, { octets: zip(['a/UG.geojson', 'b/UG.geojson']) });
+  const r = L.importerZip(ctx);
+  assert.ok(r.message.split('\n').some((l) => l.startsWith('b/UG.geojson : nom de couche en double')), r.message);
+});
+
+test('importerZip : zip réimporté sans aucune couche lisible -> import avorté, registre et carte intacts (décision n° 11)', () => {
+  const ok = { charge: true, controle: null, message: null, avertissements: [] };
+  const premier = contexte({ 'a.geojson': ok, 'b.geojson': ok });
+  L.importerZip(premier.ctx);
+  const avant = JSON.stringify(L.lireRegistre(premier.ctx.reglages, ID));
+  const retraits = [];
+  const r = L.importerZip({ ...premier.ctx, octets: zip(['lisez-moi.txt']), retirerDeLaCarte: (n) => retraits.push(n) });
+  assert.equal(r.message, 'aucune couche lisible dans essai.zip, rien changé');
+  assert.deepEqual(r.chargees, []);
+  assert.equal(JSON.stringify(L.lireRegistre(premier.ctx.reglages, ID)), avant);
+  assert.deepEqual(retraits, []);
+  assert.equal(premier.journal.filter((j) => j.startsWith('ajouter')).length, 2);
+});

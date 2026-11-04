@@ -142,3 +142,14 @@ en `/vsizip/`, style par défaut. Plugin en **0.3.0**.
   préfixé ; `.qml` du zip contrôlé avant d'être écrit : XML, racine `<qgis>`, `renderer-v2`).
 - Ce que la 010 ne fait pas : lire les Shapefile et les tables de GeoPackage dans
   `couchesDuZip` (mission 024).
+
+## Arbitrages de Pascal (4 novembre 2026, « oui à tout »)
+
+- `.qml` impossible à écrire : **l'ancien `.qml` voisin est effacé avant l'écriture** ; si
+  l'écriture échoue, la couche est chargée en style par défaut avec l'avertissement prévu, et
+  aucun `.qml` périmé ne peut s'appliquer.
+- **Préversion du plugin 0.3.0 publiée avant la fusion** : la branche `mission/010-styles`
+  déclenche la préversion « plugin-essai », pour l'essai de Pascal sur le Samsung (couleurs de
+  `Serre_EA2026`, réouverture, réimport du même zip).
+- **Confirmé par Pascal (4 novembre) :** ancien `.qml` impossible à effacer = couche refusée
+  (« ancien style (.qml) impossible à effacer, couche refusée »).

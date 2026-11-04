@@ -10,12 +10,15 @@
 #  - le zip est fabriqué ici par outils/zip-essai-manuel.mjs (testé, identique à l'octet à chaque fois),
 #    il n'est pas versé au dépôt ; son sha256 est écrit dans les notes ; le flashcode (PNG et SVG) est
 #    généré puis contrôlé par décodage (outils/flashcodes.mjs, type « manuel »).
+# Mission 035 : la même préversion contient aussi essai-manuel-geojson.zip (mêmes quatre couches, tout en
+# GeoJSON) et son flashcode, contrôlé par décodage ; à prendre tant que le plugin ne lit pas les Shapefile
+# (mission 024).
 # Ce workflow ne touche ni au plugin (release-plugin.yml, « plugin-essai ») ni au projet modèle.
 # Aucune clé, aucun secret : le jeton du dépôt suffit.
 name: Release de l'essai du manuel
 on:
   push:
-    branches: ['main', 'mission/033-essai-manuel']
+    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson']
     paths: ['outils/zip-essai-manuel.mjs', 'outils/flashcodes.mjs', 'tests/recette/essai/zip-ecrire.mjs', '.github/workflows/release-essai-manuel.yml']
   workflow_dispatch:
 permissions:
@@ -50,12 +53,17 @@ jobs:
         run: |
           node outils/flashcodes.mjs generer dist/flashcodes manuel essai
           node outils/flashcodes.mjs verifier dist/flashcodes manuel essai
+          node outils/flashcodes.mjs generer dist/flashcodes-geojson manuel-geojson essai
+          node outils/flashcodes.mjs verifier dist/flashcodes-geojson manuel-geojson essai
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "Zip de démonstration aux noms du manuel : UG, Parcelles, FRT (Shapefile) et un export ProdBois (GeoJSON)."
+            echo "Deux zips de démonstration aux noms du manuel, mêmes quatre couches, mêmes données :"
+            echo
+            echo "- **essai-manuel-geojson.zip** : UG, Parcelles, FRT et l'export ProdBois, tout en **GeoJSON**. **À prendre tant que le plugin ne lit pas les Shapefile (mission 024)** : le plugin actuel ne lit que le GeoJSON."
+            echo "- **essai-manuel.zip** : UG, Parcelles, FRT en Shapefile et l'export ProdBois en GeoJSON. À prendre quand le plugin lira les Shapefile (mission 024)."
             echo
             echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans cerf.qgz avec le plugin Cerf 0.3.0 ou plus (bouton d'import du plugin, sans réseau)."
             echo
@@ -70,9 +78,11 @@ jobs:
             echo "- Les accents (Chêne, Réservée) s'affichent sans caractères abîmés ; aucun message de refus ; les 4 couches sont en lecture seule et reviennent à la réouverture du projet."
             echo
             echo '```'
-            sha256sum dist/essai-manuel.zip
+            sha256sum dist/essai-manuel.zip dist/essai-manuel-geojson.zip
             echo '```'
           } > notes.md
+          echo >> notes.md
+          node outils/flashcodes.mjs notes manuel-geojson essai essai-manuel >> notes.md
           echo >> notes.md
           node outils/flashcodes.mjs notes manuel essai essai-manuel >> notes.md
           # Étiquette fixe : on supprime la release et son étiquette, puis on recrée sur le commit courant.
@@ -83,5 +93,5 @@ jobs:
           if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/essai-manuel" >/dev/null 2>&1; then
             gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/essai-manuel"
           fi
-          gh release create essai-manuel dist/essai-manuel.zip dist/flashcodes/* \
+          gh release create essai-manuel dist/essai-manuel.zip dist/flashcodes/* dist/essai-manuel-geojson.zip dist/flashcodes-geojson/* \
             --target "$GITHUB_SHA" --title "Essai du manuel (données fictives)" --notes-file notes.md --prerelease --latest=false

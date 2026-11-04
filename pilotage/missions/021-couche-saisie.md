@@ -80,3 +80,28 @@ sur l'appareil (zip séparé, consigne de la notice, ou autre : à proposer à P
 ## Comment saura-t-on que ça marche ?
 
 L'agent ajoute des points sur le terrain sans réseau, et ils arrivent au bureau.
+
+## Décisions de Pascal sur le plan (3 novembre 2026)
+
+Plan : `outils/PLAN-021.md` (e3bdb88).
+
+1. **Mise à jour sans écrasement : deux zips** (option A). `cerf-projet-modele.zip` ne
+   contient que `cerf.qgz` (mise à jour) ; `cerf-projet-modele-premiere-installation.zip`
+   contient `cerf.qgz` et `saisie.gpkg` vide. Les appareils déjà en service prennent une
+   fois le zip de première installation.
+2. **`saisie.gpkg` versé** à la racine du dépôt, régénéré par `outils/projet-modele.mjs`.
+3. **Publication à part** : workflow `release-projet-modele.yml` (préversion d'essai sur
+   `mission/021-couche-saisie`, release sur `main`) ; le décideur de la 008 n'est pas touché.
+   Harnais étendu à ce workflow et au script des zips (`outils/zips-projet-modele.mjs`) et à
+   ses tests.
+4. **Couche non retirable** dans QField.
+5. Retenus par défaut (propositions du plan, sans objection) : R-tree omis (à rajouter si
+   QGIS s'en plaint) ; `essence` et `remarque` en `TEXT` sans longueur, `diametre` sans
+   plafond ; la notice reste à la mission 018 (le dev livre trois phrases à reprendre).
+6. **Après la relecture de 5febe1c (3 novembre 2026)** : la release du projet modèle ne doit
+   jamais devenir « latest » (`--latest=false`), pour garder
+   `releases/latest/download/cerf.zip` (URL stable du plugin, mission 008). **URL stable du
+   projet modèle : étiquette fixe `projet-modele`**, écrasée à chaque version sur `main`
+   (`…/releases/download/projet-modele/cerf-projet-modele.zip` et
+   `…-premiere-installation.zip`). Test de la mission 006 adapté par le dev (arbre à trois
+   feuilles, « Saisie terrain » en tête) : accepté par Pascal.

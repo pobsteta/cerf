@@ -4,6 +4,8 @@
 //   - docs/spec.md § 3.3 : cerf_id est un UUID, écrit par QGIS dans le projet ; § 3.4 : zoom max, « © IGN », aucune clé ;
 //   - docs/referentiels/fonds-ign.md § 1 (gabarits XYZ, mesurés le 2 novembre 2026) et § 2 (zoom 0 à 19) ;
 //   - docs/adr/0002-fonds-ign-xyz.md et son amendement du 2 novembre 2026 (PM gardé, zoom 19, « © IGN »).
+// Amendement du 3 novembre 2026 (Pascal) : les contrôles « deux fonds XYZ, zoom 0 à 19, © IGN » portent sur les couches du groupe
+// « Fonds de carte », non sur toutes les couches du projet (la couche « Saisie terrain » de la mission 021 est hors du groupe).
 // Emplacement : cerf.qgz à la racine du dépôt. La fiche 006 ne donne pas de chemin : CHEMIN ci-dessous
 // est une hypothèse du testeur, à confirmer par l'orchestrateur.
 // ROUGE ATTENDU tant que cerf.qgz n'existe pas (mission 006) : chaque test « cerf.qgz » échoue avec le message
@@ -87,6 +89,9 @@ function analyser(buf) {
   const valeurs = (s) => [...s.matchAll(/<value>([\s\S]*?)<\/value>/g)].map((m) => dexml(m[1]));
   const lesVals = valeurs(vals);
   const variables = valeurs(noms).map((n, i) => [n, lesVals[i]]);
+  // Fonds de carte = les couches du groupe « Fonds de carte » (la couche « Saisie terrain », mission 021, est hors du groupe).
+  const groupe = xml.match(/<layer-tree-group\b[^>]*\bname="Fonds de carte"[^>]*>([\s\S]*?)<\/layer-tree-group>/)?.[1] ?? '';
+  const idsFonds = [...groupe.matchAll(/<layer-tree-layer\b[^>]*>/g)].map((m) => m[0].match(/\bid="([^"]*)"/)?.[1]);
   const arbre = [...xml.matchAll(/<layer-tree-layer\b[^>]*>/g)].map((m) => m[0].match(/\bid="([^"]*)"/)?.[1]);
   return {
     xml,
@@ -98,6 +103,7 @@ function analyser(buf) {
       id: champ(b, 'id'), nom: champ(b, 'layername'), fournisseur: champ(b, 'provider'),
       source: champ(b, 'datasource') ?? '', brut: b,
     })),
+    get fonds() { return this.couches.filter((c) => idsFonds.includes(c.id)); },
   };
 }
 // Source lue comme une chaîne de requête : aucun ordre imposé, paramètres inconnus tolérés
@@ -129,10 +135,10 @@ const verifs = {
     if (!UUID.test(v[0][1] ?? '')) return [`cerf_id = « ${v[0][1]} », pas un UUID`];
     return v[0][1] === UUID_NUL ? ["cerf_id est l'UUID nul : à générer par QGIS"] : [];
   },
-  'exactement deux couches, toutes XYZ (aucune donnée métier)': (p) => {
+  'exactement deux fonds XYZ dans le groupe « Fonds de carte »': (p) => {
     const d = [];
-    if (p.couches.length !== 2) d.push(`${p.couches.length} couche(s), attendu 2`);
-    for (const c of p.couches) {
+    if (p.fonds.length !== 2) d.push(`${p.fonds.length} couche(s) dans le groupe « Fonds de carte », attendu 2`);
+    for (const c of p.fonds) {
       const s = lireSource(c.source);
       for (const k of s?.doublons ?? []) d.push(`couche « ${c.nom} » : paramètre ${k} en double`);
       if (c.fournisseur !== 'wms' || !s || s.type !== 'xyz') d.push(`couche « ${c.nom} » : source « ${c.source.slice(0, 60)} », attendu type=xyz (fournisseur wms)`);
@@ -140,18 +146,23 @@ const verifs = {
     return d;
   },
   'les deux fonds attendus, gabarit XYZ exact (PM, {z}/{y}/{x}, format)': (p) => {
-    const urls = p.couches.map((c) => lireSource(c.source)?.url);
+    const urls = p.fonds.map((c) => lireSource(c.source)?.url);
     return FONDS.filter((f) => !urls.includes(f.url)).map((f) => `fond ${f.nom} : URL XYZ attendue absente ou différente : ${f.url}`)
       .concat(urls.filter((u) => u && !FONDS.some((f) => f.url === u)).map((u) => `URL inattendue : ${u}`));
   },
-  'zoom 0 à 19 sur chaque fond': (p) => p.couches.flatMap((c) => {
+  'zoom 0 à 19 sur chaque fond': (p) => p.fonds.flatMap((c) => {
     const s = lireSource(c.source) ?? {}; const d = [];
     if (s.zmax !== ZMAX) d.push(`« ${c.nom} » : zmax = ${s.zmax}, attendu ${ZMAX}`);
     if (s.zmin !== ZMIN) d.push(`« ${c.nom} » : zmin = ${s.zmin}, attendu ${ZMIN}`);
     return d;
   }),
-  'attribution « © IGN » sur chaque fond': (p) => p.couches.filter((c) => !c.brut.includes(ATTRIBUTION)).map((c) => `« ${c.nom} » : « ${ATTRIBUTION} » absent de la couche`),
+  'attribution « © IGN » sur chaque fond': (p) => p.fonds.filter((c) => !c.brut.includes(ATTRIBUTION)).map((c) => `« ${c.nom} » : « ${ATTRIBUTION} » absent de la couche`),
   "les deux fonds sont dans l'arbre des couches": (p) => p.couches.filter((c) => !p.arbre.includes(c.id)).map((c) => `« ${c.nom} » (${c.id}) absent du layer-tree`),
+  'aucune couche raster ou wms hors du groupe « Fonds de carte » (seules les vectorielles y sont admises)': (p) => {
+    const dans = new Set(p.fonds.map((c) => c.id));
+    return p.couches.filter((c) => !dans.has(c.id) && (/<maplayer\b[^>]*\btype="raster"/.test(c.brut) || /^(wms|wmts|gdal|xyz)$/i.test(c.fournisseur ?? '')))
+      .map((c) => `couche « ${c.nom} » (${c.id}) : raster ou wms hors du groupe « Fonds de carte »`);
+  },
   "aucune clé d'API dans le projet": (p) => (/(apikey|api_key|[?&;]key=|[?&;]token=)/i.test(decoder(dexml(p.xml))) ? ['une clé ou un jeton apparaît dans le projet'] : []),
 };
 const defauts = (buf) => { const p = analyser(buf); return Object.entries(verifs).flatMap(([n, f]) => f(p).map((d) => `${n} : ${d}`)); };
@@ -162,14 +173,17 @@ const encode = (u) => encodeURIComponent(u).replace(/%7B/g, '{').replace(/%7D/g,
 const couche = (i, f, o = {}) => `<maplayer type="raster"><id>fond_${i}</id><layername>${f.nom}</layername><provider encoding="">wms</provider>` +
   `<datasource>${(o.source ?? `type=xyz&url=${encode(o.url ?? f.url)}&zmax=${o.zmax ?? 19}&zmin=0`).replace(/&/g, '&amp;')}</datasource>` +
   `<srs><spatialrefsys><authid>EPSG:3857</authid></spatialrefsys></srs><resourceMetadata><rights>${o.rights ?? '© IGN'}</rights></resourceMetadata></maplayer>`;
+// Couche vectorielle hors du groupe « Fonds de carte » (mission 021) : ni XYZ, ni zoom, ni attribution.
+const COUCHE_SAISIE = '<maplayer type="vector" geometry="Point"><id>saisie_0</id><layername>Saisie terrain</layername><provider encoding="UTF-8">ogr</provider>' +
+  '<datasource>./saisie.gpkg|layername=saisie_terrain</datasource><srs><spatialrefsys><authid>EPSG:2154</authid></spatialrefsys></srs></maplayer>';
 function projet(o = {}) {
   const fonds = o.fonds ?? FONDS;
   const noms = o.sansId ? '' : `<value>${o.nomVar ?? 'cerf_id'}</value>`;
   const vals = o.sansId ? '' : `<value>${o.valeur ?? UUID_ESSAI}</value>`;
   return `<!DOCTYPE qgis><qgis version="3.34"><projectCrs><spatialrefsys><srid>${o.srid ?? 2154}</srid><authid>${o.authid ?? 'EPSG:2154'}</authid></spatialrefsys></projectCrs>` +
-    `<layer-tree-group>${fonds.map((f, i) => `<layer-tree-layer id="fond_${i}" name="${f.nom}"/>`).join('')}</layer-tree-group>` +
+    `<layer-tree-group>${o.horsGroupe ? '<layer-tree-layer id="hors_0" name="Fond égaré"/>' : ''}${o.saisie ? '<layer-tree-layer id="saisie_0" name="Saisie terrain"/>' : ''}<layer-tree-group name="${o.nomGroupe ?? 'Fonds de carte'}">${fonds.map((f, i) => `<layer-tree-layer id="fond_${i}" name="${f.nom}"/>`).join('')}</layer-tree-group></layer-tree-group>` +
     `<mapcanvas name="theMapCanvas"><destinationsrs><spatialrefsys><srid>2154</srid><authid>${o.canvas ?? 'EPSG:2154'}</authid></spatialrefsys></destinationsrs></mapcanvas>` +
-    `<projectlayers>${fonds.map((f, i) => couche(i, f, i === 0 ? o.c0 : undefined)).join('')}</projectlayers>` +
+    `<projectlayers>${fonds.map((f, i) => couche(i, f, i === 0 ? o.c0 : undefined)).join('')}${o.saisie ? COUCHE_SAISIE : ''}${o.horsGroupe ? couche('hors', { nom: 'Fond égaré', url: FONDS[0].url }).replace('<id>fond_hors</id>', '<id>hors_0</id>') : ''}</projectlayers>` +
     `<properties><Variables><variableNames type="QStringList">${noms}</variableNames><variableValues type="QStringList">${vals}</variableValues></Variables></properties></qgis>`;
 }
 const qgz = (xml) => ecrireZip({ 'cerf.qgs': xml });
@@ -177,6 +191,24 @@ const qgz = (xml) => ecrireZip({ 'cerf.qgs': xml });
 // --- Garde-fous : la vérification accepte le juste, refuse chaque faute -------------------------------------
 test('garde-fou : un projet conforme (fixture) ne donne aucun défaut', () => {
   assert.deepEqual(defauts(qgz(projet())), []);
+});
+test('garde-fou : une couche vectorielle hors du groupe « Fonds de carte » ne fait échouer aucun contrôle', () => {
+  assert.deepEqual(defauts(qgz(projet({ saisie: true }))), []);
+});
+test('garde-fou : une couche raster (GeoTIFF, fournisseur gdal) à la racine est refusée', () => {
+  const xml = projet().replace('</projectlayers>', '<maplayer type="raster"><id>tif_0</id><layername>MNT</layername><provider encoding="">gdal</provider><datasource>./mnt.tif</datasource></maplayer></projectlayers>')
+    .replace('<layer-tree-group name=', '<layer-tree-layer id="tif_0" name="MNT"/><layer-tree-group name=');
+  assert.ok(defauts(qgz(xml)).some((x) => x.includes('hors du groupe')));
+});
+test('garde-fou : la couche vectorielle hors du groupe ne compte pas parmi les deux fonds (le groupe garde exactement deux fonds)', () => {
+  const p = analyser(qgz(projet({ saisie: true })));
+  assert.equal(p.couches.length, 3);
+  assert.deepEqual(p.fonds.map((c) => c.nom), FONDS.map((f) => f.nom));
+});
+test('garde-fou : une couche vectorielle ajoutée DANS le groupe est refusée (le groupe ne contient que deux fonds XYZ)', () => {
+  const xml = projet({ saisie: true }).replace('<layer-tree-layer id="saisie_0" name="Saisie terrain"/>', '').replace('</layer-tree-group></layer-tree-group>', '<layer-tree-layer id="saisie_0" name="Saisie terrain"/></layer-tree-group></layer-tree-group>');
+  const d = defauts(qgz(xml));
+  assert.ok(d.some((x) => x.includes('exactement deux fonds')), JSON.stringify(d));
 });
 const enc = (f) => encode(f.url);
 test('garde-fou : projet conforme, « http-header:referer=& » en tête de source', () => {
@@ -206,10 +238,12 @@ const fautes = {
   'jeu PM_0_19 au lieu de PM': [{ c0: { url: FONDS[0].url.replace('TILEMATRIXSET=PM&', 'TILEMATRIXSET=PM_0_19&') } }, 'gabarit XYZ exact'],
   'lignes et colonnes inversées': [{ c0: { url: FONDS[0].url.replace('TILEROW={y}&TILECOL={x}', 'TILEROW={x}&TILECOL={y}') } }, 'gabarit XYZ exact'],
   'format PNG au lieu de JPEG sur la BD ORTHO': [{ fonds: [FONDS[0], { ...FONDS[1], url: FONDS[1].url.replace('image/jpeg', 'image/png') }] }, 'gabarit XYZ exact'],
-  'couche WMTS au lieu de XYZ': [{ c0: { source: 'contextualWMSLegend=0&crs=EPSG:3857&format=image/png&layers=X&tileMatrixSet=PM&url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26REQUEST%3DGetCapabilities' } }, 'toutes XYZ'],
+  'couche WMTS au lieu de XYZ': [{ c0: { source: 'contextualWMSLegend=0&crs=EPSG:3857&format=image/png&layers=X&tileMatrixSet=PM&url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26REQUEST%3DGetCapabilities' } }, 'attendu type=xyz'],
+  'groupe « Fonds de carte » absent (groupe mal nommé)': [{ nomGroupe: 'Fonds' }, 'exactement deux fonds'],
+  'fond wms placé à la racine, hors du groupe': [{ horsGroupe: true }, 'hors du groupe'],
   'attribution absente': [{ c0: { rights: '' } }, 'attribution'],
-  'un seul fond': [{ fonds: [FONDS[0]] }, 'exactement deux couches'],
-  'une troisième couche': [{ fonds: [...FONDS, { nom: 'SCAN 25', url: GABARIT('GEOGRAPHICALGRIDSYSTEMS.MAPS', 'image/jpeg') }] }, 'exactement deux couches'],
+  'un seul fond': [{ fonds: [FONDS[0]] }, 'exactement deux fonds'],
+  'une troisième couche': [{ fonds: [...FONDS, { nom: 'SCAN 25', url: GABARIT('GEOGRAPHICALGRIDSYSTEMS.MAPS', 'image/jpeg') }] }, 'exactement deux fonds'],
   "clé encodée dans l'URL (%26key%3DSECRET)": [{ c0: { url: FONDS[0].url + '&key=SECRET', source: `type=xyz&url=${encode(FONDS[0].url)}%26key%3DSECRET&zmax=19&zmin=0` } }, 'aucune clé'],
   'type=wmts caché en fin de source': [{ c0: { source: `type=xyz&url=${encode(FONDS[0].url)}&zmax=19&zmin=0&type=wmts` } }, 'paramètre type en double'],
   'url en double après zmin': [{ c0: { source: `type=xyz&url=${encode(FONDS[0].url)}&zmax=19&zmin=0&url=${encode(FONDS[1].url)}` } }, 'paramètre url en double'],

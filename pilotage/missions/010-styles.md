@@ -119,3 +119,6 @@ trouverQml : inchangé.
 - Décisions de Pascal du 4 novembre 2026 (spec § 5) : nom de **table** pour un GeoPackage ;
   `.qml` vide ou illisible ignoré, règle par nom appliquée avec l'avertissement « .qml
   illisible, style du manuel appliqué ».
+- Décisions de Pascal du 4 novembre 2026 (suite) : un point nommé selon un motif UG avec
+  `essence` et `diametre` prend le style **ProdBois** sans avertissement ; `essence` et
+  `diametre` reconnus sans tenir compte de la casse **ni des accents** (`diamètre`).

@@ -54,10 +54,6 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · validée, lancée (plan)
-  - Homme : `dev` (opus)
-  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
-  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
 - [009-tests-styles](missions/009-tests-styles.md) · depuis le cycle 6 · lancée au cycle 6
   - Homme : `testeur` (sonnet)
   - Mission : Tests des règles de style — cycle prévu 4
@@ -65,6 +61,10 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
+  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
 - [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · essai réussi sur le Samsung
   - Homme : `dev` (opus)
   - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin

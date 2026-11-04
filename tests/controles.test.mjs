@@ -21,7 +21,7 @@
 //       reprojeter est appelé MÊME en EPSG:2154 (identité côté test, vraie transformation côté QGIS) et pour
 //       un raster ; il n'est pas appelé quand un contrôle 1, 2 ou 3 refuse, ni pour une couche vide (4).
 //     Messages (spec § 4, « Nom de la couche dans les messages », Pascal, 4 novembre 2026) : chaque refus et
-//       chaque avertissement commence par `couche.nom + ' : '` (ex. « FRT : … »). Égalité stricte quand la spec
+//       chaque avertissement commence par `couche.nom + ' : '` (ex. « FRT.shp : … »). Égalité stricte quand la spec
 //       donne le texte entier ; pour « illisible » et « couche vide » : préfixe + mot ; pour l'erreur de
 //       reprojection (exception, valeur non finie, null) la spec ne donne aucun texte : préfixe + message non vide.
 //     resultat = { charge: boolean, controle: 1..5 | null (numéro du contrôle qui refuse),

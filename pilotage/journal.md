@@ -314,3 +314,4 @@
 2026-11-04 · Pascal · essai du retrait sur le Samsung (plugin 0.3.4) : FRT retiré, FRT.gpkg et FRT.qml disparus de cerf-imports/essai-manuel-geojson/ : mission 031 confirmée sur l'appareil.
 2026-11-04 · Pascal · 039 · « ajoute dans le readme comment installer le projet, le plugin et charger un zip » : mission 039 (archiviste) ouverte. Kanban : 037 et 038 en Terminé.
 2026-11-04 · orchestrateur · release plugin-v0.3.4 publiée « latest » (21:36 UTC). Kanban : 037 et 038 en Terminé (fait au commit précédent).
+2026-11-04 · archiviste · 039 · README.md à la racine (c42d97b, PR #37) : installer le projet, le plugin, charger un zip ; limité au GeoJSON du plugin 0.3.4 ; plafond de 10 Mo sur le zip entier ; test des adresses ; 686 tests verts. Écarts spec/code signalés : cases à cocher de la spec § 1 absentes du plugin (tout est chargé) ; bouton « Ajouter un zip » dans le panneau ; références de lignes périmées en spec § 4. Relecture lancée.

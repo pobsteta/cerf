@@ -18,7 +18,7 @@
 name: Release de l'essai du manuel
 on:
   push:
-    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson']
+    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson', 'mission/036-notes-essai-manuel']
     paths: ['outils/zip-essai-manuel.mjs', 'outils/flashcodes.mjs', 'tests/recette/essai/zip-ecrire.mjs', '.github/workflows/release-essai-manuel.yml']
   workflow_dispatch:
 permissions:
@@ -65,7 +65,7 @@ jobs:
             echo "- **essai-manuel-geojson.zip** : UG, Parcelles, FRT et l'export ProdBois, tout en **GeoJSON**. **À prendre tant que le plugin ne lit pas les Shapefile (mission 024)** : le plugin actuel ne lit que le GeoJSON."
             echo "- **essai-manuel.zip** : UG, Parcelles, FRT en Shapefile et l'export ProdBois en GeoJSON. À prendre quand le plugin lira les Shapefile (mission 024)."
             echo
-            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans cerf.qgz avec le plugin Cerf 0.3.0 ou plus (bouton d'import du plugin, sans réseau)."
+            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans cerf.qgz avec le plugin Cerf 0.3.2 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
             echo
             echo "Version du $(date -u +%Y-%m-%d), commit ${GITHUB_SHA}."
             echo
@@ -84,7 +84,8 @@ jobs:
           echo >> notes.md
           node outils/flashcodes.mjs notes manuel-geojson essai essai-manuel >> notes.md
           echo >> notes.md
-          node outils/flashcodes.mjs notes manuel essai essai-manuel >> notes.md
+          # Le titre « Flashcodes de l'essai (préversion) » n'est écrit qu'une fois (mission 036) : on retire celui du second bloc.
+          node outils/flashcodes.mjs notes manuel essai essai-manuel | tail -n +3 >> notes.md
           # Étiquette fixe : on supprime la release et son étiquette, puis on recrée sur le commit courant.
           if gh release view essai-manuel >/dev/null 2>&1; then
             gh release delete essai-manuel --cleanup-tag --yes

@@ -283,7 +283,7 @@ const wf = readFileSync(join(RACINE, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché sur la branche de la mission et sur main, étiquette fixe essai-manuel, jamais latest', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?\]/);
   assert.match(wfCode, /concurrency:\n\s+group: release-essai-manuel\n\s+cancel-in-progress: false/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\*/);
   assert.match(wfCode, /--prerelease --latest=false/);
@@ -294,6 +294,21 @@ test('workflow : déclenché sur la branche de la mission et sur main, étiquett
   assert.doesNotMatch(wfCode, /plugin-essai|plugin-v|projet-modele/);
 });
 
-test('workflow : les notes disent données fictives, plugin 0.3.0 ou plus, et les couleurs de la spec § 5', () => {
-  for (const motif of [/fictives/, /plugin Cerf 0\.3\.0/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /cerf\.qgz/]) assert.match(wf, motif);
+test('workflow : les notes disent données fictives, plugin 0.3.2 ou plus, et les couleurs de la spec § 5', () => {
+  for (const motif of [/fictives/, /plugin Cerf 0\.3\.2 ou plus/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /cerf\.qgz/]) assert.match(wf, motif);
+});
+
+test('mission 036 : notes « 0.3.2 ou plus » avec sa raison, jamais 0.3.0 ; un seul titre de flashcodes, aucun flashcode perdu', () => {
+  assert.match(wf, /plugin Cerf 0\.3\.2 ou plus/);
+  assert.match(wf, /Avant la 0\.3\.2, toute couche était refusée/);
+  assert.doesNotMatch(wf, /0\.3\.0 ou plus/);
+  // Le workflow assemble les deux blocs de notes ; on rejoue l'assemblage.
+  const bloc = (type) => notes(type, 'essai', 'essai-manuel');
+  const second = bloc('manuel').split('\n').slice(2).join('\n');
+  assert.match(wfCode, /notes manuel essai essai-manuel \| tail -n \+3 >> notes\.md/);
+  assert.match(wfCode, /notes manuel-geojson essai essai-manuel >> notes\.md/);
+  const total = bloc('manuel-geojson') + '\n' + second;
+  assert.equal(total.split("Flashcodes de l'essai (préversion)").length - 1, 1);
+  assert.match(total, /flashcode-essai-manuel\.png/);
+  assert.match(total, /flashcode-essai-manuel-geojson\.png/);
 });

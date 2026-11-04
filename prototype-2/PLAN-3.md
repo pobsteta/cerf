@@ -124,3 +124,13 @@ sans écran d'erreur, et la décision de la 026 se prend sur ces réponses.
 ## Ligne de journal proposée
 
 `2026-11-04 · dev · 027 · étape 1 : plan rendu (prototype-2/PLAN-3.md), aucun code ; saveVectorLayerAs lue sur les sources 4.3.7 : rend le chemin ou "", écrase, GPKG par extension ou "GPKG", crée le dossier sans garde de chemin, ne reprojette pas, NoSymbology, synchrone ; ecrireZip sait déjà deflater ; sept questions à Pascal.`
+
+## Réalisation (étape 2) : écarts au plan, dits
+
+- Le bouton 12 enchaîne **quatre** couches (Shapefile, GeoJSON, puis les **deux** tables du GeoPackage) dans un seul dossier `q3-<N>` ; le 9b (2 000 entités) n'y est pas.
+- Le 9b ne style pas et n'ajoute pas la copie à la carte (temps lu seul, comme prévu) ; il charge la copie pour la compter.
+- Le texte du `.qml` (`qmlStyle`, `STYLES`) est passé de `fabriquer-essais.mjs` à `essai-logique.mjs` : le plugin l'écrit lui-même ; les octets du `.qml` et de l'ancien zip sont inchangés (sha256 testé).
+- La garde d'écriture est `peutEcrireQ3` (`.gpkg` et `.qml` dans `cerf-imports/q3-<N>/`) ; celle d'effacement `peutEffacerQ3` (annexes du même dossier, jamais le zip). `peutEffacerQml` du prototype n° 2 est inchangée.
+- Les accents sont relus par `createFeatureIterator` puis `attribute("nom")` ; si cet appel échoue, l'écran le dit et le protocole donne le repli (fiche de l'entité).
+- Aucun essai de chemin non inscriptible (réponse 6 de Pascal). Version du plugin : 0.2.0.
+- Le contrôle `ogrinfo` du workflow bloque sur les fichiers décompressés et ne bloque pas sur la lecture en `/vsizip/` (c'est ce que l'essai met à l'épreuve) : le résultat est dit dans les notes.

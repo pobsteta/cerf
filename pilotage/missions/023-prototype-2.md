@@ -128,3 +128,26 @@ termes exacts de l'écran.
 **Décisions de Pascal (4 novembre 2026) :** question 5 « sans objet » pour une couche dont le
 style n'a pas été pris aux questions 1 ou 3 ; une capture lisible de l'écran d'erreur remplace
 la recopie ; `essai-q3.gpkg` sert seulement au contrôle QGIS sur le PC (le protocole le dit).
+
+## Remarques à reprendre (aller-retour 2/3, 4 novembre 2026)
+
+**Relecteur : prêt pour Pascal**, avec deux mineurs à reprendre ici :
+1. Protocole, question 5, ligne 1 : « si ce n'est pas 2 sur 2 par la source : s'arrêter,
+   capture » (la lecture de `layer.source` en QML n'est pas prouvée).
+2. Notes de la préversion : y écrire le sha du commit empaqueté (l'étiquette `prototype-2`
+   reste sur 35fce3b avec `upload --clobber`), ou déplacer l'étiquette.
+3. (Pour plus tard, non à faire ici) : si le plugin doit un jour effacer des `.qml`, l'ADR
+   0007 devra le dire.
+
+**Testeur (protocole) :** cinq précisions :
+1. Questions 1 et 3 : si la case 1 n'est pas cochée (couche non chargée), répondre « essai
+   raté » (pas « non »), avec la capture de l'écran d'erreur.
+2. Question 2 : même consigne « essai raté » si rien ne s'affiche ou si la couche ne charge pas.
+3. Question 5 : la règle se lit sur la ligne de chaque couche (« rechargée depuis le disque »
+   ou « déjà dans le projet, non rechargée »), pas sur n global.
+4. Question 7, case 4 : ajouter « bornes NaN ou infinies » aux formes d'échec qui valent refus.
+5. Zoom : repli « appui long sur la couche dans le panneau des couches, puis zoomer sur la
+   couche » ; recherche par coordonnées : taper deux entiers séparés par une espace
+   (« 1051113 6840462 »), sans virgule ni « m ». Installation du plugin : déjà éprouvée par
+   Pascal par URL (prototype n° 1, Cerf 0.1.1) ; ajouter seulement « si l'entrée n'existe
+   pas, le dire avant d'aller plus loin ».

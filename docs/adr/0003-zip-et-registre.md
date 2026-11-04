@@ -1,7 +1,7 @@
 # ADR 0003 — Lecture dans le zip et registre des couches
 
 - **Date :** 2026-11-02
-- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3)
+- **Statut :** **acceptée par Pascal le 2 novembre 2026** (porte n° 1) — arbitrages de Pascal reportés (brief, arbitrage 6 ; spec § 9, n° 1 à 3) ; **amendée par l'ADR 0008 (4 novembre 2026)**
 - **Proposée par :** Claude (orchestrateur), d'après la critique du `contradicteur`
 - **Tranchée par :** Pascal
 
@@ -97,9 +97,8 @@ Ce qui précède reste lisible tel quel ; ce qui change :
 - **Copie du zip** : **gardée** dans `cerf-imports/` (réparation, réimport). La phrase
   « pas de décompression : pas de double stockage » ne vaut plus pour les vecteurs : la
   place sur l'appareil est doublée (zip et fichiers réécrits).
-- **Registre** : pour une couche vecteur, le **chemin de la copie réécrite** (relatif au
-  dossier des copies) remplace `chemin_vsi` ; le champ `zip` est **gardé**. Un GeoTIFF garde
-  son `chemin_vsi`.
+- **Registre** (schéma identique à la spec § 3.3) : `{ zip, couche, chemin: "<zip sans .zip>/<couche>.gpkg", style, ajoutee_le, qml? }` pour un vecteur ; un GeoTIFF et les anciennes entrées gardent `chemin_vsi`. Le champ `zip` est
+  **gardé** ; les chemins sont relatifs au dossier des copies.
 - **Valeur sacrifiée ajoutée** : la fidélité au format d'origine (un Shapefile devient un
   GeoPackage).
 - La mission 026 (décompresseur JavaScript) est abandonnée.

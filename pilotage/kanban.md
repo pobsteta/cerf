@@ -20,6 +20,10 @@ _Modèle de carte :_
 
 ## Bac à sable
 
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · fiche à valider
+  - Homme : `dev` (opus)
+  - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
+  - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
 - [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente

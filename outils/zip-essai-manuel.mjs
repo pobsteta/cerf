@@ -4,7 +4,7 @@
 // Fontainebleau (France métropolitaine : elles passent le contrôle de vraisemblance, spec § 4).
 //
 // Contenu : UG, Parcelles, FRT (Shapefile complet : .shp .shx .dbf .prj .cpg UTF-8, polygones
-// emboîtés FRT dans Parcelles dans UG) et un export ProdBois (GeoJSON, membre `crs` = CRS84,
+// fictifs, posés côte à côte, sans emboîtement) et un export ProdBois (GeoJSON, membre `crs` = CRS84,
 // points avec `essence` et `diametre`). Tous les fichiers sont compressés (deflate).
 //
 // Usage : node outils/zip-essai-manuel.mjs <dossier-de-sortie>   (écrit essai-manuel.zip ; rien dans le dépôt)
@@ -37,10 +37,10 @@ export function lambert93VersWgs84(x, y) {
 // Rectangle [xmin, ymin, xmax, ymax] -> anneau extérieur fermé, sens HORAIRE (convention du Shapefile).
 const anneau = ([x0, y0, x1, y1]) => [[x0, y0], [x0, y1], [x1, y1], [x1, y0], [x0, y0]];
 
-// Emboîtement : chaque FRT est dans une parcelle, chaque parcelle dans une UG.
+// Trois couches fictives, côte à côte (UG au sud, Parcelles au centre, FRT au nord), sans hiérarchie entre elles.
 export const UG = [
-  { CODE_UG: 'UG01', LIBELLE: 'Chênaie sessile', rect: [674000, 6811000, 674800, 6811600] },
-  { CODE_UG: 'UG02', LIBELLE: 'Futaie irrégulière', rect: [674800, 6811000, 675600, 6811600] },
+  { CODE_UG: 'UG01', LIBELLE: 'Chênaie sessile', rect: [674000, 6810200, 674800, 6810800] },
+  { CODE_UG: 'UG02', LIBELLE: 'Futaie irrégulière', rect: [674800, 6810200, 675600, 6810800] },
 ];
 export const PARCELLES = [
   { CODE_PARC: '12', LIBELLE: 'Parcelle 12, en régénération', rect: [674050, 6811050, 674400, 6811550] },
@@ -49,9 +49,9 @@ export const PARCELLES = [
   { CODE_PARC: '15', LIBELLE: 'Parcelle 15', rect: [675200, 6811050, 675550, 6811550] },
 ];
 export const FRT = [
-  { CODE_FRT: 'FRT01', LIBELLE: 'Fréquentation touristique, sentier', rect: [674100, 6811100, 674300, 6811300] },
-  { CODE_FRT: 'FRT02', LIBELLE: 'Fréquentation touristique, aire d\'accueil', rect: [674900, 6811100, 675100, 6811300] },
-  { CODE_FRT: 'FRT03', LIBELLE: 'Fréquentation touristique, carrefour', rect: [675250, 6811250, 675450, 6811450] },
+  { CODE_FRT: 'FRT01', LIBELLE: "Zone d'essai é 1", rect: [674100, 6811700, 674300, 6811900] },
+  { CODE_FRT: 'FRT02', LIBELLE: "Zone d'essai é 2", rect: [674900, 6811700, 675100, 6811900] },
+  { CODE_FRT: 'FRT03', LIBELLE: "Zone d'essai é 3", rect: [675250, 6811700, 675450, 6811900] },
 ];
 
 // Dix tiges (Lambert 93), dans les parcelles 12 et 14 ; essence = code (spec § 3.2), diamètre entier (cm).

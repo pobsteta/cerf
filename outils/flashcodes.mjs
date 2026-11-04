@@ -7,8 +7,8 @@
 //
 // Usage :
 //   node outils/flashcodes.mjs generer  <dossier> <plugin|projet|manuel> <stable|essai>   PNG + SVG dans <dossier>
-//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet> <stable|essai>   décode et compare
-//   node outils/flashcodes.mjs notes    <plugin|projet> <stable|essai> <étiquette> bloc Markdown des notes
+//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet|manuel> <stable|essai>   décode et compare
+//   node outils/flashcodes.mjs notes    <plugin|projet|manuel> <stable|essai> <étiquette> bloc Markdown des notes
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

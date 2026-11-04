@@ -125,17 +125,18 @@ test('chaque Shapefile est complet : .prj Lambert 93, .cpg UTF-8, .shx et .dbf c
   }
 });
 
-test('emboîtement : chaque FRT est dans une parcelle, chaque parcelle dans une UG', () => {
+test('couches côte à côte : aucune n\'est dans une autre (pas d\'emboîtement, pas de hiérarchie)', () => {
   const boite = (a) => ({ xmin: Math.min(...a.map((p) => p[0])), xmax: Math.max(...a.map((p) => p[0])), ymin: Math.min(...a.map((p) => p[1])), ymax: Math.max(...a.map((p) => p[1])) });
-  const dans = (p, g) => p.xmin >= g.xmin && p.xmax <= g.xmax && p.ymin >= g.ymin && p.ymax <= g.ymax;
-  const [ug, parc, frt] = ['UG', 'Parcelles', 'FRT'].map((b) => lireShp(zip, b).anneaux.map(boite));
-  for (const p of parc) assert.ok(ug.some((u) => dans(p, u)), `parcelle ${JSON.stringify(p)} hors UG`);
-  for (const f of frt) assert.ok(parc.some((p) => dans(f, p)), `FRT ${JSON.stringify(f)} hors parcelle`);
+  const sep = (p, g) => p.xmax <= g.xmin || g.xmax <= p.xmin || p.ymax <= g.ymin || g.ymax <= p.ymin;
+  const c = Object.fromEntries(['UG', 'Parcelles', 'FRT'].map((b) => [b, lireShp(zip, b).anneaux.map(boite)]));
+  for (const [x, y] of [['UG', 'Parcelles'], ['UG', 'FRT'], ['Parcelles', 'FRT']]) for (const p of c[x]) for (const g of c[y]) assert.ok(sep(p, g), `${x} et ${y} se recouvrent`);
 });
 
 test('accents : les valeurs du .dbf (UTF-8, déclaré par le .cpg) et du GeoJSON sont lues sans corruption', () => {
   assert.equal(lireShp(zip, 'UG').lignes[0].LIBELLE, 'Chênaie sessile');
   assert.equal(lireShp(zip, 'Parcelles').lignes[0].LIBELLE, 'Parcelle 12, en régénération');
+  assert.equal(lireShp(zip, 'FRT').lignes[0].LIBELLE, "Zone d'essai é 1");
+  for (const l of lireShp(zip, 'FRT').lignes) assert.ok(!/fr[ée]quentation|touristique/i.test(l.LIBELLE), 'aucun libellé ne développe le sigle FRT');
   const g = JSON.parse(zip[NOM_PRODBOIS].donnees.toString('utf8'));
   assert.ok(g.features.some((f) => f.properties.observation === 'Chêne sessile, belle grume'));
   assert.ok(g.features.some((f) => f.properties.typeTige === 'Réservée'));
@@ -153,13 +154,18 @@ test('ProdBois : GeoJSON avec crs CRS84 explicite, 10 points, essence (code) et 
     const [lon, lat] = f.geometry.coordinates; // CRS84 : longitude puis latitude
     assert.ok(lon > 2.5 && lon < 2.8 && lat > 48.3 && lat < 48.5, `${lon},${lat} hors Fontainebleau`);
   }
-  // Le premier point est la tige posée à (674120 ; 6811120) en Lambert 93 : on le retrouve à moins de 1 cm.
+  // Les dix tiges, en Lambert 93 : tiges 1 à 5 dans la parcelle 12, tiges 6 à 10 dans la parcelle 14.
+  const [p12, p14] = [0, 2].map((i) => lireShp(zip, 'Parcelles').anneaux[i]);
+  assert.deepEqual(lireShp(zip, 'Parcelles').lignes.map((l) => l.CODE_PARC), ['12', '13', '14', '15']);
+  const dedans = ([x, y], a) => x > Math.min(...a.map((p) => p[0])) && x < Math.max(...a.map((p) => p[0])) && y > Math.min(...a.map((p) => p[1])) && y < Math.max(...a.map((p) => p[1]));
+  g.features.forEach((f, i) => {
+    const pt = versLambert93(...f.geometry.coordinates);
+    assert.ok(dedans(pt, i < 5 ? p12 : p14), `tige ${i + 1} (${pt}) hors de la parcelle ${i < 5 ? 12 : 14}`);
+    assert.ok(!dedans(pt, i < 5 ? p14 : p12), `tige ${i + 1} dans l'autre parcelle`);
+  });
+  // La première tige est posée à (674120 ; 6811120) : on la retrouve à moins de 1 cm.
   const [x, y] = versLambert93(...g.features[0].geometry.coordinates);
   assert.ok(Math.abs(x - 674120) < 0.01 && Math.abs(y - 6811120) < 0.01, `${x} ; ${y}`);
-  // ... et il tombe dans la parcelle 12 du Shapefile.
-  const p12 = lireShp(zip, 'Parcelles').anneaux[0].map((p) => p);
-  assert.ok(x > Math.min(...p12.map((p) => p[0])) && x < Math.max(...p12.map((p) => p[0])));
-  assert.ok(y > Math.min(...p12.map((p) => p[1])) && y < Math.max(...p12.map((p) => p[1])));
 });
 
 test('règles du plugin : chaque Shapefile est reconnu par nom (UG, Parcelles, FRT), avec le bon style et l\'étiquette', () => {

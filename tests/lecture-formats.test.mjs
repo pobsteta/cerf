@@ -22,11 +22,13 @@
 //       par le nom du fichier, sans l'ouvrir ni la charger, et sans jamais en faire une source sans
 //       `layername` (QGIS ouvrirait la première table en silence). Texte exact du refus (Pascal, 4 nov. 2026) :
 //       « <nom dans le zip> : tables illisibles, couche non chargée », en ligne entière du message d'importerZip.
-//       Liste VIDE ([]) = tables connues, aucune : JAMAIS le silence (Pascal). CHOIX RETENU : couchesDuZip rend
-//       la même entrée marquée { format: 'gpkg', table: null } que pour les tables inconnues ; le plugin la
-//       refuse avec un message qui commence par le nom du fichier (texte libre pour ce cas ; un champ de plus,
-//       par exemple `vide: true`, est permis mais non exigé). Testé au niveau de couchesDuZip, car le service
-//       qui fournit les tables à importerZip n'existe pas encore (mission 030).
+//       Liste VIDE ([]) = tables connues, aucune : JAMAIS le silence (Pascal, 4 nov. 2026). MARQUE EXIGÉE : couchesDuZip
+//       rend { format: 'gpkg', table: null, vide: true } pour [] ; pour les tables inconnues, `vide` est absent ou
+//       false (table: null dans les deux cas). Le plugin en tire deux lignes exactes, chemin tel que dans le zip :
+//       « <chemin> : aucune table vecteur, couche non chargée » (vide) et « <chemin> : tables illisibles, couche non
+//       chargée » (inconnues ou illisibles). Dans les deux cas : aucune source, voisin intact. La ligne « aucune table
+//       vecteur » n'est testable qu'au niveau de couchesDuZip, car le service qui fournit les tables à importerZip
+//       n'existe pas encore (mission 030) : voir le commentaire daté près du test d'importerZip.
 //       Comment le plugin trouve les tables hors ligne n'est pas tranché ici (question pour Pascal).
 //   decrireEntree(entree, noms) (mission 010, tel que livré : TOUS les fichiers du même dossier, dans l'ordre du zip,
 //     annexes et .qml compris ; tests/controles-branchement.test.mjs le fixe, mais seulement « même dossier ») : pas de
@@ -161,30 +163,33 @@ test('GeoPackage : deux .gpkg, chacun ses tables ; .gpkg-wal et .gpkg-shm : igno
   ], 'deux fichiers');
 });
 
-test('GeoPackage sans table vecteur (liste vide) : jamais le silence (entrée table: null qui nomme le fichier)', () => {
+test('GeoPackage sans table vecteur (liste vide) : jamais le silence (table: null, vide: true, nom = chemin dans le zip)', () => {
   const cas = [['a.gpkg', 'a.gpkg'], ['d/a.gpkg', 'd/a.gpkg']];
   for (const [entree, nom] of cas) {
     const r = lire('couchesDuZip', [entree, 'b.geojson'], { [entree]: [] });
     const vide = r.filter((c) => c.format === 'gpkg' && c.entree === entree);
     assert.equal(vide.length, 1, `${ROUGE} : ${entree} sans table doit sortir une fois, pas disparaître`);
     assert.equal(vide[0].table, null, `${ROUGE} : table: null pour ${entree}`);
-    assert.ok(String(vide[0].nom).startsWith(nom), `${ROUGE} : le nom commence par « ${nom} » : ${vide[0].nom}`);
+    assert.equal(vide[0].vide, true, `${ROUGE} : vide: true pour ${entree} (liste de tables [] lue sans erreur)`);
+    assert.equal(vide[0].nom, nom, `${ROUGE} : nom = chemin complet dans le zip`);
     assert.deepEqual(r.filter((c) => c !== vide[0]).map((c) => c.entree), ['b.geojson'], `${ROUGE} : le voisin est intact`);
   }
 });
 
 test('GeoPackage dont les tables sont inconnues : jamais perdu en silence (entrée table: null, refusée par le plugin)', () => {
   const cas = [
-    ['sans `tables`', ['a.gpkg'], undefined],
-    ['`tables` vide {}', ['a.gpkg'], {}],
-    ['`tables` sans clé pour ce .gpkg', ['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }],
+    ['sans `tables`', ['a.gpkg'], undefined, 'a.gpkg'],
+    ['`tables` vide {}', ['a.gpkg'], {}, 'a.gpkg'],
+    ['`tables` sans clé pour ce .gpkg', ['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }, 'a.gpkg'],
+    ['dossier, sans `tables`', ['d/a.gpkg'], undefined, 'd/a.gpkg'],
   ];
-  for (const [quoi, liste, tables] of cas) {
+  for (const [quoi, liste, tables, entree] of cas) {
     const r = lire('couchesDuZip', liste, tables);
-    const inconnu = r.filter((c) => c.format === 'gpkg' && c.entree === 'a.gpkg');
-    assert.equal(inconnu.length, 1, `${ROUGE} : a.gpkg (${quoi}) doit sortir une fois, pas disparaître`);
+    const inconnu = r.filter((c) => c.format === 'gpkg' && c.entree === entree);
+    assert.equal(inconnu.length, 1, `${ROUGE} : ${entree} (${quoi}) doit sortir une fois, pas disparaître`);
     assert.equal(inconnu[0].table, null, `${ROUGE} : table: null (${quoi})`);
-    assert.ok(String(inconnu[0].nom).startsWith('a.gpkg'), `${ROUGE} : le nom commence par le fichier (${quoi}) : ${inconnu[0].nom}`);
+    assert.ok(!inconnu[0].vide, `${ROUGE} : vide absent ou false (${quoi}) : ce n'est pas une liste [] connue`);
+    assert.equal(inconnu[0].nom, entree, `${ROUGE} : nom = chemin complet dans le zip (${quoi}) : ${inconnu[0].nom}`);
   }
   // Le .gpkg connu voisin reste normal, dans l'ordre du zip.
   egal(noms(['a.gpkg', 'b.gpkg'], { 'b.gpkg': ['T'] }).map((c) => `${c.entree}:${c.table}`), ['a.gpkg:null', 'b.gpkg:T'], 'inconnu puis connu');
@@ -291,6 +296,12 @@ test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fic
   assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
 });
 
+// 2026-11-04 : cas `[]` d'importerZip NON testé ici. La ligne exacte attendue est
+// « Serre.gpkg : aucune table vecteur, couche non chargée » (chemin tel que dans le zip, distincte de « tables illisibles »),
+// mais le service de tables n'existe pas (mission 030) : son nom et sa forme dans le contexte d'importerZip ne sont fixés
+// par aucune interface écrite, et un nom inventé ici rendrait le test insatisfiable. Le test viendra avec la mission 030,
+// dans ce fichier, juste ici : contexteGpkg(['Serre.gpkg', 'b.geojson'], { <service de tables> renvoyant { 'Serre.gpkg': [] } }),
+// ligne exacte, rien ouvert pour Serre.gpkg, voisin chargé. D'ici là, la marque `vide: true` de couchesDuZip est le seul garde.
 test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouvert, rien chargé, rien inscrit, message nommant le fichier', () => {
   const { ctx, ouvertes, ajoutees } = contexteGpkg(['dossier/a.gpkg']);
   const r = lire('importerZip', ctx);

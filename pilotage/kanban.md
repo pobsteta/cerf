@@ -27,6 +27,10 @@ _Modèle de carte :_
 
 ## Validé
 
+- [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · validée par Pascal le 4 novembre, après la 037
+  - Homme : `dev` (sonnet)
+  - Mission : Compter les entités par un itérateur (plugin 0.3.4)
+  - Moyens : prototype n° 2 (createFeatureIterator), Cerf.qml
 - [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (sonnet)
   - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)

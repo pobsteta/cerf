@@ -393,5 +393,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.3\.1$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.3\.2$/m);
 });

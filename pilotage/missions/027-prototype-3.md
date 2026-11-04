@@ -62,3 +62,42 @@ entités (bouton 9b) ; nouveau zip `essai-styles-z.zip`, l'ancien inchangé ; m�
 `cerf-essai-2` et même préversion `prototype-2` (sha dans les notes) ; « Étang » et « Forêt »
 dans le `.dbf` ; dossier neuf `q3-<N>` par appui ; pas d'essai de chemin non inscriptible ;
 protocole en section « Prototype n° 3 » de `tests/recette/prototype-2.md`, relu par le testeur.
+
+## Remarques à reprendre (aller-retour 1/3, 4 novembre 2026)
+
+**Relecteur :** code conforme (588/588, gardes, `isValid` avant, `.qml` avant chargement, zip
+en méthode 8, ancien zip inchangé). À reprendre :
+1. **Préversion** : notes périmées (bc92fdf) ; le prochain push doit la republier ; vérifier
+   notes (sha du commit, sha256 de `essai-styles-z.zip`, ligne `/vsizip/`).
+2. **Faux oui** : les couches du prototype n° 2 (`UG_q1` bleue à `carres(-800,0)`,
+   `Parcelles_q3` orange à `carres(0,0)`) sont aux mêmes endroits et couleurs que les copies du
+   prototype n° 3. **Décaler les emprises** du zip compressé (fabrication), et consigne au
+   protocole : décocher ou retirer les couches précédentes, vérifier la carte vide à l'endroit.
+3. Bouton 12 : il mesure un **coût fixe** sur quatre petites couches, pas la règle des
+   2 minutes du brief (Serre_EA2026) : changer le libellé (« coût fixe par couche »), sans
+   verdict « limite du brief tenue ».
+4. Mineur : harmoniser la place du bouton 11 dans le texte.
+
+**Testeur (protocole P3, lignes 372 à 538), onze corrections :**
+1. P3-1 case 1 : ordre des lignes comme à l'écran (« Champ nom relu » avant « écrit : oui »).
+2. « N > 0 » aussi pour 9 et 10 ; « aucune ligne ÉCHEC, fond non rouge » pour cocher.
+3. « Lecture du champ nom : ERREUR » : ne pas cocher, réponse « non », vérifier par la fiche de
+   l'entité (« Vu autrement »).
+4. Faux oui (voir relecteur 2) : ne laisser visible que la couche du moment avant P3-2 et
+   P3-4 ; consigne faisable avec des gants.
+5. « Essai raté » seulement si la copie n'est pas chargée (source qui ne charge pas, chaîne
+   vide, « écrit : NON ») ; sinon répondre d'après la carte ; même règle à P3-3 et P3-4b.
+6. P3-3 : deux captures `p3-q3a-carte.png` (Parcelles) et `p3-q3b-carte.png` (Zones), dans la
+   table Réponses.
+7. P3-5 : cocher seulement si « Fichiers présents » ≥ 2 (un `.gpkg` et un `.qml` de taille
+   > 0 avant effacement) et des lignes « rmFile » ; toucher le 11 une fois par dossier ; ordre
+   fixé (8, 10, 9, puis 11 sur le dossier du 9) ; l'effacement porte sur le dernier dossier ;
+   ne pas toucher le 11 après 9b ni 12.
+8. « Chaque bouton une fois » : excepter le 12.
+9. P3-6 : rappuyer jusqu'à voir « Médiane des trois derniers » ; relever les trois totaux et
+   vérifier la médiane ; « durée illisible » ou 0 ms n'est pas une mesure ; « oui » = case 2 et
+   aucun ÉCHEC sur les trois appuis ; séparer l'attendu (« 2000 entités ») du relevé.
+10. Redescendre au bas de l'écran après chaque appui ; 9b et 12 figent l'écran : attendre, et
+    choisir « Attendre » si Android le propose.
+11. Bouton 0b en échec : « essai raté » partout, capture, s'arrêter ; couvrir « le zip compressé
+    n'est pas là » dans la définition d'« essai raté ».

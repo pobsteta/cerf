@@ -161,8 +161,8 @@ Item {
   }
 
   // Lectures de la couche pour les contrôles ; chaque lecture est protégée (échec = valeur
-  // « mauvaise », donc refus). À vérifier : featureCount(), extent.
-  function decrireCouche(couche) {
+  // « mauvaise », donc refus). Comptage par itérateur (mission 038) : featureCount() n'est pas invocable.
+  function decrireCouche(couche, format) {
     let lisible = false;
     let systeme = { valide: false, epsg: 0 };
     let nbEntites = -1;
@@ -173,7 +173,12 @@ Item {
       // Logique.decrireSysteme. L'objet crs est passé tel quel à la reprojection.
       systeme = Logique.decrireSysteme(couche.crs);
     } catch (e) { /* système inconnu */ }
-    try { nbEntites = Number(couche.featureCount()); } catch (e) { nbEntites = -1; }
+    if (format !== "tif") {
+      // Un raster n'a pas d'entités (jamais « vide ») ; pour un vecteur, un itérateur qui échoue = illisible (contrôle 2).
+      const c = Logique.compterEntites(couche, function (l) { return LayerUtils.createFeatureIterator(l); });
+      nbEntites = c.nbEntites;
+      if (!c.lisible) lisible = false;
+    }
     try {
       emprise = Logique.lireEmprise(couche);
     } catch (e) { emprise = null; }

@@ -104,7 +104,7 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 
 - Les champs de code `CODE_UG`, `CODE_PARC` et `CODE_FRT` sont **provisoires** (casse libre). **Sans ce champ, la couleur s'applique mais aucune étiquette ne s'affiche.**
 - Un nom reconnu mais en point ou en ligne (sans les champs `essence` et `diametre`) garde le style par défaut, avec un avertissement.
-- **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : QField ne sait pas lire un fichier à l'intérieur d'un zip (`readFileContent`), donc le plugin ne le lit jamais. La règle du manuel s'applique, avec l'avertissement « <fichier> : .qml illisible, style du manuel appliqué ». La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
+- **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
 
 ### Systèmes de coordonnées

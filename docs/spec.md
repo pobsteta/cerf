@@ -206,7 +206,7 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
 - tables illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
   chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée »). Ce message
   couvre aussi la liste des tables impossible à obtenir et le GeoPackage à **table attributaire
-  seule** (sans géométrie) (Pascal, 5 novembre 2026) ;
+  seule** (sans géométrie) (Pascal, 4 novembre 2026, « oui aux trois ») ;
 - aucune table vecteur → refus « `<chemin>.gpkg` : aucune table vecteur, couche non chargée ».
   Accepté tel quel (Pascal, 5 novembre 2026) mais **probablement inatteignable** : la requête de
   lecture exige la couche 0 que la sonde ouvre (QGIS `qgsogrprovider.cpp` l. 4513-4523).
@@ -241,9 +241,9 @@ Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pa
 Ordre de priorité (en vigueur) : règle par nom → règle par champs → style par défaut de QGIS.
 
 **`.qml` posé dans le zip : non pris en charge pour l'instant** (Pascal, 5 novembre 2026).
-`FileUtils.readFileContent` de QField (4.3.7, `qffileutils.cpp` l. 620-636) ne lit pas dans
-`/vsizip/` : le plugin tente la lecture, n'obtient rien, traite le `.qml` comme illisible, applique
-la règle du manuel et avertit « <fichier> : .qml illisible, style du manuel appliqué ». Un `.qml`
+`FileUtils.readFileContent` de QField (4.3.7, `qffileutils.cpp` l. 620-636), la fonction qui lit un
+fichier texte, ne lit pas dans `/vsizip/` (les couches du zip, elles, sont lues par GDAL) : le plugin tente la lecture, n'obtient rien, traite le `.qml` comme illisible, applique
+la règle du manuel et avertit « UG.shp : .qml illisible, style du manuel appliqué ». Un `.qml`
 valide du zip n'est donc jamais appliqué. La surcharge par `.qml` du zip est **reportée, non
 abandonnée** : l'ordre visé reste `.qml` du zip → règle par nom → règle par champs → défaut.
 *Texte d'origine (3 novembre 2026), devenu faux pour la lecture, gardé pour mémoire : le `.qml` du

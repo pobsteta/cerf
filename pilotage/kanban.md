@@ -86,7 +86,7 @@ _Modèle de carte :_
   - Homme : `archiviste` (sonnet)
   - Mission : README : installer le projet, le plugin, et charger un zip
   - Moyens : spec, releases, journal
-- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · fusionnée (PR #38), plugin 0.4.0
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · fusionnée (PR #38), plugin 0.4.0 (journal du 4 novembre, l. 323 et 326 ; fusion demandée le 5 novembre, l. 327)
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
   - Moyens : prototype n° 2, zips de recette
@@ -132,7 +132,7 @@ _Modèle de carte :_
   - Homme : `dev` (sonnet)
   - Mission : Styles du manuel — cycle prévu 4
   - Moyens : `docs/spec.md` § 5
-- [029-amendements-adr-0008](missions/029-amendements-adr-0008.md) · depuis le cycle 6 · fusionnée (PR #22)
+- [029-amendements-adr-0008](missions/029-amendements-adr-0008.md) · depuis le cycle 6 · fusionnée (PR #22) (journal du 4 novembre, l. 258 : 47219ad)
   - Homme : `archiviste` (sonnet)
   - Mission : Amender ADR 0003, ADR 0007 et la spec après l'ADR 0008
   - Moyens : ADR 0008, fiche 010
@@ -144,11 +144,11 @@ _Modèle de carte :_
   - Homme : `dev` (opus)
   - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
   - Moyens : prototype n° 2, sources QField
-- [028-noms-des-fichiers](missions/028-noms-des-fichiers.md) · depuis le cycle 6 · PR #21 fusionnée, plugin 0.2.1
+- [028-noms-des-fichiers](missions/028-noms-des-fichiers.md) · depuis le cycle 6 · PR #21 fusionnée, plugin 0.2.1 (journal du 4 novembre, l. 237 : 21c1a3b)
   - Homme : `dev` (sonnet)
   - Mission : Fichiers publiés nommés plugin-… et projet-…
   - Moyens : workflows de release, flashcodes
-- [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0
+- [012-controles](missions/012-controles.md) · depuis le cycle 6 · PR #19 fusionnée, plugin 0.2.0 (journal du 4 novembre, l. 219 : fusion 4464b7f)
   - Homme : `dev` (opus)
   - Mission : Contrôles d'import — cycle prévu 5
   - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
@@ -160,7 +160,7 @@ _Modèle de carte :_
   - Homme : `dev` (sonnet)
   - Mission : Flashcodes des adresses stables dans les releases
   - Moyens : qrencode dans le workflow, sources QField
-- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · PR #17 fusionnée
+- [022-rangement-releases](missions/022-rangement-releases.md) · depuis le cycle 6 · PR #17 fusionnée (journal du 4 novembre, l. 181 : a606432)
   - Homme : `dev` (sonnet)
   - Mission : Rangement des workflows de publication
   - Moyens : workflows de release, relectures de la 021
@@ -168,11 +168,11 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Zips de recette piege et lourd — cycle prévu 3
   - Moyens : `docs/spec.md` § 6
-- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026
+- [020-tests-couche-saisie](missions/020-tests-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026 (journal du 4 novembre, l. 145)
   - Homme : `testeur` (sonnet)
   - Mission : Tests de la couche de saisie du projet modèle
   - Moyens : `docs/spec.md` § 3.5, § 5, § 6 n° 10
-- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026 ; recette § 6 n° 10 à faire
+- [021-couche-saisie](missions/021-couche-saisie.md) · depuis le cycle 5 · fusionnée (PR #15), 4 novembre 2026 (journal du 4 novembre, l. 145) ; recette § 6 n° 10 à faire
   - Homme : `dev` (opus)
   - Mission : Couche « Saisie terrain » et saisie.gpkg dans le projet modèle
   - Moyens : `outils/projet-modele.mjs`, `node:sqlite`, spec § 3.5

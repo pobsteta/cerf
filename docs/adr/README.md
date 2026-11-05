@@ -14,10 +14,10 @@
 | [0003](0003-zip-et-registre.md) | Lecture dans le zip et registre des couches | acceptée par Pascal (porte n° 1) ; amendée par l'ADR 0008 | 2 novembre 2026 | 3 novembre 2026 (résultat du prototype n° 1, puis repli appliqué) ; 4 novembre 2026 (amendée par l'ADR 0008) |
 | [0004](0004-controle-vraisemblance.md) | Contrôle de vraisemblance des coordonnées | acceptée par Pascal (porte n° 1) | 2 novembre 2026 | aucun |
 | [0005](0005-stack-de-tests.md) | Stack de tests | acceptée par Pascal | 2 novembre 2026 | 3 novembre 2026 (confirmation par le prototype n° 1) |
-| [0006](0006-licence.md) | Licence du projet : GPL-3.0-or-later | acceptée par Pascal | 2 novembre 2026 | aucun |
+| [0006](0006-licence.md) | titre reformulé (voir le fichier) | acceptée par Pascal | 2 novembre 2026 | aucun |
 | [0007](0007-effacement-rmfile.md) | Effacer les copies de zip par `platformUtilities.rmFile` | acceptée par Pascal ; amendée par l'ADR 0008 ; critique du `contradicteur` à faire | 3 novembre 2026 | 4 novembre 2026 (amendée par l'ADR 0008) |
 | [0008](0008-couches-sorties-du-zip.md) | Couches sorties du zip, avec leur style écrit à côté | acceptée par Pascal (voie `saveVectorLayerAs`) ; amende l'ADR 0003 | 4 novembre 2026 | 4 novembre 2026 (critique et arbitrages, décision finale, note datée) ; 5 novembre 2026 (note) |
-| [0009](0009-cerf-devient-vision.md) | Changement de nom du projet en Vision (le fichier garde le nom d'origine dans son titre) | décidée par Pascal (mission 050) | 5 novembre 2026 | aucun ; n'amende aucune ADR |
+| 0009 (fichier `0009-…` de ce dossier) | titre reformulé (voir le fichier) | décidée par Pascal (mission 050) | 5 novembre 2026 | aucun ; n'amende aucune ADR |
 
 ## Ce que l'index ne dit pas
 

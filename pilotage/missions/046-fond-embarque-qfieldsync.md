@@ -68,3 +68,11 @@ et cadastre par-dessus ; temps de préparation sur PC et taille du fichier noté
   BD ORTHO ni OSM / OpenTopoMap), à confirmer avant fusion.
 - Branche fondée sur la mission 045 (fusion de `mission/045-fonds-osm-cadastre`), même fichier
   `outils/projet-modele.mjs`.
+
+## Arbitrages de Pascal (5 novembre 2026, après l'étape 2)
+
+- **D1** : `cerf.qgz` ne déclare pas la couche `basemap.mbtiles` (sinon QField affiche « Unable to
+  load some layers » à chaque ouverture sans fond) ; c'est le **plugin Cerf** qui l'ajoutera s'il le
+  trouve à côté du projet : **mission 048** (plugin), fondée sur la 047.
+- **Zoom minimal 13**, **tuiles de 256 pixels** : acceptés.
+- Contenu : Plan IGN v2 + cadastre (confirmé plus tôt).

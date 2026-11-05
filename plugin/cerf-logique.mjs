@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.4.2';
+export const VERSION = '0.4.3';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -1220,6 +1220,36 @@ export function importerZip(ctx) {
   return { chargees, refusees, ecartees, avertissements, message: lignes.join('\n') };
 }
 
+// --------------------------------------------------------------------------- fond embarqué (mission 048)
+
+// basemap.mbtiles (QFieldSync, mission 046) posé à côté de cerf.qgz. Chargé en lecture seule par GDAL (LayerUtils.loadRasterLayer,
+// QField v4.3.7 qflayerutils.cpp l. 622-627), ajouté à la carte sans écriture dans le registre des imports. Sa place dans l'arbre
+// est celle de QgsLayerTreeUtils::insertLayerAtOptimalPlacement (QGIS 3a92eb3, qgslayertreeutils.cpp l. 534-720) : sous les couches
+// vecteur, au-dessus des fonds XYZ ; pas de déplacement (décision de Pascal, 5 novembre 2026).
+export const NOM_FICHIER_FOND = 'basemap.mbtiles';
+export const NOM_FOND_EMBARQUE = 'Fond embarqué (hors ligne)';
+export const MESSAGE_FOND_ILLISIBLE = "Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché.";
+
+// Vrai si `source` est le fond embarqué (chemin finissant par /basemap.mbtiles).
+export function estSourceFondEmbarque(source) {
+  const fin = '/' + NOM_FICHIER_FOND;
+  return typeof source === 'string' && source.length > fin.length && source.substring(source.length - fin.length) === fin;
+}
+
+// Rend 'absent' (rien, sans message), 'deja' (une couche le lit déjà), 'ajoute' ou 'illisible'.
+function chargerFondEmbarque(ctx, dossierProjet) {
+  if (typeof ctx.fondDejaPresent !== 'function' || typeof ctx.existe !== 'function') return 'absent';
+  const chemin = sansBarreFinale(dossierProjet) + '/' + NOM_FICHIER_FOND;
+  let present = false;
+  try { present = !!ctx.existe(chemin); } catch (e) { present = false; }
+  if (!present) return 'absent';
+  let deja = false;
+  try { deja = !!ctx.fondDejaPresent(chemin); } catch (e) { deja = false; }
+  if (deja) return 'deja';
+  const r = chargerSansPlanter(ctx.chargerCouche, chemin, NOM_FOND_EMBARQUE);
+  return r.couche ? 'ajoute' : 'illisible';
+}
+
 // --------------------------------------------------------------------------- ouvrir
 
 export function demarrerProjet(ctx) {
@@ -1267,6 +1297,7 @@ export function demarrerProjet(ctx) {
     if (!estSourceRaster(source)) r.couche.readOnly = true;
     rechargees.push({ zip: e.zip, couche: e.couche });
   }
+  const fondEmbarque = chargerFondEmbarque(ctx, ctx.dossierProjet);
   const lignes = [];
   if (etat.illisible) lignes.push("registre illisible : il sera remplacé au prochain ajout d'un zip");
   if (douteuses > 0) {
@@ -1289,8 +1320,9 @@ export function demarrerProjet(ctx) {
       ? `1 couche n'a pas pu être rechargée : illisible (${nomsDe(illisibles)})`
       : `${illisibles.length} couches n'ont pas pu être rechargées : illisibles (${nomsDe(illisibles)})`);
   }
+  if (fondEmbarque === 'illisible') lignes.push(MESSAGE_FOND_ILLISIBLE);
   return {
-    actif: true, boutonVisible: true, cerfId, rechargees, absentes, illisibles, douteuses,
+    actif: true, boutonVisible: true, cerfId, rechargees, absentes, illisibles, douteuses, fondEmbarque,
     message: lignes.join('\n'),
   };
 }

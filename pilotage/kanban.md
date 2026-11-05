@@ -50,13 +50,13 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [045-fonds-osm-cadastre](missions/045-fonds-osm-cadastre.md) · depuis le cycle 6 · en cours
-  - Homme : `acquereur` puis `dev` (sonnet)
-  - Mission : fonds OSM, OSM topo et cadastre (au-dessus des fonds) dans cerf.qgz ; SCAN 25 en attente de JFC
-  - Moyens : `outils/projet-modele.mjs`, ADR 0002, spec § 3.4, `docs/referentiels/`
-
 ## Terminé
 
+- [048-fond-embarque-plugin](missions/048-fond-embarque-plugin.md) · depuis le cycle 6 · fusionnée (PR #49)
+  - Homme : `dev`
+- [047-styles-gpkg](missions/047-styles-gpkg.md) · depuis le cycle 6 · fusionnée (PR #47)
+- [046-fond-embarque-qfieldsync](missions/046-fond-embarque-qfieldsync.md) · depuis le cycle 6 · fusionnée (PR #48)
+- [045-fonds-osm-cadastre](missions/045-fonds-osm-cadastre.md) · depuis le cycle 6 · fusionnée (PR #46)
 - [044-json-ignore](missions/044-json-ignore.md) · depuis le cycle 6 · fusionnée (PR #45)
   - Homme : `dev` (sonnet)
 - [043-flashcodes-readme](missions/043-flashcodes-readme.md) · depuis le cycle 6 · fusionnée (PR #44)

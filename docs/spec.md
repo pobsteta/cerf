@@ -172,7 +172,17 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
   `saisie.gpkg`, `cerf-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
   `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `cerf.qgz` ne déclare
   pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture tant que le fichier
-  manque) ; le **plugin Cerf** l'ajoutera s'il le trouve à côté du projet (**mission 048**). Licence de la rastérisation : non tranchée (CGU non lues).
+  manque) ; le **plugin Cerf** l'ajoute s'il le trouve à côté du projet (**mission 048**, puce suivante). Licence de la rastérisation : non tranchée (CGU non lues).
+- **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
+  À l'ouverture de `cerf.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
+  que le projet ne porte pas déjà une couche marquée `cerf/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
+  couche raster « Fond embarqué (hors ligne) », cochée, sans entrée au registre des imports. Absent : rien, aucun
+  message (pas de couche déclarée dans `cerf.qgz`, donc pas de page « Unable to load some layers »). Présent mais
+  illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » Place : celle de
+  `insertLayerAtOptimalPlacement` (QGIS `qgslayertreeutils.cpp` l. 534-720), sous les vecteurs et **au-dessus** des
+  fonds XYZ, sans déplacement (QML ne voit aucune API de l'arbre) : il recouvre les fonds en ligne sur son emprise ;
+  pour voir la BD ORTHO, le décocher. QField ne réécrit pas le projet ouvert dans les sources lues (la couche n'est
+  pas gardée au `.qgz`). Ordre réel et affichage en mode avion : **non prouvés**, à voir à l'essai sur le Samsung.
 
 ### 3.5 Couche de saisie (amendement du 3 novembre 2026)
 

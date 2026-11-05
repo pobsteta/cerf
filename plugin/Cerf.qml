@@ -182,6 +182,13 @@ Item {
     return LayerUtils.loadVectorLayer(source, nom);
   }
 
+  // Mission 049 : libère une couche ouverte par LayerUtils.loadVectorLayer / loadRasterLayer et non ajoutée à la carte.
+  // QField v4.3.7 (qflayerutils.cpp l. 618 et 624) la rend en CppOwnership : sans deleteLater, personne ne la détruit.
+  // La logique ne l'appelle jamais sur une couche ajoutée au projet, ni deux fois sur la même.
+  function libererCouche(couche) {
+    couche.deleteLater();
+  }
+
   // Mission 024 : tables vecteur d'un GeoPackage du zip (voie 1 du prototype n° 4, NON PROUVÉE sur le Samsung).
   // Rend la liste des tables, [] si aucune, null si illisibles (la logique refuse alors « tables illisibles »).
   // Appels lus dans les sources : LayerUtils.loadVectorLayer (qflayerutils.h l. 200), createFeatureIterator (l. 234),
@@ -322,6 +329,7 @@ Item {
       dossierProjet: dossierProjet(),
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       fondDejaPresent: fondDejaPresent,
+      libererCouche: libererCouche,
       chargerCouche: id ? chargeur() : function () { return null; }
     });
     registreChange();
@@ -405,6 +413,7 @@ Item {
       effacerFichier: effacerFichier,
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
+      libererCouche: libererCouche,
       tablesGpkg: tablesGpkg,
       styleGpkg: styleGpkg,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },

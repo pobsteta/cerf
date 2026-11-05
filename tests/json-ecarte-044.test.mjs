@@ -193,8 +193,8 @@ test('retours « vides » (projet non Cerf) portent aussi ecartees: []', () => {
   assert.deepEqual(r.ecartees, []);
 });
 
-test('version 0.4.3 et préversion : branche de la mission 044 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.3');
-  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.4\.3$/m);
+test('version 0.4.4 et préversion : branche de la mission 044 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.4.4');
+  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.4\.4$/m);
   assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/044-json-ignore'/);
 });

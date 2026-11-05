@@ -99,7 +99,7 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.4.3 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.4.4 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 

@@ -1,7 +1,7 @@
 // Mission 024 : tests unitaires du dev, à côté des tests d'acceptation du testeur (tests/lecture-formats.test.mjs).
 // Service de lecture des tables d'un GeoPackage (tablesDuGpkg, voie 1 du prototype n° 4), GeoTIFF lus en /vsizip/
 // (loadRasterLayer, registre chemin_vsi), tables de GeoPackage dans importerZip, chemin complet dans le zip pour
-// les messages du § 4, zip piege de bout en bout avec le vrai cerf-controles.mjs, forme de Cerf.qml, version 0.4.3.
+// les messages du § 4, zip piege de bout en bout avec le vrai cerf-controles.mjs, forme de Cerf.qml, version 0.4.4.
 // Coordonnées : EPSG:2154 (x = Est, y = Nord, mètres) sauf mention ; EPSG:4326 / CRS84 : x = longitude, y = latitude.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -380,8 +380,8 @@ test('Cerf.qml : aucune lecture de featureCount, isEmpty ni isValid() appelé co
 
 // ============================================================================ version
 
-test('version et préversion : 0.4.3, branche de la mission 024 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.3');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.3$/m);
+test('version et préversion : 0.4.4, branche de la mission 024 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.4.4');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/024-lecture-formats'/);
 });

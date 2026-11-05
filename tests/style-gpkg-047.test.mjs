@@ -337,8 +337,8 @@ test('cerf-logique.mjs : la requête ne lit que styleQML de layer_styles (pas de
   assert.doesNotMatch(src, /\?\?/);
 });
 
-test('version 0.4.3 (constante, metadata.txt) et préversion : branche de la mission 047 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.3');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.3$/m);
+test('version 0.4.4 (constante, metadata.txt) et préversion : branche de la mission 047 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.4.4');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/047-styles-gpkg'/);
 });

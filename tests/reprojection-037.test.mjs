@@ -219,8 +219,8 @@ test('forme : cerf-controles.mjs sans ?., ?? ni import', () => {
   const code = lire('plugin/cerf-controles.mjs').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.4.3, branche de la mission 037 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.3');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.3$/m);
+test('version et préversion : 0.4.4, branche de la mission 037 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.4.4');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/037-reprojection'/);
 });

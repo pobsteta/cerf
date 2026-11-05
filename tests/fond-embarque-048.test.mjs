@@ -133,8 +133,8 @@ test('Cerf.qml : chargeur du fond (loadRasterLayer, marque, libération si inval
   assert.match(q, /fondDejaPresent: fondDejaPresent/);
 });
 
-test('version 0.4.3 (constante, metadata.txt) et préversion : branche de la mission 048', () => {
-  assert.equal(L.VERSION, '0.4.3');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.3$/m);
+test('version 0.4.4 (constante, metadata.txt) et préversion : branche de la mission 048', () => {
+  assert.equal(L.VERSION, '0.4.4');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/048-fond-embarque-plugin'/);
 });

@@ -35,4 +35,4 @@ mêmes couches et les mêmes messages qu'en 0.4.3.
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** libérer par `deleteLater`, une seule fois et par un service passé à la logique, toute couche ouverte par `LayerUtils` (vecteur ou GeoTIFF) qui n'est pas ajoutée à la carte (invalide, refusée, `.json` écarté, doublon, réimport, rechargement), sans jamais libérer une couche ajoutée au projet et sans rien changer de ce que voit l'agent, afin que le chargeur des zips ne fuie plus de mémoire.

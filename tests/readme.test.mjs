@@ -81,3 +81,44 @@ test('mission 042 : .json non GeoJSON, comportement réel sur l\'appareil, cité
   const claude = readFileSync(join(RACINE, 'CLAUDE.md'), 'utf8');
   assert.ok(!claude.includes('dans le zip surcharge la règle'), 'CLAUDE.md dit encore que le .qml du zip surcharge la règle');
 });
+
+// Mission 043 : les flashcodes affichés dans le README sont décodables et collés à leur adresse.
+// Même règle que tests/flashcodes.test.mjs : sans zbarimg, décodage sauté, sauf CERF_FLASHCODES_EXIGER=1.
+import { readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { decoder } from '../outils/flashcodes.mjs';
+
+const ZBAR = !spawnSync('zbarimg', ['--version'], { stdio: 'ignore' }).error;
+const DOSSIER_QR = join(RACINE, 'docs', 'flashcodes');
+const TYPES_QR = ['projet', 'plugin', 'manuel', 'manuel-geojson'];
+const stables = TYPES_QR.flatMap((t) => flashcodes(t, 'stable'));
+
+test('mission 043 : le dossier docs/flashcodes ne contient que les SVG des flashcodes stables du README', () => {
+  const attendus = stables.map((f) => `${f.nom}.svg`).sort();
+  const reels = existsSync(DOSSIER_QR) ? readdirSync(DOSSIER_QR).sort() : [];
+  assert.deepEqual(reels, attendus, 'docs/flashcodes doit contenir exactement ces SVG (générés par outils/flashcodes.mjs)');
+});
+
+for (const f of stables) {
+  test(`mission 043 : ${f.nom}.svg décode l'adresse stable`, { skip: ZBAR ? false : 'zbarimg absent' }, () => {
+    assert.equal(decoder(join(DOSSIER_QR, `${f.nom}.svg`)), f.url, `${f.nom}.svg ne décode pas ${f.url} : regénérer avec outils/flashcodes.mjs`);
+  });
+
+  test(`mission 043 : le README montre ${f.nom}.svg près de ${f.url}`, () => {
+    const img = `docs/flashcodes/${f.nom}.svg`;
+    const iAdresse = readme.indexOf(f.url);
+    const iImage = readme.indexOf(img);
+    assert.ok(iAdresse >= 0, `adresse absente du README : ${f.url}`);
+    assert.ok(iImage >= 0, `image absente du README : ${img}`);
+    assert.ok(Math.abs(iImage - iAdresse) < 500, `${img} est trop loin de ${f.url} dans le README`);
+    assert.match(readme, new RegExp(`<img src="${img.replace(/\./g, '\\.')}"[^>]*alt="[^"]+"`), `${img} sans texte alternatif`);
+  });
+}
+
+test('mission 043 : plus de flashcode « joint à la release » seul dans le README', () => {
+  assert.ok(!/\(`flashcode-(projet|plugin)\.png`, joint/.test(readme), 'le README renvoie encore au seul flashcode joint à la release');
+});
+
+test('mission 043 : les décodages ne sont pas sautés quand on les exige', () => {
+  if (process.env.CERF_FLASHCODES_EXIGER === '1') assert.ok(ZBAR, 'zbarimg doit être installé');
+});

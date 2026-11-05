@@ -83,7 +83,7 @@ jobs:
             echo "Plugin QField Vision $version, à installer par URL (Paramètres, Plugins, « Install plugin from URL »)."
             echo
             echo "Ne pas renommer plugin-vision.zip : QField nomme le dossier du plugin d'après le nom du zip."
-            echo "Si l'ancien plugin « Vision » (dossier vision) est installé, le désinstaller une fois : plugin-vision.zip s'installe à côté."
+            echo "Si l'ancien plugin du projet, avant son changement de nom (dossier plugin- suivi de l'ancien nom ; ADR 0009), est installé, le désinstaller une fois : plugin-vision.zip s'installe à côté."
             echo "Essai sur le Samsung : plugin/PLAN.md § 9."
             echo
             echo '```'

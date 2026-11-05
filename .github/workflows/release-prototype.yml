@@ -1,9 +1,12 @@
+# Historique (mission 004), ne pas relancer : voir ADR 0009 (le projet a changé de nom ; ce prototype garde son état d'origine).
 # Publie le prototype n° 1 (mission 004) en release GitHub « prototype-1 » à chaque push
 # sur la branche du prototype (l'étiquette est créée par la release). Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
 # versés au dépôt) ; leur sha256 est écrit dans les notes de la release.
 name: Release du prototype
 on:
-  workflow_dispatch:
+  push:
+    branches: ['mission/004-prototype-1']
+    paths: ['prototype/**', 'outils/**', 'tests/recette/**', '.github/workflows/release-prototype.yml']
 permissions:
   contents: write
 jobs:
@@ -28,29 +31,29 @@ jobs:
           # Projet modèle de la mission 006 (branche mission/006-projet-modele), zippé pour
           # l'import par URL de QField.
           git fetch --depth=1 origin mission/006-projet-modele
-          git show FETCH_HEAD:vision.qgz > dist/vision.qgz
-          (cd dist && zip -X vision-projet-modele.zip vision.qgz && rm vision.qgz)
+          git show FETCH_HEAD:cerf.qgz > dist/cerf.qgz
+          (cd dist && zip -X cerf-projet-modele.zip cerf.qgz && rm cerf.qgz)
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "Prototype n° 1 de Vision (mission 004), plugin QField jetable, à installer par URL."
+            echo "Prototype n° 1 de Cerf (mission 004), plugin QField jetable, à installer par URL."
             echo
-            echo "Ne pas renommer vision-prototype.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Ne pas renommer cerf-prototype.zip : QField nomme le dossier du plugin d'après le nom du zip."
             echo "Protocole d'essai : tests/recette/prototype-1.md."
             echo
             echo '```'
             sha256sum dist/*.zip
             echo
-            echo "vision.qgz contenu dans vision-projet-modele.zip, pris sur mission/006-projet-modele :"
-            (cd dist && unzip -p vision-projet-modele.zip vision.qgz | sha256sum | sed 's/-$/vision.qgz/')
+            echo "cerf.qgz contenu dans cerf-projet-modele.zip, pris sur mission/006-projet-modele :"
+            (cd dist && unzip -p cerf-projet-modele.zip cerf.qgz | sha256sum | sed 's/-$/cerf.qgz/')
             echo '```'
           } > notes.md
           if gh release view prototype-1 >/dev/null 2>&1; then
-            gh release upload prototype-1 dist/vision-prototype.zip dist/vision-essai.zip dist/essai.zip dist/essai-cp437.zip dist/vision-projet-modele.zip --clobber
+            gh release upload prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip --clobber
             gh release edit prototype-1 --notes-file notes.md
           else
-            gh release create prototype-1 dist/vision-prototype.zip dist/vision-essai.zip dist/essai.zip dist/essai-cp437.zip dist/vision-projet-modele.zip \
+            gh release create prototype-1 dist/cerf-prototype.zip dist/cerf-essai.zip dist/essai.zip dist/essai-cp437.zip dist/cerf-projet-modele.zip \
               --target "$GITHUB_SHA" --title "Prototype n° 1" --notes-file notes.md --prerelease
           fi

@@ -4,9 +4,9 @@
 > § 6, § 8 n° 5, § 9), de l'ADR 0003 et de l'ADR 0005. Mission 003, aller-retour 1/3.
 > **Statut : proposé, pas encore suivi.**
 > Le prototype (mission 004) est écrit : les gestes nomment ses boutons tels qu'ils figurent
-> dans `prototype/Vision.qml` (A à I), correspondance au § 10 bis de `prototype/PLAN.md`.
+> dans `prototype/Cerf.qml` (A à I), correspondance au § 10 bis de `prototype/PLAN.md`.
 > Ce que le protocole attend que le prototype **affiche** (liste,
-> chemin, taille, `vision_id`, temps…) est une exigence pour la mission 004 : si le prototype
+> chemin, taille, `cerf_id`, temps…) est une exigence pour la mission 004 : si le prototype
 > n'affiche pas la valeur, le geste n'est pas coché et Pascal le dit dans « Vu autrement ».
 
 **But.** Dire, sur critère fixé d'avance, si un plugin QField sait : (1) lister le contenu
@@ -30,22 +30,22 @@ dans la case. Une case non cochée veut dire non.
 | Version d'Android (la question 8 n'a de sens qu'à partir de la 11) | |
 | Version de QField | |
 | Prototype installé (version ou commit) | |
-| `vision_id` du projet d'essai (voir ci-dessous) | |
-| Projet d'essai choisi par Pascal (`vision-essai` ou `vision.qgz`) | |
+| `cerf_id` du projet d'essai (voir ci-dessous) | |
+| Projet d'essai choisi par Pascal (`cerf-essai` ou `cerf.qgz`) | |
 
 **Avant le mode avion : télécharger les zips d'essai** depuis la release `prototype-1` :
-`essai.zip` (https://github.com/pobsteta/vision/releases/download/prototype-1/essai.zip) et
-`essai-cp437.zip` (https://github.com/pobsteta/vision/releases/download/prototype-1/essai-cp437.zip).
+`essai.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai.zip) et
+`essai-cp437.zip` (https://github.com/pobsteta/cerf/releases/download/prototype-1/essai-cp437.zip).
 
-**Le plugin** `vision-prototype.zip`, à installer par URL dans QField
-(https://github.com/pobsteta/vision/releases/download/prototype-1/vision-prototype.zip), et le
-projet `vision-essai.zip`
-(https://github.com/pobsteta/vision/releases/download/prototype-1/vision-essai.zip), même release.
+**Le plugin** `cerf-prototype.zip`, à installer par URL dans QField
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-prototype.zip), et le
+projet `cerf-essai.zip`
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-essai.zip), même release.
 
-**Le projet d'essai** est `vision-essai` (`vision_id` 936eb144-5447-4094-a579-fac12a9f0595) ou,
-au choix de Pascal, le projet modèle `vision.qgz`
-(https://github.com/pobsteta/vision/releases/download/prototype-1/vision-projet-modele.zip,
-`vision_id` d98bf4b8-0fac-4dac-85cf-58e6701aceeb).
+**Le projet d'essai** est `cerf-essai` (`cerf_id` 936eb144-5447-4094-a579-fac12a9f0595) ou,
+au choix de Pascal, le projet modèle `cerf.qgz`
+(https://github.com/pobsteta/cerf/releases/download/prototype-1/cerf-projet-modele.zip,
+`cerf_id` ebad8ff8-577e-48bc-9489-6bab871230c2).
 
 **Permission de stockage.** Au premier toucher de « A. Copier hors projet » ou de « B. Copier
 dans le projet », le prototype peut demander une permission de stockage d'Android : l'accepter,
@@ -56,8 +56,8 @@ et l'écrire dans « Vu autrement ».
 
 | Fichier | Taille | Entrées | Où il est |
 |---|---|---|---|
-| `essai.zip` | 2110 octets | **9** | `tests/recette/essai/essai.zip` |
-| `essai-cp437.zip` | 183 octets | **1** | `tests/recette/essai/essai-cp437.zip` |
+| `essai.zip` | 2108 octets | **9** | `tests/recette/essai/essai.zip` |
+| `essai-cp437.zip` | 181 octets | **1** | `tests/recette/essai/essai-cp437.zip` |
 | `lourd.zip` | 199996542 octets | **1** | fabriqué, **non versé au dépôt** : voir ci-dessous |
 
 **`module-essai.mjs` n'est pas copié sur le téléphone** : il est **embarqué par le
@@ -87,14 +87,14 @@ GeoJSON est en WGS84 (`crs` CRS84), longitude 2,35 puis latitude 48,85. Le Shape
 `shape_essai` est **le même point en Lambert 93** : X = 652301,56 et Y = 6861302,73, avec un
 `.prj` Lambert 93 (EPSG:2154).
 
-**Où Pascal lit `vision_id`.** `vision_id` est la variable de projet de `vision.qgz` (spec § 3.3) :
+**Où Pascal lit `cerf_id`.** `cerf_id` est la variable de projet de `cerf.qgz` (spec § 3.3) :
 Pascal la lit sur le poste, dans QGIS, onglet Variables des propriétés du projet. Le projet
-d'essai (`vision-essai` ou `vision.qgz`) en porte une. **Le prototype affiche la valeur
+d'essai (`cerf-essai` ou `cerf.qgz`) en porte une. **Le prototype affiche la valeur
 qu'il lit** ; les chemins du protocole contiennent cette valeur. Pascal compare la valeur
 affichée à celle de QGIS et la note dans le tableau ci-dessus.
 
 - Passer le téléphone en **mode avion** : tout le protocole se fait sans réseau.
-- Ouvrir le projet d'essai choisi par Pascal : `vision-essai` ou `vision.qgz` (voir plus haut).
+- Ouvrir le projet d'essai choisi par Pascal : `cerf-essai` ou `cerf.qgz` (voir plus haut).
 
 **Chemin de secours.** Si « C. Lister la copie » affiche « taille de la copie inconnue », les
 questions 1, 2, 3, 8 et 9 listent par « I. Essai à risque : lister un gros zip » au lieu de C.
@@ -125,8 +125,8 @@ aux plugins (spec § 9, n° 1). Le geste 3 dit si ce repli marche.
 | N° | Geste | Résultat attendu | Vu |
 |---|---|---|---|
 | 1 | Toucher « A. Copier hors projet » pour `essai.zip` (celui du geste 1 de la question 1). | Le prototype annonce la copie faite, sans message d'erreur. | ☐ |
-| 2 | Lire le chemin de la copie affiché par le prototype, et la valeur de `vision_id` qu'il affiche (voir « Où Pascal lit `vision_id` »). | Le chemin est `Imported Datasets/vision/<vision_id>/essai.zip`, sous le dossier de l'application, **hors du dossier projet**, et `<vision_id>` est la valeur notée plus haut. | ☐ |
-| 3 | Lire la taille de la copie affichée par le prototype. | 2110 octets, la même que `essai.zip` d'origine. | ☐ |
+| 2 | Lire le chemin de la copie affiché par le prototype, et la valeur de `cerf_id` qu'il affiche (voir « Où Pascal lit `cerf_id` »). | Le chemin est `Imported Datasets/cerf/<cerf_id>/essai.zip`, sous le dossier de l'application, **hors du dossier projet**, et `<cerf_id>` est la valeur notée plus haut. | ☐ |
+| 3 | Lire la taille de la copie affichée par le prototype. | 2108 octets, la même que `essai.zip` d'origine. | ☐ |
 | 4 | Avec « C. Lister la copie », **lister la copie** (le fichier du chemin lu au geste 2, pas l'original). | Les mêmes 9 entrées s'affichent, et le prototype dit qu'il les lit dans la copie. | ☐ |
 
 **Si non** : la copie hors du dossier projet est impossible ; le zip est posé dans le dossier
@@ -156,7 +156,7 @@ valeur sacrifiée : la place.
 |---|---|---|---|
 | 1 | Toucher « E. Module .mjs », qui appelle le module embarqué. | Aucune erreur de chargement n'est affichée. | ☐ |
 | 2 | Lire le résultat de `somme(2, 3)` affiché par le prototype. | `5`. | ☐ |
-| 3 | Lire la valeur de `SIGNATURE` affichée par le prototype. | `vision-prototype-1`. | ☐ |
+| 3 | Lire la valeur de `SIGNATURE` affichée par le prototype. | `cerf-prototype-1`. | ☐ |
 
 **Si non** : la logique du plugin ne peut pas être partagée avec Node sous cette forme, et la
 pile de tests de l'ADR 0005 est à reprendre avec Pascal.
@@ -281,7 +281,7 @@ Pascal ».
 2. **Temps du GeoTIFF de 200 Mo** (question 7, geste 3) : **mesuré et noté**. Le temps
    maximal sera fixé **après l'essai**, par Pascal ; il n'est pas fixé à ce jour.
 3. **Tolérance de 1 m** sur la position du point d'essai (question 5, geste 4) : **gardée**.
-4. **Zip d'essai** de 2110 octets et **plafond du test à 4096 octets** : acceptés (pris acte).
+4. **Zip d'essai** de 2108 octets et **plafond du test à 4096 octets** : acceptés (pris acte).
 
 ## Sources des valeurs
 
@@ -300,7 +300,7 @@ Pascal ».
   8 bits. Cette relecture est faite **sur le poste, avec GDAL, pas dans QField** : elle ne
   prouve rien sur le téléphone.
 - **Tailles et décomptes** : `unzip -l`, relancé le 2 novembre 2026 sur `essai.zip` (9
-  entrées, 2110 octets) et `essai-cp437.zip` (1 entrée, 183 octets) ; sortie de
+  entrées, 2108 octets) et `essai-cp437.zip` (1 entrée, 181 octets) ; sortie de
   `fabriquer-geotiff-lourd.mjs` pour `lourd.zip`, relancé le 2 novembre 2026.
 - **Le reste** : `docs/spec.md` (§ 3.1, § 3.3, § 5, § 6 n° 7, § 9), ADR 0003 (« À prototyper »,
   « Valeurs sacrifiées »), ADR 0005, dans l'état du commit de départ `e6ff190`.

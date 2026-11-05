@@ -4,7 +4,7 @@ Vision est un projet QField modèle (`vision.qgz`) pour toute unité territorial
 
 Ce qu'on construit, pour qui : [`docs/brief.md`](docs/brief.md). Le détail du comportement : [`docs/spec.md`](docs/spec.md).
 
-Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et portent les fichiers cités (lecture de l'API GitHub).
+Adresses vérifiées le 4 novembre 2026 (lecture de l'API GitHub) sous l'ancien nom du dépôt : à partir de la version 0.5.0, publiée à la fusion de la mission 050, les quatre releases existent et portent les fichiers cités.
 
 ## 1. Installer le projet sur le téléphone (QField)
 
@@ -93,7 +93,7 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 À savoir :
 
 - **Ne renomme pas le zip** : QField nomme le dossier du plugin d'après le nom du zip.
-- Si tu as déjà un ancien plugin « Vision » (dossier `vision`), **désinstalle-le une fois** avant, pour ne pas avoir deux boutons.
+- Si tu as déjà l'ancien plugin du projet, celui d'avant son changement de nom (dossier `plugin-` suivi de l'ancien nom ; ADR 0009), **désinstalle-le une fois** avant, pour ne pas avoir deux boutons.
 - Le bouton Vision de la barre d'outils **n'apparaît que dans un projet Vision**, c'est-à-dire un projet qui a la variable `vision_id` (c'est le cas de `vision.qgz`). Dans un autre projet, il reste caché.
 - Pour tester une version pas encore publiée : préversion `plugin-essai`, `https://github.com/pobsteta/vision/releases/download/plugin-essai/plugin-vision.zip` (adresse d'essai, jamais « latest »).
 

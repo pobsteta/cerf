@@ -78,14 +78,14 @@ test('retouche 2 : aucun geste du Samsung ne demande de lancer node --test', () 
 });
 
 // --- Retouche 3 -----------------------------------------------------------------------
-test('retouche 3 : où Pascal lit vision_id, et ce que « lister la copie » vise', () => {
+test('retouche 3 : où Pascal lit cerf_id, et ce que « lister la copie » vise', () => {
   const t = texte();
-  assert.match(t, /Où Pascal lit `vision_id`/);
-  assert.match(t, /variable de projet de `vision\.qgz`/);
+  assert.match(t, /Où Pascal lit `cerf_id`/);
+  assert.match(t, /variable de projet de `cerf\.qgz`/);
   assert.match(t, /Variables des propriétés du projet/);
-  assert.match(t, /`vision_id` du projet d'essai/);
+  assert.match(t, /`cerf_id` du projet d'essai/);
   const q = questions();
-  assert.match(q[1].corps, /valeur de `vision_id` qu'il affiche/);
+  assert.match(q[1].corps, /valeur de `cerf_id` qu'il affiche/);
   assert.match(q[1].corps, /lister la copie\*\* \(le fichier du chemin lu au geste 2, pas l'original\)/);
   assert.match(q[2].corps, /\*\*Lister la copie\*\* de nouveau avec « C\. Lister la copie » \(même geste que le geste 4 de la question 2\)/);
   assert.doesNotMatch(t, /Relister la copie/);
@@ -146,20 +146,20 @@ test('protocole : neuf lignes dans la réponse de Pascal ; les décisions de Pas
   assert.match(qp, /temps[^.]*mesuré et noté/i);
   assert.match(qp, /temps\s+maximal[^.]*après l'essai/i);
   assert.match(qp, /Tolérance de 1 m[^.]*gardée/);
-  assert.match(qp, /2110 octets/);
+  assert.match(qp, /2108 octets/);
   assert.match(qp, /4096 octets/);
   assert.doesNotMatch(qp, /\?/);
   assert.doesNotMatch(t, /jugé réussi si les quatre/);
   assert.doesNotMatch(t, /## Hors de ce protocole/);
 });
 
-test('protocole : tailles et décomptes écrits = ceux des fichiers (9 entrées, 2110 octets ; 1 entrée, 183 octets)', () => {
+test('protocole : tailles et décomptes écrits = ceux des fichiers (9 entrées, 2108 octets ; 1 entrée, 181 octets)', () => {
   const t = texte();
   assert.equal(entreesZip(ZIP).length, 9);
-  assert.equal(statSync(ZIP).size, 2110);
+  assert.equal(statSync(ZIP).size, 2108);
   assert.equal(entreesZip(ZIP437).length, 1);
-  assert.equal(statSync(ZIP437).size, 183);
-  assert.ok(t.includes('2110 octets') && t.includes('183 octets'));
+  assert.equal(statSync(ZIP437).size, 181);
+  assert.ok(t.includes('2108 octets') && t.includes('181 octets'));
   assert.ok(t.includes('(9 entrées, noms exacts)'));
   assert.doesNotMatch(t, /8 entrées|8 entrée/);
 });
@@ -271,7 +271,7 @@ test('GeoTIFF lourd : le script refuse de tourner sans dossier de sortie', () =>
 });
 
 test('GeoTIFF lourd (à 1 Mo) : un zip d\'une entrée lourd.tif SANS compression, CRC juste, GeoTIFF en EPSG:2154', () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'vision-lourd-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'cerf-lourd-'));
   try {
     const avant = readdirSync(ESSAI).sort();
     const r = spawnSync(process.execPath, [SCRIPT_LOURD, dossier, '1'], { encoding: 'utf8' });
@@ -335,7 +335,7 @@ test('aucun fichier de plus de 1 Mo sous tests/', () => {
 });
 
 test('les petits zips versés sont ceux que fabrique fabriquer-essais.mjs, octet pour octet', () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'vision-essais-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'cerf-essais-'));
   try {
     execFileSync(process.execPath, [join(ESSAI, 'fabriquer-essais.mjs'), dossier]);
     for (const nom of ['essai.zip', 'essai-cp437.zip']) {

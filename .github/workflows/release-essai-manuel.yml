@@ -80,7 +80,7 @@ jobs:
             echo "- **essai-gpkg-style.zip** : zip d'**essai** (mission 047), un GeoPackage de deux tables dont l'une garde son style enregistré (voir plus bas)."
             echo "- **piege.zip** : zip de **recette**, données **fictives**, huit fichiers, cinq pièges (mission 016). Il doit donner **un message clair par piège** ; ce n'est pas un zip à utiliser sur le terrain."
             echo
-            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans vision.qgz avec le plugin Vision 0.3.2 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
+            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans vision.qgz avec le plugin Vision 0.5.0 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
             echo
             echo "Version du $(date -u +%Y-%m-%d), commit ${GITHUB_SHA}."
             echo

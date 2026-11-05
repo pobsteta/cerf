@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Vision, prototype n° 1 (mission 004) : logique du plugin, sans API de QField.
-// Écrit pour Vision (rien de recopié, ADR 0006). Module ECMAScript pur, sans .pragma, sans
-// .import, sans import : chargé à la fois par QML (Vision.qml) et par Node
+// Cerf, prototype n° 1 (mission 004) : logique du plugin, sans API de QField.
+// Écrit pour Cerf (rien de recopié, ADR 0006). Module ECMAScript pur, sans .pragma, sans
+// .import, sans import : chargé à la fois par QML (Cerf.qml) et par Node
 // (tests/prototype.test.mjs), ADR 0005.
 // Prudence de syntaxe pour le moteur JavaScript de QML : ni « ?. », ni « ?? », ni
 // séparateur de chiffres, ni TextDecoder.
@@ -97,7 +97,7 @@ export function decoderCp437(octets) {
   return s;
 }
 
-// Décodeur UTF-8 écrit pour Vision (QML n'offre pas TextDecoder). Octet invalide : U+FFFD.
+// Décodeur UTF-8 écrit pour Cerf (QML n'offre pas TextDecoder). Octet invalide : U+FFFD.
 export function decoderUtf8(octets) {
   let s = '';
   let i = 0;
@@ -233,24 +233,24 @@ function sansBarreFinale(d) {
   return d.length > 1 ? d.replace(/\/+$/, '') : d;
 }
 
-// Préfixe de la copie hors projet : <application>/Imported Datasets/vision/<vision_id>/
+// Préfixe de la copie hors projet : <application>/Imported Datasets/cerf/<cerf_id>/
 // (spec § 3.3, ADR 0003).
-export function prefixeHorsProjet(dossierApplication, visionId) {
+export function prefixeHorsProjet(dossierApplication, cerfId) {
   if (!dossierApplication) throw new Error("dossier de l'application inconnu : copie impossible");
-  if (visionId === undefined || visionId === null || String(visionId).trim() === '') {
-    throw new Error('vision_id absent du projet : copie hors projet refusée');
+  if (cerfId === undefined || cerfId === null || String(cerfId).trim() === '') {
+    throw new Error('cerf_id absent du projet : copie hors projet refusée');
   }
-  const id = String(visionId);
+  const id = String(cerfId);
   if (id.indexOf('/') >= 0 || id.indexOf('\\') >= 0 || id === '.' || id === '..' || id.indexOf('..') >= 0) {
-    throw new Error(`vision_id invalide (« ${id} ») : il ne doit contenir ni « / » ni « .. »`);
+    throw new Error(`cerf_id invalide (« ${id} ») : il ne doit contenir ni « / » ni « .. »`);
   }
-  return `${sansBarreFinale(dossierApplication)}/Imported Datasets/vision/${id}/`;
+  return `${sansBarreFinale(dossierApplication)}/Imported Datasets/cerf/${id}/`;
 }
 
 // Préfixe de la copie dans le projet (repli de la spec § 9, n° 1).
 export function prefixeDansProjet(dossierProjet) {
   if (!dossierProjet) throw new Error('aucun projet ouvert : copie dans le projet impossible');
-  return `${sansBarreFinale(dossierProjet)}/vision-essai/`;
+  return `${sansBarreFinale(dossierProjet)}/cerf-essai/`;
 }
 
 // Chemin complet d'un fichier reçu de getFile (relatif au préfixe, ou déjà absolu).

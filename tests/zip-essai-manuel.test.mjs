@@ -294,12 +294,12 @@ test('workflow : déclenché sur la branche de la mission et sur main, étiquett
   assert.doesNotMatch(wfCode.split('\n').filter((l) => !/^\s*echo /.test(l)).join('\n'), /plugin-essai|plugin-v|projet-modele/); // les notes (echo) peuvent nommer la préversion plugin-essai (mission 040)
 });
 
-test('workflow : les notes disent données fictives, plugin 0.3.2 ou plus, et les couleurs de la spec § 5', () => {
-  for (const motif of [/fictives/, /plugin Vision 0\.3\.2 ou plus/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /vision\.qgz/]) assert.match(wf, motif);
+test('workflow : les notes disent données fictives, plugin 0.5.0 ou plus, et les couleurs de la spec § 5', () => {
+  for (const motif of [/fictives/, /plugin Vision 0\.5\.0 ou plus/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /vision\.qgz/]) assert.match(wf, motif);
 });
 
-test('mission 036 : notes « 0.3.2 ou plus » avec sa raison, jamais 0.3.0 ; un seul titre de flashcodes, aucun flashcode perdu', () => {
-  assert.match(wf, /plugin Vision 0\.3\.2 ou plus/);
+test('mission 036 : notes « 0.5.0 ou plus » (projet vision.qgz) avec la raison de la 0.3.2, jamais 0.3.0 ; un seul titre de flashcodes, aucun flashcode perdu', () => {
+  assert.match(wf, /plugin Vision 0\.5\.0 ou plus/);
   assert.match(wf, /Avant la 0\.3\.2, toute couche était refusée/);
   assert.doesNotMatch(wf, /0\.3\.0 ou plus/);
   // Le workflow assemble les deux blocs de notes ; on rejoue l'assemblage.

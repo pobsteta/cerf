@@ -27,14 +27,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
-  - Homme : `dev` (sonnet)
-  - Mission : Publier piege.zip dans la préversion essai-manuel
-  - Moyens : outils/zips-recette.mjs, release-essai-manuel.yml
-- [039-readme](missions/039-readme.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
-  - Homme : `archiviste` (sonnet)
-  - Mission : README : installer le projet, le plugin, et charger un zip
-  - Moyens : spec, releases, journal
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
@@ -58,12 +50,20 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · tests prêts (65a6680) ; dev après la 010 et la 030
+## Terminé
+
+- [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · fusionnée (PR #39)
+  - Homme : `dev` (sonnet)
+  - Mission : Publier piege.zip dans la préversion essai-manuel
+  - Moyens : outils/zips-recette.mjs, release-essai-manuel.yml
+- [039-readme](missions/039-readme.md) · depuis le cycle 6 · fusionnée (PR #37)
+  - Homme : `archiviste` (sonnet)
+  - Mission : README : installer le projet, le plugin, et charger un zip
+  - Moyens : spec, releases, journal
+- [024-lecture-formats](missions/024-lecture-formats.md) · depuis le cycle 6 · fusionnée (PR #38), plugin 0.4.0
   - Homme : `testeur` puis `dev` (sonnet)
   - Mission : Lecture des Shapefile, GeoPackage et GeoTIFF du zip
   - Moyens : prototype n° 2, zips de recette
-
-## Terminé
 
 - [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · fusionnée (PR #35), plugin 0.3.4
   - Homme : `dev` (sonnet)

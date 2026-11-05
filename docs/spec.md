@@ -146,7 +146,7 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
   (§ 9, n° 5).
 - **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
   À l'ouverture de `cerf.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
-  qu'aucune couche ne le lit déjà, le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
+  que le projet ne porte pas déjà une couche marquée `cerf/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
   couche raster « Fond embarqué (hors ligne) », cochée, sans entrée au registre des imports. Absent : rien, aucun
   message (pas de couche déclarée dans `cerf.qgz`, donc pas de page « Unable to load some layers »). Présent mais
   illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » Place : celle de

@@ -86,9 +86,21 @@ test('illisible (le chargement lève) : même texte, pas de plantage', () => {
 
 test('le message d\'illisibilité s\'ajoute aux autres lignes du démarrage', () => {
   const { ctx } = monde({ fichiers: [FOND], valide: false });
-  ctx.reglages.setValue('x', 1);
-  const r = L.demarrerProjet(ctx);
-  assert.match(r.message, /fichier illisible, il n'est pas affiché\.$/);
+  // Une vraie autre ligne : une entrée de registre dont la copie est absente du disque.
+  ctx.reglages.setValue(L.cleRegistre(ID), JSON.stringify([{ zip: 'a.zip', couche: 'UG', chemin: 'a/UG.gpkg' }]));
+  const lignes = L.demarrerProjet(ctx).message.split('\n');
+  assert.equal(lignes.length, 2);
+  assert.match(lignes[0], /copie absente/);
+  assert.equal(lignes[1], TEXTE_ILLISIBLE);
+});
+
+test('ordre : le fond est traité après la recharge du registre', () => {
+  const { ctx, appels } = monde({ fichiers: [FOND, `${PROJET}/cerf-imports/a/UG.gpkg`] });
+  ctx.reglages.setValue(L.cleRegistre(ID), JSON.stringify([{ zip: 'a.zip', couche: 'UG', chemin: 'a/UG.gpkg' }]));
+  L.demarrerProjet(ctx);
+  assert.equal(appels.length, 2);
+  assert.match(appels[0].source, /a\/UG\.gpkg\|layername=UG$/);
+  assert.equal(appels[1].source, FOND);
 });
 
 test('projet sans cerf_id : rien, même si le fichier est là', () => {
@@ -105,10 +117,20 @@ test('dossier du projet inconnu : rien', () => {
   assert.equal(appels.length, 0);
 });
 
-test('Cerf.qml : marque la couche, la repère par sa marque, branche fondDejaPresent', () => {
+test('Cerf.qml : chargeur du fond (loadRasterLayer, marque, libération si invalide) et fondDejaPresent branché', () => {
   const q = lire('plugin/Cerf.qml');
-  assert.match(q, /fondDejaPresent/);
-  assert.match(q, /cerf\/fond/);
+  const debut = q.indexOf('if (Logique.estSourceFondEmbarque(source)) {');
+  assert.ok(debut > 0, 'branche du fond embarqué absente du chargeur');
+  const branche = q.substring(debut, q.indexOf('const zip = zipDeLaCopie', debut));
+  assert.match(branche, /LayerUtils\.loadRasterLayer\(source, nom\)/);
+  assert.match(branche, /if \(fond && fond\.isValid\) \{[^}]*setCustomProperty\("cerf\/fond", "embarque"\)[^}]*addMapLayer\(qgisProject, fond\)[^}]*return fond;/s);
+  assert.match(branche, /if \(fond\) fond\.deleteLater\(\);\s*return null;/);
+  assert.doesNotMatch(branche, /cerf\/zip|chemin|registre/i);
+  // la reconnaissance : la marque seule (source() illisible en QML)
+  const f = q.substring(q.indexOf('function fondDejaPresent'), q.indexOf('function infosCouche'));
+  assert.match(f, /customProperty\("cerf\/fond", ""\)\) === "embarque"/);
+  assert.doesNotMatch(f, /\.source/);
+  assert.match(q, /fondDejaPresent: fondDejaPresent/);
 });
 
 test('version 0.4.3 (constante, metadata.txt) et préversion : branche de la mission 048', () => {

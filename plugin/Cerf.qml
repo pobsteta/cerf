@@ -85,8 +85,11 @@ Item {
         if (fond && fond.isValid) {
           fond.setCustomProperty("cerf/fond", "embarque");
           ProjectUtils.addMapLayer(qgisProject, fond);
+          return fond;
         }
-        return fond;
+        // Couche invalide : loadRasterLayer la rend en CppOwnership (QField v4.3.7 qflayerutils.cpp l. 624), personne ne la libérera.
+        if (fond) fond.deleteLater();
+        return null;
       }
       // Copie GeoPackage (ADR 0008) : le zip est donné ; couche en /vsizip/ : il se lit dans la source.
       const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
@@ -103,7 +106,8 @@ Item {
     };
   }
 
-  // Mission 048 : une couche du projet lit déjà le fond embarqué (marque cerf/fond, ou source finissant par basemap.mbtiles).
+  // Mission 048 : une couche du projet porte déjà la marque cerf/fond=embarque. Seule la marque compte sur l'appareil :
+  // source() n'est ni Q_PROPERTY ni Q_INVOKABLE (QGIS 3a92eb3 qgsmaplayer.h l. 606), « l.source » vaut undefined en QML.
   function fondDejaPresent() {
     if (!qgisProject) return false;
     const couches = ProjectUtils.mapLayers(qgisProject);
@@ -112,7 +116,6 @@ Item {
       if (!l) continue;
       try {
         if (typeof l.customProperty === "function" && String(l.customProperty("cerf/fond", "")) === "embarque") return true;
-        if (Logique.estSourceFondEmbarque(String(l.source))) return true;
       } catch (e) { /* couche sans source lisible */ }
     }
     return false;

@@ -13,8 +13,11 @@ Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et porten
 1. Ouvre QField.
 2. Sur l'écran d'accueil, touche « Projets et jeux de données locaux ».
 3. Touche le bouton d'actions en bas à droite (« Import Actions »), puis « Import URL ».
-4. Colle l'adresse suivante, ou touche l'icône QR code du champ et vise le flashcode (`flashcode-projet.png`, joint à la release) :
+4. Colle l'adresse suivante, ou touche l'icône QR code du champ et vise le flashcode ci-dessous (le même, `flashcode-projet.png`, est aussi joint à la release) :
    `https://github.com/pobsteta/cerf/releases/download/projet-modele/projet-cerf.zip`
+
+   <img src="docs/flashcodes/flashcode-projet.svg" width="200" alt="Flashcode de l'adresse du projet Cerf (projet-cerf.zip)">
+
 5. Ouvre le projet **`cerf.qgz`**.
 
 Le zip contient `cerf.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
@@ -37,8 +40,11 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 À faire une fois par appareil, avec du réseau.
 
 1. Dans QField : Paramètres, Plugins, « Install plugin from URL ».
-2. Colle l'adresse stable, ou touche l'icône QR code du champ et vise le flashcode (`flashcode-plugin.png`, joint à la release du plugin) :
+2. Colle l'adresse stable, ou touche l'icône QR code du champ et vise le flashcode ci-dessous (le même, `flashcode-plugin.png`, est aussi joint à la release du plugin) :
    `https://github.com/pobsteta/cerf/releases/latest/download/plugin-cerf.zip`
+
+   <img src="docs/flashcodes/flashcode-plugin.svg" width="200" alt="Flashcode de l'adresse du plugin Cerf (plugin-cerf.zip)">
+
 3. Valide, puis active le plugin si QField le demande.
 
 À savoir :
@@ -123,7 +129,13 @@ Un zip de démonstration (données fictives, aux noms du manuel : UG, Parcelles,
 
 `https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel-geojson.zip`
 
-`essai-manuel.zip`, de la même préversion, porte les mêmes couches avec UG, Parcelles et FRT en Shapefile.
+<img src="docs/flashcodes/flashcode-essai-manuel-geojson.svg" width="200" alt="Flashcode de l'adresse de essai-manuel-geojson.zip">
+
+`essai-manuel.zip`, de la même préversion, porte les mêmes couches avec UG, Parcelles et FRT en Shapefile :
+
+`https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip`
+
+<img src="docs/flashcodes/flashcode-essai-manuel.svg" width="200" alt="Flashcode de l'adresse de essai-manuel.zip">
 
 ## 4. Pour les développeurs
 

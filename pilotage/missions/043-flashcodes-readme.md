@@ -17,7 +17,7 @@ qu'il cite, le flashcode de cette adresse, sous forme d'image versionnée dans l
   recopiées à la main ; taille d'affichage lisible depuis un écran de PC (vers 200 px).
 - Le texte du README garde l'adresse en clair et la façon de viser (icône QR code du champ).
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** le README montre, à côté de chaque adresse stable (projet, plugin, essai-manuel-geojson, essai-manuel), le flashcode en SVG (200 px) versionné dans `docs/flashcodes/`, généré par `outils/flashcodes.mjs` ; l'adresse reste en clair. Un test décode chaque SVG et vérifie qu'il est collé à son adresse dans le README. Pas de PNG versionné (ils restent joints aux releases). `piege.zip` n'est pas cité par le README : pas de flashcode. L'adresse complète d'`essai-manuel.zip` a été ajoutée au README (il n'était cité que par son nom).
 
 ## Moyens
 

@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.4.3';
+export const VERSION = '0.4.4';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -701,15 +701,43 @@ function nomsDe(liste) {
 
 // --------------------------------------------------------------------------- importer
 
-function chargerSansPlanter(chargerCouche, source, nom, zip) {
+// Mission 049 : QField rend toute couche chargée par LayerUtils en CppOwnership (v4.3.7, qflayerutils.cpp l. 618 et 624) :
+// personne ne la libère si elle n'est pas ajoutée au projet. `liberer(couche)` libère une couche invalide (une seule fois).
+function chargerSansPlanter(chargerCouche, source, nom, zip, liberer) {
   try {
     const c = zip === undefined ? chargerCouche(source, nom) : chargerCouche(source, nom, zip);
     if (!c) return { couche: null, raison: 'illisible' };
-    if (!c.isValid) return { couche: null, raison: 'illisible' };
+    if (!c.isValid) {
+      if (typeof liberer === 'function') liberer(c);
+      return { couche: null, raison: 'illisible' };
+    }
     return { couche: c, raison: '' };
   } catch (e) {
     return { couche: null, raison: 'illisible (' + (e && e.message ? e.message : String(e)) + ')' };
   }
+}
+
+// Mission 049 : suivi des couches ouvertes par un import. `liberer` ne libère une couche qu'une fois, jamais une couche
+// « gardée » (ajoutée au projet, ou dont l'ajout a été tenté : le doute profite à la carte). `toutLiberer` balaie à la fin
+// de l'import (y compris sur retour anticipé ou exception) ce qui a été ouvert sans être gardé. Le service est
+// `ctx.libererCouche(couche)` (Cerf.qml : deleteLater) ; absent, rien n'est libéré. Ne lève jamais.
+function creerSuivi(ctx) {
+  const ouvertes = [];
+  const gardees = [];
+  const liberees = [];
+  const suivi = {
+    suivre: function (c) { if (c && ouvertes.indexOf(c) < 0) ouvertes.push(c); return c; },
+    garder: function (c) { if (c && gardees.indexOf(c) < 0) gardees.push(c); },
+    liberer: function (c) {
+      if (!c || gardees.indexOf(c) >= 0 || liberees.indexOf(c) >= 0) return;
+      // Une couche déjà au projet (rendue telle quelle par le chargeur) appartient au QgsProject : jamais libérée ici.
+      try { if (ctx && typeof ctx.coucheDuProjet === 'function' && ctx.coucheDuProjet(c)) return; } catch (e) { return; }
+      liberees.push(c);
+      try { if (ctx && typeof ctx.libererCouche === 'function') ctx.libererCouche(c); } catch (e) { /* sans effet */ }
+    },
+    toutLiberer: function () { for (let i = 0; i < ouvertes.length; i++) suivi.liberer(ouvertes[i]); },
+  };
+  return suivi;
 }
 
 // Description d'une entrée du zip pour les contrôles (spec § 4) : nom court avec extension,
@@ -882,7 +910,7 @@ function qmlAbsent(ctx, chemin, dossier) {
 // Réécrit la couche ouverte (contrôlée) en GeoPackage dans cerf-imports/<zip>/, écrit le .qml à
 // côté AVANT le chargement, puis charge la copie. Rend { ok: false, message } ou
 // { ok: true, copie, rendu, relatif, style, qml, avertissements }.
-function copierEtStyler(ctx, couche, c, nomZip, noms) {
+function copierEtStyler(ctx, couche, c, nomZip, noms, suivi) {
   const fichier = nomAffiche(c);
   const dossier = dossierCopies(ctx.dossierProjet);
   const p = cheminsDeLaCopie(ctx.dossierProjet, nomZip, c.couche);
@@ -922,7 +950,8 @@ function copierEtStyler(ctx, couche, c, nomZip, noms) {
       avertissements.push('style non écrit, couche chargée avec le style par défaut');
     }
   }
-  const o = chargerSansPlanter(ctx.ouvrirCouche, rendu + '|layername=' + c.couche, c.couche);
+  const o = chargerSansPlanter(ctx.ouvrirCouche, rendu + '|layername=' + c.couche, c.couche, undefined, suivi.liberer);
+  suivi.suivre(o.couche);
   if (!o.couche) return { ok: false, message: `${fichier} : copie illisible après réécriture, couche refusée` };
   return { ok: true, copie: o.couche, rendu, relatif: rendu.substring(dossier.length + 1), style: styleFinal, qml: qmlFinal, avertissements };
 }
@@ -1018,13 +1047,24 @@ function messageGpkgSansTable(c) {
 
 // Ouvre une couche du zip en /vsizip/, sans l'ajouter à la carte. Le format est passé à ouvrirCouche :
 // Cerf.qml ouvre un GeoTIFF par LayerUtils.loadRasterLayer (mission 024), le reste par loadVectorLayer.
-function ouvrirDuZip(ctx, copie, c) {
+function ouvrirDuZip(ctx, copie, c, suivi) {
   const source = sourceDeLaCouche(copie, c);
   if (source === '') return { couche: null, raison: 'illisible' };
-  return chargerSansPlanter(function (s, n) { return ctx.ouvrirCouche(s, n, c.format); }, source, c.couche);
+  const o = chargerSansPlanter(function (s, n) { return ctx.ouvrirCouche(s, n, c.format); }, source, c.couche, undefined, suivi.liberer);
+  suivi.suivre(o.couche);
+  return o;
 }
 
 export function importerZip(ctx) {
+  const suivi = creerSuivi(ctx);
+  try {
+    return importerZipSuivi(ctx, suivi);
+  } finally {
+    suivi.toutLiberer();
+  }
+}
+
+function importerZipSuivi(ctx, suivi) {
   const vide = (message) => ({ chargees: [], refusees: [], ecartees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
   const nomZip = ctx.nomZip;
@@ -1083,7 +1123,7 @@ export function importerZip(ctx) {
   for (let i = couches.length - 1; i >= 0; i--) {
     const c = couches[i];
     if (!c.json) continue;
-    const o = ouvrirDuZip(ctx, copie, c);
+    const o = ouvrirDuZip(ctx, copie, c, suivi);
     if (o.couche) { ouvertesJson[c.entree] = o; continue; }
     couches.splice(i, 1);
     ecarter(c);
@@ -1105,7 +1145,7 @@ export function importerZip(ctx) {
       if (!aCharger(c)) continue;
       if (c.json) { nbLisibles++; continue; } // déjà ouvert plus haut
       if (Object.prototype.hasOwnProperty.call(ouvertes, c.couche)) continue; // doublon : refusé plus bas
-      const o = ouvrirDuZip(ctx, copie, c);
+      const o = ouvrirDuZip(ctx, copie, c, suivi);
       ouvertes[c.couche] = o;
       if (o.couche) nbLisibles++;
     }
@@ -1152,7 +1192,7 @@ export function importerZip(ctx) {
     const source = sourceDeLaCouche(copie, c);
     // Ouvrir (en /vsizip/, sans ajouter à la carte), contrôler, réécrire, styler, charger la copie,
     // puis seulement ajouter à la carte et inscrire.
-    const r = (c.json && ouvertesJson[c.entree]) || ouvertes[c.couche] || ouvrirDuZip(ctx, copie, c);
+    const r = (c.json && ouvertesJson[c.entree]) || ouvertes[c.couche] || ouvrirDuZip(ctx, copie, c, suivi);
     // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
     // précède « illisible » et que le message porte le chemin complet dans le zip.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
@@ -1172,6 +1212,7 @@ export function importerZip(ctx) {
       // (QGIS 3a92eb3, src/core/raster/qgsrasterlayer.h ; elle est à QgsVectorLayer, qgsvectorlayer.h l. 420).
       for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
       try {
+        suivi.garder(r.couche);
         ctx.ajouterALaCarte(r.couche, c.couche, source, nomZip);
       } catch (e) {
         refuser(nom + ' : ajout à la carte impossible');
@@ -1183,12 +1224,15 @@ export function importerZip(ctx) {
       chargees.push({ couche: c.couche, entree: c.entree, source, style: STYLE_DEFAUT });
       continue;
     }
-    const cp = copierEtStyler(ctx, r.couche, c, nomZip, noms);
+    const cp = copierEtStyler(ctx, r.couche, c, nomZip, noms, suivi);
+    // La couche ouverte dans le zip n'est jamais celle de la carte (la copie GeoPackage l'est) : libérée sans attendre.
+    suivi.liberer(r.couche);
     if (!cp.ok) { refuser(cp.message); continue; }
     for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
     for (let k = 0; k < cp.avertissements.length; k++) avertissements.push(nom + ' : ' + cp.avertissements[k]);
     try {
       cp.copie.readOnly = true;
+      suivi.garder(cp.copie);
       ctx.ajouterALaCarte(cp.copie, c.couche, cp.rendu, nomZip);
     } catch (e) {
       refuser(nom + ' : ajout à la carte impossible');
@@ -1246,6 +1290,8 @@ function chargerFondEmbarque(ctx, dossierProjet) {
   let deja = false;
   try { deja = !!ctx.fondDejaPresent(chemin); } catch (e) { deja = false; }
   if (deja) return 'deja';
+  // Pas de `liberer` ici, volontairement : le chargeur de Cerf.qml libère seul un fond invalide (CppOwnership) ;
+  // en passer un autre donnerait une double libération.
   const r = chargerSansPlanter(ctx.chargerCouche, chemin, NOM_FOND_EMBARQUE);
   return r.couche ? 'ajoute' : 'illisible';
 }
@@ -1272,6 +1318,9 @@ export function demarrerProjet(ctx) {
   }
   // Décision n° 5 : les entrées douteuses sont retirées aussitôt, sans rien effacer.
   if (douteuses > 0) ecrireRegistre(ctx.reglages, cerfId, saines);
+  // Mission 049 : le chargeur rend une couche invalide sans l'ajouter à la carte ; elle est libérée ici, une seule fois.
+  const suivi = creerSuivi(ctx);
+  const liberer = suivi.liberer;
   const presence = {};
   const rechargees = [];
   const absentes = [];
@@ -1282,7 +1331,7 @@ export function demarrerProjet(ctx) {
       // Copie GeoPackage (ADR 0008) : rechargée depuis le disque, le zip n'est pas relu ; son .qml
       // est à côté, QGIS l'applique seul au chargement.
       if (!ctx.existe(dossier + '/' + e.chemin)) { absentes.push({ zip: e.zip, couche: e.couche, copie: true }); continue; }
-      const rc = chargerSansPlanter(ctx.chargerCouche, dossier + '/' + e.chemin + '|layername=' + e.couche, e.couche, e.zip);
+      const rc = chargerSansPlanter(ctx.chargerCouche, dossier + '/' + e.chemin + '|layername=' + e.couche, e.couche, e.zip, liberer);
       if (!rc.couche) { illisibles.push({ zip: e.zip, couche: e.couche }); continue; }
       rc.couche.readOnly = true;
       rechargees.push({ zip: e.zip, couche: e.couche });
@@ -1291,7 +1340,7 @@ export function demarrerProjet(ctx) {
     if (!Object.prototype.hasOwnProperty.call(presence, e.zip)) presence[e.zip] = !!ctx.existe(dossier + '/' + e.zip);
     if (!presence[e.zip]) { absentes.push({ zip: e.zip, couche: e.couche }); continue; }
     const source = '/vsizip/' + dossier + '/' + e.chemin_vsi;
-    const r = chargerSansPlanter(ctx.chargerCouche, source, e.couche);
+    const r = chargerSansPlanter(ctx.chargerCouche, source, e.couche, undefined, liberer);
     if (!r.couche) { illisibles.push({ zip: e.zip, couche: e.couche }); continue; }
     // Un GeoTIFF (mission 024) n'a pas de readOnly (propriété de QgsVectorLayer seulement, qgsvectorlayer.h l. 420).
     if (!estSourceRaster(source)) r.couche.readOnly = true;

@@ -50,13 +50,10 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [042-qml-json-docs](missions/042-qml-json-docs.md) · depuis le cycle 6 · en cours
-  - Homme : `archiviste`
-  - Mission : `.qml` du zip reporté et `.json` non GeoJSON dans CLAUDE.md, brief, ADR 0008, spec, README
-  - Moyens : `plugin/cerf-logique.mjs`, `plugin/Cerf.qml`, journal des 4 et 5 novembre
-
 ## Terminé
 
+- [042-qml-json-docs](missions/042-qml-json-docs.md) · depuis le cycle 6 · fusionnée (PR #43)
+  - Homme : `archiviste`
 - [041-spec-readme-024](missions/041-spec-readme-024.md) · depuis le cycle 6 · fusionnée (PR #42)
   - Homme : `archiviste`
 - [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · fusionnée (PR #39)

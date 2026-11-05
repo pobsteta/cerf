@@ -106,7 +106,7 @@ test('décision 7 : __MACOSX/ et ._* ignorés en silence ; .GEOJSON dans un sous
   assert.deepEqual(m.couchesDuZip([
     '__MACOSX/._UG.geojson', '__MACOSX/x/UG.geojson', 'x/._Parcelles.geojson', '._a.geojson',
     'a/b/FRT.GEOJSON', 'dossier/',
-  ]), [{ couche: 'FRT', entree: 'a/b/FRT.GEOJSON' }]);
+  ]), [{ couche: 'FRT', entree: 'a/b/FRT.GEOJSON', nom: 'a/b/FRT.GEOJSON', format: 'geojson' }]);
 });
 
 // ============================================================================ décision 6 : plafond
@@ -212,7 +212,7 @@ test('importerZip : message de bilan (singulier, pluriel, refus) et date par dé
 test('importerZip : zip sans GeoJSON -> message qui le dit', async () => {
   const m = await M();
   const r = m.importerZip(ctxImport({ ctx: { octets: zipDe('lisez-moi.txt') } }).ctx);
-  assert.match(r.message, /Aucune couche GeoJSON dans x\.zip/);
+  assert.match(r.message, /Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans x\.zip/);
 });
 
 // ============================================================================ registre
@@ -393,5 +393,5 @@ test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (
   const qml = lire('Cerf.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.3\.4$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.4\.0$/m);
 });

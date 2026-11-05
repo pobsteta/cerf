@@ -283,7 +283,7 @@ const wf = readFileSync(join(RACINE, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché sur la branche de la mission et sur main, étiquette fixe essai-manuel, jamais latest', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?(, 'mission\/040-publier-piege')?\]/);
   assert.match(wfCode, /concurrency:\n\s+group: release-essai-manuel\n\s+cancel-in-progress: false/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\*/);
   assert.match(wfCode, /--prerelease --latest=false/);
@@ -291,7 +291,7 @@ test('workflow : déclenché sur la branche de la mission et sur main, étiquett
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes manuel essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes manuel essai/);
   assert.doesNotMatch(wfCode, /--latest(?!=false)/);
-  assert.doesNotMatch(wfCode, /plugin-essai|plugin-v|projet-modele/);
+  assert.doesNotMatch(wfCode.split('\n').filter((l) => !/^\s*echo /.test(l)).join('\n'), /plugin-essai|plugin-v|projet-modele/); // les notes (echo) peuvent nommer la préversion plugin-essai (mission 040)
 });
 
 test('workflow : les notes disent données fictives, plugin 0.3.2 ou plus, et les couleurs de la spec § 5', () => {

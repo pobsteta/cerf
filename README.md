@@ -50,24 +50,27 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.3.4 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.4.0 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 
-- **GeoJSON seulement** : fichiers `.geojson`, et fichiers `.json` **si leur contenu est du GeoJSON** (un autre `.json` est ignoré sans message).
-- **Shapefile, GeoPackage et GeoTIFF : pas encore.** Ils viendront avec la mission 024 (`pilotage/missions/`). Un zip qui n'a que ces formats ne donne aucune couche, sans message de refus par fichier.
-- **Dans un zip qui mêle GeoJSON et Shapefile, GeoPackage ou GeoTIFF, les fichiers autres que GeoJSON sont ignorés sans aucun message.** Exemple : un `FRT` en Shapefile à côté d'un `UG.geojson` : l'UG est chargée, le FRT manque et rien ne s'affiche pour le dire. Vérifie les couches sur la carte.
-- Pour essayer tout de suite, prends un zip tout en GeoJSON (voir « Zip d'essai »).
+Extensions sans tenir compte de la casse, à la racine du zip ou dans des dossiers :
+
+- **GeoJSON** : fichiers `.geojson`, et fichiers `.json` **si leur contenu est du GeoJSON** (un autre `.json` est ignoré sans message).
+- **Shapefile** : le `.shp` avec, dans le même dossier et sous le même nom, `.shx`, `.dbf`, `.prj` (obligatoires) et `.cpg` (conseillé). Un `.prj`, `.shx` ou `.dbf` absent fait refuser la couche ; un `.cpg` absent donne l'avertissement « accents peut-être mal lus ».
+- **GeoPackage** (`.gpkg`) : **une couche par table vecteur**. Le plugin lit la liste des tables dans le fichier, sans réseau. Cette lecture n'est pas encore prouvée sur le téléphone : si elle échoue, le GeoPackage est refusé (« tables illisibles »), il n'est jamais ignoré sans message.
+- **GeoTIFF** (`.tif`, `.tiff`) : lu dans le zip, sans copie, avec le style par défaut de QGIS. Range-le dans le zip **sans compression** (`zip -0`) pour une lecture rapide.
+- Shapefile, GeoJSON et GeoPackage sont copiés en GeoPackage dans `cerf-imports/` : une couche Shapefile apparaît donc comme un GeoPackage.
 
 ### Combien de couches
 
-Un zip peut en contenir **autant qu'on veut** : chaque fichier GeoJSON est une couche, à la racine ou dans des dossiers. Toutes les couches du zip sont chargées ; il n'y a pas de case à cocher dans la version actuelle (la spec § 1 en prévoit).
+Un zip peut en contenir **autant qu'on veut** : chaque GeoJSON, chaque Shapefile, chaque table de GeoPackage et chaque GeoTIFF est une couche. Toutes les couches du zip sont chargées ; il n'y a pas de case à cocher dans la version actuelle (la spec § 1 en prévoit).
 
 Les limites réelles :
 
 - **Le zip entier doit peser 10 Mo au plus aujourd'hui** (10 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/cerf-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc.
-- **Deux couches de même nom** (`a/UG.geojson` et `b/UG.geojson`) : la seconde est refusée, la première est chargée.
-- **Ignorés sans message** : dossier `__MACOSX`, fichiers `._*` (zips faits sur Mac), `.qmd`, et tout fichier qui n'est pas du GeoJSON, y compris un Shapefile, un GeoPackage ou un GeoTIFF.
+- **Deux couches de même nom** (`a/UG.geojson` et `b/UG.shp`, ou une table `UG` de GeoPackage) : la seconde est refusée, la première est chargée.
+- **Ignorés sans message** : dossier `__MACOSX`, fichiers `._*` (zips faits sur Mac), `.qmd`, et tout autre fichier. Les fichiers annexes (`.tfw`, `.aux.xml`, `.qix`, `.sbn`, `.sbx`) vont avec leur couche, sans message.
 - Une couche refusée n'empêche pas les autres.
 
 ### Étapes
@@ -76,8 +79,8 @@ Les limites réelles :
 2. Ouvre `cerf.qgz`.
 3. Touche le bouton Cerf de la barre d'outils des plugins : le panneau Cerf s'ouvre. Touche « Ajouter un zip ».
 4. Choisis ton zip dans le sélecteur de fichiers Android. Autorise l'accès au stockage si Android le demande.
-5. Lis le message du panneau : une ligne par couche refusée ou avertie, qui commence par le nom du fichier avec son extension (`UG.geojson : …`). Seul le refus « nom de couche en double » donne le chemin complet dans le zip ; le chemin complet partout viendra avec la mission 024.
-6. Regarde la carte. Les couches sont **en lecture seule**. Le plugin les copie en GeoPackage dans `cerf-imports/` (dossier du projet), avec leur style.
+5. Lis le message du panneau : une ligne par couche refusée ou avertie, qui commence par le **chemin complet de la couche dans le zip**, avec son extension : `FRT.shp : …` à la racine, `Serre EA/réf/Parcelles.shp : …` dans des dossiers, `d/Serre.gpkg/Releves : …` pour une table de GeoPackage.
+6. Regarde la carte. Les couches sont **en lecture seule**. Le plugin copie les couches vecteur en GeoPackage dans `cerf-imports/` (dossier du projet), avec leur style ; les GeoTIFF restent lus dans la copie du zip.
 
 ### Retrouver et retirer
 
@@ -100,7 +103,8 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 
 - Les champs de code `CODE_UG`, `CODE_PARC` et `CODE_FRT` sont **provisoires** (casse libre). **Sans ce champ, la couleur s'applique mais aucune étiquette ne s'affiche.**
 - Un nom reconnu mais en point ou en ligne (sans les champs `essence` et `diametre`) garde le style par défaut, avec un avertissement.
-- **Un fichier `.qml` du même nom que la couche, dans le même dossier du zip, remplace la règle** (`UG.qml` à côté de `UG.geojson`). Si ce `.qml` est vide ou illisible, il est ignoré, la règle s'applique, avec un avertissement.
+- **Un fichier `.qml` du même nom que la couche, dans le même dossier du zip, remplace la règle** (`UG.qml` à côté de `UG.geojson` ou de `UG.shp` ; pour une table de GeoPackage, le nom de la table : `UG.qml` à côté de `Serre.gpkg`). Si ce `.qml` est vide ou illisible, il est ignoré, la règle s'applique, avec un avertissement.
+- Un GeoTIFF garde le style par défaut de QGIS.
 
 ### Systèmes de coordonnées
 
@@ -118,7 +122,7 @@ Un zip de démonstration (données fictives, aux noms du manuel : UG, Parcelles,
 
 `https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel-geojson.zip`
 
-Ne prends pas `essai-manuel.zip` de la même préversion tant que la mission 024 n'est pas livrée : ses trois couches sont en Shapefile, que le plugin ne lit pas encore.
+`essai-manuel.zip`, de la même préversion, porte les mêmes couches avec UG, Parcelles et FRT en Shapefile.
 
 ## 4. Pour les développeurs
 

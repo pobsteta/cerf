@@ -1,4 +1,6 @@
-# Cerf — brief
+# Vision — brief
+
+> **Note du 5 novembre 2026** : le projet s'appelle Vision depuis cette date (`docs/adr/` n° 0009). Les décisions datées d'avant ce jour ont été prises sous son nom d'origine ; seul le nom a changé, pas le sens.
 
 > Rédigé par Claude avec `/imperatrice:brief` le 2 novembre 2026, à partir du mail de
 > JFC et des réponses de Pascal (tours 1 à 3). Chaque ligne vient d'une réponse de
@@ -32,7 +34,7 @@
 - **Coût complet aujourd'hui** : inconnu ; un ordre de grandeur est à demander à JFC
   (heures par projet fait à la main, nombre de projets par an).
 
-## Ce que fait Cerf
+## Ce que fait Vision
 
 - **En une phrase** : un projet QField modèle, prêt pour toute UT de métropole (Corse comprise), avec les fonds IGN
   en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches
@@ -52,7 +54,7 @@
   1. le projet modèle `.qgz` ;
   2. le plugin QField **d'application** (arbitrage 1), en zip installable par URL sur
      chaque tablette, actif dans tous les projets mais qui n'agit que dans un projet
-     Cerf ;
+     Vision ;
   3. une **convention du zip** d'une page : noms de couches attendus, formats acceptés
      (GeoJSON, GeoPackage, Shapefile complet : `.shp`, `.shx`, `.dbf`, `.prj`, `.cpg`
      ; GeoTIFF), système de coordonnées, et en annexe la grammaire des styles (motif de
@@ -135,7 +137,7 @@
      [`qfield_addLayer`](https://github.com/lukashelmke/qfield_addLayer/blob/main/main.qml)
      (registre dans les réglages de QField, rechargement à la fin de l'ouverture du
      projet). Règles retenues (arbitrage 6) : la **clé** du registre est un identifiant
-     propre au projet Cerf, stocké dans le projet, et non son nom de fichier ; les
+     propre au projet Vision, stocké dans le projet, et non son nom de fichier ; les
      **copies** vont dans le dossier « Imported Datasets » de QField, **hors du dossier
      projet** (que QFieldCloud peut purger). Reste à écrire dans la spec : le
      comportement si un fichier a disparu ; la perte du registre si QField est
@@ -155,7 +157,7 @@
   exacte de `qfield-layer-loader`** (arbitrage 5) ; GPL-3.0-or-later pressentie, comme
   Groma et Surculus ; **maintenu par Pascal sur GitHub**
   (nom du dépôt : à trancher par Pascal).
-- **Successeur** : **Jeff Cerf**, désigné par Pascal le 2 novembre 2026.
+- **Successeur** : **Jeff Vision**, désigné par Pascal le 2 novembre 2026.
 
 ## Comment saura-t-on que ça marche ?
 
@@ -187,7 +189,7 @@ Pascal Obstétar.
   son niveau de zoom ;
 - la lecture de la licence de `qfield-layer-loader` ;
 - la réponse de JFC sur la licence SCAN 25 de l'ONF ;
-- ~~le nom du projet~~ (Cerf, tranché par Pascal le 2 novembre 2026), la licence ouverte choisie, le dépôt GitHub (`pobsteta/cerf` existe : à confirmer par Pascal).
+- ~~le nom du projet~~ (nom d'origine tranché par Pascal le 2 novembre 2026, changé le 5 novembre : ADR 0009), la licence ouverte choisie, le dépôt GitHub (`pobsteta/vision` existe : à confirmer par Pascal).
 
 ## Arbitrages de Pascal (2 novembre 2026)
 
@@ -199,8 +201,8 @@ Sur les huit questions du `contradicteur` (critique au journal du même jour) :
 3. **contrôle de vraisemblance d'emprise** (France métropolitaine) à la place de
    « sans système déclaré, refusé » ;
 4. « toute UT » = **métropole, Corse comprise**, en tranche 1 ;
-5. licence de Cerf tranchée **après lecture** de la licence de `qfield-layer-loader` ;
-6. clé du registre = **identifiant propre au projet Cerf** ; copies **hors du dossier
+5. licence de Vision tranchée **après lecture** de la licence de `qfield-layer-loader` ;
+6. clé du registre = **identifiant propre au projet Vision** ; copies **hors du dossier
    projet** ;
 7. **protocole des deux minutes** retenu, avec zip piégé ;
 8. commission et affouagistes **retirés** de la tranche 1.
@@ -210,8 +212,8 @@ Sur les huit questions du `contradicteur` (critique au journal du même jour) :
 Détail dans `docs/spec.md` § 9. Ce qui modifie le brief :
 
 - **arbitrage 6 conditionnel** : si le plugin ne peut pas lister le zip hors du dossier
-  projet, le zip va dans le dossier projet et Cerf n'est pas utilisé avec QFieldCloud ;
-- **un seul projet `cerf.qgz` par appareil**, pour toutes les forêts ;
+  projet, le zip va dans le dossier projet et Vision n'est pas utilisé avec QFieldCloud ;
+- **un seul projet `vision.qgz` par appareil**, pour toutes les forêts ;
 - **licence GPL-3.0-or-later**, code à Pascal, rien de recopié ;
 - le geste porte sur un zip, pas sur un dossier ;
 - pas de chargement forcé d'une couche refusée.
@@ -223,7 +225,7 @@ modifiable, conforme au brief), Pascal veut pouvoir ajouter des points sur le te
 retient la voie 1 :
 
 1. le projet modèle porte une couche **« Saisie terrain »**, **ponctuelle**, vide, prête à
-   remplir, dans un GeoPackage posé à côté de `cerf.qgz` ;
+   remplir, dans un GeoPackage posé à côté de `vision.qgz` ;
 2. ses champs sont ceux de ProdBois : `essence`, `diametre`, plus `remarque` et `date`
    (remplie seule) ; ses points prennent donc le style ProdBois / Relevés du manuel ;
 3. les couches importées restent **en lecture seule** ;
@@ -235,7 +237,7 @@ retient la voie 1 :
 
 Après les prototypes n° 2 et n° 3 (fiches 023, 027), le point « pas de décompression : GDAL lit
 dans le zip » ne vaut plus que pour les GeoTIFF : les couches vecteur sont ouvertes dans le
-zip, contrôlées, puis réécrites en GeoPackage dans `cerf-imports/` avec leur style à côté, pour
+zip, contrôlées, puis réécrites en GeoPackage dans `vision-imports/` avec leur style à côté, pour
 que les couleurs du manuel s'affichent (ADR 0008).
 
 ## Validation

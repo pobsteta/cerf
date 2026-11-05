@@ -1,4 +1,4 @@
-# Kanban de Cerf
+# Kanban de Vision
 
 > Cinq colonnes (fiche n° 8). Chaque carte porte l'Homme (qui), la Mission (quoi, quand,
 > combien) et les Moyens (comment, où, avec qui), et renvoie à sa fiche dans
@@ -52,7 +52,7 @@ _Modèle de carte :_
 
 - [050-vision](missions/050-vision.md) · depuis le cycle 6 · en cours
   - Homme : `dev` puis `archiviste`
-  - Mission : Cerf devient Vision, partout sauf l'historique (plugin 0.5.0)
+  - Mission : le projet change de nom, il s'appelle Vision (ADR 0009 ; plugin 0.5.0)
   - Moyens : tout le dépôt
 
 ## Terminé
@@ -88,11 +88,11 @@ _Modèle de carte :_
 - [038-compter-entites](missions/038-compter-entites.md) · depuis le cycle 6 · fusionnée (PR #35), plugin 0.3.4
   - Homme : `dev` (sonnet)
   - Mission : Compter les entités par un itérateur (plugin 0.3.4)
-  - Moyens : prototype n° 2 (createFeatureIterator), Cerf.qml
+  - Moyens : prototype n° 2 (createFeatureIterator), Vision.qml
 - [037-reprojection](missions/037-reprojection.md) · depuis le cycle 6 · fusionnée (PR #34), plugin 0.3.3
   - Homme : `dev` (sonnet)
   - Mission : Reprojection de l'emprise depuis un système reconstruit par son nom (plugin 0.3.3)
-  - Moyens : prototype n° 2 (reprojection prouvée), Cerf.qml
+  - Moyens : prototype n° 2 (reprojection prouvée), Vision.qml
 - [036-notes-essai-manuel](missions/036-notes-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #32)
   - Homme : `dev` (sonnet)
   - Mission : Notes de la préversion essai-manuel : plugin 0.3.2 ou plus
@@ -104,7 +104,7 @@ _Modèle de carte :_
 - [034-crs-valide](missions/034-crs-valide.md) · depuis le cycle 6 · fusionnée (PR #30), plugin 0.3.2
   - Homme : `dev` (sonnet)
   - Mission : Système de coordonnées jugé valide d'après ce que QML voit (plugin 0.3.2)
-  - Moyens : sources de QGIS 3a92eb3, Cerf.qml
+  - Moyens : sources de QGIS 3a92eb3, Vision.qml
 - [033-essai-manuel](missions/033-essai-manuel.md) · depuis le cycle 6 · fusionnée (PR #27)
   - Homme : `dev` (sonnet)
   - Mission : Zip de démonstration aux noms du manuel
@@ -174,13 +174,13 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Tests du squelette du plugin — cycle prévu 3
   - Moyens : `docs/spec.md` § 1, § 3.3, § 6 
-- [008-squelette-plugin](missions/008-squelette-plugin.md) · depuis le cycle 5 · fusionnée (PR #13), Cerf 0.1.1, 3 novembre 2026
+- [008-squelette-plugin](missions/008-squelette-plugin.md) · depuis le cycle 5 · fusionnée (PR #13), plugin 0.1.1, 3 novembre 2026
   - Homme : `dev` (opus)
   - Mission : Squelette du plugin : un parcours complet, minimal — cycle prévu 3
   - Moyens : ADR 0001, 0003, 0005, 0006 
 - [006-projet-modele](missions/006-projet-modele.md) · depuis le cycle 4 · PR #8 fusionnée ; ouvert dans QField
   - Homme : `dev` (sonnet)
-  - Mission : Projet modèle cerf.qgz — cycle prévu 2
+  - Mission : Projet modèle vision.qgz — cycle prévu 2
   - Moyens : référentiel 001, ADR 0002, spec § 2 et § 3.3
 
 - [005-tests-projet-modele](missions/005-tests-projet-modele.md) · depuis le cycle 4 · PR #7 fusionnée (avec #8)
@@ -242,5 +242,5 @@ l'inscrit avec ce qu'elle nous apprend._
 - cycle 1 · mauvaise nouvelle : deux missions sur trois (001, 002) sans moyens, faute d'avoir vérifié les outils des agents et le réseau à la porte n° 2 · pour Pascal · elle nous apprend qu'à la porte n° 2, la troisième question se vérifie par un essai (outils de l'agent, domaine joignable)
 - cycle 2 · mauvaise nouvelle : trois missions prêtes (019, 002, 003) mais aucune fusionnée ; le goulet est la relecture, pas la production · pour Pascal · elle nous apprend « le rythme avant l'ambition » : réduire la voilure et faire relire avant de produire
 - cycle 3 · livraison : les deux URL XYZ vérifiées des fonds IGN (Plan IGN v2, BD ORTHO, zoom maximal 19, `docs/referentiels/fonds-ign.md`), à coller à la main dans QField · pour JFC · premier élément du brief qu'un agent de terrain peut prendre en main : les fonds IGN en flux, sans les 700 Mo de fonds embarqués
-- cycle 4 · livraison : le projet modèle cerf.qgz (fonds IGN en flux dans le groupe « Fonds de carte », Lambert 93, cerf_id), importable par URL dans QField depuis la release prototype-1 · pour JFC · un projet tout prêt, vu ouvert sur le Samsung de Pascal, au lieu de deux URL à coller à la main
+- cycle 4 · livraison : le projet modèle vision.qgz (fonds IGN en flux dans le groupe « Fonds de carte », Lambert 93, vision_id), importable par URL dans QField depuis la release prototype-1 · pour JFC · un projet tout prêt, vu ouvert sur le Samsung de Pascal, au lieu de deux URL à coller à la main
 - cycle 5 · livraison : les zips de recette piege et lourd, rejouables par outils/zips-recette.mjs, à ouvrir dans QGIS · pour Pascal · de quoi juger le futur plugin sur les pièges et la charge, là où le cycle 4 livrait le projet

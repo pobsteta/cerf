@@ -1,8 +1,10 @@
 # Fond embarqué IGN fabriqué par QFieldSync (« base map »)
 
+> **Note du 5 novembre 2026** : le projet s'appelle Vision depuis cette date (`docs/adr/` n° 0009). Les décisions datées d'avant ce jour ont été prises sous son nom d'origine ; seul le nom a changé, pas le sens.
+
 - **Propriétaire :** Pascal Obstétar. Rédigé par l'`acquereur` (mission 046, étape 1).
 - **Décision éclairée :** quelle voie (A, B ou C, § 7) choisir pour livrer un fond IGN lisible sans réseau
-  dans `cerf.qgz`, sans casser `cerf_id`, `cerf-imports/`, le registre ni `saisie.gpkg` (ADR 0002, spec § 3.3 à 3.5 et § 9 n° 5).
+  dans `vision.qgz`, sans casser `vision_id`, `vision-imports/`, le registre ni `saisie.gpkg` (ADR 0002, spec § 3.3 à 3.5 et § 9 n° 5).
 - **Date de consultation :** 5 novembre 2026.
 - **Sources lues :**
   - code de `opengisch/libqfieldsync`, branche `master` (`raw.githubusercontent.com`), fichiers
@@ -75,7 +77,7 @@ Constats du code (`offline_converter.py`, `layer.py`, `package_dialog.py`) :
 | Question de la fiche | Constat | Source |
 |---|---|---|
 | Copie du projet ? | Le projet est **écrit** (`QgsProject.write`) sous un autre nom : le paquet propose `<nom du projet>_qfield.qgz` (filtre `*.qgz, *.qgs`). Il ne remplace pas le projet source. | `package_dialog.py` |
-| Variables de projet (`cerf_id`) | Le code ne les traite pas explicitement ; le projet est réécrit tel quel avec ses propriétés, donc `cerf_id` **reste** (déduit, **à vérifier sur un paquet réel** : ouvrir le `.qgz` produit, Propriétés > Variables). | `offline_converter.py` (absence de traitement) |
+| Variables de projet (`vision_id`) | Le code ne les traite pas explicitement ; le projet est réécrit tel quel avec ses propriétés, donc `vision_id` **reste** (déduit, **à vérifier sur un paquet réel** : ouvrir le `.qgz` produit, Propriétés > Variables). | `offline_converter.py` (absence de traitement) |
 | Couches XYZ | Une couche non fichier (WMS, XYZ…) a l'action par défaut **`NO_ACTION`** : gardée **en ligne**, intacte. Le code ne nomme pas XYZ. Si l'agent a choisi un thème pour le fond, les couches du thème peuvent être retirées du paquet (documentation, extrait). | `layer.py` `default_action` ; doc (extrait) |
 | Couche « Saisie terrain » (`saisie.gpkg`) | Fichier GeoPackage vecteur : action par défaut **`COPY`** (fichier copié, source repointée). La conversion « hors ligne » (`data.gpkg`, `QgsOfflineEditing`) n'a lieu que pour l'action `OFFLINE` (par défaut : couches PostgreSQL). Un GeoPackage déjà GPKG est copié tel quel. **Le `saisie.gpkg` copié est celui de l'ordinateur, vide.** | `layer.py`, `offline_converter.py` |
 | Emprise | `areaOfInterest` du projet, sinon emprise courante du canevas (`mapCanvas().extent()`), système du projet. Sert au fond ; aux vecteurs seulement si `offlineCopyOnlyAoi`. | `package_dialog.py`, `offline_converter.py` |
@@ -85,19 +87,19 @@ Constats du code (`offline_converter.py`, `layer.py`, `package_dialog.py`) :
 Deuxième source : la documentation (extrait) concorde sur « fond = couche raster tout en bas du paquet » et sur le défaut de zoom 14.
 Elle n'a pas pu être lue pour le détail de « Package for QField » (copie / hors ligne).
 
-## 3. Conséquences pour Cerf
+## 3. Conséquences pour Vision
 
-1. **Le paquet remplace-t-il `cerf.qgz` ?** Pas par lui-même : il produit **un autre projet** (`<nom>_qfield.qgz`) dans un autre dossier, à copier
+1. **Le paquet remplace-t-il `vision.qgz` ?** Pas par lui-même : il produit **un autre projet** (`<nom>_qfield.qgz`) dans un autre dossier, à copier
    sur l'appareil par câble. Mais il contient un `saisie.gpkg` **vide** : le copier sur celui de l'appareil **écraserait les points saisis**
-   (spec § 3.5 : la mise à jour ne doit pas écraser `saisie.gpkg`). Le nom du projet change aussi (`_qfield`), alors que la spec veut « un seul `cerf.qgz` par appareil » :
-   il faudrait renommer ou exporter sous le nom `cerf.qgz`.
-2. **`cerf-imports/` et registre.** Le registre est dans les réglages de QField, clé `cerf/<cerf_id>` ; les copies sont dans
-   `<dossier du projet>/cerf-imports/`. Un paquet copié dans un **nouveau** dossier garde `cerf_id` (à vérifier) mais n'a **pas** `cerf-imports/` : le registre
+   (spec § 3.5 : la mise à jour ne doit pas écraser `saisie.gpkg`). Le nom du projet change aussi (`_qfield`), alors que la spec veut « un seul `vision.qgz` par appareil » :
+   il faudrait renommer ou exporter sous le nom `vision.qgz`.
+2. **`vision-imports/` et registre.** Le registre est dans les réglages de QField, clé `vision/<vision_id>` ; les copies sont dans
+   `<dossier du projet>/vision-imports/`. Un paquet copié dans un **nouveau** dossier garde `vision_id` (à vérifier) mais n'a **pas** `vision-imports/` : le registre
    renvoie « copie absente (réimporter le zip) » pour tous les vecteurs. Copié **sur** le dossier existant : les fichiers hors paquet restent
-   (`cerf-imports/` n'est pas dans le paquet), mais `saisie.gpkg` et `cerf.qgz` sont écrasés. La voie A est donc la plus risquée pour les
+   (`vision-imports/` n'est pas dans le paquet), mais `saisie.gpkg` et `vision.qgz` sont écrasés. La voie A est donc la plus risquée pour les
    données déjà en place.
 3. **Livrer seulement le fond ?** Le code le permet : `basemap.mbtiles` est un fichier autonome, produit à côté du projet empaqueté,
-   sans dépendance à celui-ci. Il peut être copié à côté de `cerf.qgz` et déclaré d'avance dans le projet modèle comme couche raster
+   sans dépendance à celui-ci. Il peut être copié à côté de `vision.qgz` et déclaré d'avance dans le projet modèle comme couche raster
    (source relative `./basemap.mbtiles`, comme `saisie.gpkg`, spec § 3.5). **Non vérifié** (rien dans le code ni la doc lue) :
    comportement de QField quand le fichier est **absent** à l'ouverture (couche invalide au premier lancement, message ?), et lecture d'un MBTiles
    hors du dossier du projet : il sera **dans** le dossier du projet, ce qui respecte la limite vue avec QField 4.3.7 (spec § 3.3).
@@ -155,7 +157,7 @@ Un GeoPackage raster demanderait un autre outil (QGIS : « Convertir en GeoPacka
 
 ## 6. Points non vérifiés (à essayer sur un vrai paquet)
 
-1. `cerf_id` présent dans le `.qgz` empaqueté.
+1. `vision_id` présent dans le `.qgz` empaqueté.
 2. Chemin du MBTiles (relatif ou absolu) dans le `.qgs` produit, et lecture du MBTiles par QField 4.3.7 sur le Samsung.
 3. QField et un projet qui déclare `./basemap.mbtiles` absent.
 4. Version réelle de QFieldSync installée (clés `baseMapMupp` ou `baseMapTilesMaxZoomLevel` ?).
@@ -167,15 +169,15 @@ Un GeoPackage raster demanderait un autre outil (QGIS : « Convertir en GeoPacka
 Rien n'est tranché ici. Trois voies.
 
 ### Voie A : le projet empaqueté par QFieldSync est copié sur l'appareil
-- **Gestes sur PC (agent ou JFC) :** installer QFieldSync dans QGIS ; ouvrir `cerf.qgz` ; régler « Base Map » (thème « Fond embarqué », zoom min/max, taille de tuile) ; définir l'emprise de l'UT ; « Package for QField » ; obtenir un dossier avec `<nom>_qfield.qgz`, `basemap.mbtiles`, `saisie.gpkg` vide.
-- **Gestes sur le Samsung :** copier le dossier par câble USB, sur l'ancien ou dans un autre ; renommer en `cerf.qgz` ; réimporter les zips.
-- **Risques :** `saisie.gpkg` écrasé par un fichier vide (points perdus) ; `cerf-imports/` absent dans un nouveau dossier, donc « copie absente » pour chaque couche du registre ; deux projets sur l'appareil contre « un seul `cerf.qgz` » ; `cerf_id` à vérifier ; nom `_qfield` à corriger. Le plus de gestes, le plus de risques.
+- **Gestes sur PC (agent ou JFC) :** installer QFieldSync dans QGIS ; ouvrir `vision.qgz` ; régler « Base Map » (thème « Fond embarqué », zoom min/max, taille de tuile) ; définir l'emprise de l'UT ; « Package for QField » ; obtenir un dossier avec `<nom>_qfield.qgz`, `basemap.mbtiles`, `saisie.gpkg` vide.
+- **Gestes sur le Samsung :** copier le dossier par câble USB, sur l'ancien ou dans un autre ; renommer en `vision.qgz` ; réimporter les zips.
+- **Risques :** `saisie.gpkg` écrasé par un fichier vide (points perdus) ; `vision-imports/` absent dans un nouveau dossier, donc « copie absente » pour chaque couche du registre ; deux projets sur l'appareil contre « un seul `vision.qgz` » ; `vision_id` à vérifier ; nom `_qfield` à corriger. Le plus de gestes, le plus de risques.
 - **Taille :** fond + projet + `saisie.gpkg` ; fond seul de l'ordre de 35-90 Mo (Plan IGN, zoom 17) à ~700 Mo (zoom 19) ; ortho, plusieurs fois plus.
 
-### Voie B : seul `basemap.mbtiles`, déposé à côté de `cerf.qgz`, déclaré d'avance dans le projet modèle
+### Voie B : seul `basemap.mbtiles`, déposé à côté de `vision.qgz`, déclaré d'avance dans le projet modèle
 - **Gestes sur PC :** les mêmes jusqu'au paquet ; on ne garde que `basemap.mbtiles` (le reste du paquet est jeté).
-- **Gestes sur le Samsung :** copier **un seul fichier** à côté de `cerf.qgz` (même dossier que `saisie.gpkg`), mode avion pour la vérification. Le projet modèle (étape 2, `outils/projet-modele.mjs`) déclare une couche raster `./basemap.mbtiles` sous le groupe « Fonds de carte ».
-- **Risques :** `cerf.qgz`, `cerf_id`, `saisie.gpkg`, `cerf-imports/` et registre **non touchés** (aucun fichier existant écrasé, sauf un ancien `basemap.mbtiles`). Reste à vérifier : couche invalide tant que le fichier est absent (message de QField ?), un fond par UT sous le même nom à écraser, lecture par QField.
+- **Gestes sur le Samsung :** copier **un seul fichier** à côté de `vision.qgz` (même dossier que `saisie.gpkg`), mode avion pour la vérification. Le projet modèle (étape 2, `outils/projet-modele.mjs`) déclare une couche raster `./basemap.mbtiles` sous le groupe « Fonds de carte ».
+- **Risques :** `vision.qgz`, `vision_id`, `saisie.gpkg`, `vision-imports/` et registre **non touchés** (aucun fichier existant écrasé, sauf un ancien `basemap.mbtiles`). Reste à vérifier : couche invalide tant que le fichier est absent (message de QField ?), un fond par UT sous le même nom à écraser, lecture par QField.
 - **Taille :** celle du seul fichier (voir § 4).
 
 ### Voie C : autre, fond produit sans QFieldSync, même sortie MBTiles
@@ -189,8 +191,8 @@ CGU lues ; qui prépare le fond (l'agent ou JFC).
 
 ## 8. Trois points au sol
 
-1. **Le paquet réel sur un PC :** produire un paquet de l'UT de Pascal et ouvrir le `.qgz` produit : `cerf_id` présent ? « Basemap » en bas ? chemin du MBTiles relatif ?
-2. **Samsung, mode avion :** un `basemap.mbtiles` de ~100 Mo puis ~700 Mo à côté de `cerf.qgz` : s'ouvre-t-il, à quelle vitesse, et que dit QField si le fichier manque ?
+1. **Le paquet réel sur un PC :** produire un paquet de l'UT de Pascal et ouvrir le `.qgz` produit : `vision_id` présent ? « Basemap » en bas ? chemin du MBTiles relatif ?
+2. **Samsung, mode avion :** un `basemap.mbtiles` de ~100 Mo puis ~700 Mo à côté de `vision.qgz` : s'ouvre-t-il, à quelle vitesse, et que dit QField si le fichier manque ?
 3. **Résolution contre erreur de 5 m :** zoom 17 contre 18 sur un point de l'UT, avec le cadastre par-dessus : suffisant à l'œil sur tablette en plein soleil ?
 
 ## 9. Liste de contrôle

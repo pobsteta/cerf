@@ -17,15 +17,12 @@ const HISTORIQUE = [
   /^pilotage\/missions\/0[0-4]\d-/, // fiches 000 à 049, dans leur texte d'origine
   /^pilotage\/missions\/050-vision\.md$/, // la fiche du renommage nomme l'ancien et le nouveau
   /^docs\/adr\/000[1-8]-/, // ADR passées, texte d'origine
+  /^docs\/adr\/0009-/, // l'ADR du renommage cite l'ancien nom
+  /^tests\/garde-nom-050\.test\.mjs$/, // ce fichier nomme l'ancien nom dans son commentaire d'en-tête
   /^docs\/referentiels\/brut\//, // mesures brutes datées
   /^plugin\/PLAN-012\.md$/, // plans de missions passées (012, 021)
   /^outils\/PLAN-021\.md$/,
 ];
-// Provisoire : documentation que l'archiviste reprend à l'étape 2 de la mission 050. À retirer ensuite.
-const DOC_ETAPE_2 = [
-  /^CLAUDE\.md$/, /^docs\//, /^pilotage\//, /^plugin\/PLAN\.md$/,
-];
-
 // « effacerFichier » (RemoveFile de QField) contient « cerF » par hasard de la langue : pas un reste de l'ancien nom.
 const sansFauxAmis = (t) => t.replace(/effacerFichier/g, '');
 
@@ -35,10 +32,6 @@ const restes = (exclus) => suivis().filter((f) => !exclus.some((re) => re.test(f
   return ANCIEN.test(sansFauxAmis(readFileSync(resolve(RACINE, f)).toString('latin1')));
 });
 
-test('garde : l\'ancien nom n\'apparaît plus dans les fichiers suivis (contenu ni chemin), hors historique et documentation de l\'étape 2', () => {
-  assert.deepEqual(restes([...HISTORIQUE, ...DOC_ETAPE_2]), []);
-});
-
-test('garde : l\'ancien nom n\'apparaît plus dans la documentation vivante', { todo: 'étape 2 : l\'archiviste reprend CLAUDE.md, docs/ et pilotage/ ; retirer DOC_ETAPE_2 ensuite' }, () => {
+test('garde : l\'ancien nom n\'apparaît plus dans les fichiers suivis (contenu ni chemin), hors historique', () => {
   assert.deepEqual(restes(HISTORIQUE), []);
 });

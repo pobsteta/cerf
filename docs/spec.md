@@ -47,8 +47,12 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
   plus).
 - Contient une ou plusieurs couches, à la racine ou dans des sous-dossiers.
 - Formats, extensions sans tenir compte de la casse :
-  - GeoJSON (`.geojson`, `.json`) ; un `.json` qui n'est pas du GeoJSON est ignoré en
-    silence ;
+  - GeoJSON (`.geojson`, `.json`) ; un `.json` qui n'est pas du GeoJSON devrait être
+    ignoré en silence (intention d'origine) ; **état réel sur l'appareil (5 novembre 2026)** :
+    le contenu d'un `.json` du zip n'est pas lisible (`FileUtils.readFileContent` ne lit pas en
+    `/vsizip/`, § 5), le plugin ne peut pas le reconnaître, le tente comme couche et, si QField
+    ne l'ouvre pas, le **refuse** avec « `<chemin dans le zip>` : illisible » (`plugin/cerf-logique.mjs`
+    l. 964-977, `plugin/Cerf.qml` l. 117-124) ; reporté, pas de mission de code (Pascal) ;
   - GeoPackage (`.gpkg`, une couche par table) ;
   - Shapefile : **obligatoires** `.shp`, `.shx`, `.dbf`, `.prj` ; **conseillé** `.cpg` ;
   - GeoTIFF (`.tif`, `.tiff`), **rangé dans le zip sans compression** (`zip -0`) ou en

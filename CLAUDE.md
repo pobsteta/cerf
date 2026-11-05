@@ -57,7 +57,8 @@ les agents doivent garder en tête.
   QFieldCloud), voir `docs/spec.md` § 3.3 et § 10.
 - **Styles du manuel** (source : mail de JFC, tableau dans `docs/brief.md`) : UG, Parcelles,
   FRT et exports ProdBois / Relevés, appliqués par règle sur le nom de la couche ; un `.qml`
-  posé à côté d'une couche dans le zip surcharge la règle.
+  posé dans le zip n'est pas pris en charge pour l'instant (reporté, Pascal, 5 novembre 2026 :
+  `docs/spec.md` § 5).
 - **Fonds de carte** : Géoplateforme IGN (Plan IGN v2, BD ORTHO) déclarés en **XYZ**, pas en
   WMTS (hors ligne, QField ne met pas GetCapabilities en cache). SCAN 25 seulement si
   l'ONF confirme licence et clé (JFC) ; **aucune clé dans le dépôt**.

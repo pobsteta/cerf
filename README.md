@@ -62,7 +62,7 @@ Le plugin 0.4.0 (sur `main`) fait ce qui suit. Pas plus.
 
 Extensions sans tenir compte de la casse, à la racine du zip ou dans des dossiers :
 
-- **GeoJSON** : fichiers `.geojson`, et fichiers `.json` **si leur contenu est du GeoJSON** (un autre `.json` est ignoré sans message).
+- **GeoJSON** : fichiers `.geojson`, et fichiers `.json`, tentés comme GeoJSON. *Sur l'appareil (5 novembre 2026), le plugin ne peut pas lire le contenu d'un `.json` du zip : il ne sait donc pas écarter un `.json` qui n'est pas du GeoJSON, et le tente comme couche. Si QField ne l'ouvre pas, il est refusé avec le message « `<chemin dans le zip>` : illisible » (les autres couches sont chargées) ; il n'est pas ignoré en silence. Retire du zip les `.json` qui ne sont pas des couches.*
 - **Shapefile** (lecture confirmée sur l'appareil avec le plugin 0.4.0, 5 novembre 2026) : le `.shp` avec, dans le même dossier et sous le même nom, `.shx`, `.dbf`, `.prj` (obligatoires) et `.cpg` (conseillé). Un `.prj`, `.shx` ou `.dbf` absent fait refuser la couche ; un `.cpg` absent donne l'avertissement « accents peut-être mal lus ».
 - **GeoPackage** (`.gpkg`) : **une couche par table vecteur**. Le plugin lit la liste des tables dans le fichier, sans réseau. Cette lecture n'est pas encore prouvée sur le téléphone (zip d'essai `essai-tables-z.zip` à essayer) : si elle échoue, ou si le GeoPackage n'a qu'une table attributaire sans géométrie, il est refusé (« tables illisibles »), il n'est jamais ignoré sans message.
 - **GeoTIFF** (`.tif`, `.tiff`) : lu dans le zip, sans copie, avec le style par défaut de QGIS. Range-le dans le zip **sans compression** (`zip -0`) pour une lecture rapide.

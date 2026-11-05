@@ -52,7 +52,7 @@ _Modèle de carte :_
 
 ## Terminé
 
-- [049-fuite-couches](missions/049-fuite-couches.md) · depuis le cycle 6 · PR ouverte
+- [049-fuite-couches](missions/049-fuite-couches.md) · depuis le cycle 6 · fusionnée (PR #50)
   - Homme : `dev`
 - [048-fond-embarque-plugin](missions/048-fond-embarque-plugin.md) · depuis le cycle 6 · fusionnée (PR #49)
   - Homme : `dev`

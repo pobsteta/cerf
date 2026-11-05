@@ -252,8 +252,8 @@ Ordre de priorité (en vigueur depuis le plugin 0.4.2, mission 047, 5 novembre 2
 GeoPackage** → règle par nom → règle par champs → style par défaut de QGIS. *Avant la 0.4.2 (gardé pour mémoire) :
 règle par nom → règle par champs → style par défaut.* L'ordre visé, une fois le `.qml` du zip lisible, est : style du
 GeoPackage → `.qml` du zip → règle par nom → règle par champs → défaut (le style du GeoPackage est un style que
-l'agent a choisi dans QGIS, comme un `.qml` ; **priorité sur la règle du manuel proposée par l'orchestrateur, à
-confirmer par Pascal**).
+l'agent a choisi dans QGIS, comme un `.qml` ; **priorité sur la règle du manuel proposée par l'orchestrateur,
+confirmée par Pascal le 5 novembre 2026**).
 
 **Style enregistré dans un GeoPackage du zip** (mission 047, plugin 0.4.2, 5 novembre 2026). QGIS écrit le style
 d'une couche dans la table `layer_styles` du GeoPackage (« Enregistrer le style dans la base de données »). Pour chaque

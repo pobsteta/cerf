@@ -3,7 +3,7 @@
 > Fiche rédigée par Claude (orchestrateur) le 5 novembre 2026, à la demande de Pascal (« est-ce que
 > le plugin gère les styles des couches contenues dans un gpkg du zip ? Si non il doit le faire »).
 > **Statut : validée par Pascal le 5 novembre 2026.** Priorité du style du GeoPackage sur la règle
-> du manuel : proposée par l'orchestrateur, **à confirmer par Pascal** (même intention que le
+> du manuel : proposée par l'orchestrateur, **confirmée par Pascal le 5 novembre 2026** (même intention que le
 > `.qml` posé dans le zip, brief, reporté pour une raison technique propre au `.qml`).
 
 ## Constat (plugin 0.4.1, `main`)

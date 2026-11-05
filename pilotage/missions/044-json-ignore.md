@@ -26,7 +26,7 @@ style).
   (`estGeoJson`) reste ; si le contenu n'est pas du GeoJSON, la même ligne « pas une couche
   GeoJSON, ignoré » s'affiche (plus de silence, une seule conduite sur PC et sur l'appareil).
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** un `.json` du zip qui ne s'ouvre pas (appareil) ou dont le contenu lisible n'est pas du GeoJSON (PC) est écarté avec « `<chemin>` : pas une couche GeoJSON, ignoré », sans être un refus ; un `.json` qui s'ouvre reste une couche normale, un `.geojson` illisible reste refusé ; but : que l'agent voie pourquoi un fichier de config du zip n'est pas chargé, sans faux refus.
 
 ## Moyens
 

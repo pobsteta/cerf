@@ -22,6 +22,49 @@ Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et porten
 
 Le zip contient `cerf.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
 
+### Les fonds de carte
+
+`cerf.qgz` contient cinq fonds, dans le groupe « Fonds de carte », du dessus au dessous :
+
+| Fond | Affiché au départ | Hors ligne |
+|---|---|---|
+| **Cadastre** (parcelles, transparent, Géoplateforme IGN) | oui | à vérifier (critère n° 5, la veille puis J+2) |
+| **Plan IGN v2** | oui | à vérifier (critère n° 5, la veille puis J+2) |
+| **OpenStreetMap** | non, à cocher | **non : en ligne seulement** |
+| **OpenTopoMap** (carte topographique) | non, à cocher | **non : en ligne seulement** |
+| **BD ORTHO** (photo aérienne IGN) | non, à cocher | à vérifier (critère n° 5, la veille puis J+2) |
+
+- **OpenStreetMap et OpenTopoMap ne marchent qu'avec du réseau.** La politique de l'OpenStreetMap Foundation interdit l'usage hors ligne de ses tuiles : ne compte pas sur ces deux fonds sans réseau, ni le lendemain. Leurs serveurs peuvent aussi refuser des tuiles (la politique de l'OSMF exige un User-Agent qui identifie l'application ; non vérifié avec QField).
+- **Fonds IGN hors ligne : pas encore prouvé.** Le cache des tuiles de QGIS peut expirer, et l'essai du critère n° 5 (la veille, puis J+2) n'a pas encore été passé sur le Samsung. Ne pars pas sur le terrain en comptant sur ces fonds sans réseau avant d'avoir fait cet essai. Un fond embarqué se prépare sur PC avec QFieldSync (section suivante, mission 046).
+- Le cadastre se superpose au fond affiché. Pour voir la BD ORTHO, coche-la : le cadastre reste au-dessus.
+- Zoom maximal : 19 (cadastre, Plan IGN v2, BD ORTHO ; OpenStreetMap 19, **non vérifié, à mesurer sur le Samsung**), 13 pour OpenTopoMap (valeur la plus prudente des sources, à mesurer). Aucune clé n'est nécessaire. Les attributions (« © IGN », « © les contributeurs d'OpenStreetMap », OpenTopoMap) sont dans les propriétés de chaque couche.
+- Le critère « fond visible hors ligne la veille et à J+2 » ne vaut que pour les fonds IGN.
+
+Voir [`docs/spec.md`](docs/spec.md) § 3.4.
+
+### Préparer un fond embarqué de l'UT (PC, QFieldSync)
+
+Pour travailler sans réseau sur une UT, on fabrique sur un PC un fichier `basemap.mbtiles` (Plan IGN v2 et cadastre, de l'emprise de l'UT) avec l'extension QGIS **QFieldSync**. Seul ce fichier va sur le Samsung ; `cerf.qgz`, `saisie.gpkg`, `cerf-imports/` et le registre ne sont pas touchés. **OpenStreetMap et OpenTopoMap n'y sont pas** (en ligne seulement).
+
+> **État de la mission 046.** Le projet modèle contient le thème de carte « Fond embarqué » et les réglages QFieldSync. **Décision D1 de Pascal (5 novembre 2026) : `cerf.qgz` ne déclare pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture si le fichier d'une couche manque). C'est le **plugin Cerf** (0.4.3, mission 048) qui ajoute le fond s'il le trouve à côté du projet. Les étapes 1 à 4 ci-dessous produisent le fichier, les étapes 5 à 7 le mettent en place. **Pas encore prouvé sur le Samsung** : l'essai reste à faire.
+>
+> **Ne choisis pas le thème « Fond embarqué » dans QField.** QField propose, de mémoire (à vérifier sur le Samsung), les thèmes de carte du projet dans son panneau des couches ; si l'agent choisit ce thème sur le terrain, la couche « Saisie terrain » et les couches importées sont masquées. Ce thème ne sert qu'à QFieldSync, sur PC.
+
+1. **Installer QFieldSync** dans QGIS sur PC (menu Extensions, Installer/Gérer les extensions, chercher « QFieldSync »). Il faut le module Processing activé. Après installation, l'écran de configuration doit proposer « Tiles min zoom level » et « Tiles max zoom level » (une version plus ancienne a d'autres réglages : à vérifier).
+2. **Ouvrir `cerf.qgz`** dans QGIS, depuis un dossier **sans caractères spéciaux** dans son chemin (accents, espaces, symboles : QFieldSync refuse sinon, `check_files_have_unsupported_characters`), et **avec du réseau** (les tuiles sont téléchargées chez l'IGN pendant la fabrication ; sans réseau le fond sort vide, sans message). Avant de produire, **vérifier que le groupe « Fonds de carte » est coché** : le thème « Fond embarqué » le recoche à son application (`has-checked-group-info`, QGIS 3a92eb3), mais un groupe décoché donnerait un fond vide.
+3. **Choisir l'emprise de l'UT** : dans les réglages QFieldSync du projet (Projet > Propriétés > « QField »), groupe « Base Map », vérifier : type « Map theme », thème **Fond embarqué**, tuile **256**, zoom min **13**, zoom max **17** (déjà réglés par le projet modèle), puis donner l'emprise de l'UT dans « Area of interest » (ou, sans emprise donnée, zoomer la carte sur l'UT : QFieldSync prend alors l'emprise affichée). Une emprise plus grande que l'UT coûte du temps et de la place.
+4. **Produire** : « Package for QField », avec un dossier de sortie **différent** de celui de `cerf.qgz` (QFieldSync le refuse sinon). QFieldSync fabrique tout le projet empaqueté : on **ne prend que le fichier `basemap.mbtiles`** du dossier produit et on jette le reste. Surtout **ne copie jamais le `saisie.gpkg` produit** (il est vide) sur celui du téléphone.
+5. **Copier `basemap.mbtiles`** par câble USB dans le dossier du projet du Samsung, à côté de `cerf.qgz` (même dossier que `saisie.gpkg`), en remplaçant celui d'une autre UT.
+6. **Rouvrir le projet** : le plugin ajoute alors la couche « Fond embarqué (hors ligne) », cochée, en lecture seule, sans entrée dans la liste des couches importées ; elle revient à chaque réouverture tant que le fichier est là. Sans fichier : rien ne se passe, aucun message. Fichier illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. »
+7. **Vérifier en mode avion** : zoomer sur l'UT ; le fond embarqué et les couches importées par-dessus doivent s'afficher. **Le fond embarqué recouvre les fonds en ligne sur son emprise** : pour voir la BD ORTHO, le décocher. QField le place sous les couches vecteur et au-dessus des fonds en ligne ; cet ordre réel sera vu à l'essai sur le Samsung.
+
+- **Taille attendue (estimation, non mesurée)** : pour 10 km sur 10 km, au zoom max 17 (environ 0,8 m par pixel), environ 2 300 tuiles au niveau 17 et un tiers de plus pour les niveaux 13 à 16. D'après les tuiles du Plan IGN v2 mesurées par la mission 001, le Plan IGN seul fait de l'ordre de **35 à 90 Mo** ; le cadastre en ajoute (non mesuré). Un zoom 18 coûte environ quatre fois plus, un zoom 19 seize fois (JFC a parlé de 700 Mo, ce qui correspond au zoom 19, hypothèse à lui demander). À confirmer sur un essai réel : taille et durée à noter.
+- Au-delà du zoom 17, QField agrandit les tuiles (image floue) ; les fonds en ligne gardent le zoom 19.
+- **Licence : non tranchée.** Les conditions d'utilisation de cartes.gouv.fr (CGU) n'ont pas été lues, et rien n'a été lu sur l'usage hors ligne de tuiles IGN ni sur le cadastre : les lire (ou demander à l'IGN) avant de diffuser un fond embarqué. Garder l'attribution « © IGN ».
+- Détail et sources : [`docs/referentiels/fond-embarque-qfieldsync.md`](docs/referentiels/fond-embarque-qfieldsync.md) ; réglages : `outils/projet-modele.mjs`.
+
+Voir [`docs/spec.md`](docs/spec.md) § 3.4.
+
 ### Mettre le projet à jour
 
 **N'importe pas le zip de mise à jour avec « Import URL »** : QField le décompresserait dans un dossier neuf, donc dans un autre projet, sans les points déjà saisis.
@@ -113,7 +156,7 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 - **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
 - **Style enregistré dans un GeoPackage** (*plugin 0.4.2, mission 047, 5 novembre 2026*). Quand tu enregistres le style d'une couche dans QGIS avec « Enregistrer le style dans la base de données » (« Enregistrer comme style par défaut »), il est écrit dans la table `layer_styles` du `.gpkg`. Pour chaque table d'un GeoPackage du zip, le plugin lit ce style, sans réseau, et le garde **à la place** de la règle du manuel : la table `UG` d'un `Serre.gpkg` stylée par toi n'est plus bleue, elle garde ton style. S'il y a plusieurs styles pour la table, le plugin prend celui « par défaut », sinon le plus récent. Sans `layer_styles`, ou sans ligne pour la table, la règle du manuel s'applique comme avant, sans message. Si le style est vide ou n'est pas du XML QGIS, la règle du manuel s'applique avec l'avertissement « `<chemin>` : .qml illisible, style du manuel appliqué ». **Cette lecture n'est pas encore prouvée sur le téléphone** (même voie que la liste des tables : requête `SELECT` sur le GeoPackage) ; zip d'essai `essai-gpkg-style.zip`, plus bas.
-- **Fond embarqué `basemap.mbtiles`** (*plugin 0.4.3, mission 048, 5 novembre 2026 ; pas encore prouvé sur le téléphone*). Si un fichier `basemap.mbtiles` (produit par QFieldSync pour ton UT, mission 046) est **à côté de `cerf.qgz`**, le plugin l'ajoute à l'ouverture du projet, cochée, sous le nom « Fond embarqué (hors ligne) », en lecture seule. Étapes : 1. copier `basemap.mbtiles` à côté de `cerf.qgz` ; 2. rouvrir le projet ; 3. vérifier en mode avion que le fond s'affiche. Sans fichier : rien ne se passe, aucun message. Fichier présent mais illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » **Le fond embarqué recouvre les fonds en ligne sur son emprise** : pour voir la BD ORTHO, décoche-le. QField le place sous les couches vecteur et au-dessus des fonds en ligne ; cet ordre réel sera vu à l'essai sur le Samsung. Il n'apparaît pas dans la liste des couches importées, et il revient à chaque réouverture tant que le fichier est là.
+- **Fond embarqué `basemap.mbtiles`** (*plugin 0.4.3, mission 048, 5 novembre 2026 ; pas encore prouvé sur le téléphone*) : voir les étapes 5 à 7 de « Préparer un fond embarqué de l'UT » plus haut. Détail technique : `docs/spec.md` § 3.4.
 
 ### Systèmes de coordonnées
 

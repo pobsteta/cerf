@@ -50,8 +50,16 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [048-fond-embarque-plugin](missions/048-fond-embarque-plugin.md) · depuis le cycle 6 · en cours
+  - Homme : `dev`
+  - Mission : plugin 0.4.3, fond embarqué `basemap.mbtiles` ajouté à l'ouverture
+  - Moyens : `docs/spec.md` § 3.4, README, sources de QField 4.3.7
+
 ## Terminé
 
+- [047-styles-gpkg](missions/047-styles-gpkg.md) · depuis le cycle 6 · fusionnée (PR #47)
+- [046-fond-embarque-qfieldsync](missions/046-fond-embarque-qfieldsync.md) · depuis le cycle 6 · fusionnée (PR #48)
+- [045-fonds-osm-cadastre](missions/045-fonds-osm-cadastre.md) · depuis le cycle 6 · fusionnée (PR #46)
 - [044-json-ignore](missions/044-json-ignore.md) · depuis le cycle 6 · fusionnée (PR #45)
   - Homme : `dev` (sonnet)
 - [043-flashcodes-readme](missions/043-flashcodes-readme.md) · depuis le cycle 6 · fusionnée (PR #44)

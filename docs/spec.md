@@ -29,7 +29,7 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
 ## 2. Livrables
 
 1. `cerf.qgz` : projet modèle vide de données métier, en Lambert 93 (EPSG:2154), avec
-   les deux fonds XYZ (ADR 0002), la variable de projet `cerf_id` (§ 3.3) et la couche
+   les cinq fonds XYZ (ADR 0002, § 3.4), la variable de projet `cerf_id` (§ 3.3) et la couche
    de saisie « Saisie terrain » (§ 3.5), avec son GeoPackage vide `saisie.gpkg`.
 2. Le plugin QField d'application, en zip installable par URL (ADR 0001), sous
    GPL-3.0-or-later (ADR 0006), code entièrement écrit pour Cerf.
@@ -132,18 +132,47 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 
 | Fond | Couche Géoplateforme | Format | Clé |
 |---|---|---|---|
+| Cadastre | `CADASTRALPARCELS.PARCELLAIRE_EXPRESS` (PNG transparent, jeu `PM`) | PNG | non |
 | Plan IGN v2 | `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` | PNG | non |
+| OpenStreetMap | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` (hors Géoplateforme) | PNG | non |
+| OpenTopoMap | `https://tile.opentopomap.org/{z}/{x}/{y}.png` (hors Géoplateforme) | PNG | non |
 | BD ORTHO | `ORTHOIMAGERY.ORTHOPHOTOS` | JPEG | non |
 | SCAN 25 | seulement si JFC confirme licence et clé ONF | — | voir ci-dessous |
 
-- Zoom maximal de chaque couche XYZ fixé à la limite annoncée par la Géoplateforme (à
+Mission 045 (arbitrages de Pascal, 5 novembre 2026 ; référentiel `docs/referentiels/fonds-osm-cadastre.md`).
+**Ordre dans l'arbre, du dessus au dessous** : Cadastre, Plan IGN v2, OpenStreetMap, OpenTopoMap, BD ORTHO ;
+« Saisie terrain » reste au-dessus du groupe. **Visibles au départ** : Cadastre et Plan IGN v2 ; les trois
+autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visible par défaut.
+
+- **OpenStreetMap et OpenTopoMap : en ligne seulement** (la politique de l'OSMF interdit l'usage hors ligne
+  sur `tile.openstreetmap.org`). Ils **sortent du critère n° 5 (J+2)**, qui ne vaut que pour les fonds IGN
+  (Cadastre, Plan IGN v2, BD ORTHO). Le README le dit à l'agent.
+- **Zoom maximal par fond** : 19 pour le cadastre, le Plan IGN v2 et la BD ORTHO ; **19 pour OpenStreetMap,
+  non vérifié (référentiel : « mémoire »), à mesurer sur le Samsung** ; **13 pour OpenTopoMap**, valeur la plus
+  prudente des sources (17 wiki OSM, 15 site, 13 ticket GitHub), à mesurer sur l'appareil par Pascal.
+- **Cadastre, jeu de matrices** : `PM_0_19` est le jeu annoncé par le GetCapabilities (limites de 0 à 19) ;
+  l'URL utilise `TILEMATRIXSET=PM` (mesuré : 200 aux zooms 15 et 19, 404 au zoom 20). Ne pas « corriger » l'URL
+  en `PM_0_19`.
+- **Attribution par fond** : « © IGN » (cadastre compris, décision de Pascal), « © les contributeurs
+  d'OpenStreetMap », « © les contributeurs d'OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA) ».
+- Domaines OSM et OpenTopoMap non mesurables depuis l'environnement de développement (politique réseau) :
+  URL non testées en HTTP, à vérifier sur le Samsung.
+
+- Zoom maximal de chaque couche XYZ (par fond, voir ci-dessus) fixé à la limite annoncée par la Géoplateforme (à
   fournir par l'`acquereur`), pour éviter les tuiles vides.
-- Attribution « © IGN » affichée, selon la licence des données (à vérifier par
+- Attribution (« © IGN » pour les fonds IGN) affichée, selon la licence des données (à vérifier par
   l'`acquereur`).
 - SCAN 25 : la clé se placerait dans l'URL, donc dans le `.qgz`. Si le SCAN 25 entre, le
   mécanisme est à décrire dans une ADR ; **aucune clé dans le dépôt**.
 - Fond embarqué de repli : **pas en tranche 1**, sauf si l'essai à J+2 (critère 5) échoue
-  (§ 9, n° 5).
+  (§ 9, n° 5). **Mission 046 (Pascal, 5 novembre 2026) : lancée sans attendre cet essai, voie B.**
+  Un fichier `basemap.mbtiles` (MBTiles, pas GeoPackage) est fabriqué sur PC par QFieldSync à partir du thème de carte
+  « Fond embarqué » de `cerf.qgz` (Plan IGN v2 + Cadastre ; ni OpenStreetMap ni OpenTopoMap), **zoom 13 à 17**, tuiles de
+  256 px, puis **seul ce fichier** est copié à côté de `cerf.qgz` sur l'appareil (pas de projet empaqueté : `cerf_id`,
+  `saisie.gpkg`, `cerf-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
+  `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `cerf.qgz` ne déclare
+  pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture tant que le fichier
+  manque) ; le **plugin Cerf** l'ajoute s'il le trouve à côté du projet (**mission 048**, puce suivante). Licence de la rastérisation : non tranchée (CGU non lues).
 - **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
   À l'ouverture de `cerf.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
   que le projet ne porte pas déjà une couche marquée `cerf/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
@@ -361,7 +390,7 @@ marqués « (auto, logique seule) » ont aussi un test automatique sur la logiqu
 3. Superposition au fond IGN **à moins de 5 m** d'un repère connu (repère à fournir par
    JFC).
 4. Après **redémarrage de l'appareil**, les 4 couches reviennent. (auto, logique seule)
-5. Fond IGN visible hors ligne sur une zone parcourue **la veille, puis à J+2** (le cache
+5. Fond IGN (Cadastre, Plan IGN v2, BD ORTHO ; **pas OpenStreetMap ni OpenTopoMap**, en ligne seulement) visible hors ligne sur une zone parcourue **la veille, puis à J+2** (le cache
    de QGIS expire par défaut au bout de 24 h). Échec à J+2 → fond embarqué de repli.
 6. Zip `piege`, chaque piège donne un message clair et aucune couche n'est chargée de
    travers : GeoJSON en Lambert 93 **sans membre `crs`** ; Shapefile sans `.prj` ; GeoTIFF

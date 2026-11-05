@@ -49,3 +49,15 @@ test('les champs de code et les messages de retrait cités existent dans le code
     assert.ok(readme.includes(m) && src.includes(m), m);
   }
 });
+
+test('mission 041 : .qml du zip non pris en charge, message sans couche, Shapefile confirmé', () => {
+  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const spec = readFileSync(join(RACINE, 'docs', 'spec.md'), 'utf8');
+  const msg = 'Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans';
+  assert.ok(src.includes(msg) && readme.includes(msg) && spec.includes(msg));
+  assert.ok(readme.includes("pas pris en charge pour l'instant"));
+  assert.ok(spec.includes("non pris en charge pour l'instant"));
+  assert.ok(!readme.includes('remplace la règle'));
+  assert.ok(!spec.includes("À l'étude, non tranché"));
+  assert.ok(readme.includes("confirmée sur l'appareil"));
+});

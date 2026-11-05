@@ -29,7 +29,7 @@ décisions de Pascal du 5 novembre 2026, sans toucher au code :
 Mettre aussi le README à jour sur ce que l'essai du 5 novembre a confirmé : Shapefile lu sur
 l'appareil avec le plugin 0.4.0 (journal du 5 novembre).
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** corriger l'ordre de priorité des styles (le `.qml` du zip n'est pas lu, reporté), porter le message sans couche, l'état des tables de GeoPackage et le Shapefile confirmé dans la spec § 4-5 et le README, sans toucher au code.
 
 ## Moyens
 

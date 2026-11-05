@@ -341,7 +341,14 @@ test('point 14 : source déjà en 2154 (entrée rendue telle quelle, non vide) r
   assert.equal(r.charge, true);
 });
 
-test('point 14 : Cerf.qml refuse un point vide (garde présente dans reprojeterPoint)', () => {
+// Mission 024 : le point vide de QField (QgsPoint() : x et y à NaN, QGIS 3a92eb3 qgspoint.h l. 89-91) est refusé par
+// un test de finitude ; isEmpty() n'est pas exposé à QML (qgspoint.h l. 633), son appel était du code mort.
+test('point 14 : Cerf.qml refuse un point vide (garde de finitude dans reprojeterPoint, sans isEmpty)', () => {
   const qml = readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8');
-  assert.match(qml, /isEmpty[\s\S]{0,120}throw new Error\("reprojection : point vide"\)/);
+  const corps = /function reprojeterPoint\([\s\S]*?\n  \}\n/.exec(qml);
+  assert.ok(corps, 'reprojeterPoint présent dans Cerf.qml');
+  const code = corps[0].split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.match(code, /if \(!isFinite\(px\) \|\| !isFinite\(py\)\) throw new Error\("reprojection : point vide"\)/);
+  assert.match(code, /return \{ x: px, y: py \}/, 'le point rendu est celui qui a passé la garde');
+  assert.doesNotMatch(code, /isEmpty/, 'code mort retiré : isEmpty() n\'est pas exposé à QML');
 });

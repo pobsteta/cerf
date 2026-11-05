@@ -83,7 +83,8 @@ Item {
       const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
       if (deja) return deja;
-      const couche = LayerUtils.loadVectorLayer(source, nom);
+      // Mission 024 : un GeoTIFF (chemin_vsi en .tif ou .tiff) se recharge en raster.
+      const couche = Logique.estSourceRaster(source) ? LayerUtils.loadRasterLayer(source, nom) : LayerUtils.loadVectorLayer(source, nom);
       if (couche && couche.isValid) {
         couche.setCustomProperty("cerf/zip", zip);
         couche.setCustomProperty("cerf/couche", nom);
@@ -146,9 +147,29 @@ Item {
   // « à vérifier » ci-dessous est à confirmer sur le Samsung ; un appel absent ou en erreur
   // donne un REFUS de la couche (jamais « contrôle sauté »).
 
-  // Ouvre la couche sans l'ajouter au projet.
-  function ouvrirCouche(source, nom) {
+  // Ouvre la couche sans l'ajouter au projet. Mission 024 : un GeoTIFF (format « tif ») s'ouvre par
+  // LayerUtils.loadRasterLayer (QField v4.3.7, src/core/utils/qflayerutils.h l. 208 ; qflayerutils.cpp l. 622-627 :
+  // new QgsRasterLayer(uri, name, "gdal")), en /vsizip/ (ADR 0008) ; le reste par loadVectorLayer (l. 200).
+  function ouvrirCouche(source, nom, format) {
+    if (format === "tif") return LayerUtils.loadRasterLayer(source, nom);
     return LayerUtils.loadVectorLayer(source, nom);
+  }
+
+  // Mission 024 : tables vecteur d'un GeoPackage du zip (voie 1 du prototype n° 4, NON PROUVÉE sur le Samsung).
+  // Rend la liste des tables, [] si aucune, null si illisibles (la logique refuse alors « tables illisibles »).
+  // Appels lus dans les sources : LayerUtils.loadVectorLayer (qflayerutils.h l. 200), createFeatureIterator (l. 234),
+  // hasNext, next, close (l. 52-75) ; QgsFeature::attribute(QString) Q_INVOKABLE (QGIS 3a92eb3,
+  // src/core/qgsfeature.h l. 1080) ; isValid Q_PROPERTY de QgsMapLayer (qgsmaplayer.h l. 94) ; deleteLater, slot de
+  // QObject (la couche est en CppOwnership, qflayerutils.cpp l. 618 : sans cela elle resterait en mémoire).
+  function tablesGpkg(source) {
+    const r = Logique.tablesDuGpkg(source, {
+      ouvrir: function (uri, nom) { return LayerUtils.loadVectorLayer(uri, nom); },
+      creerIterateur: function (l) { return LayerUtils.createFeatureIterator(l); },
+      liberer: function (l) { l.deleteLater(); }
+    });
+    if (r.etat === "liste") return r.tables;
+    if (r.etat === "aucune") return [];
+    return null;
   }
 
   // Ajoute à la carte une couche acceptée, marquée (zip, couche). `zipDonne` : le zip de la copie
@@ -192,10 +213,14 @@ Item {
     const source = crs;
     const but = CoordinateReferenceSystemUtils.fromDescription("EPSG:2154");
     const p = GeometryUtils.reprojectPoint(GeometryUtils.point(x, y), source, but);
-    // QField 4.3.7 ne lève rien sur échec : il rend un QgsPoint() vide. Vide = échec = refus.
-    // Source déjà en 2154 : l'entrée est rendue telle quelle (non vide), donc acceptée.
-    if (!p || (typeof p.isEmpty === "function" ? p.isEmpty() : p.isEmpty === true)) throw new Error("reprojection : point vide");
-    return { x: Number(p.x), y: Number(p.y) };
+    // QField 4.3.7 ne lève rien sur échec : il rend un QgsPoint() vide, dont x et y valent NaN (QGIS 3a92eb3,
+    // src/core/geometry/qgspoint.h l. 89-91). isEmpty() n'est pas exposé à QML (qgspoint.h l. 633 : ni Q_INVOKABLE ni
+    // Q_PROPERTY ; seuls x, y, z, m le sont, l. 56-59) : c'est le test de finitude qui refuse le point vide.
+    // Source déjà en 2154 : l'entrée est rendue telle quelle (finie), donc acceptée.
+    const px = p ? Number(p.x) : NaN;
+    const py = p ? Number(p.y) : NaN;
+    if (!isFinite(px) || !isFinite(py)) throw new Error("reprojection : point vide");
+    return { x: px, y: py };
   }
 
   function controlerCouche(description) {
@@ -339,6 +364,7 @@ Item {
       effacerFichier: effacerFichier,
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
+      tablesGpkg: tablesGpkg,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,
       controlerCouche: controlerCouche,

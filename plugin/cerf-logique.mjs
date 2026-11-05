@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.3.4';
+export const VERSION = '0.4.0';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -367,24 +367,193 @@ export function zipDeLaSource(source, dossier) {
 
 // --------------------------------------------------------------------------- couches du zip
 
-// GeoJSON par l'extension .geojson ; un .json est aussi retenu, marqué `json: true` : c'est
-// importerZip qui lit son contenu pour savoir si c'est du GeoJSON (spec § 3.1, mission 010).
-// Décision n° 7 : __MACOSX/ et les fichiers « ._* » (zips faits sur Mac) ignorés en silence.
-export function couchesDuZip(noms) {
+// Mission 024 (spec § 3.1, § 4 ; ADR 0008) : GeoJSON, Shapefile complet, une couche par table de
+// GeoPackage et GeoTIFF, extensions sans tenir compte de la casse. Vocabulaire des formats : celui
+// de decrireEntree et de cerf-controles.mjs (geojson, shp, gpkg, tif).
+// Chaque couche : { couche, entree, nom, format } ;
+//   - couche : nom du fichier sans dossier ni extension ; pour une table de GeoPackage, le nom de la table ;
+//   - nom : nom d'affichage des messages du § 4 = chemin complet dans le zip, avec l'extension ;
+//     pour une table : « <chemin>.gpkg/<table> » (Pascal, 4 novembre 2026) ;
+//   - Shapefile : + fichiers (fichiersDuShapefile, seule source, partagée avec decrireEntree) ;
+//   - GeoPackage : + table. `tables` = { '<entrée .gpkg>': ['table', ...] } (tables vecteur lues par le
+//     plugin, tablesDuGpkg). Tables inconnues (pas de clé) : une entrée table: null, refusée « tables
+//     illisibles » ; liste vide : table: null, vide: true, refusée « aucune table vecteur ». Jamais perdu en silence.
+// Un .json est retenu, marqué `json: true` : importerZip lit son contenu pour savoir si c'est du GeoJSON.
+// Annexes (.shx, .dbf, .prj, .cpg seuls, .qix, .sbn, .sbx, .shp.xml, .tfw, .aux.xml, -wal, -shm), .qml, .qmd :
+// aucune couche propre. Décision n° 7 : __MACOSX/ et les fichiers « ._* » ignorés en silence.
+const FORMATS_PAR_EXTENSION = { geojson: 'geojson', json: 'geojson', shp: 'shp', gpkg: 'gpkg', tif: 'tif', tiff: 'tif' };
+const EXTENSIONS_SHAPEFILE = ['shp', 'shx', 'dbf', 'prj', 'cpg'];
+
+function extensionDe(fichier) {
+  const m = /\.([^.]*)$/.exec(fichier);
+  return m ? m[1].toLowerCase() : '';
+}
+
+function entreeIgnoree(entree) {
+  if (entree === '' || entree.charAt(entree.length - 1) === '/') return true;
+  if (('/' + entree).indexOf('/__MACOSX/') >= 0) return true;
+  return nomDeFichier(entree).indexOf('._') === 0;
+}
+
+// Fichiers du Shapefile `entree` (son .shp) : entrées du zip du même dossier, même racine (casse libre),
+// d'extension .shp .shx .dbf .prj .cpg, dans cet ordre, celles qui existent (la première de chaque
+// extension). Chemins complets dans le zip. Seule source de ces fichiers (couchesDuZip, decrireEntree) :
+// le contrôle 1 (spec § 4) lit cette liste.
+export function fichiersDuShapefile(entree, noms) {
+  const e = String(entree);
+  const dossier = dossierDe(e);
+  const fichier = nomDeFichier(e);
+  const racine = fichier.replace(/\.[^.]*$/, '').toLowerCase();
+  const trouves = {};
+  for (let i = 0; i < noms.length; i++) {
+    const n = String(noms[i]);
+    if (entreeIgnoree(n) || dossierDe(n) !== dossier) continue;
+    const f = nomDeFichier(n);
+    const ext = extensionDe(f);
+    if (EXTENSIONS_SHAPEFILE.indexOf(ext) < 0) continue;
+    if (f.substring(0, f.length - ext.length - 1).toLowerCase() !== racine) continue;
+    if (!Object.prototype.hasOwnProperty.call(trouves, ext)) trouves[ext] = n;
+  }
+  // Le .shp est l'entrée elle-même (si deux .shp ne diffèrent que par la casse, chacun garde le sien).
+  if (extensionDe(fichier) === 'shp') trouves.shp = e;
+  const fichiers = [];
+  for (let k = 0; k < EXTENSIONS_SHAPEFILE.length; k++) {
+    if (Object.prototype.hasOwnProperty.call(trouves, EXTENSIONS_SHAPEFILE[k])) fichiers.push(trouves[EXTENSIONS_SHAPEFILE[k]]);
+  }
+  return fichiers;
+}
+
+export function couchesDuZip(noms, tables) {
   const couches = [];
+  const connues = tables && typeof tables === 'object' ? tables : {};
   for (let i = 0; i < noms.length; i++) {
     const entree = String(noms[i]);
-    if (entree === '' || entree.charAt(entree.length - 1) === '/') continue;
-    if (('/' + entree).indexOf('/__MACOSX/') >= 0) continue;
+    if (entreeIgnoree(entree)) continue;
     const fichier = nomDeFichier(entree);
-    if (fichier.indexOf('._') === 0) continue;
-    const estJson = /\.json$/i.test(fichier) && !/\.geojson$/i.test(fichier);
-    if (!estJson && !/\.geojson$/i.test(fichier)) continue;
-    const couche = fichier.substring(0, fichier.length - (estJson ? '.json' : '.geojson').length);
+    const ext = extensionDe(fichier);
+    if (!Object.prototype.hasOwnProperty.call(FORMATS_PAR_EXTENSION, ext)) continue;
+    const format = FORMATS_PAR_EXTENSION[ext];
+    const couche = fichier.substring(0, fichier.length - ext.length - 1);
     if (couche === '') continue;
-    if (estJson) couches.push({ couche, entree, json: true }); else couches.push({ couche, entree });
+    if (format === 'geojson') {
+      if (ext === 'json') couches.push({ couche, entree, nom: entree, format, json: true });
+      else couches.push({ couche, entree, nom: entree, format });
+    } else if (format === 'shp') {
+      couches.push({ couche, entree, nom: entree, format, fichiers: fichiersDuShapefile(entree, noms) });
+    } else if (format === 'tif') {
+      couches.push({ couche, entree, nom: entree, format });
+    } else {
+      const liste = Object.prototype.hasOwnProperty.call(connues, entree) ? connues[entree] : null;
+      if (!Array.isArray(liste)) {
+        couches.push({ couche, entree, nom: entree, format, table: null });
+      } else if (liste.length === 0) {
+        couches.push({ couche, entree, nom: entree, format, table: null, vide: true });
+      } else {
+        for (let k = 0; k < liste.length; k++) {
+          const table = String(liste[k]);
+          couches.push({ couche: table, entree, nom: entree + '/' + table, format, table });
+        }
+      }
+    }
   }
   return couches;
+}
+
+// Source /vsizip/ d'une couche du zip (copie du zip dans cerf-imports/) : l'entrée elle-même (le .shp
+// pour un Shapefile) ; pour une table de GeoPackage, « |layername=<table> ». Un GeoPackage aux tables
+// inconnues ou sans table (table: null) n'a PAS de source : '' (QGIS ouvrirait sa première table en silence).
+export function sourceDeLaCouche(copie, c) {
+  const base = '/vsizip/' + copie + '/' + c.entree;
+  if (c.format !== 'gpkg') return base;
+  if (typeof c.table !== 'string' || !nomDeTableSur(c.table)) return '';
+  return base + '|layername=' + c.table;
+}
+
+// Source d'un raster (GeoTIFF) : Cerf.qml l'ouvre par LayerUtils.loadRasterLayer, et non loadVectorLayer.
+export function estSourceRaster(source) {
+  return typeof source === 'string' && /\.tiff?$/i.test(source);
+}
+
+// --------------------------------------------------------------------------- tables d'un GeoPackage (mission 024)
+
+// Voie 1 du prototype n° 4 (mission 030, prototype-2/essai-logique.mjs, verdictTables ; bouton 13 de
+// prototype-2/Essai.qml) : une couche OGR dont le filtre est une requête. QGIS 3a92eb3 passe un filtre qui
+// commence par « SELECT » à GDALDatasetExecuteSQL (src/core/providers/ogr/qgsogrproviderutils.cpp
+// l. 1390-1395) : chaque ligne de gpkg_contents devient une entité, lue par l'itérateur.
+// NON PROUVÉE sur le Samsung (prototype n° 4 pas encore essayé) : en cas d'échec, « tables illisibles ».
+export const SQL_TABLES_GPKG = 'SELECT table_name, data_type FROM gpkg_contents ORDER BY table_name';
+export const TYPE_TABLE_VECTEUR = 'features';
+
+// Nom de table sûr dans « |layername= » : ni « | » (séparateur des options de la source), ni retour à la
+// ligne, ni caractère nul (garde du prototype n° 4, nomDeTableSur).
+export function nomDeTableSur(nom) {
+  return typeof nom === 'string' && nom !== '' && nom.length <= 200 && !/[|\r\n\u0000]/.test(nom);
+}
+
+function valeurTexte(v) {
+  if (v === undefined || v === null) return '';
+  return String(v);
+}
+
+function ouvrirSansPlanter(services, uri, nom) {
+  try {
+    const c = services.ouvrir(uri, nom);
+    return c && c.isValid === true ? c : (c ? { invalide: c } : null);
+  } catch (e) {
+    return null;
+  }
+}
+
+function liberer(services, c) {
+  if (!c) return;
+  try { if (typeof services.liberer === 'function') services.liberer(c.invalide ? c.invalide : c); } catch (e) { /* sans effet */ }
+}
+
+// Tables vecteur d'un GeoPackage `source` (« /vsizip/<copie>/<entrée .gpkg> »), sans réseau.
+// services = { ouvrir(uri, nom) -> couche, creerIterateur(couche) -> itérateur, liberer(couche) }.
+// Rend { etat, tables } :
+//   - 'liste' : tables vecteur (data_type « features »), dans l'ordre de la requête ;
+//   - 'aucune' : la liste est lue sans erreur, au moins une ligne, aucune de type « features », ET aucune
+//     sonde « |layerid=0 » ne s'ouvre (exigence de la relecture de la 030) ;
+//   - 'illisible' : tout le reste : requête qui ne s'ouvre pas, lecture qui lève, liste vide (GDAL y a ouvert
+//     une couche : incohérent), table_name ou data_type manquant, nom de table non sûr, ou aucune table
+//     vecteur alors que la sonde layerid ouvre une couche. Jamais « aucune » sur une erreur. Ne lève jamais.
+export function tablesDuGpkg(source, services) {
+  const illisible = { etat: 'illisible', tables: [] };
+  if (!services || typeof services.ouvrir !== 'function' || typeof services.creerIterateur !== 'function') return illisible;
+  const requete = ouvrirSansPlanter(services, source + '|subset=' + SQL_TABLES_GPKG, 'cerf_tables');
+  if (!requete || requete.invalide) { liberer(services, requete); return illisible; }
+  const lignes = [];
+  let it = null;
+  let lu = true;
+  try {
+    it = services.creerIterateur(requete);
+    if (!it) throw new Error('itérateur absent');
+    while (it.hasNext()) {
+      const f = it.next();
+      const table = valeurTexte(f.attribute('table_name'));
+      const type = valeurTexte(f.attribute('data_type'));
+      if (table === '' || type === '') throw new Error('table_name ou data_type manquant');
+      lignes.push({ table: table, type: type });
+    }
+  } catch (e) {
+    lu = false;
+  }
+  if (it) { try { it.close(); } catch (e) { /* fermeture sans effet sur le résultat */ } }
+  liberer(services, requete);
+  if (!lu || lignes.length === 0) return illisible;
+  const tables = [];
+  for (let i = 0; i < lignes.length; i++) {
+    if (lignes[i].type !== TYPE_TABLE_VECTEUR) continue;
+    if (!nomDeTableSur(lignes[i].table)) return illisible;
+    tables.push(lignes[i].table);
+  }
+  if (tables.length > 0) return { etat: 'liste', tables: tables };
+  // Aucune table vecteur lue : on ne le croit que si GDAL n'ouvre aucune couche par layerid.
+  const sonde = ouvrirSansPlanter(services, source + '|layerid=0', 'cerf_sonde');
+  const ouverte = !!sonde && !sonde.invalide;
+  liberer(services, sonde);
+  return ouverte ? illisible : { etat: 'aucune', tables: [] };
 }
 
 // --------------------------------------------------------------------------- registre
@@ -493,32 +662,45 @@ function chargerSansPlanter(chargerCouche, source, nom, zip) {
   }
 }
 
-// Description d'une entrée du zip pour les contrôles (spec § 4) : nom avec extension,
-// format d'après l'extension, noms du zip dans le même dossier (pour .prj, .shx, .dbf, .cpg).
+// Description d'une entrée du zip pour les contrôles (spec § 4) : nom court avec extension,
+// format d'après l'extension, et les fichiers (noms sans dossier). Pour un Shapefile, les fichiers sont
+// ceux de fichiersDuShapefile (mission 024 : une seule source avec couchesDuZip, que lit le contrôle 1) ;
+// pour les autres formats, les noms du zip dans le même dossier (inchangé depuis la mission 010).
 export function decrireEntree(entree, noms) {
   const fichier = nomDeFichier(entree);
-  const m = /\.([^.]*)$/.exec(fichier);
-  const ext = m ? m[1].toLowerCase() : '';
-  const format = { geojson: 'geojson', json: 'geojson', gpkg: 'gpkg', shp: 'shp', tif: 'tif', tiff: 'tif' }[ext] || ext;
-  const dossier = dossierDe(entree);
+  const ext = extensionDe(fichier);
+  const format = Object.prototype.hasOwnProperty.call(FORMATS_PAR_EXTENSION, ext) ? FORMATS_PAR_EXTENSION[ext] : ext;
   const fichiers = [];
-  for (let i = 0; i < noms.length; i++) {
-    const n = String(noms[i]);
-    if (dossierDe(n) === dossier) fichiers.push(nomDeFichier(n));
+  if (format === 'shp') {
+    const liste = fichiersDuShapefile(entree, noms);
+    for (let i = 0; i < liste.length; i++) fichiers.push(nomDeFichier(liste[i]));
+  } else {
+    const dossier = dossierDe(entree);
+    for (let i = 0; i < noms.length; i++) {
+      const n = String(noms[i]);
+      if (dossierDe(n) === dossier) fichiers.push(nomDeFichier(n));
+    }
   }
   return { nom: fichier, format, fichiers };
 }
 
+// Nom d'une couche dans les messages du § 4 : le chemin complet dans le zip, avec l'extension, et
+// « /<table> » pour une table de GeoPackage (Pascal, 4 novembre 2026 ; mission 024). Repli : l'entrée.
+function nomAffiche(c) {
+  return typeof c.nom === 'string' && c.nom !== '' ? c.nom : String(c.entree);
+}
+
 // Décrit puis contrôle une couche ; toute exception vaut refus (spec § 4). Si l'ouverture a
 // échoué (`couche` nulle), on contrôle quand même avec `lisible: false` : le contrôle 1
-// (Shapefile incomplet) passe avant le 2 (« illisible »), et le message porte le nom avec
-// extension, sans erreur technique.
+// (Shapefile incomplet) passe avant le 2 (« illisible »), et le message porte le chemin complet
+// dans le zip (mission 024), sans erreur technique. decrireEntree donne le format et les fichiers ;
+// le nom transmis au contrôle est le nom affiché (cerf-controles.mjs en tire la racine du Shapefile).
 function controlerSansPlanter(ctx, couche, c, noms) {
-  const nom = nomDeFichier(c.entree);
+  const nom = nomAffiche(c);
   try {
     const entree = decrireEntree(c.entree, noms);
     const lue = couche ? ctx.decrireCouche(couche, entree.format) : { lisible: false };
-    const description = Object.assign({}, lue, entree);
+    const description = Object.assign({}, lue, entree, { nom: nom });
     if (!couche) description.lisible = false;
     const v = ctx.controlerCouche(description);
     if (v && v.charge === true) return { charge: true, avertissements: Array.isArray(v.avertissements) ? v.avertissements : [] };
@@ -567,14 +749,18 @@ export function peutEcrireCopie(chemin, dossier) {
 // <renderer-v2>), sinon celui de la règle du manuel (styleDe puis qmlDe). Rend
 // { style, qml, contenu, avertissements } ; contenu null = rien à écrire (style par défaut).
 // Les avertissements sont des phrases seules (l'appelant ajoute « <fichier> : », spec § 4).
-function choisirStyle(ctx, couche, nomZip, nomCouche, entree, noms) {
+function choisirStyle(ctx, couche, nomZip, c, noms) {
+  const nomCouche = c.couche;
   const rien = { style: STYLE_DEFAUT, qml: '', contenu: null, avertissements: [] };
   const S = ctx.styles;
   if (!S || typeof ctx.infosCouche !== 'function') return rien;
   try {
     const infos = ctx.infosCouche(couche) || {};
     const champs = infos.champs || [];
-    const cheminQml = typeof S.trouverQml === 'function' ? S.trouverQml(entree, noms) : null;
+    // Une table de GeoPackage : son .qml porte le nom de la table, à côté du .gpkg (spec § 5).
+    let cheminQml = null;
+    if (c.format === 'gpkg') cheminQml = typeof S.trouverQmlDeTable === 'function' ? S.trouverQmlDeTable(c.entree, c.table, noms) : null;
+    else cheminQml = typeof S.trouverQml === 'function' ? S.trouverQml(c.entree, noms) : null;
     let texte = null;
     if (cheminQml) {
       try { texte = typeof ctx.lireTexte === 'function' ? ctx.lireTexte(nomZip, cheminQml) : null; } catch (e) { texte = null; }
@@ -619,13 +805,13 @@ function qmlAbsent(ctx, chemin, dossier) {
 // côté AVANT le chargement, puis charge la copie. Rend { ok: false, message } ou
 // { ok: true, copie, rendu, relatif, style, qml, avertissements }.
 function copierEtStyler(ctx, couche, c, nomZip, noms) {
-  const fichier = nomDeFichier(c.entree);
+  const fichier = nomAffiche(c);
   const dossier = dossierCopies(ctx.dossierProjet);
   const p = cheminsDeLaCopie(ctx.dossierProjet, nomZip, c.couche);
   if (!peutEcrireCopie(p.gpkg, dossier) || !peutEcrireCopie(p.qml, dossier)) {
     return { ok: false, message: `${fichier} : nom non écrivable dans cerf-imports/, couche refusée` };
   }
-  const st = choisirStyle(ctx, couche, nomZip, c.couche, c.entree, noms);
+  const st = choisirStyle(ctx, couche, nomZip, c, noms);
   let rendu = '';
   try { rendu = String(ctx.reecrireCouche(couche, p.gpkg) || ''); } catch (e) { rendu = ''; }
   if (rendu === '') return { ok: false, message: `${fichier} : copie impossible (écriture refusée par QField), couche refusée` };
@@ -725,6 +911,41 @@ function noterEffacement(cumul, bilan) {
   if (bilan.nonVerifiable) cumul.nonVerifiable = true;
 }
 
+// Tables des GeoPackage du zip, par le service `ctx.tablesGpkg(source, entree)` (Cerf.qml : tablesDuGpkg
+// sur QField) : il rend la liste des tables vecteur, [] si aucune, ou autre chose (null, exception) si
+// illisibles. Service absent : tables inconnues, donc « tables illisibles » (jamais ouvert sans layername).
+function tablesDesGpkg(ctx, copie, noms) {
+  const tables = {};
+  if (typeof ctx.tablesGpkg !== 'function') return tables;
+  const sans = couchesDuZip(noms);
+  for (let i = 0; i < sans.length; i++) {
+    const c = sans[i];
+    if (c.format !== 'gpkg' || Object.prototype.hasOwnProperty.call(tables, c.entree)) continue;
+    let liste = null;
+    try { liste = ctx.tablesGpkg('/vsizip/' + copie + '/' + c.entree, c.entree); } catch (e) { liste = null; }
+    if (!Array.isArray(liste)) continue;
+    let saine = true;
+    for (let k = 0; k < liste.length; k++) if (!nomDeTableSur(liste[k])) saine = false;
+    if (saine) tables[c.entree] = liste.slice();
+  }
+  return tables;
+}
+
+// Refus d'un GeoPackage sans table à charger (spec § 4, Pascal, 4 novembre 2026), avant toute ouverture.
+function messageGpkgSansTable(c) {
+  return c.vide === true
+    ? `${nomAffiche(c)} : aucune table vecteur, couche non chargée`
+    : `${nomAffiche(c)} : tables illisibles, couche non chargée`;
+}
+
+// Ouvre une couche du zip en /vsizip/, sans l'ajouter à la carte. Le format est passé à ouvrirCouche :
+// Cerf.qml ouvre un GeoTIFF par LayerUtils.loadRasterLayer (mission 024), le reste par loadVectorLayer.
+function ouvrirDuZip(ctx, copie, c) {
+  const source = sourceDeLaCouche(copie, c);
+  if (source === '') return { couche: null, raison: 'illisible' };
+  return chargerSansPlanter(function (s, n) { return ctx.ouvrirCouche(s, n, c.format); }, source, c.couche);
+}
+
 export function importerZip(ctx) {
   const vide = (message) => ({ chargees: [], refusees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
@@ -739,11 +960,12 @@ export function importerZip(ctx) {
   } catch (e) {
     return vide(`${nomZip} : ${e.message}`);
   }
+  const copie = cheminCopie(ctx.dossierProjet, nomZip);
   // Un .json n'est une couche que s'il est du GeoJSON (spec § 3.1) : contenu lu, et ignoré en
   // silence s'il n'en est pas. Contenu illisible (lecture impossible) : on tente le chargement,
   // un échec sera alors dit (jamais de GeoJSON perdu en silence).
   const couches = [];
-  const candidates = couchesDuZip(noms);
+  const candidates = couchesDuZip(noms, tablesDesGpkg(ctx, copie, noms));
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     if (c.json && ctx.styles && typeof ctx.styles.estGeoJson === 'function' && typeof ctx.lireTexte === 'function') {
@@ -758,7 +980,7 @@ export function importerZip(ctx) {
     // intacts : ce retour précède le retrait de la décision n° 8).
     const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
     if (dejaImporte) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
-    return vide(`Aucune couche GeoJSON dans ${nomZip}.`);
+    return vide(`Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans ${nomZip}.`);
   }
   // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
   // contrôle = tout passe »). Mission 010 (ADR 0008) : sans de quoi réécrire et écrire le .qml,
@@ -769,7 +991,8 @@ export function importerZip(ctx) {
     }
   }
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
-  const copie = cheminCopie(ctx.dossierProjet, nomZip);
+  // Un GeoPackage sans table à charger (table: null) n'est jamais ouvert ni compté comme présent.
+  const aCharger = (c) => !(c.format === 'gpkg' && c.table === null);
   // Ouverture de toutes les couches AVANT de toucher au registre ou à la carte (décision n° 13) :
   // un zip réimporté dont aucune couche ne s'ouvre est un import avorté, rien n'est retiré.
   const ouvertes = {};
@@ -778,8 +1001,9 @@ export function importerZip(ctx) {
     let nbLisibles = 0;
     for (let i = 0; i < couches.length; i++) {
       const c = couches[i];
+      if (!aCharger(c)) continue;
       if (Object.prototype.hasOwnProperty.call(ouvertes, c.couche)) continue; // doublon : refusé plus bas
-      const o = chargerSansPlanter(ctx.ouvrirCouche, '/vsizip/' + copie + '/' + c.entree, c.couche);
+      const o = ouvrirDuZip(ctx, copie, c);
       ouvertes[c.couche] = o;
       if (o.couche) nbLisibles++;
     }
@@ -791,7 +1015,7 @@ export function importerZip(ctx) {
   // sont plus sortent du registre (la copie du zip est écrasée par QField ; les copies des
   // couches, réécrites par saveVectorLayerAs).
   const presentes = {};
-  for (let i = 0; i < couches.length; i++) presentes[couches[i].couche] = true;
+  for (let i = 0; i < couches.length; i++) if (aCharger(couches[i])) presentes[couches[i].couche] = true;
   const bilanEfface = { restes: [], nonVerifiable: false };
   const anciennes = lireRegistre(ctx.reglages, ctx.cerfId);
   for (let i = 0; i < anciennes.length; i++) {
@@ -809,19 +1033,26 @@ export function importerZip(ctx) {
   const vues = {};
   for (let i = 0; i < couches.length; i++) {
     const c = couches[i];
+    const nom = nomAffiche(c);
+    if (!aCharger(c)) {
+      // GeoPackage aux tables illisibles ou sans table vecteur : refusé, jamais ouvert, voisins traités.
+      const message = messageGpkgSansTable(c);
+      refusees.push({ couche: c.couche, entree: c.entree, raison: message, message });
+      continue;
+    }
     if (Object.prototype.hasOwnProperty.call(vues, c.couche)) {
       // Décision n° 4 : même nom dans deux dossiers du zip, la seconde est refusée.
       const raison = `nom de couche en double dans le zip (déjà pris par ${vues[c.couche]})`;
-      refusees.push({ couche: c.couche, entree: c.entree, raison, message: `${c.entree} : ${raison}` });
+      refusees.push({ couche: c.couche, entree: c.entree, raison, message: `${nom} : ${raison}` });
       continue;
     }
-    vues[c.couche] = c.entree;
-    const source = '/vsizip/' + copie + '/' + c.entree;
+    vues[c.couche] = nom;
+    const source = sourceDeLaCouche(copie, c);
     // Ouvrir (en /vsizip/, sans ajouter à la carte), contrôler, réécrire, styler, charger la copie,
     // puis seulement ajouter à la carte et inscrire.
-    const r = ouvertes[c.couche] || chargerSansPlanter(ctx.ouvrirCouche, source, c.couche);
+    const r = ouvertes[c.couche] || ouvrirDuZip(ctx, copie, c);
     // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
-    // précède « illisible » et que le message porte le nom avec extension.
+    // précède « illisible » et que le message porte le chemin complet dans le zip.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
     const refuser = (message) => {
       // Réimport : une couche acceptée au premier import puis refusée ne doit pas rester au registre.
@@ -832,16 +1063,33 @@ export function importerZip(ctx) {
     };
     if (!verdict.charge) { refuser(verdict.message); continue; }
     // Un verdict d'acceptation ne vaut rien sur une couche qui ne s'est pas ouverte : jamais de copie d'une couche nulle.
-    if (!r.couche) { refuser(nomDeFichier(c.entree) + ' : couche illisible, couche refusée'); continue; }
+    if (!r.couche) { refuser(nom + ' : couche illisible, couche refusée'); continue; }
+    if (c.format === 'tif') {
+      // GeoTIFF (ADR 0008, arbitrage n° 3) : lu dans le zip, style par défaut, sans réécriture ; au registre
+      // par `chemin_vsi` (ADR 0003 amendée). Pas de readOnly : QgsRasterLayer n'a pas cette propriété
+      // (QGIS 3a92eb3, src/core/raster/qgsrasterlayer.h ; elle est à QgsVectorLayer, qgsvectorlayer.h l. 420).
+      for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
+      try {
+        ctx.ajouterALaCarte(r.couche, c.couche, source, nomZip);
+      } catch (e) {
+        refuser(nom + ' : ajout à la carte impossible');
+        continue;
+      }
+      inscrire(ctx.reglages, ctx.cerfId, {
+        zip: nomZip, couche: c.couche, chemin_vsi: nomZip + '/' + c.entree, style: STYLE_DEFAUT, ajoutee_le: maintenant().toISOString(),
+      });
+      chargees.push({ couche: c.couche, entree: c.entree, source, style: STYLE_DEFAUT });
+      continue;
+    }
     const cp = copierEtStyler(ctx, r.couche, c, nomZip, noms);
     if (!cp.ok) { refuser(cp.message); continue; }
     for (let k = 0; k < verdict.avertissements.length; k++) avertissements.push(verdict.avertissements[k]);
-    for (let k = 0; k < cp.avertissements.length; k++) avertissements.push(nomDeFichier(c.entree) + ' : ' + cp.avertissements[k]);
+    for (let k = 0; k < cp.avertissements.length; k++) avertissements.push(nom + ' : ' + cp.avertissements[k]);
     try {
       cp.copie.readOnly = true;
       ctx.ajouterALaCarte(cp.copie, c.couche, cp.rendu, nomZip);
     } catch (e) {
-      refuser(nomDeFichier(c.entree) + ' : ajout à la carte impossible');
+      refuser(nom + ' : ajout à la carte impossible');
       continue;
     }
     // Inscription après chaque couche (spec § 1, geste 5).
@@ -909,9 +1157,11 @@ export function demarrerProjet(ctx) {
     }
     if (!Object.prototype.hasOwnProperty.call(presence, e.zip)) presence[e.zip] = !!ctx.existe(dossier + '/' + e.zip);
     if (!presence[e.zip]) { absentes.push({ zip: e.zip, couche: e.couche }); continue; }
-    const r = chargerSansPlanter(ctx.chargerCouche, '/vsizip/' + dossier + '/' + e.chemin_vsi, e.couche);
+    const source = '/vsizip/' + dossier + '/' + e.chemin_vsi;
+    const r = chargerSansPlanter(ctx.chargerCouche, source, e.couche);
     if (!r.couche) { illisibles.push({ zip: e.zip, couche: e.couche }); continue; }
-    r.couche.readOnly = true;
+    // Un GeoTIFF (mission 024) n'a pas de readOnly (propriété de QgsVectorLayer seulement, qgsvectorlayer.h l. 420).
+    if (!estSourceRaster(source)) r.couche.readOnly = true;
     rechargees.push({ zip: e.zip, couche: e.couche });
   }
   const lignes = [];

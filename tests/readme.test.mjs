@@ -49,3 +49,23 @@ test('les champs de code et les messages de retrait cités existent dans le code
     assert.ok(readme.includes(m) && src.includes(m), m);
   }
 });
+
+test('mission 041 : .qml du zip non pris en charge, message sans couche, Shapefile confirmé', async () => {
+  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const spec = readFileSync(join(RACINE, 'docs', 'spec.md'), 'utf8');
+  const { AVERTISSEMENT_QML_ILLISIBLE } = await import('../plugin/cerf-styles.mjs');
+  const msg = 'Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans';
+  assert.ok(src.includes(msg), 'le code ne contient plus le message « Aucune couche … dans »');
+  assert.ok(readme.includes(msg), 'le README ne cite pas le message « Aucune couche … dans » du code');
+  assert.ok(spec.includes(msg), 'la spec ne cite pas le message « Aucune couche … dans » du code');
+  assert.ok(readme.includes("pas pris en charge pour l'instant"), "le README ne dit plus « pas pris en charge pour l'instant »");
+  assert.ok(spec.includes("non pris en charge pour l'instant"), "la spec ne dit plus « non pris en charge pour l'instant »");
+  assert.ok(!readme.includes('remplace la règle'), 'le README dit encore que le .qml remplace la règle');
+  assert.ok(!spec.includes("À l'étude, non tranché"), 'la spec dit encore « À l\'étude, non tranché »');
+  assert.ok(readme.includes("confirmée sur l'appareil"), "le README ne dit plus « confirmée sur l'appareil » pour le Shapefile");
+  assert.ok(readme.includes(AVERTISSEMENT_QML_ILLISIBLE), "le README ne cite pas l'avertissement AVERTISSEMENT_QML_ILLISIBLE du code");
+  assert.ok(spec.includes(AVERTISSEMENT_QML_ILLISIBLE), "la spec ne cite pas l'avertissement AVERTISSEMENT_QML_ILLISIBLE du code");
+  const illisibles = 'tables illisibles, couche non chargée';
+  assert.ok(src.includes(illisibles), 'le code ne contient plus « tables illisibles, couche non chargée »');
+  assert.ok(spec.includes(illisibles), 'la spec ne cite pas « tables illisibles, couche non chargée » comme le code');
+});

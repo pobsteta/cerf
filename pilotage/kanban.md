@@ -52,6 +52,8 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [041-spec-readme-024](missions/041-spec-readme-024.md) · depuis le cycle 6 · fusionnée (PR #42)
+  - Homme : `archiviste`
 - [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · fusionnée (PR #39)
   - Homme : `dev` (sonnet)
   - Mission : Publier piege.zip dans la préversion essai-manuel

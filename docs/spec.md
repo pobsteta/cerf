@@ -204,17 +204,24 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
 
 **GeoPackage sans table lisible** (Pascal, 4 novembre 2026) :
 - tables illisibles → refus « `<chemin>.gpkg` : tables illisibles, couche non
-  chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée ») ;
-  *[le cas « tables inconnues » (liste des tables impossible à obtenir) est provisoirement rangé
-  sous ce message : le mot « inconnues » ne vient pas de Pascal ; en attente de Pascal et de la
-  mission 030]* ;
+  chargée » (exemple : « dossier/a.gpkg : tables illisibles, couche non chargée »). Ce message
+  couvre aussi la liste des tables impossible à obtenir et le GeoPackage à **table attributaire
+  seule** (sans géométrie) (Pascal, 4 novembre 2026, « oui aux trois ») ;
 - aucune table vecteur → refus « `<chemin>.gpkg` : aucune table vecteur, couche non chargée ».
+  Accepté tel quel (Pascal, 5 novembre 2026) mais **probablement inatteignable** : la requête de
+  lecture exige la couche 0 que la sonde ouvre (QGIS `qgsogrprovider.cpp` l. 4513-4523).
 - Dans les deux cas, le fichier n'est **jamais ouvert sans `layername`** (QGIS ouvrirait la
   première table en silence) et n'est **jamais ignoré en silence** ; les autres couches du zip
   sont traitées. Ce n'est pas le contrôle 1 (qui vise le Shapefile incomplet).
-- **À l'étude, non tranché ici** : comment le plugin lit les tables d'un GeoPackage hors ligne
-  (mission 030, prototype n° 4). Tant que ce n'est pas tranché, tout GeoPackage du zip tombe dans
-  le premier cas.
+- **Lecture des tables, tranchée** (mission 024, plugin 0.4.0) : voie 1 du prototype n° 4, une
+  requête `SELECT … FROM gpkg_contents` sur le GeoPackage, hors ligne. **Pas encore prouvée sur
+  l'appareil** (Samsung) : `essai-tables-z.zip` reste à essayer ; en cas d'échec, « tables
+  illisibles ».
+
+**Zip sans aucune couche** : le message est « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans
+`<nom du zip>`. » (Pascal, 4 novembre 2026 ; texte du code, `plugin/cerf-logique.mjs`).
+Un zip déjà importé qui n'a plus aucune couche lisible n'est pas vidé : « aucune couche lisible dans
+`<nom du zip>`, rien changé ».
 
 **Deux couches de même nom dans deux dossiers du zip** (`a/UG.geojson`, `b/UG.geojson`) : elles
 donneraient la même copie `cerf-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
@@ -231,13 +238,20 @@ Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pa
 
 ## 5. Styles (annexe de la convention du zip)
 
-Ordre de priorité : `.qml` de même nom que la couche dans le zip → règle par nom → règle
-par champs → style par défaut de QGIS. Le `.qml` posé dans le zip est **lu** par le plugin
-(QGIS ne le trouve pas seul derrière `/vsizip/`), **contrôlé**, puis **écrit à côté de la
-copie** réécrite (voir l'amendement ci-dessous).
+Ordre de priorité (en vigueur) : règle par nom → règle par champs → style par défaut de QGIS.
+
+**`.qml` posé dans le zip : non pris en charge pour l'instant** (Pascal, 5 novembre 2026).
+`FileUtils.readFileContent` de QField (4.3.7, `qffileutils.cpp` l. 620-636), la fonction qui lit un
+fichier texte, ne lit pas dans `/vsizip/` (les couches du zip, elles, sont lues par GDAL) : le plugin tente la lecture, n'obtient rien, traite le `.qml` comme illisible, applique
+la règle du manuel et avertit « UG.shp : .qml illisible, style du manuel appliqué ». Un `.qml`
+valide du zip n'est donc jamais appliqué. La surcharge par `.qml` du zip est **reportée, non
+abandonnée** : l'ordre visé reste `.qml` du zip → règle par nom → règle par champs → défaut.
+*Texte d'origine (3 novembre 2026), devenu faux pour la lecture, gardé pour mémoire : le `.qml` du
+zip est lu, contrôlé, puis écrit à côté de la copie réécrite.* Le mécanisme d'écriture à côté de la
+copie (amendement ci-dessous) vaut pour le `.qml` de la règle du manuel.
 
 **Amendement du 4 novembre 2026 (ADR 0008)** : pour un vecteur, le plugin **écrit le `.qml`
-retenu** (celui du zip, contrôlé, sinon celui de la règle) **à côté du GeoPackage réécrit,
+retenu** (celui de la règle du manuel ; celui du zip, contrôlé, quand sa lecture sera possible) **à côté du GeoPackage réécrit,
 avant le chargement** ; QGIS l'applique alors seul, et le garde à la réouverture. Un `.qml`
 écrit après le chargement serait ignoré. Une table, un `.qml` (`UG.qml` à côté de la table `UG`).
 Un GeoTIFF lu dans le zip n'a pas de style du manuel.

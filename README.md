@@ -57,9 +57,10 @@ Le plugin 0.4.0 (sur `main`) fait ce qui suit. Pas plus.
 Extensions sans tenir compte de la casse, à la racine du zip ou dans des dossiers :
 
 - **GeoJSON** : fichiers `.geojson`, et fichiers `.json` **si leur contenu est du GeoJSON** (un autre `.json` est ignoré sans message).
-- **Shapefile** : le `.shp` avec, dans le même dossier et sous le même nom, `.shx`, `.dbf`, `.prj` (obligatoires) et `.cpg` (conseillé). Un `.prj`, `.shx` ou `.dbf` absent fait refuser la couche ; un `.cpg` absent donne l'avertissement « accents peut-être mal lus ».
-- **GeoPackage** (`.gpkg`) : **une couche par table vecteur**. Le plugin lit la liste des tables dans le fichier, sans réseau. Cette lecture n'est pas encore prouvée sur le téléphone : si elle échoue, le GeoPackage est refusé (« tables illisibles »), il n'est jamais ignoré sans message.
+- **Shapefile** (lecture confirmée sur l'appareil avec le plugin 0.4.0, 5 novembre 2026) : le `.shp` avec, dans le même dossier et sous le même nom, `.shx`, `.dbf`, `.prj` (obligatoires) et `.cpg` (conseillé). Un `.prj`, `.shx` ou `.dbf` absent fait refuser la couche ; un `.cpg` absent donne l'avertissement « accents peut-être mal lus ».
+- **GeoPackage** (`.gpkg`) : **une couche par table vecteur**. Le plugin lit la liste des tables dans le fichier, sans réseau. Cette lecture n'est pas encore prouvée sur le téléphone (zip d'essai `essai-tables-z.zip` à essayer) : si elle échoue, ou si le GeoPackage n'a qu'une table attributaire sans géométrie, il est refusé (« tables illisibles »), il n'est jamais ignoré sans message.
 - **GeoTIFF** (`.tif`, `.tiff`) : lu dans le zip, sans copie, avec le style par défaut de QGIS. Range-le dans le zip **sans compression** (`zip -0`) pour une lecture rapide.
+- Un zip sans aucune couche de ces quatre formats donne le message « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans <nom du zip>. ».
 - Shapefile, GeoJSON et GeoPackage sont copiés en GeoPackage dans `cerf-imports/` : une couche Shapefile apparaît donc comme un GeoPackage.
 
 ### Combien de couches
@@ -90,7 +91,7 @@ Les limites réelles :
 
 ### Les styles du manuel
 
-Le plugin choisit le style dans cet ordre : un `.qml` du zip, puis la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS.
+Le plugin choisit le style dans cet ordre : la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS. Un `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** (voir plus bas).
 
 | Couche | Nom reconnu (exemples) | Géométrie | Champ de l'étiquette |
 |---|---|---|---|
@@ -103,7 +104,7 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 
 - Les champs de code `CODE_UG`, `CODE_PARC` et `CODE_FRT` sont **provisoires** (casse libre). **Sans ce champ, la couleur s'applique mais aucune étiquette ne s'affiche.**
 - Un nom reconnu mais en point ou en ligne (sans les champs `essence` et `diametre`) garde le style par défaut, avec un avertissement.
-- **Un fichier `.qml` du même nom que la couche, dans le même dossier du zip, remplace la règle** (`UG.qml` à côté de `UG.geojson` ou de `UG.shp` ; pour une table de GeoPackage, le nom de la table : `UG.qml` à côté de `Serre.gpkg`). Si ce `.qml` est vide ou illisible, il est ignoré, la règle s'applique, avec un avertissement.
+- **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
 
 ### Systèmes de coordonnées

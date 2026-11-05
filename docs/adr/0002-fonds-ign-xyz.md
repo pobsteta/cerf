@@ -72,3 +72,33 @@ Gabarit d'URL proposé, à vérifier par l'`acquereur` :
 ## Question de contrôle
 
 Cette décision tient-elle nos six valeurs, et que sommes-nous prêts à payer pour cela ?
+
+## Amendement du 5 novembre 2026 (mission 045, décidé par Pascal)
+
+> Ajout daté par l'orchestrateur ; le texte ci-dessus reste tel quel. Le titre de l'ADR
+> (« fonds IGN ») est gardé : cet amendement couvre aussi les fonds non IGN.
+
+- **Fonds non IGN.** Le projet modèle ajoute OpenStreetMap
+  (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`) et OpenTopoMap
+  (`https://tile.opentopomap.org/{z}/{x}/{y}.png`), sans clé, décochés par défaut.
+- **En ligne seulement.** La politique de l'OSMF interdit l'usage hors ligne des tuiles de
+  `tile.openstreetmap.org` ; celle d'OpenTopoMap n'a pas été lue en entier. Ces deux fonds sortent
+  du critère n° 5 (J+2, spec § 9), qui ne vaut que pour les fonds IGN, et n'entrent pas dans un fond
+  embarqué.
+- **Cadastre en surimpression.** Couche `CADASTRALPARCELS.PARCELLAIRE_EXPRESS` de la Géoplateforme,
+  XYZ, PNG transparent (mesuré : 96 % de pixels transparents au zoom 15), au-dessus de tous les
+  fonds, visible par défaut, attribution « © IGN ». URL en `TILEMATRIXSET=PM` (le GetCapabilities
+  annonce `PM_0_19`) : 200 aux zooms 15 et 19, 404 au zoom 20 (mesuré le 5 novembre 2026).
+- **Ordre de l'arbre** (premier = dessus) : Cadastre, Plan IGN v2, OpenStreetMap, OpenTopoMap,
+  BD ORTHO ; Cadastre et Plan IGN v2 cochés.
+- **Zoom et attribution par fond.** 0 à 19 pour les fonds IGN ; 0 à 19 pour OpenStreetMap
+  (**non mesuré**) ; **0 à 13 pour OpenTopoMap** (valeur la plus prudente de sources divergentes,
+  13, 15 ou 17 ; gardée par Pascal jusqu'à la mesure sur le Samsung). « © IGN » ;
+  « © les contributeurs d'OpenStreetMap » ; « © les contributeurs d'OpenStreetMap, SRTM |
+  © OpenTopoMap (CC-BY-SA) ».
+- **Coût nommé.** URL, zooms et en-têtes `User-Agent` / `Referer` d'OpenStreetMap et
+  d'OpenTopoMap non testés en HTTP (domaines refusés par l'environnement de développement) : un
+  refus des serveurs est possible ; vérification par Pascal sur le Samsung. Pérennité
+  d'OpenTopoMap incertaine.
+- **SCAN 25** : toujours en attente de JFC ; la clé `ign_scan_ws` n'entre pas dans le dépôt
+  (Pascal, 5 novembre 2026).

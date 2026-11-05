@@ -1,5 +1,7 @@
 # Plan du squelette du plugin (mission 008)
 
+> **PÉRIMÉ (bandeau du 5 novembre 2026, mission 051).** Historique, ne plus suivre comme mode d'emploi ; la référence est la spec (`docs/spec.md`) et, pour ce que fait le plugin, le README du dépôt et son code.
+
 > **Note du 5 novembre 2026** : le projet s'appelle Vision depuis cette date (`docs/adr/` n° 0009). Les décisions datées d'avant ce jour ont été prises sous son nom d'origine ; seul le nom a changé, pas le sens.
 
 > **Mise à jour du 3 novembre 2026 (version 0.1.1)** : les copies ne vont plus dans

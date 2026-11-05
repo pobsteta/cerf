@@ -70,7 +70,7 @@ test('workflow : fabrique piege.zip avec zips-recette.mjs, flashcode contrôlé,
   assert.doesNotMatch(wfCode, /projet-modele|plugin-v/);
 });
 
-test('notes : piege.zip expliqué, cinq lignes attendues (plugin 0.4.0), 0.3.4 ne lit que le GeoJSON', () => {
+test('notes : piege.zip expliqué, cinq lignes attendues (plugin 0.5.0 ou plus)', () => {
   assert.match(wf, /piege\.zip\*\* : zip de \*\*recette\*\*, données \*\*fictives\*\*.*un message clair par piège/);
   for (const ligne of [
     '« 2 couches chargées : UG_vide, Zone_inconnue »',
@@ -79,8 +79,9 @@ test('notes : piege.zip expliqué, cinq lignes attendues (plugin 0.4.0), 0.3.4 n
     '« UG_sans_crs.geojson : Coordonnées incohérentes : système mal déclaré ? »',
     '« FRT_sans_georef.tif : système de coordonnées inconnu »',
   ]) assert.ok(wf.includes(ligne), ligne);
-  assert.match(wf, /plugin 0\.4\.0, préversion « plugin-essai », PR #38/);
-  assert.match(wf, /plugin stable 0\.3\.4 ne lit que le GeoJSON : avec lui, les pièges Shapefile et GeoTIFF sont ignorés sans message/);
+  assert.match(wf, /Ce que Pascal doit voir avec piege\.zip \(plugin Vision 0\.5\.0 ou plus\)/);
+  assert.match(wf, /Ces lignes valent pour le plugin Vision 0\.5\.0 ou plus\./);
+  assert.doesNotMatch(wf, /plugin stable 0\.3\.4|plugin 0\.4\.0, préversion/);
 });
 
 test('notes : les lignes attendues sont celles du plugin (textes recopiés du code)', () => {

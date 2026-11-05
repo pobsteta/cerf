@@ -175,6 +175,11 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
   `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `vision.qgz` ne déclare
   pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture tant que le fichier
   manque) ; le **plugin Vision** l'ajoute s'il le trouve à côté du projet (**mission 048**, puce suivante). Licence de la rastérisation : non tranchée (CGU non lues).
+  **Ajout du 5 novembre 2026 (mission 051, archiviste ; rien n'est effacé).** La phrase « pas en tranche 1, sauf si
+  l'essai à J+2 échoue » ci-dessus est **dépassée par les faits** : le fond embarqué est livré (mission 046, fabrication
+  par QFieldSync ; mission 048, chargement par le plugin 0.4.3), sans attendre l'essai. **L'essai à J+2 du critère 5
+  (§ 6) reste à passer** : aucun résultat rapporté à ce jour ; l'essai global de Pascal du 5 novembre (« tout est testé
+  et ok », fond embarqué compris) ne donne pas ce détail.
 - **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
   À l'ouverture de `vision.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
   que le projet ne porte pas déjà une couche marquée `vision/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
@@ -268,6 +273,10 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
   requête `SELECT … FROM gpkg_contents` sur le GeoPackage, hors ligne. **Pas encore prouvée sur
   l'appareil** (Samsung) : `essai-tables-z.zip` reste à essayer ; en cas d'échec, « tables
   illisibles ».
+  *Ajout du 5 novembre 2026 (mission 051) : Pascal a déclaré « tout est testé et ok » après ses essais sur le Samsung
+  avec Vision 0.5.0, dont `essai-tables-z.zip` et `essai-gpkg-style.zip` (journal du 5 novembre). Le **détail par essai
+  n'a pas été rapporté** (voie `SELECT` réussie ou repli, avertissements vus) : la voie reste donc écrite « pas encore
+  prouvée » ici et au § 5, jusqu'à ce que Pascal rapporte le détail.*
 
 **Zip sans aucune couche** : le message est « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans
 `<nom du zip>`. » (Pascal, 4 novembre 2026 ; texte du code, `plugin/vision-logique.mjs`).
@@ -303,7 +312,7 @@ table vecteur d'un GeoPackage du zip, **avant** la réécriture, le plugin lit `
 `qgsogrutils.cpp` `loadStoredStyle` : `ORDER BY CASE WHEN useAsDefault THEN 1 ELSE 2 END, update_time DESC` ; seule la
 première ligne est lue). La lecture passe par une couche OGR filtrée `|subset=SELECT styleQML FROM layer_styles WHERE …`,
 la même voie que la liste des tables (§ 4, mission 024), sans réseau ; **elle n'est pas prouvée sur l'appareil**
-(Samsung : `essai-gpkg-style.zip`). Le style lu est écrit comme `<table>.qml` à côté de la copie réécrite, à la place
+(Samsung : `essai-gpkg-style.zip` ; essai global de Pascal du 5 novembre 2026, « tout est testé et ok », détail non rapporté : voir § 4). Le style lu est écrit comme `<table>.qml` à côté de la copie réécrite, à la place
 de celui de la règle du manuel (même mécanisme que l'amendement du 4 novembre ci-dessous : effacement de l'ancien
 `.qml`, écriture avant le chargement, mêmes refus et avertissements). Le registre garde `style: "gpkg"`.
 - **Aucune table `layer_styles`, ou aucune ligne pour la table** : règle du manuel comme avant, **sans message**.
@@ -450,6 +459,9 @@ embarqué (sauf échec à J+2).
    `qfield_addLayer` ; **le code est à Pascal**.
 5. Pas de fond embarqué en tranche 1 ; essai à J+2 dans la recette ; s'il échoue, on le
    prépare.
+   *Ajout du 5 novembre 2026 (mission 051) : cet arbitrage est dépassé par les missions 046 et 048 (fond
+   embarqué livré sans attendre l'essai, décision de Pascal du 5 novembre 2026) ; voir § 3.4. L'essai à J+2 reste
+   à passer et à rapporter.*
 6. Recette avec un GeoTIFF de 200 Mo et un GeoPackage ; GeoTIFF rangé dans le zip sans
    compression.
 7. Pas de chargement forcé d'une couche refusée (valeur sacrifiée : l'autonomie de
@@ -481,3 +493,30 @@ comme le prévoyait le code de QField (`readFileContent`, `qffileutils.cpp` L620
 copie listée à l'essai du prototype était vraisemblablement celle du bouton B, dans le
 projet. → le repli § 9 n° 1 **s'applique** (validé par Pascal le 3 novembre 2026) ; les
 autres résultats (Q2 à Q4) tiennent.
+
+## 11. Questions ouvertes (à trancher par Pascal)
+
+> Section ouverte le 5 novembre 2026 (mission 051, archiviste), à la suite du bilan n° 1. **Aucune de ces questions
+> n'est tranchée** : l'archiviste les range pour qu'un successeur les trouve ; la décision est à Pascal, qui la
+> note dans une ligne datée sous la question (ajout, pas d'effacement).
+
+1. **Plafond de 10 Mo du zip** : le plugin refuse en bloc un zip de plus de 10 000 000 octets
+   (`PLAFOND_LISTAGE_OCTETS`, `plugin/vision-logique.mjs`, décision n° 6 de Pascal du 3 novembre 2026, README § 3). Garder, relever ou
+   changer de méthode (les zips lourds de la recette, critère 7 et § 9 n° 6) ? *À trancher par Pascal.*
+2. **Mission 014 (registre complet)** : sort du dossier `vision-imports/<nom du zip>/` une fois vide (l'effacer ?) et
+   remplacement du dossier entier au réimport (ADR 0007 amendée, ADR 0008 note du 4 novembre ; § 3.3). *À trancher par Pascal.*
+3. **Mission 013 (tests du registre complet)** : « Validé » depuis le 2 novembre 2026, jamais lancée ; ses tests portent sur le registre
+   de la 014 (aucune PR). Faire, fusionner avec la 014 ou abandonner ? *À trancher par Pascal.*
+4. **Mission 015 (panneau pour gants et soleil)** : « Validé » depuis le 2 novembre 2026 ; le panneau existe
+   (`plugin/Panneau.qml`) sans que la fiche ait été reprise ; les cases de choix des couches prévues au § 1 n'existent pas
+   (README § 3). Reprendre, découper ou abandonner ? *À trancher par Pascal.*
+5. **Mission 017 (convention du zip)** : « Validé » depuis le 2 novembre 2026 ; le contenu est aujourd'hui réparti entre
+   § 3.1, § 4, § 5 et README § 3. Écrire la page unique pour JFC (avec les annexes), ou déclarer la spec et le README
+   suffisants ? *À trancher par Pascal.*
+6. **Message « préparer le hors ligne »** : idée de l'orchestrateur (rappeler à l'agent, avant de partir, d'ouvrir la
+   zone du jour pour remplir le cache des fonds IGN, critère 5), **non décidée**, aucun texte validé. *À trancher par Pascal.*
+7. **Essais de recette non rapportés** (d'ici le 12 novembre, décision du bilan n° 1) : critères 1, 3, 5 (veille et J+2),
+   7 et 10 du § 6, détail des essais de lecture des tables et du style de GeoPackage (§ 4, § 5). Ce ne sont pas des
+   décisions mais des résultats attendus de Pascal.
+8. **Réponses attendues de JFC** (voir `docs/brief.md`, « À fournir avant la spec ») : Serre_EA2026, champs `CODE_UG`,
+   `CODE_PARC`, `CODE_FRT`, licence SCAN 25, licence du fond IGN embarqué.

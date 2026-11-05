@@ -225,7 +225,7 @@ test('workflow : déclenché aussi sur mission/035, publie les deux zips et leur
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\* dist\/essai-manuel-geojson\.zip dist\/flashcodes-geojson\/\*/);
   assert.match(wfCode, /sha256sum dist\/essai-manuel\.zip dist\/essai-manuel-geojson\.zip/);
-  assert.match(wf, /essai-manuel-geojson\.zip.*tant que le plugin ne lit pas les Shapefile/);
+  assert.match(wf, /essai-manuel-geojson\.zip.*pour essayer le GeoJSON seul/);
   assert.match(wf, /mission 024/);
   assert.match(wfCode, /--prerelease --latest=false/);
   assert.doesNotMatch(wfCode.split('\n').filter((l) => !/^\s*echo /.test(l)).join('\n'), /plugin-essai|plugin-v|projet-modele/); // les notes (echo) peuvent nommer la préversion plugin-essai (mission 040)

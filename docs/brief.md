@@ -189,6 +189,12 @@ Pascal Obstétar.
   son niveau de zoom ;
 - la lecture de la licence de `qfield-layer-loader` ;
 - la réponse de JFC sur la licence SCAN 25 de l'ONF ;
+- **ajout du 5 novembre 2026 (mission 051, questions ouvertes à demander à JFC)** :
+  - les **noms exacts des champs de code** de ses couches UG, Parcelles et FRT : `CODE_UG`, `CODE_PARC` et
+    `CODE_FRT` sont provisoires (spec § 5, README § 3) ; sans le bon champ, la couleur s'applique mais aucune
+    étiquette ne s'affiche ;
+  - la **licence du fond IGN embarqué** (`basemap.mbtiles`, Plan IGN v2 et cadastre rastérisés pour un usage
+    hors ligne) : CGU non lues, voir `docs/referentiels/fond-embarque-qfieldsync.md` § 5 ;
 - ~~le nom du projet~~ (nom d'origine tranché par Pascal le 2 novembre 2026, changé le 5 novembre : ADR 0009), la licence ouverte choisie, le dépôt GitHub (`pobsteta/vision` existe : à confirmer par Pascal).
 
 ## Arbitrages de Pascal (2 novembre 2026)

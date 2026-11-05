@@ -15,10 +15,10 @@
 # (mission 024).
 # Mission 040 : la même préversion contient aussi piege.zip (zip de recette de la mission 016, données
 # fictives, cinq pièges, fabriqué par outils/zips-recette.mjs <dossier> piege) et son flashcode, contrôlé par
-# décodage ; les notes disent les lignes attendues avec le plugin 0.4.0.
+# décodage ; les notes disent les lignes attendues avec le plugin Vision 0.5.0 ou plus.
 # Mission 047 : la même préversion contient aussi essai-gpkg-style.zip (données fictives : un GeoPackage de deux
 # tables, Parcelles avec un style enregistré dans layer_styles, UG sans ; fabriqué par outils/zip-essai-gpkg-style.mjs)
-# et son flashcode, contrôlé par décodage ; les notes disent ce que Pascal doit voir avec le plugin 0.4.2.
+# et son flashcode, contrôlé par décodage ; les notes disent ce que Pascal doit voir avec le plugin Vision 0.5.0 ou plus.
 # Ce workflow ne touche ni au plugin (release-plugin.yml, « plugin-essai ») ni au projet modèle.
 # Aucune clé, aucun secret : le jeton du dépôt suffit.
 name: Release de l'essai du manuel
@@ -75,8 +75,8 @@ jobs:
           {
             echo "Quatre zips : deux zips de démonstration aux noms du manuel (mêmes quatre couches, mêmes données), le zip piégé de la recette et le zip d'essai du style d'un GeoPackage :"
             echo
-            echo "- **essai-manuel-geojson.zip** : UG, Parcelles, FRT et l'export ProdBois, tout en **GeoJSON**. **À prendre tant que le plugin ne lit pas les Shapefile (mission 024)** : le plugin actuel ne lit que le GeoJSON."
-            echo "- **essai-manuel.zip** : UG, Parcelles, FRT en Shapefile et l'export ProdBois en GeoJSON. À prendre quand le plugin lira les Shapefile (mission 024)."
+            echo "- **essai-manuel-geojson.zip** : UG, Parcelles, FRT et l'export ProdBois, tout en **GeoJSON**. Même contenu que essai-manuel.zip, sans Shapefile : pour essayer le GeoJSON seul (le plugin lit aussi les Shapefile depuis la mission 024)."
+            echo "- **essai-manuel.zip** : UG, Parcelles, FRT en Shapefile et l'export ProdBois en GeoJSON. Le plugin Vision 0.5.0 ou plus lit les Shapefile (mission 024)."
             echo "- **essai-gpkg-style.zip** : zip d'**essai** (mission 047), un GeoPackage de deux tables dont l'une garde son style enregistré (voir plus bas)."
             echo "- **piege.zip** : zip de **recette**, données **fictives**, huit fichiers, cinq pièges (mission 016). Il doit donner **un message clair par piège** ; ce n'est pas un zip à utiliser sur le terrain."
             echo
@@ -93,7 +93,7 @@ jobs:
             echo "- Les accents (Chêne, Réservée) s'affichent sans caractères abîmés ; aucun message de refus ; les 4 couches sont en lecture seule et reviennent à la réouverture du projet."
             echo
             echo
-            echo "### Ce que Pascal doit voir avec piege.zip (plugin 0.4.0, préversion « plugin-essai », PR #38)"
+            echo "### Ce que Pascal doit voir avec piege.zip (plugin Vision 0.5.0 ou plus)"
             echo
             echo "Importer piege.zip dans vision.qgz : le panneau doit afficher ces lignes, et seulement elles."
             echo
@@ -103,9 +103,9 @@ jobs:
             echo "- « UG_sans_crs.geojson : Coordonnées incohérentes : système mal déclaré ? » (refus) ;"
             echo "- « FRT_sans_georef.tif : système de coordonnées inconnu » (refus)."
             echo
-            echo "Le plugin stable 0.3.4 ne lit que le GeoJSON : avec lui, les pièges Shapefile et GeoTIFF sont ignorés sans message. Les lignes ci-dessus ne valent que pour le plugin 0.4.0 ou plus."
+            echo "Ces lignes valent pour le plugin Vision 0.5.0 ou plus."
             echo
-            echo "### Ce que Pascal doit voir avec essai-gpkg-style.zip (plugin 0.4.2, préversion « plugin-essai », mission 047)"
+            echo "### Ce que Pascal doit voir avec essai-gpkg-style.zip (plugin Vision 0.5.0 ou plus, mission 047)"
             echo
             echo "- **essai-gpkg-style.zip** : zip d'**essai**, données **fictives**, un seul GeoPackage (Essai_style.gpkg) de deux tables de polygones. Importer dans vision.qgz : « 2 couches chargées : Parcelles, UG »."
             echo "- **Parcelles** (3 polygones) garde le style **enregistré dans le GeoPackage** : contour **vert** épais (2 mm), sans remplissage ; ni l'orange du manuel, ni le rouge (une ligne plus récente mais non par défaut ne doit pas s'afficher)."

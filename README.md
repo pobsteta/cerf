@@ -190,9 +190,45 @@ Un zip de démonstration (données fictives, aux noms du manuel : UG, Parcelles,
 
 ## 4. Pour les développeurs
 
-- Brief : [`docs/brief.md`](docs/brief.md). Spécification : [`docs/spec.md`](docs/spec.md). Décisions d'architecture : [`docs/adr/`](docs/adr/).
-- Plan du plugin : [`plugin/PLAN.md`](plugin/PLAN.md). Code du plugin : [`plugin/`](plugin/).
+- Brief : [`docs/brief.md`](docs/brief.md). Spécification : [`docs/spec.md`](docs/spec.md). Décisions d'architecture : [`docs/adr/`](docs/adr/) (index : [`docs/adr/README.md`](docs/adr/README.md)).
+- Code du plugin : [`plugin/`](plugin/). Les plans [`plugin/PLAN.md`](plugin/PLAN.md), [`plugin/PLAN-012.md`](plugin/PLAN-012.md) et [`outils/PLAN-021.md`](outils/PLAN-021.md) sont de l'**historique périmé** (bandeau en tête) : la référence est la spec.
 - Tests : `node --test` à la racine (commande dans [`.claude/test-command`](.claude/test-command)).
 - Méthode de travail, rôles, sources de vérité : [`CLAUDE.md`](CLAUDE.md). Mémoire du projet : [`pilotage/journal.md`](pilotage/journal.md) (ajout seul).
-- Les workflows de release sont dans `.github/workflows/`. Aucune clé ni donnée de l'ONF dans le dépôt.
-- Licence du plugin : GPL-3.0-or-later.
+- Aucune clé ni donnée de l'ONF dans le dépôt. Licence du plugin : GPL-3.0-or-later.
+
+### Publier une version (lu dans `.github/workflows/`)
+
+1. Monter la version à **deux endroits**, qui doivent rester égaux : `version=` dans [`plugin/metadata.txt`](plugin/metadata.txt) et la constante `VERSION` de [`plugin/vision-logique.mjs`](plugin/vision-logique.mjs) (la release lit `metadata.txt`).
+2. Branche de mission : un push déclenche [`release-plugin.yml`](.github/workflows/release-plugin.yml) **seulement s'il touche `plugin/**`, `tests/**` ou ce workflow lui-même** (clé `paths` du fichier), et qui écrase la préversion `plugin-essai` (jamais « latest »), pour l'essai sur le Samsung avant fusion. Le déclencheur de branche est écrit dans le workflow : une nouvelle branche de mission doit y être ajoutée.
+3. Fusion de la PR dans `main` : release `plugin-v<version>` (« latest », adresse stable `releases/latest/download/plugin-vision.zip`), **seulement si `plugin/` a changé** dans le push ([`outils/decider-release.mjs`](outils/decider-release.mjs)) ; refusée (workflow rouge) si l'étiquette existe déjà, d'où la montée de version. Lancement manuel possible sur `main`.
+4. Projet modèle : [`release-projet-modele.yml`](.github/workflows/release-projet-modele.yml), sur `main` quand `vision.qgz`, `saisie.gpkg`, `outils/projet-modele.mjs`, `outils/zips-projet-modele.mjs` ou son propre fichier (`release-projet-modele.yml`) changent (clé `paths` du workflow) : release à étiquette fixe `projet-modele` (`projet-vision.zip`, `projet-vision-mise-a-jour.zip`), recréée à chaque fois ; lancement manuel sur une autre branche : préversion `projet-modele-essai`.
+5. Zips d'essai : [`release-essai-manuel.yml`](.github/workflows/release-essai-manuel.yml), préversion à étiquette fixe `essai-manuel` (jamais « latest »). Chaque publication lance d'abord `node --test`, génère les flashcodes et les contrôle par décodage. [`release-prototype.yml`](.github/workflows/release-prototype.yml) est de l'historique : ne pas relancer (ADR 0009).
+
+### Versions de référence
+
+| Quoi | Version | Source |
+|---|---|---|
+| QField | 4.3.7 (Samsung de Pascal ; sources lues pour toute API de plugin) | [ADR 0003](docs/adr/0003-zip-et-registre.md), [ADR 0008](docs/adr/0008-couches-sorties-du-zip.md), [spec § 3.3](docs/spec.md) |
+| QGIS | commit `3a92eb3`, celui qu'embarque QField 4.3.7 | commentaires de [`plugin/vision-logique.mjs`](plugin/vision-logique.mjs) l. 17, 47, 57 ; fiches [034](pilotage/missions/034-crs-valide.md) et [038](pilotage/missions/038-compter-entites.md) |
+| QFieldSync (extension QGIS, fond embarqué sur PC) | **non épinglé** : version réelle à noter lors du premier essai | [référentiel](docs/referentiels/fond-embarque-qfieldsync.md) § 6 n° 4 (points non vérifiés) |
+| Node.js | 22 | workflows de release (`node-version`) |
+| Python | 3.12 ; `pyproj==3.8.0` | workflows ; [`outils/requirements.txt`](outils/requirements.txt) |
+
+### Prérequis des outils (poste de développement)
+
+- **Tests** : Node.js 22 et `node --test`, sans dépendance à installer ; `node:sqlite` est employé par l'outil du projet modèle ([`outils/projet-modele.mjs`](outils/projet-modele.mjs)).
+- **Flashcodes** ([`outils/flashcodes.mjs`](outils/flashcodes.mjs)) : `qrencode` (génération) et `zbarimg`, paquet `zbar-tools` (contrôle par décodage) ; les workflows les installent par `apt`. Sans eux, les tests de flashcodes ne les exigent que si `VISION_FLASHCODES_EXIGER=1` (variable posée par les workflows).
+- **Emprise de la métropole** ([`outils/emprise.py`](outils/emprise.py)) : Python 3.12 et `pip install -r outils/requirements.txt` (`pyproj==3.8.0`, qui apporte PROJ).
+- **Mesure des fonds IGN** ([`outils/mesure-fonds.sh`](outils/mesure-fonds.sh)) : `curl` et un accès à `data.geopf.fr`.
+- **Fond embarqué** : QGIS et son extension QFieldSync, sur PC (voir § 1).
+
+### Services externes
+
+| Service | Pour quoi | Source de l'adresse et des limites |
+|---|---|---|
+| Géoplateforme IGN (`data.geopf.fr`) | Plan IGN v2, BD ORTHO, cadastre (XYZ, sans clé) | [`docs/referentiels/fonds-ign.md`](docs/referentiels/fonds-ign.md), [`docs/referentiels/fonds-osm-cadastre.md`](docs/referentiels/fonds-osm-cadastre.md) |
+| OpenStreetMap (`tile.openstreetmap.org`) | fond en ligne seulement (politique de l'OSMF) | [`docs/referentiels/fonds-osm-cadastre.md`](docs/referentiels/fonds-osm-cadastre.md), [spec § 3.4](docs/spec.md) |
+| OpenTopoMap (`tile.opentopomap.org`) | fond en ligne seulement | idem |
+| GitHub (dépôt `pobsteta/vision`, Releases, Actions) | code, publication des zips et flashcodes | workflows ci-dessus |
+
+SCAN 25 : pas branché (licence et clé de l'ONF à confirmer par JFC ; aucune clé dans le dépôt).

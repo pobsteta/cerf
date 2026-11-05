@@ -24,7 +24,10 @@ message », sans toucher au code.
    `docs/spec.md` § 3.1 l. 50-51 en conséquence, avec la date. **Pas de mission de code** (choix de
    Pascal) ; signaler si le comportement réel est gênant pour l'agent de terrain.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** (archiviste, 5 novembre 2026) Mettre à jour CLAUDE.md, brief, ADR 0008
+(ajout daté), spec § 3.1 et README pour dire que le `.qml` du zip est reporté et qu'un `.json` non
+GeoJSON, faute de pouvoir être lu sur l'appareil, est tenté comme couche puis refusé avec
+« <chemin> : illisible » (cerf-logique.mjs l. 964-977, Cerf.qml l. 117-124), sans toucher au code.
 
 ## Moyens
 

@@ -77,6 +77,10 @@
   2 novembre 2026) : le mail de JFC est la seule source ; le reste est à trancher par
   Pascal.
 
+  *Note du 5 novembre 2026 : le point suivant (surcharge par un `.qml` du zip) n'est pas pris en
+  charge pour l'instant, reporté et non abandonné (Pascal) ; état réel : `docs/spec.md` § 5. L'intention
+  d'origine est gardée ci-dessous.*
+
   Un fichier `.qml` posé à côté d'une couche dans le zip **surcharge** la règle, pour
   les cas particuliers. Conséquence : le GeoJSON de ProdBois et les Shapefile « des
   nostalgiques » et de Canopée sont chargés tels quels, sans conversion en GeoPackage.

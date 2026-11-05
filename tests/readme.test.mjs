@@ -69,3 +69,15 @@ test('mission 041 : .qml du zip non pris en charge, message sans couche, Shapefi
   assert.ok(src.includes(illisibles), 'le code ne contient plus « tables illisibles, couche non chargée »');
   assert.ok(spec.includes(illisibles), 'la spec ne cite pas « tables illisibles, couche non chargée » comme le code');
 });
+
+test('mission 042 : .json non GeoJSON, comportement réel sur l\'appareil, cité comme le code', () => {
+  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const spec = readFileSync(join(RACINE, 'docs', 'spec.md'), 'utf8');
+  assert.ok(src.includes("if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) continue;"), 'le code n\'écarte plus un .json par son contenu comme la doc le décrit : relire README et spec § 3.1');
+  assert.ok(!readme.includes('est ignoré sans message'), 'le README dit encore qu\'un .json non GeoJSON est ignoré sans message');
+  assert.ok(!spec.includes('est ignoré en\n    silence ;'), 'la spec dit encore sans réserve qu\'un .json non GeoJSON est ignoré en silence');
+  assert.ok(readme.includes(': illisible'), 'le README ne cite pas le message « : illisible » du .json');
+  assert.ok(spec.includes('5 novembre 2026') && spec.includes('le **refuse**'), 'la spec ne dit pas que le .json est refusé');
+  const claude = readFileSync(join(RACINE, 'CLAUDE.md'), 'utf8');
+  assert.ok(!claude.includes('dans le zip surcharge la règle'), 'CLAUDE.md dit encore que le .qml du zip surcharge la règle');
+});

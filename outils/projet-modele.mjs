@@ -46,6 +46,24 @@ export const FONDS = [
 ];
 export const GROUPE_FONDS = 'Fonds de carte';
 
+// ---------- Mission 046 : fond embarqué fabriqué par QFieldSync (voie B, arbitrage de Pascal du 5 novembre 2026) ----------
+// Thème de carte « Fond embarqué » : Plan IGN v2 et Cadastre visibles, rien d'autre (ni OSM ni OpenTopoMap : en ligne seulement).
+// Propriétés lues par libqfieldsync (project.py l. 36-39 et 60-62, ProjectConfig, préfixe « qfieldsync ») : QFieldSync en tire
+// native:tilesxyzmbtiles (offline_converter.py l. 686-695) et écrit basemap.mbtiles. Voir docs/referentiels/fond-embarque-qfieldsync.md.
+export const THEME_FOND = 'Fond embarqué';
+export const FONDS_DU_THEME = ['Plan IGN v2', 'Cadastre'];
+// Zoom max 17 (Pascal) ; zoom min 13 : environ 13 m par pixel à 47° de latitude, une UT de 10 km tient sur un écran ; les niveaux
+// 13 à 16 ajoutent environ un tiers du nombre de tuiles du niveau 17 (calcul de l'étude § 4). Tuiles de 256 px : la correspondance
+// zoom / mètres par pixel est alors celle de la grille standard (0,8 m par pixel au zoom 17) ; avec 512 ou 1024 elle n'est pas lue.
+export const PROPRIETES_QFIELDSYNC = [
+  { cle: 'createBaseMap', type: 'bool', valeur: 'true' },
+  { cle: 'baseMapType', type: 'QString', valeur: 'mapTheme' },
+  { cle: 'baseMapTheme', type: 'QString', valeur: THEME_FOND },
+  { cle: 'baseMapTileSize', type: 'int', valeur: '256' },
+  { cle: 'baseMapTilesMinZoomLevel', type: 'int', valeur: '13' },
+  { cle: 'baseMapTilesMaxZoomLevel', type: 'int', valeur: '17' },
+];
+
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 // QgsDataSourceUri::encodedUri : paramètres par ordre alphabétique (type, url, zmax, zmin) ; dans la valeur de
 // url, « & », « = », « % », « + », « # », « { » et « } » sont encodés (comme %7Bz%7D dans une source OSM XYZ).
@@ -259,6 +277,13 @@ ${feuilles}
       <item>${idSaisie()}</item>
 ${FONDS.map((f) => `      <item>${idCouche(f)}</item>`).join('\n')}
     </custom-order>`;
+  const themeFond = `  <visibility-presets>
+    <visibility-preset name="${xml(THEME_FOND)}">
+${FONDS_DU_THEME.map((n) => `      <layer id="${idCouche({ nom: n })}" visible="1" style="default"/>`).join('\n')}
+    </visibility-preset>
+  </visibility-presets>
+`;
+  const proprietesFond = PROPRIETES_QFIELDSYNC.map((p) => `      <${p.cle} type="${p.type}">${xml(p.valeur)}</${p.cle}>`).join('\n');
   return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis projectname="Cerf" version="${VERSION_QGIS}" saveUser="cerf" saveUserFull="Cerf">
   <homePath path=""/>
@@ -302,8 +327,11 @@ ${FONDS.map((f) => `    <layer id="${idCouche(f)}"/>`).join('\n')}
       <ProjectionsEnabled type="int">1</ProjectionsEnabled>
       <ProjectCrs type="QString">EPSG:2154</ProjectCrs>
     </SpatialRefSys>
+    <qfieldsync>
+${proprietesFond}
+    </qfieldsync>
   </properties>
-</qgis>
+${themeFond}</qgis>
 `;
 }
 

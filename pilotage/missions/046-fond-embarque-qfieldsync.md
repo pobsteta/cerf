@@ -56,7 +56,7 @@ et cadastre par-dessus ; temps de préparation sur PC et taille du fichier noté
 
 - **Relecteur :** `relecteur` après chaque étape, puis Pascal (PR vers `main`). **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** préparer sur PC, avec QFieldSync, un fond embarqué IGN (Plan IGN v2 + cadastre, zoom 13 à 17) d'une UT sous forme d'un seul `basemap.mbtiles` copié à côté de `cerf.qgz` (voie B), sans toucher `cerf_id`, `saisie.gpkg`, `cerf-imports/` ni au plugin ; étape 2 faite pour le thème, les propriétés QFieldSync, les tests et le README ; la couche déclarée d'avance est suspendue à la décision de Pascal (risque : page d'erreur de QField à chaque ouverture sans le fichier).
 
 ## Arbitrages de Pascal (5 novembre 2026, après l'étape 1)
 

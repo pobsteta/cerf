@@ -165,7 +165,14 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
 - SCAN 25 : la clé se placerait dans l'URL, donc dans le `.qgz`. Si le SCAN 25 entre, le
   mécanisme est à décrire dans une ADR ; **aucune clé dans le dépôt**.
 - Fond embarqué de repli : **pas en tranche 1**, sauf si l'essai à J+2 (critère 5) échoue
-  (§ 9, n° 5).
+  (§ 9, n° 5). **Mission 046 (Pascal, 5 novembre 2026) : lancée sans attendre cet essai, voie B.**
+  Un fichier `basemap.mbtiles` (MBTiles, pas GeoPackage) est fabriqué sur PC par QFieldSync à partir du thème de carte
+  « Fond embarqué » de `cerf.qgz` (Plan IGN v2 + Cadastre ; ni OpenStreetMap ni OpenTopoMap), **zoom 13 à 17**, tuiles de
+  256 px, puis **seul ce fichier** est copié à côté de `cerf.qgz` sur l'appareil (pas de projet empaqueté : `cerf_id`,
+  `saisie.gpkg`, `cerf-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
+  `docs/referentiels/fond-embarque-qfieldsync.md`. **Reste à décider par Pascal : la déclaration d'avance de la couche
+  « Fond embarqué (hors ligne) » sur `./basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque
+  ouverture tant que le fichier manque). Licence de la rastérisation : non tranchée (CGU non lues).
 
 ### 3.5 Couche de saisie (amendement du 3 novembre 2026)
 

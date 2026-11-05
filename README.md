@@ -1,10 +1,10 @@
-# Cerf
+# Vision
 
-Cerf est un projet QField modèle (`cerf.qgz`) pour toute unité territoriale de métropole, avec les fonds IGN en flux. Un plugin QField, écrit pour Cerf, permet à l'agent d'ajouter sur le terrain, depuis un zip, les couches dont il a besoin, affichées aux couleurs du manuel.
+Vision est un projet QField modèle (`vision.qgz`) pour toute unité territoriale de métropole, avec les fonds IGN en flux. Un plugin QField, écrit pour Vision, permet à l'agent d'ajouter sur le terrain, depuis un zip, les couches dont il a besoin, affichées aux couleurs du manuel.
 
 Ce qu'on construit, pour qui : [`docs/brief.md`](docs/brief.md). Le détail du comportement : [`docs/spec.md`](docs/spec.md).
 
-Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et portent les fichiers cités (lecture de l'API GitHub).
+Adresses vérifiées le 4 novembre 2026 (lecture de l'API GitHub) sous l'ancien nom du dépôt : à partir de la version 0.5.0, publiée à la fusion de la mission 050, les quatre releases existent et portent les fichiers cités.
 
 ## 1. Installer le projet sur le téléphone (QField)
 
@@ -14,17 +14,17 @@ Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et porten
 2. Sur l'écran d'accueil, touche « Projets et jeux de données locaux ».
 3. Touche le bouton d'actions en bas à droite (« Import Actions »), puis « Import URL ».
 4. Colle l'adresse suivante, ou touche l'icône QR code du champ et vise le flashcode ci-dessous (le même, `flashcode-projet.png`, est aussi joint à la release) :
-   `https://github.com/pobsteta/cerf/releases/download/projet-modele/projet-cerf.zip`
+   `https://github.com/pobsteta/vision/releases/download/projet-modele/projet-vision.zip`
 
-   <img src="docs/flashcodes/flashcode-projet.svg" width="200" alt="Flashcode de l'adresse du projet Cerf (projet-cerf.zip)">
+   <img src="docs/flashcodes/flashcode-projet.svg" width="200" alt="Flashcode de l'adresse du projet Vision (projet-vision.zip)">
 
-5. Ouvre le projet **`cerf.qgz`**.
+5. Ouvre le projet **`vision.qgz`**.
 
-Le zip contient `cerf.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
+Le zip contient `vision.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
 
 ### Les fonds de carte
 
-`cerf.qgz` contient cinq fonds, dans le groupe « Fonds de carte », du dessus au dessous :
+`vision.qgz` contient cinq fonds, dans le groupe « Fonds de carte », du dessus au dessous :
 
 | Fond | Affiché au départ | Hors ligne |
 |---|---|---|
@@ -44,17 +44,17 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.4.
 
 ### Préparer un fond embarqué de l'UT (PC, QFieldSync)
 
-Pour travailler sans réseau sur une UT, on fabrique sur un PC un fichier `basemap.mbtiles` (Plan IGN v2 et cadastre, de l'emprise de l'UT) avec l'extension QGIS **QFieldSync**. Seul ce fichier va sur le Samsung ; `cerf.qgz`, `saisie.gpkg`, `cerf-imports/` et le registre ne sont pas touchés. **OpenStreetMap et OpenTopoMap n'y sont pas** (en ligne seulement).
+Pour travailler sans réseau sur une UT, on fabrique sur un PC un fichier `basemap.mbtiles` (Plan IGN v2 et cadastre, de l'emprise de l'UT) avec l'extension QGIS **QFieldSync**. Seul ce fichier va sur le Samsung ; `vision.qgz`, `saisie.gpkg`, `vision-imports/` et le registre ne sont pas touchés. **OpenStreetMap et OpenTopoMap n'y sont pas** (en ligne seulement).
 
-> **État de la mission 046.** Le projet modèle contient le thème de carte « Fond embarqué » et les réglages QFieldSync. **Décision D1 de Pascal (5 novembre 2026) : `cerf.qgz` ne déclare pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture si le fichier d'une couche manque). C'est le **plugin Cerf** (0.4.3, mission 048) qui ajoute le fond s'il le trouve à côté du projet. Les étapes 1 à 4 ci-dessous produisent le fichier, les étapes 5 à 7 le mettent en place. **Pas encore prouvé sur le Samsung** : l'essai reste à faire.
+> **État de la mission 046.** Le projet modèle contient le thème de carte « Fond embarqué » et les réglages QFieldSync. **Décision D1 de Pascal (5 novembre 2026) : `vision.qgz` ne déclare pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture si le fichier d'une couche manque). C'est le **plugin Vision** (0.4.3, mission 048) qui ajoute le fond s'il le trouve à côté du projet. Les étapes 1 à 4 ci-dessous produisent le fichier, les étapes 5 à 7 le mettent en place. **Pas encore prouvé sur le Samsung** : l'essai reste à faire.
 >
 > **Ne choisis pas le thème « Fond embarqué » dans QField.** QField propose, de mémoire (à vérifier sur le Samsung), les thèmes de carte du projet dans son panneau des couches ; si l'agent choisit ce thème sur le terrain, la couche « Saisie terrain » et les couches importées sont masquées. Ce thème ne sert qu'à QFieldSync, sur PC.
 
 1. **Installer QFieldSync** dans QGIS sur PC (menu Extensions, Installer/Gérer les extensions, chercher « QFieldSync »). Il faut le module Processing activé. Après installation, l'écran de configuration doit proposer « Tiles min zoom level » et « Tiles max zoom level » (une version plus ancienne a d'autres réglages : à vérifier).
-2. **Ouvrir `cerf.qgz`** dans QGIS, depuis un dossier **sans caractères spéciaux** dans son chemin (accents, espaces, symboles : QFieldSync refuse sinon, `check_files_have_unsupported_characters`), et **avec du réseau** (les tuiles sont téléchargées chez l'IGN pendant la fabrication ; sans réseau le fond sort vide, sans message). Avant de produire, **vérifier que le groupe « Fonds de carte » est coché** : le thème « Fond embarqué » le recoche à son application (`has-checked-group-info`, QGIS 3a92eb3), mais un groupe décoché donnerait un fond vide.
+2. **Ouvrir `vision.qgz`** dans QGIS, depuis un dossier **sans caractères spéciaux** dans son chemin (accents, espaces, symboles : QFieldSync refuse sinon, `check_files_have_unsupported_characters`), et **avec du réseau** (les tuiles sont téléchargées chez l'IGN pendant la fabrication ; sans réseau le fond sort vide, sans message). Avant de produire, **vérifier que le groupe « Fonds de carte » est coché** : le thème « Fond embarqué » le recoche à son application (`has-checked-group-info`, QGIS 3a92eb3), mais un groupe décoché donnerait un fond vide.
 3. **Choisir l'emprise de l'UT** : dans les réglages QFieldSync du projet (Projet > Propriétés > « QField »), groupe « Base Map », vérifier : type « Map theme », thème **Fond embarqué**, tuile **256**, zoom min **13**, zoom max **17** (déjà réglés par le projet modèle), puis donner l'emprise de l'UT dans « Area of interest » (ou, sans emprise donnée, zoomer la carte sur l'UT : QFieldSync prend alors l'emprise affichée). Une emprise plus grande que l'UT coûte du temps et de la place.
-4. **Produire** : « Package for QField », avec un dossier de sortie **différent** de celui de `cerf.qgz` (QFieldSync le refuse sinon). QFieldSync fabrique tout le projet empaqueté : on **ne prend que le fichier `basemap.mbtiles`** du dossier produit et on jette le reste. Surtout **ne copie jamais le `saisie.gpkg` produit** (il est vide) sur celui du téléphone.
-5. **Copier `basemap.mbtiles`** par câble USB dans le dossier du projet du Samsung, à côté de `cerf.qgz` (même dossier que `saisie.gpkg`), en remplaçant celui d'une autre UT.
+4. **Produire** : « Package for QField », avec un dossier de sortie **différent** de celui de `vision.qgz` (QFieldSync le refuse sinon). QFieldSync fabrique tout le projet empaqueté : on **ne prend que le fichier `basemap.mbtiles`** du dossier produit et on jette le reste. Surtout **ne copie jamais le `saisie.gpkg` produit** (il est vide) sur celui du téléphone.
+5. **Copier `basemap.mbtiles`** par câble USB dans le dossier du projet du Samsung, à côté de `vision.qgz` (même dossier que `saisie.gpkg`), en remplaçant celui d'une autre UT.
 6. **Rouvrir le projet** : le plugin ajoute alors la couche « Fond embarqué (hors ligne) », cochée, en lecture seule, sans entrée dans la liste des couches importées ; elle revient à chaque réouverture tant que le fichier est là. Sans fichier : rien ne se passe, aucun message. Fichier illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. »
 7. **Vérifier en mode avion** : zoomer sur l'UT ; le fond embarqué et les couches importées par-dessus doivent s'afficher. **Le fond embarqué recouvre les fonds en ligne sur son emprise** : pour voir la BD ORTHO, le décocher. QField le place sous les couches vecteur et au-dessus des fonds en ligne ; cet ordre réel sera vu à l'essai sur le Samsung.
 
@@ -69,37 +69,37 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.4.
 
 **N'importe pas le zip de mise à jour avec « Import URL »** : QField le décompresserait dans un dossier neuf, donc dans un autre projet, sans les points déjà saisis.
 
-1. Télécharge `projet-cerf-mise-a-jour.zip` sur l'ordinateur, dans la même release `projet-modele` :
-   `https://github.com/pobsteta/cerf/releases/download/projet-modele/projet-cerf-mise-a-jour.zip`
-2. Décompresse-le : il ne contient que `cerf.qgz`.
+1. Télécharge `projet-vision-mise-a-jour.zip` sur l'ordinateur, dans la même release `projet-modele` :
+   `https://github.com/pobsteta/vision/releases/download/projet-modele/projet-vision-mise-a-jour.zip`
+2. Décompresse-le : il ne contient que `vision.qgz`.
 3. Branche le téléphone par câble USB.
-4. Copie `cerf.qgz` dans le dossier du projet du téléphone, en remplaçant l'ancien.
+4. Copie `vision.qgz` dans le dossier du projet du téléphone, en remplaçant l'ancien.
 5. Ne recopie **jamais** un `saisie.gpkg` vide par-dessus un `saisie.gpkg` rempli.
 
 Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
-## 2. Installer le plugin Cerf
+## 2. Installer le plugin Vision
 
 À faire une fois par appareil, avec du réseau.
 
 1. Dans QField : Paramètres, Plugins, « Install plugin from URL ».
 2. Colle l'adresse stable, ou touche l'icône QR code du champ et vise le flashcode ci-dessous (le même, `flashcode-plugin.png`, est aussi joint à la release du plugin) :
-   `https://github.com/pobsteta/cerf/releases/latest/download/plugin-cerf.zip`
+   `https://github.com/pobsteta/vision/releases/latest/download/plugin-vision.zip`
 
-   <img src="docs/flashcodes/flashcode-plugin.svg" width="200" alt="Flashcode de l'adresse du plugin Cerf (plugin-cerf.zip)">
+   <img src="docs/flashcodes/flashcode-plugin.svg" width="200" alt="Flashcode de l'adresse du plugin Vision (plugin-vision.zip)">
 
 3. Valide, puis active le plugin si QField le demande.
 
 À savoir :
 
 - **Ne renomme pas le zip** : QField nomme le dossier du plugin d'après le nom du zip.
-- Si tu as déjà un ancien plugin « Cerf » (dossier `cerf`), **désinstalle-le une fois** avant, pour ne pas avoir deux boutons.
-- Le bouton Cerf de la barre d'outils **n'apparaît que dans un projet Cerf**, c'est-à-dire un projet qui a la variable `cerf_id` (c'est le cas de `cerf.qgz`). Dans un autre projet, il reste caché.
-- Pour tester une version pas encore publiée : préversion `plugin-essai`, `https://github.com/pobsteta/cerf/releases/download/plugin-essai/plugin-cerf.zip` (adresse d'essai, jamais « latest »).
+- Si tu as déjà l'ancien plugin du projet, celui d'avant son changement de nom (dossier `plugin-` suivi de l'ancien nom ; ADR 0009), **désinstalle-le une fois** avant, pour ne pas avoir deux boutons.
+- Le bouton Vision de la barre d'outils **n'apparaît que dans un projet Vision**, c'est-à-dire un projet qui a la variable `vision_id` (c'est le cas de `vision.qgz`). Dans un autre projet, il reste caché.
+- Pour tester une version pas encore publiée : préversion `plugin-essai`, `https://github.com/pobsteta/vision/releases/download/plugin-essai/plugin-vision.zip` (adresse d'essai, jamais « latest »).
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.4.4 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.5.0 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 
@@ -110,7 +110,7 @@ Extensions sans tenir compte de la casse, à la racine du zip ou dans des dossie
 - **GeoPackage** (`.gpkg`) : **une couche par table vecteur**. Le plugin lit la liste des tables dans le fichier, sans réseau. Cette lecture n'est pas encore prouvée sur le téléphone (zip d'essai `essai-tables-z.zip` à essayer) : si elle échoue, ou si le GeoPackage n'a qu'une table attributaire sans géométrie, il est refusé (« tables illisibles »), il n'est jamais ignoré sans message.
 - **GeoTIFF** (`.tif`, `.tiff`) : lu dans le zip, sans copie, avec le style par défaut de QGIS. Range-le dans le zip **sans compression** (`zip -0`) pour une lecture rapide.
 - Un zip sans aucune couche de ces quatre formats donne le message « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans <nom du zip>. ».
-- Shapefile, GeoJSON et GeoPackage sont copiés en GeoPackage dans `cerf-imports/` : une couche Shapefile apparaît donc comme un GeoPackage.
+- Shapefile, GeoJSON et GeoPackage sont copiés en GeoPackage dans `vision-imports/` : une couche Shapefile apparaît donc comme un GeoPackage.
 
 ### Combien de couches
 
@@ -118,7 +118,7 @@ Un zip peut en contenir **autant qu'on veut** : chaque GeoJSON, chaque Shapefile
 
 Les limites réelles :
 
-- **Le zip entier doit peser 10 Mo au plus aujourd'hui** (10 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/cerf-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc.
+- **Le zip entier doit peser 10 Mo au plus aujourd'hui** (10 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/vision-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc.
 - **Deux couches de même nom** (`a/UG.geojson` et `b/UG.shp`, ou une table `UG` de GeoPackage) : la seconde est refusée, la première est chargée.
 - **Ignorés sans message** : dossier `__MACOSX`, fichiers `._*` (zips faits sur Mac), `.qmd`, et tout autre fichier. Les fichiers annexes (`.tfw`, `.aux.xml`, `.qix`, `.sbn`, `.sbx`) vont avec leur couche, sans message.
 - Une couche refusée n'empêche pas les autres.
@@ -126,16 +126,16 @@ Les limites réelles :
 ### Étapes
 
 1. Mets le zip sur le téléphone, dans n'importe quel dossier (par exemple Téléchargements). Pas besoin de réseau pour l'import.
-2. Ouvre `cerf.qgz`.
-3. Touche le bouton Cerf de la barre d'outils des plugins : le panneau Cerf s'ouvre. Touche « Ajouter un zip ».
+2. Ouvre `vision.qgz`.
+3. Touche le bouton Vision de la barre d'outils des plugins : le panneau Vision s'ouvre. Touche « Ajouter un zip ».
 4. Choisis ton zip dans le sélecteur de fichiers Android. Autorise l'accès au stockage si Android le demande.
 5. Lis le message du panneau : une ligne par couche refusée ou avertie, qui commence par le **chemin complet de la couche dans le zip**, avec son extension : `FRT.shp : …` à la racine, `Serre EA/réf/Parcelles.shp : …` dans des dossiers, `d/Serre.gpkg/Releves : …` pour une table de GeoPackage.
-6. Regarde la carte. Les couches sont **en lecture seule**. Le plugin copie les couches vecteur en GeoPackage dans `cerf-imports/` (dossier du projet), avec leur style ; les GeoTIFF restent lus dans la copie du zip.
+6. Regarde la carte. Les couches sont **en lecture seule**. Le plugin copie les couches vecteur en GeoPackage dans `vision-imports/` (dossier du projet), avec leur style ; les GeoTIFF restent lus dans la copie du zip.
 
 ### Retrouver et retirer
 
 - **Réouverture** : ferme et rouvre le projet, ou redémarre le téléphone, les couches reviennent (sans réseau).
-- **Retrait** : dans le panneau Cerf, touche « Retirer » en face de la couche. La couche quitte la carte et le registre. Le plugin essaie d'effacer ses fichiers (`.gpkg`, `.qml`), vérifie, puis dit ce qui reste : « Fichiers restés sur l'appareil : … ». La copie du zip est effacée quand plus aucune couche ne s'en sert ; sinon, ou si l'effacement échoue : « Copie conservée sur l'appareil : … ».
+- **Retrait** : dans le panneau Vision, touche « Retirer » en face de la couche. La couche quitte la carte et le registre. Le plugin essaie d'effacer ses fichiers (`.gpkg`, `.qml`), vérifie, puis dit ce qui reste : « Fichiers restés sur l'appareil : … ». La copie du zip est effacée quand plus aucune couche ne s'en sert ; sinon, ou si l'effacement échoue : « Copie conservée sur l'appareil : … ».
 - **Réimporter un zip sous le même nom** : il remplace l'ancien. Les couches de l'ancien zip qui ne sont plus dans le nouveau sont retirées.
 
 ### Les styles du manuel
@@ -172,19 +172,19 @@ Le texte exact de chaque refus et avertissement est dans [`docs/spec.md`](docs/s
 
 Un zip de démonstration (données fictives, aux noms du manuel : UG, Parcelles, FRT, ProdBois, tout en GeoJSON) est dans la préversion `essai-manuel` :
 
-`https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel-geojson.zip`
+`https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel-geojson.zip`
 
 <img src="docs/flashcodes/flashcode-essai-manuel-geojson.svg" width="200" alt="Flashcode de l'adresse de essai-manuel-geojson.zip">
 
 `essai-manuel.zip`, de la même préversion, porte les mêmes couches avec UG, Parcelles et FRT en Shapefile :
 
-`https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip`
+`https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel.zip`
 
 <img src="docs/flashcodes/flashcode-essai-manuel.svg" width="200" alt="Flashcode de l'adresse de essai-manuel.zip">
 
 `essai-gpkg-style.zip`, de la même préversion (données fictives, mission 047), contient un GeoPackage de deux tables : `Parcelles`, avec un style enregistré (contour vert épais), doit le garder ; `UG`, sans style enregistré, prend le bleu du manuel :
 
-`https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-gpkg-style.zip`
+`https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-gpkg-style.zip`
 
 (adresse d'essai : son flashcode est dans les notes de la préversion `essai-manuel`.)
 

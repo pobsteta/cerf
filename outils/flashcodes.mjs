@@ -15,11 +15,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const DEPOT = 'https://github.com/pobsteta/cerf/releases';
+export const DEPOT = 'https://github.com/pobsteta/vision/releases';
 
-// Mission 028 : noms des fichiers publiés. Pas de flashcode pour la mise à jour du projet (copie de cerf.qgz à la main).
-const PLUGIN = 'plugin-cerf.zip';
-const PROJET = 'projet-cerf.zip';
+// Mission 028 : noms des fichiers publiés. Pas de flashcode pour la mise à jour du projet (copie de vision.qgz à la main).
+const PLUGIN = 'plugin-vision.zip';
+const PROJET = 'projet-vision.zip';
 
 const ACCES_PLUGIN =
   'dans QField, Paramètres, Plugins, « Install plugin from URL », touche l\'icône QR code du champ, puis vise cet écran';
@@ -33,7 +33,7 @@ export function flashcodes(type, mode) {
   if (!['stable', 'essai'].includes(mode)) throw new Error(`mode inconnu : ${mode}`);
   if (type === 'plugin') {
     const url = mode === 'stable' ? `${DEPOT}/latest/download/${PLUGIN}` : `${DEPOT}/download/plugin-essai/${PLUGIN}`;
-    return [{ nom: 'flashcode-plugin', url, titre: 'Plugin Cerf', phrase: `Installe le plugin Cerf : ${ACCES_PLUGIN}.` }];
+    return [{ nom: 'flashcode-plugin', url, titre: 'Plugin Vision', phrase: `Installe le plugin Vision : ${ACCES_PLUGIN}.` }];
   }
   if (type === 'projet') {
     const etiquette = mode === 'stable' ? 'projet-modele' : 'projet-modele-essai';
@@ -41,8 +41,8 @@ export function flashcodes(type, mode) {
       {
         nom: 'flashcode-projet',
         url: `${DEPOT}/download/${etiquette}/${PROJET}`,
-        titre: 'Projet Cerf, première installation',
-        phrase: `Installe le projet Cerf avec sa couche « Saisie terrain » vide, une seule fois par appareil : ${ACCES_PROJET}.`,
+        titre: 'Projet Vision, première installation',
+        phrase: `Installe le projet Vision avec sa couche « Saisie terrain » vide, une seule fois par appareil : ${ACCES_PROJET}.`,
       },
     ];
   }
@@ -53,7 +53,7 @@ export function flashcodes(type, mode) {
         nom: 'flashcode-essai-manuel',
         url: `${DEPOT}/download/essai-manuel/essai-manuel.zip`,
         titre: 'Zip de démonstration essai-manuel.zip',
-        phrase: 'Télécharge le zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf.',
+        phrase: 'Télécharge le zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans vision.qgz avec le plugin Vision.',
       },
     ];
   }
@@ -64,7 +64,7 @@ export function flashcodes(type, mode) {
         nom: 'flashcode-essai-manuel-geojson',
         url: `${DEPOT}/download/essai-manuel/essai-manuel-geojson.zip`,
         titre: 'Zip de démonstration essai-manuel-geojson.zip (tout en GeoJSON)',
-        phrase: 'Télécharge la variante tout en GeoJSON du zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-la dans cerf.qgz avec le plugin Cerf : à prendre tant que le plugin ne lit pas les Shapefile.',
+        phrase: 'Télécharge la variante tout en GeoJSON du zip de démonstration (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-la dans vision.qgz avec le plugin Vision : à prendre tant que le plugin ne lit pas les Shapefile.',
       },
     ];
   }
@@ -75,7 +75,7 @@ export function flashcodes(type, mode) {
         nom: 'flashcode-piege',
         url: `${DEPOT}/download/essai-manuel/piege.zip`,
         titre: 'Zip de recette piege.zip (cinq pièges, données fictives)',
-        phrase: 'Télécharge le zip piégé de la recette (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf : chaque piège doit donner un message clair.',
+        phrase: 'Télécharge le zip piégé de la recette (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans vision.qgz avec le plugin Vision : chaque piège doit donner un message clair.',
       },
     ];
   }
@@ -86,7 +86,7 @@ export function flashcodes(type, mode) {
         nom: 'flashcode-gpkg-style',
         url: `${DEPOT}/download/essai-manuel/essai-gpkg-style.zip`,
         titre: 'Zip d\'essai essai-gpkg-style.zip (style enregistré dans un GeoPackage)',
-        phrase: 'Télécharge le zip d\'essai du style enregistré dans un GeoPackage (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf : Parcelles doit garder son contour vert épais, UG prend le bleu du manuel.',
+        phrase: 'Télécharge le zip d\'essai du style enregistré dans un GeoPackage (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans vision.qgz avec le plugin Vision : Parcelles doit garder son contour vert épais, UG prend le bleu du manuel.',
       },
     ];
   }
@@ -137,7 +137,7 @@ function zbar(chemin) {
 // Texte décodé d'un fichier PNG ou SVG de flashcode.
 export function decoder(chemin) {
   if (!chemin.endsWith('.svg')) return zbar(chemin);
-  const tmp = mkdtempSync(join(tmpdir(), 'cerf-qr-'));
+  const tmp = mkdtempSync(join(tmpdir(), 'vision-qr-'));
   try {
     const pbm = join(tmp, 'qr.pbm');
     writeFileSync(pbm, svgVersPbm(readFileSync(chemin, 'utf8')));

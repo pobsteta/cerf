@@ -1,6 +1,6 @@
 // Mission 016 : fabrique les zips de recette `piege` et `lourd` (spec § 6, critères 6 et 7),
 // à l'identique à chaque fabrication (dates et contenus fixes, aucun hasard).
-// Écrit pour Cerf, sans dépendance (Node >= 22.13 pour node:sqlite). Données fictives.
+// Écrit pour Vision, sans dépendance (Node >= 22.13 pour node:sqlite). Données fictives.
 //
 // Usage : node outils/zips-recette.mjs <dossier-de-sortie> [piege|lourd|tout] [taille-lourd-en-Mo]
 //   <dossier-de-sortie> obligatoire : rien ne tombe dans le dépôt (lourd.zip fait 200 Mo).
@@ -175,7 +175,7 @@ export async function fabriquerGpkg(chemin) {
 // GeoPackage sans recompresser le GeoTIFF.
 export async function fabriquerLourd(dossier, tailleMo = 200) {
   mkdirSync(dossier, { recursive: true });
-  const tmp = mkdtempSync(join(tmpdir(), 'cerf-lourd-'));
+  const tmp = mkdtempSync(join(tmpdir(), 'vision-lourd-'));
   try {
     const t = fabriquerGeotiffLourd(tmp, tailleMo);
     const gpkgChemin = join(tmp, NOM_GPKG);

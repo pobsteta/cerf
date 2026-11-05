@@ -1,5 +1,5 @@
 // Mission 003 : petit écrivain de zip pour les fichiers d'essai (sans dépendance).
-// Écrit pour Cerf. Pas de ZIP64 : toute entrée et tout zip font moins de 4 Gio.
+// Écrit pour Vision. Pas de ZIP64 : toute entrée et tout zip font moins de 4 Gio.
 import { deflateRawSync } from 'node:zlib';
 
 const TABLE = new Uint32Array(256);

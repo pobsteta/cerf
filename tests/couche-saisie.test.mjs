@@ -1,13 +1,13 @@
 // Mission 020 : tests de la couche de saisie « Saisie terrain » (écrits avant la production, mission 021).
 // Sources des valeurs (aucune n'est inventée) :
-//   - docs/spec.md § 3.5 : saisie.gpkg à côté de cerf.qgz, chemin relatif ; table saisie_terrain, Point, EPSG:2154, vide ;
+//   - docs/spec.md § 3.5 : saisie.gpkg à côté de vision.qgz, chemin relatif ; table saisie_terrain, Point, EPSG:2154, vide ;
 //     couche « Saisie terrain » modifiable, au-dessus du groupe « Fonds de carte » ; champs fid, essence (texte),
 //     diametre (entier), remarque (texte), date (date et heure, défaut now(), modifiable) ;
 //   - docs/spec.md § 5 (règle ProdBois / Relevés) : cercle noir plein 2 mm ; étiquette "essence" || '\n' || "diametre",
 //     8 pt, noire, liseré blanc ; § 2 point 1 et § 3.4 : cinq fonds XYZ depuis la mission 045 (deux avant), groupe « Fonds de carte » ;
 //   - docs/spec.md § 6 n° 10 et docs/brief.md (amendement du 3 novembre 2026).
-// Emplacement : saisie.gpkg et cerf.qgz à la racine du dépôt (comme tests/projet-modele.test.mjs).
-//   La variable d'environnement CERF_RACINE (facultative) remplace cette racine : elle sert à prouver que les tests
+// Emplacement : saisie.gpkg et vision.qgz à la racine du dépôt (comme tests/projet-modele.test.mjs).
+//   La variable d'environnement VISION_RACINE (facultative) remplace cette racine : elle sert à prouver que les tests
 //   sont satisfiables sur des fichiers jetables ; elle n'est pas posée en CI.
 // ROUGE ATTENDU jusqu'à la mission 021 : chaque test « réel » échoue avec « saisie.gpkg absent : rouge attendu… »
 //   ou « couche « Saisie terrain » absente… ». Les tests « garde-fou » (fixtures fabriquées ici) sont verts : ils
@@ -25,8 +25,8 @@ import { DatabaseSync } from 'node:sqlite';
 // Une URL n'est jamais lue par .pathname (encodage en pourcent, « /C:/ » sous Windows) : fileURLToPath partout.
 const racineDepuis = (dossier) => pathToFileURL(resolve(dossier) + sep);
 const cheminGpkg = (racine) => fileURLToPath(new URL('saisie.gpkg', racine));
-const RACINE = process.env.CERF_RACINE ? racineDepuis(process.env.CERF_RACINE) : new URL('../', import.meta.url);
-const CHEMIN_QGZ = new URL('cerf.qgz', RACINE);
+const RACINE = process.env.VISION_RACINE ? racineDepuis(process.env.VISION_RACINE) : new URL('../', import.meta.url);
+const CHEMIN_QGZ = new URL('vision.qgz', RACINE);
 const CHEMIN_GPKG = new URL('saisie.gpkg', RACINE);
 
 // --- Valeurs attendues ---------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ const APP_ID_GPKG = [0x47504b47, 0x47503130, 0x47503131]; // « GPKG » (1.2+), 
 function lireZip(buf) {
   let e = buf.length - 22;
   while (e >= 0 && buf.readUInt32LE(e) !== 0x06054b50) e--;
-  if (e < 0) throw new Error("cerf.qgz n'est pas un zip (fin de répertoire introuvable)");
+  if (e < 0) throw new Error("vision.qgz n'est pas un zip (fin de répertoire introuvable)");
   const n = buf.readUInt16LE(e + 10);
   let p = buf.readUInt32LE(e + 16);
   const entrees = {};
@@ -89,7 +89,7 @@ function lireGpkg(chemin) {
 }
 const type = (t) => String(t ?? '').toUpperCase().replace(/\(.*\)/, '').trim();
 const TYPES = {
-  // TOLÉRANCE : noms de types GeoPackage (OGC 12-128r19) ; la spec Cerf dit seulement « entier », « texte », « date et heure ».
+  // TOLÉRANCE : noms de types GeoPackage (OGC 12-128r19) ; la spec Vision dit seulement « entier », « texte », « date et heure ».
   essence: [/^TEXT$/], remarque: [/^TEXT$/],
   diametre: [/^(INTEGER|INT|SMALLINT|MEDIUMINT)$/],   // pas REAL ni TEXT ; TINYINT exclu (127 cm au plus)
   date: [/^(DATETIME|TIMESTAMP)$/],                    // TOLÉRANCE : TIMESTAMP accepté ; DATE seul ou TEXT refusés (il faut l'heure)
@@ -156,7 +156,7 @@ const verifsGpkg = {
 const defautsGpkg = (chemin) => { const g = lireGpkg(chemin); return Object.entries(verifsGpkg).flatMap(([n, f]) => f(g).map((d) => `${n} : ${d}`)); };
 
 // =====================================================================================================
-// PARTIE 2 : la couche dans cerf.qgz
+// PARTIE 2 : la couche dans vision.qgz
 // =====================================================================================================
 const dexml = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 const attrs = (tag) => Object.fromEntries([...tag.matchAll(/([\w:.-]+)="([^"]*)"/g)].map((m) => [m[1], dexml(m[2])]));
@@ -201,7 +201,7 @@ function analyserQgs(xml) {
 }
 const saisies = (p) => p.couches.filter((c) => c.nom === NOM_COUCHE);
 const saisie = (p) => saisies(p)[0];
-const absente = () => [`couche « ${NOM_COUCHE} » absente de cerf.qgz : rouge attendu jusqu'à la mission 021`];
+const absente = () => [`couche « ${NOM_COUCHE} » absente de vision.qgz : rouge attendu jusqu'à la mission 021`];
 const vrai = (v) => ['1', 'true'].includes(v);
 
 const verifsQgs = {
@@ -219,7 +219,7 @@ const verifsQgs = {
     const c = saisie(p); if (!c) return absente();
     const [chemin, ...params] = c.source.split('|'), d = [];
     if (/^([a-z]:[\\/]|[\\/]|file:|\/vsi)/i.test(chemin) || /^[a-z][a-z0-9+.-]*:\/\//i.test(chemin)) d.push(`chemin absolu ou URL : « ${chemin} » (QField déplace le projet)`);
-    else if (chemin.replace(/^\.\//, '') !== FICHIER) d.push(`chemin « ${chemin} », attendu ./${FICHIER} ou ${FICHIER} (à côté de cerf.qgz, sans sous-dossier ni « .. »)`);
+    else if (chemin.replace(/^\.\//, '') !== FICHIER) d.push(`chemin « ${chemin} », attendu ./${FICHIER} ou ${FICHIER} (à côté de vision.qgz, sans sous-dossier ni « .. »)`);
     if (!params.includes(`layername=${TABLE}`)) d.push(`layername=${TABLE} absent de la source (« ${c.source} »)`);
     return d;
   },
@@ -344,7 +344,7 @@ const defautsQgs = (xml) => { const p = analyserQgs(xml); return Object.entries(
 // =====================================================================================================
 // FIXTURES (garde-fous) : un GeoPackage et un projet justes, écrits comme GDAL / QGIS 3.34 les écrivent
 // =====================================================================================================
-const tmp = mkdtempSync(join(tmpdir(), 'cerf-saisie-'));
+const tmp = mkdtempSync(join(tmpdir(), 'vision-saisie-'));
 test.after(() => rmSync(tmp, { recursive: true, force: true }));
 let compteur = 0;
 function fabriquerGpkg(o = {}) {
@@ -493,14 +493,14 @@ const variantesAdmises = {
 };
 for (const [nom, o] of Object.entries(variantesAdmises)) test(`garde-fou projet : accepte ${nom}`, () => assert.deepEqual(defautsQgs(projetFixture(o)), []));
 const fautesQgs = {
-  'couche absente': [{ sansSaisie: true }, 'absente de cerf.qgz'],
-  'couche mal nommée (Saisie)': [{ nom: 'Saisie' }, 'absente de cerf.qgz'],
+  'couche absente': [{ sansSaisie: true }, 'absente de vision.qgz'],
+  'couche mal nommée (Saisie)': [{ nom: 'Saisie' }, 'absente de vision.qgz'],
   'deux couches « Saisie terrain »': [{ doublon: true }, 'attendu 1'],
   'fournisseur gdal (raster)': [{ fournisseur: 'gdal' }, 'fournisseur = gdal'],
   'géométrie Polygon': [{ geometry: 'Polygon' }, 'attendu Point'],
   'srs de la couche 4326': [{ srs: 'EPSG:4326' }, 'srs de la couche'],
   'chemin absolu Linux': [{ source: '/storage/emulated/0/saisie.gpkg|layername=saisie_terrain' }, 'chemin absolu'],
-  'chemin absolu Windows': [{ source: 'C:\\cerf\\saisie.gpkg|layername=saisie_terrain' }, 'chemin absolu'],
+  'chemin absolu Windows': [{ source: 'C:\\vision\\saisie.gpkg|layername=saisie_terrain' }, 'chemin absolu'],
   'chemin vers un sous-dossier': [{ source: './donnees/saisie.gpkg|layername=saisie_terrain' }, 'attendu ./saisie.gpkg'],
   'chemin remontant (../)': [{ source: '../saisie.gpkg|layername=saisie_terrain' }, 'attendu ./saisie.gpkg'],
   'autre fichier (saisie_2.gpkg)': [{ source: './saisie_2.gpkg|layername=saisie_terrain' }, 'attendu ./saisie.gpkg'],
@@ -568,16 +568,16 @@ for (const [nom, [o, attendu]] of Object.entries(fautesQgs)) {
 // LES VRAIS FICHIERS : rouges tant que la mission 021 n'est pas faite
 // =====================================================================================================
 function gpkgReel() {
-  assert.ok(existsSync(CHEMIN_GPKG), "saisie.gpkg absent à la racine du dépôt (à côté de cerf.qgz) : rouge attendu jusqu'à la mission 021");
+  assert.ok(existsSync(CHEMIN_GPKG), "saisie.gpkg absent à la racine du dépôt (à côté de vision.qgz) : rouge attendu jusqu'à la mission 021");
   return cheminGpkg(RACINE);
 }
 function qgsReel() {
-  assert.ok(existsSync(CHEMIN_QGZ), 'cerf.qgz absent à la racine du dépôt');
+  assert.ok(existsSync(CHEMIN_QGZ), 'vision.qgz absent à la racine du dépôt');
   return analyserQgs(qgsDuQgz(readFileSync(CHEMIN_QGZ)));
 }
-test('saisie.gpkg existe à côté de cerf.qgz', () => {
-  assert.ok(existsSync(CHEMIN_QGZ), 'cerf.qgz absent');
+test('saisie.gpkg existe à côté de vision.qgz', () => {
+  assert.ok(existsSync(CHEMIN_QGZ), 'vision.qgz absent');
   gpkgReel();
 });
 for (const [nom, f] of Object.entries(verifsGpkg)) test(`saisie.gpkg : ${nom}`, () => assert.deepEqual(f(lireGpkg(gpkgReel())), []));
-for (const [nom, f] of Object.entries(verifsQgs)) test(`cerf.qgz : ${nom}`, () => assert.deepEqual(f(qgsReel()), []));
+for (const [nom, f] of Object.entries(verifsQgs)) test(`vision.qgz : ${nom}`, () => assert.deepEqual(f(qgsReel()), []));

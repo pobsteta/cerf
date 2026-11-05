@@ -4,9 +4,9 @@
 // y compris les décisions de Pascal du 4 novembre : polygones seuls avec avertissement, casse des champs)
 // et de la fiche 009.
 //
-// ROUGE ATTENDU JUSQU'À LA MISSION 010 : le module plugin/cerf-styles.mjs n'existe pas encore.
+// ROUGE ATTENDU JUSQU'À LA MISSION 010 : le module plugin/vision-styles.mjs n'existe pas encore.
 //
-// CONTRAT PROPOSÉ à la mission 010 (module `plugin/cerf-styles.mjs`, fonctions pures, sans QField ni QGIS) :
+// CONTRAT PROPOSÉ à la mission 010 (module `plugin/vision-styles.mjs`, fonctions pures, sans QField ni QGIS) :
 //
 //   reconnaitre({ nom, geometrie, champs, qml }) -> { regle, source, avertissement }
 //     nom        : nom de la couche SANS extension (« Parcelles_serre » pour Parcelles_serre.gpkg)
@@ -43,12 +43,12 @@ import { dirname, join } from 'node:path';
 
 const ici = dirname(fileURLToPath(import.meta.url));
 const SPEC = join(ici, '..', 'docs', 'spec.md');
-// Variable CERF_STYLES_MODULE : sert uniquement à vérifier ces tests sur un module jetable non versé.
-const MODULE = process.env.CERF_STYLES_MODULE ?? join(ici, '..', 'plugin', 'cerf-styles.mjs');
+// Variable VISION_STYLES_MODULE : sert uniquement à vérifier ces tests sur un module jetable non versé.
+const MODULE = process.env.VISION_STYLES_MODULE ?? join(ici, '..', 'plugin', 'vision-styles.mjs');
 
 let charge;
 async function M() {
-  if (!existsSync(MODULE)) throw new Error('plugin/cerf-styles.mjs absent : rouge attendu jusqu\'à la mission 010');
+  if (!existsSync(MODULE)) throw new Error('plugin/vision-styles.mjs absent : rouge attendu jusqu\'à la mission 010');
   charge ??= await import(MODULE);
   for (const f of ['reconnaitre', 'styleDe', 'trouverQml']) {
     if (typeof charge[f] !== 'function') throw new Error(`${f}() non exportée : rouge attendu jusqu'à la mission 010`);

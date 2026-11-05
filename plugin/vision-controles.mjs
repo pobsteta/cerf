@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application (mission 012) : les cinq contrôles à l'import (spec § 4,
+// Vision, plugin QField d'application (mission 012) : les cinq contrôles à l'import (spec § 4,
 // ADR 0004), dans leur ordre. JavaScript pur, sans import de QField, sans réseau (ADR 0005) :
-// testable sous Node. Écrit pour Cerf.
+// testable sous Node. Écrit pour Vision.
 //
 // Le premier contrôle qui échoue arrête la couche. Toute exception vaut refus.
 

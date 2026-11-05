@@ -1,6 +1,6 @@
-# Cerf — consignes de l'orchestrateur
+# Vision — consignes de l'orchestrateur
 
-Cerf est un projet QField modèle, prêt pour toute UT de métropole, avec les fonds IGN en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches vecteur ou raster dont il a besoin, affichées aux couleurs du manuel (voir `docs/brief.md`). Il est développé par une équipe
+Vision est un projet QField modèle, prêt pour toute UT de métropole, avec les fonds IGN en flux, dans lequel l'agent ajoute sur le terrain, depuis un zip, les couches vecteur ou raster dont il a besoin, affichées aux couleurs du manuel (voir `docs/brief.md`). Il est développé par une équipe
 d'agents IA selon **la méthode de l'Impératrice** de Pascal Obstétar, apportée par le
 plugin `imperatrice` (méthode : skill `imperatrice:methode`).
 
@@ -49,11 +49,11 @@ les agents doivent garder en tête.
   (RFC 7946), un Shapefile sans `.prj` peut recevoir un système en silence.
 - **Formats acceptés dans le zip** : GeoJSON, GeoPackage, Shapefile complet (`.shp`,
   `.shx`, `.dbf`, `.prj`, `.cpg`), GeoTIFF ; les couches vecteur sont ouvertes dans le zip, contrôlées, puis réécrites en
-  GeoPackage dans `cerf-imports/` avec leur style à côté ; les GeoTIFF restent lus dans le zip
+  GeoPackage dans `vision-imports/` avec leur style à côté ; les GeoTIFF restent lus dans le zip
   (`/vsizip/`) (ADR 0008).
-- **Plugin** : plugin QField d'application, GPL-3.0-or-later, code écrit pour Cerf (rien
-  de recopié) ; un seul `cerf.qgz` par appareil ; registre à clé `cerf_id` ; copies dans
-  `<dossier du projet>/cerf-imports/` (QField refuse la lecture hors du projet ; pas de
+- **Plugin** : plugin QField d'application, GPL-3.0-or-later, code écrit pour Vision (rien
+  de recopié) ; un seul `vision.qgz` par appareil ; registre à clé `vision_id` ; copies dans
+  `<dossier du projet>/vision-imports/` (QField refuse la lecture hors du projet ; pas de
   QFieldCloud), voir `docs/spec.md` § 3.3 et § 10.
 - **Styles du manuel** (source : mail de JFC, tableau dans `docs/brief.md`) : UG, Parcelles,
   FRT et exports ProdBois / Relevés, appliqués par règle sur le nom de la couche ; un `.qml`

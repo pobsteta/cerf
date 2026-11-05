@@ -1,3 +1,4 @@
+# Historique (mission 004), ne pas relancer : voir ADR 0009 (le projet a changé de nom ; ce prototype garde son état d'origine).
 # Publie le prototype n° 1 (mission 004) en release GitHub « prototype-1 » à chaque push
 # sur la branche du prototype (l'étiquette est créée par la release). Les zips sont fabriqués ici par prototype/empaqueter.mjs (ils ne sont pas
 # versés au dépôt) ; leur sha256 est écrit dans les notes de la release.

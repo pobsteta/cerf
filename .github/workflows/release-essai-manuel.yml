@@ -3,10 +3,10 @@
 # attendre le zip réel Serre_EA2026 de JFC.
 #  - push sur la branche mission/033-essai-manuel ou sur main, ou lancement manuel : préversion à
 #    étiquette FIXE « essai-manuel », supprimée puis recréée à chaque fois (comme « projet-modele ») ;
-#  - jamais « latest » (--latest=false) : « releases/latest/download/plugin-cerf.zip » doit continuer
+#  - jamais « latest » (--latest=false) : « releases/latest/download/plugin-vision.zip » doit continuer
 #    à désigner la release du plugin ;
 #  - adresse stable :
-#      https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip
+#      https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel.zip
 #  - le zip est fabriqué ici par outils/zip-essai-manuel.mjs (testé, identique à l'octet à chaque fois),
 #    il n'est pas versé au dépôt ; son sha256 est écrit dans les notes ; le flashcode (PNG et SVG) est
 #    généré puis contrôlé par décodage (outils/flashcodes.mjs, type « manuel »).
@@ -24,7 +24,7 @@
 name: Release de l'essai du manuel
 on:
   push:
-    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson', 'mission/036-notes-essai-manuel', 'mission/040-publier-piege', 'mission/047-styles-gpkg']
+    branches: ['main', 'mission/050-vision']
     paths: ['outils/zip-essai-manuel.mjs', 'outils/zips-recette.mjs', 'outils/zip-essai-gpkg-style.mjs', 'outils/flashcodes.mjs', 'tests/recette/essai/zip-ecrire.mjs', '.github/workflows/release-essai-manuel.yml']
   workflow_dispatch:
 permissions:
@@ -51,7 +51,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y qrencode zbar-tools
       - name: Tests
         env:
-          CERF_FLASHCODES_EXIGER: '1'
+          VISION_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: Zip
         run: |
@@ -80,7 +80,7 @@ jobs:
             echo "- **essai-gpkg-style.zip** : zip d'**essai** (mission 047), un GeoPackage de deux tables dont l'une garde son style enregistré (voir plus bas)."
             echo "- **piege.zip** : zip de **recette**, données **fictives**, huit fichiers, cinq pièges (mission 016). Il doit donner **un message clair par piège** ; ce n'est pas un zip à utiliser sur le terrain."
             echo
-            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans cerf.qgz avec le plugin Cerf 0.3.2 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
+            echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans vision.qgz avec le plugin Vision 0.5.0 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
             echo
             echo "Version du $(date -u +%Y-%m-%d), commit ${GITHUB_SHA}."
             echo
@@ -95,7 +95,7 @@ jobs:
             echo
             echo "### Ce que Pascal doit voir avec piege.zip (plugin 0.4.0, préversion « plugin-essai », PR #38)"
             echo
-            echo "Importer piege.zip dans cerf.qgz : le panneau doit afficher ces lignes, et seulement elles."
+            echo "Importer piege.zip dans vision.qgz : le panneau doit afficher ces lignes, et seulement elles."
             echo
             echo "- « 2 couches chargées : UG_vide, Zone_inconnue » (Zone_inconnue : style QGIS par défaut, nom non reconnu) ;"
             echo "- « UG_vide.geojson : couche vide » (avertissement, la couche est chargée) ;"
@@ -107,7 +107,7 @@ jobs:
             echo
             echo "### Ce que Pascal doit voir avec essai-gpkg-style.zip (plugin 0.4.2, préversion « plugin-essai », mission 047)"
             echo
-            echo "- **essai-gpkg-style.zip** : zip d'**essai**, données **fictives**, un seul GeoPackage (Essai_style.gpkg) de deux tables de polygones. Importer dans cerf.qgz : « 2 couches chargées : Parcelles, UG »."
+            echo "- **essai-gpkg-style.zip** : zip d'**essai**, données **fictives**, un seul GeoPackage (Essai_style.gpkg) de deux tables de polygones. Importer dans vision.qgz : « 2 couches chargées : Parcelles, UG »."
             echo "- **Parcelles** (3 polygones) garde le style **enregistré dans le GeoPackage** : contour **vert** épais (2 mm), sans remplissage ; ni l'orange du manuel, ni le rouge (une ligne plus récente mais non par défaut ne doit pas s'afficher)."
             echo "- **UG** (2 polygones), sans style enregistré, prend la règle du manuel : contour **bleu** #0000FF, étiquette du code, 10 pt."
             echo "- Aucun avertissement. Fermer puis rouvrir le projet : les deux styles sont gardés. Si Parcelles est orange ou si le panneau dit « tables illisibles », la voie « SELECT » de lecture du GeoPackage ne passe pas sur l'appareil (non prouvée à ce jour)."

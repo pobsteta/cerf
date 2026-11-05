@@ -10,14 +10,14 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as S from '../plugin/cerf-styles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as S from '../plugin/vision-styles.mjs';
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const lire = (chemin) => readFileSync(resolve(RACINE, chemin), 'utf8');
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
-const COPIES = `${PROJET}/cerf-imports`;
+const COPIES = `${PROJET}/vision-imports`;
 const SOURCE = `/vsizip/${COPIES}/x.zip/Serre.gpkg`;
 const AVERT = '.qml illisible, style du manuel appliqué';
 
@@ -62,7 +62,7 @@ test('requête : couche filtrée « <source>|subset=SELECT styleQML FROM layer_s
   assert.deepEqual(r, { etat: 'lu', texte: QML_VERT });
   assert.equal(j.ouvertes.length, 1);
   assert.equal(j.ouvertes[0].uri, SOURCE + '|subset=' + L.requeteStyleGpkg('UG'));
-  assert.equal(j.ouvertes[0].nom, 'cerf_style');
+  assert.equal(j.ouvertes[0].nom, 'vision_style');
   const sql = L.requeteStyleGpkg('UG');
   assert.match(sql, /^SELECT styleQML FROM layer_styles WHERE f_table_name = 'UG' /, 'doit commencer par « SELECT » (qgsogrproviderutils.cpp l. 1390)');
   // Ordre de QGIS (qgsogrutils.cpp l. 3044-3048) : style par défaut d'abord, puis le plus récent.
@@ -144,7 +144,7 @@ function monde({ tables = ['UG', 'Parcelles'], styles = {}, existants = [], sans
   const disque = new Set(existants);
   const m = new Map();
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe(...noms),
+    visionId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe(...noms),
     reglages: { value: (k, d) => (m.has(k) ? m.get(k) : d), setValue: (k, v) => m.set(k, v) },
     maintenant: () => new Date('2026-11-05T10:00:00Z'),
     ouvrirCouche: (source, nom) => { journal.push('ouvrir ' + source); return { source, name: nom, isValid: true, readOnly: false }; },
@@ -309,17 +309,17 @@ test('réimport : le style du GeoPackage est relu à chaque import (un .qml d\'u
   assert.ok(w.effaces.includes(`${COPIES}/x/UG.qml`), 'ancien .qml effacé avant');
 });
 
-// ============================================================================ forme de Cerf.qml, version, déclencheur
+// ============================================================================ forme de Vision.qml, version, déclencheur
 
-const qml = lire('plugin/Cerf.qml');
+const qml = lire('plugin/Vision.qml');
 const code = qml.split('\n').filter((x) => !/^\s*\/\//.test(x)).join('\n');
 const fonction = (nom) => {
   const m = new RegExp(`function ${nom}\\([\\s\\S]*?\\n  \\}\\n`).exec(code);
-  assert.ok(m, `${nom} présent dans Cerf.qml`);
+  assert.ok(m, `${nom} présent dans Vision.qml`);
   return m[0];
 };
 
-test('Cerf.qml : styleGpkg passe par Logique.styleDuGpkg (loadVectorLayer, createFeatureIterator, deleteLater) et est branché dans importerZip', () => {
+test('Vision.qml : styleGpkg passe par Logique.styleDuGpkg (loadVectorLayer, createFeatureIterator, deleteLater) et est branché dans importerZip', () => {
   const t = fonction('styleGpkg');
   assert.match(t, /function styleGpkg\(source, table\)/);
   assert.match(t, /return Logique\.styleDuGpkg\(source, table, \{/);
@@ -329,16 +329,16 @@ test('Cerf.qml : styleGpkg passe par Logique.styleDuGpkg (loadVectorLayer, creat
   assert.match(fonction('zipRecu'), /styleGpkg: styleGpkg,/);
 });
 
-test('cerf-logique.mjs : la requête ne lit que styleQML de layer_styles (pas de DROP/INSERT/UPDATE/DELETE), sans ?. ni ??', () => {
+test('vision-logique.mjs : la requête ne lit que styleQML de layer_styles (pas de DROP/INSERT/UPDATE/DELETE), sans ?. ni ??', () => {
   const sql = L.requeteStyleGpkg('UG');
   assert.doesNotMatch(sql, /\b(DROP|INSERT|UPDATE|DELETE|ATTACH|PRAGMA)\b/i);
-  const src = lire('plugin/cerf-logique.mjs').split('\n').filter((x) => !/^\s*\/\//.test(x)).join('\n');
+  const src = lire('plugin/vision-logique.mjs').split('\n').filter((x) => !/^\s*\/\//.test(x)).join('\n');
   assert.doesNotMatch(src, /\?\./);
   assert.doesNotMatch(src, /\?\?/);
 });
 
-test('version 0.4.4 (constante, metadata.txt) et préversion : branche de la mission 047 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
-  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/047-styles-gpkg'/);
+test('version 0.5.0 (constante, metadata.txt) et préversion : branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/050-vision'/);
 });

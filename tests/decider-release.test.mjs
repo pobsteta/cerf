@@ -14,8 +14,8 @@ const push = (fichiers, branche = 'main') => decider({ evenement: 'push', branch
 test('main : plugin/ changé -> publier', () => {
   assert.equal(push(['plugin/metadata.txt', 'tests/a.mjs']).action, 'publier');
 });
-test('main : seulement tests/, cerf.qgz ou le workflow -> ignorer, avec le message clair', () => {
-  const r = push(['tests/plugin.test.mjs', 'cerf.qgz', '.github/workflows/release-plugin.yml']);
+test('main : seulement tests/, vision.qgz ou le workflow -> ignorer, avec le message clair', () => {
+  const r = push(['tests/plugin.test.mjs', 'vision.qgz', '.github/workflows/release-plugin.yml']);
   assert.equal(r.action, 'ignorer');
   assert.match(r.raison, /plugin\/ inchangé : pas de release/);
 });
@@ -54,7 +54,7 @@ test('workflow : appelle la décision et conditionne les étapes sur sa sortie',
 
 // Vrai git, petit dépôt temporaire.
 function depot() {
-  const d = mkdtempSync(join(tmpdir(), 'cerf-decider-'));
+  const d = mkdtempSync(join(tmpdir(), 'vision-decider-'));
   const g = (...a) => execFileSync('git', ['-C', d, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   g('init', '-q');
   g('config', 'user.name', 'Essai');

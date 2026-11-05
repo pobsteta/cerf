@@ -1,4 +1,4 @@
-# Équipe de Cerf
+# Équipe de Vision
 
 > Produit par l'orchestrateur avec `/imperatrice:mission`, **validé par Pascal** avant
 > tout démarrage. Règle de staffing : un agent par mission qui passe les trois
@@ -35,7 +35,7 @@
 | [003 Protocole d'essai du prototype n° 1](missions/003-protocole-prototype.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 1 |
 | [004 Prototype n° 1 : ce que QField permet à un plugin](missions/004-prototype-1.md) | `dev` | opus | tenir | oui/partiel/partiel | 2 |
 | [005 Tests du projet modèle](missions/005-tests-projet-modele.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 2 |
-| [006 Projet modèle cerf.qgz](missions/006-projet-modele.md) | `dev` | sonnet | tenir | oui/oui/partiel | 2 |
+| [006 Projet modèle vision.qgz](missions/006-projet-modele.md) | `dev` | sonnet | tenir | oui/oui/partiel | 2 |
 | [007 Tests du squelette du plugin](missions/007-tests-squelette.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 3 |
 | [008 Squelette du plugin : un parcours complet, minimal](missions/008-squelette-plugin.md) | `dev` | opus | tenir | oui/oui/oui | 3 |
 | [009 Tests des règles de style](missions/009-tests-styles.md) | `testeur` | sonnet | appuyer | oui/oui/oui | 4 |

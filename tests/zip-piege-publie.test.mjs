@@ -18,7 +18,7 @@ const wf = readFileSync(join(racine, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('piege.zip : reproductible (mêmes octets), huit entrées exactes, unzip -t valide', () => {
-  const a = mkdtempSync(join(tmpdir(), 'cerf-t040a-')); const b = mkdtempSync(join(tmpdir(), 'cerf-t040b-'));
+  const a = mkdtempSync(join(tmpdir(), 'vision-t040a-')); const b = mkdtempSync(join(tmpdir(), 'vision-t040b-'));
   try {
     const ca = fabriquerPiege(a); const cb = fabriquerPiege(b);
     assert.equal(sha(ca), sha(cb));
@@ -34,7 +34,7 @@ test('piege.zip : reproductible (mêmes octets), huit entrées exactes, unzip -t
 });
 
 test('les deux autres zips ne changent pas d\'un octet', () => {
-  const d = mkdtempSync(join(tmpdir(), 'cerf-t040m-'));
+  const d = mkdtempSync(join(tmpdir(), 'vision-t040m-'));
   try {
     assert.equal(sha(fabriquerManuel(d)), '1248dc9b96c6a56d92aa42631e929b4538f4872a51d53350406d0d0ac100f793');
     assert.equal(sha(fabriquerManuelGeojson(d)), '521cd33cd0ffce76368e25b42d3f9787aea76469b1bf56b81a9d3e872f20b1a9');
@@ -42,16 +42,16 @@ test('les deux autres zips ne changent pas d\'un octet', () => {
 });
 
 test('flashcode : l\'adresse de piege.zip dans la préversion essai-manuel (jamais latest), les autres inchangés', () => {
-  assert.deepEqual(flashcodes('piege', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/piege.zip']);
+  assert.deepEqual(flashcodes('piege', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/piege.zip']);
   assert.deepEqual(flashcodes('piege', 'stable').map((f) => f.url), flashcodes('piege', 'essai').map((f) => f.url));
   assert.equal(flashcodes('piege', 'essai')[0].nom, 'flashcode-piege');
-  assert.deepEqual(flashcodes('manuel', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip']);
+  assert.deepEqual(flashcodes('manuel', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel.zip']);
   assert.match(notes('piege', 'essai', 'essai-manuel'), /essai-manuel\/flashcode-piege\.png/);
 });
 
 const OUTILS = !spawnSync('qrencode', ['--version'], { stdio: 'ignore' }).error && !spawnSync('zbarimg', ['--version'], { stdio: 'ignore' }).error;
 test('flashcode : PNG et SVG décodés donnent exactement l\'adresse de piege.zip', { skip: OUTILS ? false : 'qrencode ou zbarimg absent' }, () => {
-  const d = mkdtempSync(join(tmpdir(), 'cerf-t040f-'));
+  const d = mkdtempSync(join(tmpdir(), 'vision-t040f-'));
   try {
     assert.equal(generer(d, 'piege', 'essai').length, 2);
     assert.deepEqual(verifier(d, 'piege', 'essai'), []);
@@ -59,7 +59,7 @@ test('flashcode : PNG et SVG décodés donnent exactement l\'adresse de piege.zi
 });
 
 test('workflow : fabrique piege.zip avec zips-recette.mjs, flashcode contrôlé, tout publié dans essai-manuel', () => {
-  assert.match(wfCode, /branches: \[[^\]]*'mission\/040-publier-piege'(, 'mission\/047-styles-gpkg')?\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/050-vision'\]/);
   assert.match(wfCode, /node --no-warnings outils\/zips-recette\.mjs dist piege/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-piege piege essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-piege piege essai/);
@@ -84,8 +84,8 @@ test('notes : piege.zip expliqué, cinq lignes attendues (plugin 0.4.0), 0.3.4 n
 });
 
 test('notes : les lignes attendues sont celles du plugin (textes recopiés du code)', () => {
-  const ctl = readFileSync(join(racine, 'plugin', 'cerf-controles.mjs'), 'utf8');
+  const ctl = readFileSync(join(racine, 'plugin', 'vision-controles.mjs'), 'utf8');
   for (const t of ['fichier .prj manquant, système de coordonnées inconnu', "système de coordonnées inconnu'", 'Coordonnées incohérentes : système mal déclaré ?', "' : couche vide'"]) assert.ok(ctl.includes(t), t);
-  const log = readFileSync(join(racine, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const log = readFileSync(join(racine, 'plugin', 'vision-logique.mjs'), 'utf8');
   assert.ok(log.includes("'couches chargées'"));
 });

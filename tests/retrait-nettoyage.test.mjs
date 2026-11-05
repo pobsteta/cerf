@@ -7,7 +7,7 @@
 //   - effacement par ctx.platformUtilities.rmFile(chemin) (tests/squelette.test.mjs, ADR 0007) ; le mock donne
 //     AUSSI ctx.effacerFichier (nom de tests/plugin-styles.test.mjs), même fonction : le dev peut utiliser l'un ou l'autre ;
 //   - ctx.existe(chemin) -> boolean (nom de tests/plugin-styles.test.mjs) sert à vérifier qu'un fichier a bien disparu.
-// Les fichiers d'une couche vecteur se déduisent de son nom (ADR 0007 amendée) dans cerf-imports/<zip sans .zip>/ :
+// Les fichiers d'une couche vecteur se déduisent de son nom (ADR 0007 amendée) dans vision-imports/<zip sans .zip>/ :
 //   <couche>.gpkg, <couche>.qml, <couche>.gpkg-wal, <couche>.gpkg-shm, <couche>.gpkg.aux.xml
 // (forme exacte des annexes : question posée à Pascal, la spec dit seulement « -wal, -shm, .aux.xml »).
 // Le message d'un effacement raté est celui décidé par Pascal : « Fichiers restés sur l'appareil : a.gpkg, a.qml. ».
@@ -25,8 +25,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ici = dirname(fileURLToPath(import.meta.url));
-// CERF_PLUGIN_031 : dossier d'un autre plugin (module jetable de la preuve de satisfiabilité) ; par défaut plugin/.
-const MODULE = join(process.env.CERF_PLUGIN_031 || join(ici, '..', 'plugin'), 'cerf-logique.mjs');
+// VISION_PLUGIN_031 : dossier d'un autre plugin (module jetable de la preuve de satisfiabilité) ; par défaut plugin/.
+const MODULE = join(process.env.VISION_PLUGIN_031 || join(ici, '..', 'plugin'), 'vision-logique.mjs');
 const R = "rouge attendu jusqu'à la mission 031";
 
 let charge;
@@ -36,9 +36,9 @@ async function M() {
   return charge;
 }
 
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
-const COPIES = `${PROJET}/cerf-imports`;
+const COPIES = `${PROJET}/vision-imports`;
 const DATE = '2026-11-04T10:00:00.000Z';
 
 const dossierDe = (zip) => zip.replace(/\.zip$/, '');
@@ -48,7 +48,7 @@ const gpkg = (zip, couche) => `${COPIES}/${dossierDe(zip)}/${couche}.gpkg`;
 const fichiers = (zip, couche) => ['.gpkg', '.qml', '.gpkg-wal', '.gpkg-shm', '.gpkg.aux.xml'].map((s) => `${COPIES}/${dossierDe(zip)}/${couche}${s}`);
 const trie = (l) => [...l].sort();
 
-function faussesReglages(entrees, cle = `cerf/${ID}`) {
+function faussesReglages(entrees, cle = `vision/${ID}`) {
   const m = new Map([[cle, JSON.stringify(entrees)]]);
   return { magasin: m, ecritures: [], value(c, d) { return m.has(c) ? m.get(c) : d; }, setValue(c, v) { m.set(c, v); this.ecritures.push(c); } };
 }
@@ -70,7 +70,7 @@ function monde({ entrees, disque = [], rate = [], leve = [], menteur = [] }) {
   };
   const reglages = faussesReglages(entrees);
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, zip: 'z.zip', couche: 'a', reglages,
+    visionId: ID, dossierProjet: PROJET, zip: 'z.zip', couche: 'a', reglages,
     retirerDeLaCarte: (nom) => { journal.push('carte ' + nom); },
     platformUtilities: { rmFile: rm },
     effacerFichier: rm,
@@ -120,37 +120,37 @@ test('ordre : la couche est retirée de la carte AVANT tout effacement de fichie
   assert.ok(iCarte >= 0 && iCarte < iEff, `carte (${iCarte}) avant le premier effacement (${iEff}) : ${w.journal.join(' | ')}`);
 });
 
-test('dernière couche du zip : ses fichiers ET la copie du zip sont effacés (comportement 008 gardé), rien hors de cerf-imports/', async () => {
-  const w = monde({ entrees: [vec('z.zip', 'a')], disque: [...fichiers('z.zip', 'a'), `${COPIES}/z.zip`, `${PROJET}/cerf.qgz`] });
+test('dernière couche du zip : ses fichiers ET la copie du zip sont effacés (comportement 008 gardé), rien hors de vision-imports/', async () => {
+  const w = monde({ entrees: [vec('z.zip', 'a')], disque: [...fichiers('z.zip', 'a'), `${COPIES}/z.zip`, `${PROJET}/vision.qgz`] });
   await lance(w);
   assert.deepEqual(trie(w.appels), trie([...fichiers('z.zip', 'a'), `${COPIES}/z.zip`]), R);
-  assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true);
+  assert.equal(w.sur_disque.has(`${PROJET}/vision.qgz`), true);
   const iCarte = w.journal.indexOf('carte a');
   assert.ok(iCarte === 0, `la carte d'abord : ${w.journal.join(' | ')}`);
 });
 
 // ---- Gardes de chemin ----------------------------------------------------------------------------
 test('garde : un chemin trafiqué au registre n\'est jamais suivi (les fichiers se déduisent du nom, ADR 0007 amendée)', async () => {
-  for (const chemin of ['../../cerf.qgz', '../autre/a.gpkg', '/sdcard/a.gpkg', `${PROJET}/cerf.qgz`]) {
-    const w = monde({ entrees: [vec('z.zip', 'a', { chemin }), vec('z.zip', 'b')], disque: [...fichiers('z.zip', 'a'), `${PROJET}/cerf.qgz`, '/sdcard/a.gpkg', `${COPIES}/../autre/a.gpkg`] });
+  for (const chemin of ['../../vision.qgz', '../autre/a.gpkg', '/sdcard/a.gpkg', `${PROJET}/vision.qgz`]) {
+    const w = monde({ entrees: [vec('z.zip', 'a', { chemin }), vec('z.zip', 'b')], disque: [...fichiers('z.zip', 'a'), `${PROJET}/vision.qgz`, '/sdcard/a.gpkg', `${COPIES}/../autre/a.gpkg`] });
     await lance(w);
     for (const c of w.appels) assert.ok(fichiers('z.zip', 'a').includes(c), `${chemin} : effacement hors des noms déduits : ${c}`);
-    assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true, chemin);
+    assert.equal(w.sur_disque.has(`${PROJET}/vision.qgz`), true, chemin);
     assert.equal(w.sur_disque.has('/sdcard/a.gpkg'), true, chemin);
     for (const f of fichiers('z.zip', 'a')) assert.equal(w.sur_disque.has(f), false, `${chemin} : ${f} doit disparaître : ${R}`);
   }
 });
 
-test('garde : nom de couche douteux au registre (« .. », « a/b », « ../x ») -> rien n\'est effacé hors de cerf-imports/<dossier du zip>/<nom>', async () => {
-  for (const couche of ['..', 'a/b', '../x', '../../cerf']) {
-    const w = monde({ entrees: [vec('z.zip', couche), vec('z.zip', 'b')], disque: [`${PROJET}/cerf.qgz`, `${PROJET}/cerf.qml`, `${COPIES}/z/b.gpkg`] });
+test('garde : nom de couche douteux au registre (« .. », « a/b », « ../x ») -> rien n\'est effacé hors de vision-imports/<dossier du zip>/<nom>', async () => {
+  for (const couche of ['..', 'a/b', '../x', '../../vision']) {
+    const w = monde({ entrees: [vec('z.zip', couche), vec('z.zip', 'b')], disque: [`${PROJET}/vision.qgz`, `${PROJET}/vision.qml`, `${COPIES}/z/b.gpkg`] });
     await lance(w, { couche });
     const pasDirect = new RegExp('^' + (COPIES + '/z/').replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '[^/]+$');
     for (const c of w.appels) {
-      assert.match(c, pasDirect, `couche « ${couche} » : ${c} n'est pas directement dans cerf-imports/z/`);
+      assert.match(c, pasDirect, `couche « ${couche} » : ${c} n'est pas directement dans vision-imports/z/`);
       assert.ok(!c.split('/').some((seg) => seg === '..' || seg === '.'), `couche « ${couche} » : segment relatif dans ${c}`);
     }
-    assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true, couche);
+    assert.equal(w.sur_disque.has(`${PROJET}/vision.qgz`), true, couche);
     assert.equal(w.sur_disque.has(`${COPIES}/z/b.gpkg`), true, couche);
   }
 });
@@ -174,14 +174,14 @@ test('garde : dossier du projet absent ou hors forme + entrée vecteur -> rien e
   }
 });
 
-test('garde : cerfId hors référentiel + entrée vecteur -> rien effacé, registre intact', async () => {
+test('garde : visionId hors référentiel + entrée vecteur -> rien effacé, registre intact', async () => {
   for (const id of ['../..', 'pas-un-uuid', '', 'a/b']) {
     const w = monde({ entrees: [vec('z.zip', 'a')], disque: fichiers('z.zip', 'a') });
     const brut = JSON.stringify([vec('z.zip', 'a')]);
-    w.reglages.magasin.set(`cerf/${id}`, brut);
-    await lance(w, { cerfId: id });
-    assert.deepEqual(w.appels, [], `cerfId « ${id} » : ${R}`);
-    assert.equal(w.reglages.magasin.get(`cerf/${id}`), brut, id);
+    w.reglages.magasin.set(`vision/${id}`, brut);
+    await lance(w, { visionId: id });
+    assert.deepEqual(w.appels, [], `visionId « ${id} » : ${R}`);
+    assert.equal(w.reglages.magasin.get(`vision/${id}`), brut, id);
   }
 });
 
@@ -332,7 +332,7 @@ function mondeImport({ disque = [], rate = [], leve = [], menteur = [] } = {}) {
     return true;
   };
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'deux.zip', reglages, octets: zipDe('a.geojson', 'sous/b.geojson'),
+    visionId: ID, dossierProjet: PROJET, nomZip: 'deux.zip', reglages, octets: zipDe('a.geojson', 'sous/b.geojson'),
     maintenant: () => new Date(DATE),
     ouvrirCouche: (source, nom) => ({ source, name: nom, isValid: true, readOnly: false }),
     decrireCouche: () => ({ lisible: true, systeme: 'EPSG:2154', nbEntites: 1, emprise: [600000, 6800000, 601000, 6801000] }),
@@ -394,12 +394,12 @@ test('réimport : effacement raté ou qui lève -> pas d\'exception, le registre
 
 test('réimport : un zip trafiqué (nom douteux) ne fait rien effacer', async () => {
   const m = await M();
-  const w = mondeImport({ disque: [`${PROJET}/cerf.qgz`] });
+  const w = mondeImport({ disque: [`${PROJET}/vision.qgz`] });
   for (const nomZip of ['../deux.zip', 'a/b.zip', '..']) {
     await Promise.resolve(m.importerZip({ ...w.ctx, nomZip }));
     assert.deepEqual(w.appels, [], nomZip);
   }
-  assert.equal(w.sur_disque.has(`${PROJET}/cerf.qgz`), true);
+  assert.equal(w.sur_disque.has(`${PROJET}/vision.qgz`), true);
 });
 
 // ---- Décision 1 de Pascal (4 novembre) : réimport, fichiers restés -------------------------------------------
@@ -511,19 +511,19 @@ test('réimport, décision 2 : ctx.existe absent -> aucun effacement, le message
   }
 });
 
-// ---- Branchement dans Cerf.qml (modèle : tests/plugin-styles.test.mjs, test « Cerf.qml : branche saveVectorLayerAs ») -----
-test('Cerf.qml : l\'appel à Logique.retirerCouche passe existe (FileUtils.fileExists) et effacerFichier', () => {
-  const qml = readFileSync(new URL('../plugin/Cerf.qml', import.meta.url), 'utf8');
+// ---- Branchement dans Vision.qml (modèle : tests/plugin-styles.test.mjs, test « Vision.qml : branche saveVectorLayerAs ») -----
+test('Vision.qml : l\'appel à Logique.retirerCouche passe existe (FileUtils.fileExists) et effacerFichier', () => {
+  const qml = readFileSync(new URL('../plugin/Vision.qml', import.meta.url), 'utf8');
   const appel = /Logique\.retirerCouche\(\{[\s\S]*?\}\);/.exec(qml);
-  assert.ok(appel, 'appel à Logique.retirerCouche introuvable dans Cerf.qml');
+  assert.ok(appel, 'appel à Logique.retirerCouche introuvable dans Vision.qml');
   assert.match(appel[0], /existe: function \(chemin\) \{ return FileUtils\.fileExists\(chemin\); \}/, `existe non branché : ${R}`);
   assert.match(appel[0], /effacerFichier: effacerFichier/, `effacerFichier non branché : ${R}`);
 });
 
-test('Cerf.qml : l\'appel à Logique.importerZip passe existe (FileUtils.fileExists), sinon l\'effacement du réimport est « non vérifiable »', () => {
-  const qml = readFileSync(new URL('../plugin/Cerf.qml', import.meta.url), 'utf8');
+test('Vision.qml : l\'appel à Logique.importerZip passe existe (FileUtils.fileExists), sinon l\'effacement du réimport est « non vérifiable »', () => {
+  const qml = readFileSync(new URL('../plugin/Vision.qml', import.meta.url), 'utf8');
   const appel = /Logique\.importerZip\(\{[\s\S]*?\n\s*\}\);/.exec(qml);
-  assert.ok(appel, 'appel à Logique.importerZip introuvable dans Cerf.qml');
+  assert.ok(appel, 'appel à Logique.importerZip introuvable dans Vision.qml');
   assert.match(appel[0], /maintenant:/, 'l\'appel capturé doit couvrir tout l\'objet de contexte');
   assert.match(appel[0], /existe: function \(chemin\) \{ return FileUtils\.fileExists\(chemin\); \}/, 'existe non branché pour importerZip');
 });

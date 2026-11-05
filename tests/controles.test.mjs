@@ -1,8 +1,8 @@
 // Mission 011 : tests des cinq contrôles à l'import (spec § 4, ADR 0004), dans leur ordre.
-// ROUGE ATTENDU JUSQU'À LA MISSION 012 : le module `plugin/cerf-controles.mjs` n'existe pas encore.
+// ROUGE ATTENDU JUSQU'À LA MISSION 012 : le module `plugin/vision-controles.mjs` n'existe pas encore.
 //
 // CONTRAT PROPOSÉ (à valider par l'orchestrateur et Pascal ; le testeur n'a pas lu le code du plugin) :
-//   module  plugin/cerf-controles.mjs  (ES module pur, sans .pragma ni .import, ADR 0005)
+//   module  plugin/vision-controles.mjs  (ES module pur, sans .pragma ni .import, ADR 0005)
 //   export const EMPRISE_VRAISEMBLANCE = { xmin, xmax, ymin, ymax }   // spec § 4 point 5, élargie de 10 km
 //   export function controlerCouche(couche, services) -> resultat    // synchrone, sans réseau
 //     couche = {
@@ -33,7 +33,7 @@
 //                  message: string | null (refus), avertissements: string[] }
 //   Le premier contrôle qui échoue arrête la couche (reprojeter n'est alors pas appelé).
 //
-// Pour rendre le test vert sur un module jetable : CERF_CONTROLES=/chemin/module.mjs node --test tests/controles.test.mjs
+// Pour rendre le test vert sur un module jetable : VISION_CONTROLES=/chemin/module.mjs node --test tests/controles.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -42,7 +42,7 @@ import { resolve, dirname } from 'node:path';
 import { entreesPiege } from '../outils/zips-recette.mjs';
 
 const ICI = dirname(fileURLToPath(import.meta.url));
-const CHEMIN = process.env.CERF_CONTROLES ? resolve(process.env.CERF_CONTROLES) : resolve(ICI, '../plugin/cerf-controles.mjs');
+const CHEMIN = process.env.VISION_CONTROLES ? resolve(process.env.VISION_CONTROLES) : resolve(ICI, '../plugin/vision-controles.mjs');
 let cache;
 async function module_() {
   if (!cache) {

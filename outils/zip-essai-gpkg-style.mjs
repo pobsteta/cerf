@@ -1,6 +1,6 @@
 // Mission 047 : fabrique `essai-gpkg-style.zip`, zip d'essai du style enregistré dans un GeoPackage
 // (table `layer_styles`, que QGIS remplit avec « Enregistrer le style dans la base de données »).
-// Écrit pour Cerf, sans dépendance (Node >= 22.13 pour node:sqlite). DONNÉES FICTIVES, en Lambert 93
+// Écrit pour Vision, sans dépendance (Node >= 22.13 pour node:sqlite). DONNÉES FICTIVES, en Lambert 93
 // (EPSG:2154), près de Fontainebleau (elles passent le contrôle de vraisemblance, spec § 4).
 //
 // Contenu : un seul fichier, Essai_style.gpkg, deux tables de polygones :
@@ -128,7 +128,7 @@ export function fabriquerGpkg(chemin) {
 
 export function fabriquerGpkgStyle(dossier) {
   mkdirSync(dossier, { recursive: true });
-  const tmp = mkdtempSync(join(tmpdir(), 'cerf-gpkg-style-'));
+  const tmp = mkdtempSync(join(tmpdir(), 'vision-gpkg-style-'));
   try {
     const f = join(tmp, NOM_GPKG);
     fabriquerGpkg(f);

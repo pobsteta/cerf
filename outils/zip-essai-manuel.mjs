@@ -1,6 +1,6 @@
 // Mission 033 : fabrique `essai-manuel.zip`, zip de démonstration aux noms du manuel (spec § 5),
 // à l'identique à chaque fabrication (dates, contenus et ordre fixes, aucun hasard).
-// Écrit pour Cerf, sans dépendance. DONNÉES FICTIVES, en Lambert 93 (EPSG:2154), près de
+// Écrit pour Vision, sans dépendance. DONNÉES FICTIVES, en Lambert 93 (EPSG:2154), près de
 // Fontainebleau (France métropolitaine : elles passent le contrôle de vraisemblance, spec § 4).
 //
 // Contenu : UG, Parcelles, FRT (Shapefile complet : .shp .shx .dbf .prj .cpg UTF-8, polygones

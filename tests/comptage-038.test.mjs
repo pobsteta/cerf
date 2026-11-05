@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as C from '../plugin/cerf-controles.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
+import * as C from '../plugin/vision-controles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const lire = (f) => readFileSync(resolve(RACINE, f), 'utf8');
@@ -98,21 +98,21 @@ test('itérateur qui lève : illisible, refus au contrôle 2 (pas « couche vide
 });
 
 // ---------- forme et branchement ----------
-test('forme : Cerf.qml n\'appelle jamais featureCount (code, hors commentaires)', () => {
-  assert.doesNotMatch(sansCommentaires(lire('plugin/Cerf.qml')), /featureCount/);
+test('forme : Vision.qml n\'appelle jamais featureCount (code, hors commentaires)', () => {
+  assert.doesNotMatch(sansCommentaires(lire('plugin/Vision.qml')), /featureCount/);
 });
 test('branchement : decrireCouche compte par Logique.compterEntites et LayerUtils.createFeatureIterator ; le format est passé', () => {
-  const qml = lire('plugin/Cerf.qml');
+  const qml = lire('plugin/Vision.qml');
   assert.match(qml, /Logique\.compterEntites\(couche, function \(l\) \{ return LayerUtils\.createFeatureIterator\(l\); \}\)/);
   assert.match(qml, /function decrireCouche\(couche, format\)/);
-  assert.match(lire('plugin/cerf-logique.mjs'), /ctx\.decrireCouche\(couche, entree\.format\)/);
+  assert.match(lire('plugin/vision-logique.mjs'), /ctx\.decrireCouche\(couche, entree\.format\)/);
 });
-test('forme : cerf-logique.mjs sans ?., ?? ni import', () => {
-  const code = sansCommentaires(lire('plugin/cerf-logique.mjs'));
+test('forme : vision-logique.mjs sans ?., ?? ni import', () => {
+  const code = sansCommentaires(lire('plugin/vision-logique.mjs'));
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.4.4, branche de la mission 038 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
-  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/038-compter-entites'/);
+test('version et préversion : 0.5.0, branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/050-vision'/);
 });

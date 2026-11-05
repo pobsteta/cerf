@@ -9,11 +9,11 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as S from '../plugin/cerf-styles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as S from '../plugin/vision-styles.mjs';
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
 const GJ = '{"type":"FeatureCollection","features":[]}';
 const zipDe = (...noms) => ecrireZip(noms.map((nom) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.from(GJ), stocke: false, utf8: true })));
@@ -27,7 +27,7 @@ function monde({ invalides = [], nuls = [], refuses = [], ajoutEchoue = false, t
   const ajoutees = [];
   const disque = new Set();
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip',
+    visionId: ID, dossierProjet: PROJET, nomZip: 'x.zip',
     reglages: { value: (k, d) => (m.has(k) ? m.get(k) : d), setValue: (k, v) => m.set(k, v) },
     maintenant: () => new Date('2026-11-05T10:00:00Z'),
     ouvrirCouche: (source, nom) => {
@@ -239,7 +239,7 @@ function mondeOuverture({ valide }) {
   const reglages = { value: (k, d) => (m.has(k) ? m.get(k) : d), setValue: (k, v) => m.set(k, v) };
   L.inscrire(reglages, ID, { zip: 'x.zip', couche: 'p', chemin: 'x/p.gpkg', style: 'defaut', ajoutee_le: '2026-11-05T10:00:00Z' });
   const ctx = {
-    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
+    variables: { vision_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (source, nom) => { const l = { source, isValid: valide, readOnly: false }; chargees.push(l); return l; },
     libererCouche: (l) => liberees.push(l),
   };
@@ -261,7 +261,7 @@ test('ouverture : copie rechargée valide (ajoutée par le chargeur) -> jamais l
   assert.equal(liberees.length, 0);
 });
 
-// Couche déjà au projet : le faux chargeur la rend telle quelle (comme Cerf.qml), marquée par coucheDuProjet.
+// Couche déjà au projet : le faux chargeur la rend telle quelle (comme Vision.qml), marquée par coucheDuProjet.
 function mondeDeja(valide) {
   const w = mondeOuverture({ valide: true });
   const deja = { source: 'projet', isValid: valide, readOnly: false, auProjet: true };
@@ -288,16 +288,16 @@ test('ouverture : couche déjà au projet et valide -> jamais libérée, pas rec
   assert.equal(w.chargees.length, 0);
 });
 
-// ------------------------------------------------------------------ forme de Cerf.qml, version
+// ------------------------------------------------------------------ forme de Vision.qml, version
 
-test('Cerf.qml : libererCouche (deleteLater) est passé à importerZip et à demarrerProjet', () => {
-  const qml = readFileSync(resolve(RACINE, 'plugin/Cerf.qml'), 'utf8');
+test('Vision.qml : libererCouche (deleteLater) est passé à importerZip et à demarrerProjet', () => {
+  const qml = readFileSync(resolve(RACINE, 'plugin/Vision.qml'), 'utf8');
   assert.match(qml, /function libererCouche\(couche\) \{\s*couche\.deleteLater\(\);\s*\}/);
   assert.equal((qml.match(/libererCouche: libererCouche,/g) || []).length, 2);
 });
 
-test('version 0.4.4 (constante, metadata.txt) et préversion : branche de la mission 049', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.4\.4$/m);
-  assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/049-fuite-couches'/);
+test('version 0.5.0 (constante, metadata.txt) et préversion : branche de la mission 050', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.5\.0$/m);
+  assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/050-vision'/);
 });

@@ -1,4 +1,4 @@
-// Mission 012 : tests du développeur pour ce qu'il branche (cerf-controles.mjs au-delà du contrat de la
+// Mission 012 : tests du développeur pour ce qu'il branche (vision-controles.mjs au-delà du contrat de la
 // mission 011, importerZip : ouvrir -> contrôler -> ajouter -> inscrire, empaquetage).
 // Coordonnées : x = Est, y = Nord en EPSG:2154 (mètres) ; lon puis lat en EPSG:4326 (degrés).
 import { test } from 'node:test';
@@ -6,8 +6,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as C from '../plugin/cerf-controles.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
+import * as C from '../plugin/vision-controles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 import { FICHIERS_PLUGIN } from '../plugin/empaqueter.mjs';
 
@@ -112,7 +112,7 @@ function contexte(verdicts, extra = {}) {
   const stock = {};
   const journal = [];
   const ctx = {
-    cerfId: ID, dossierProjet: '/storage/emulated/0/Projet', nomZip: 'essai.zip',
+    visionId: ID, dossierProjet: '/storage/emulated/0/Projet', nomZip: 'essai.zip',
     octets: zip(['a.geojson', 'b.geojson']),
     reglages: { value: (k, d) => (k in stock ? stock[k] : d), setValue: (k, v) => { stock[k] = v; } },
     ouvrirCouche: (src, nom) => { journal.push('ouvrir ' + nom); return { isValid: true, nom }; },
@@ -247,9 +247,9 @@ test('système valide sans code EPSG (ESRI, IGNF) : accepté, l\'objet crs est t
   assert.ok(pts.length > 0 && pts.every((c) => c === crs));
 });
 
-test('empaquetage : cerf-controles.mjs est dans la liste des fichiers du plugin (sinon QField ne le trouve pas)', () => {
-  assert.ok(FICHIERS_PLUGIN.includes('cerf-controles.mjs'));
-  assert.match(readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8'), /import "cerf-controles\.mjs" as Controles/);
+test('empaquetage : vision-controles.mjs est dans la liste des fichiers du plugin (sinon QField ne le trouve pas)', () => {
+  assert.ok(FICHIERS_PLUGIN.includes('vision-controles.mjs'));
+  assert.match(readFileSync(resolve(ICI, '../plugin/Vision.qml'), 'utf8'), /import "vision-controles\.mjs" as Controles/);
 });
 
 test('importerZip : doublon de nom -> message commençant par l\'entrée avec son extension', () => {
@@ -343,10 +343,10 @@ test('point 14 : source déjà en 2154 (entrée rendue telle quelle, non vide) r
 
 // Mission 024 : le point vide de QField (QgsPoint() : x et y à NaN, QGIS 3a92eb3 qgspoint.h l. 89-91) est refusé par
 // un test de finitude ; isEmpty() n'est pas exposé à QML (qgspoint.h l. 633), son appel était du code mort.
-test('point 14 : Cerf.qml refuse un point vide (garde de finitude dans reprojeterPoint, sans isEmpty)', () => {
-  const qml = readFileSync(resolve(ICI, '../plugin/Cerf.qml'), 'utf8');
+test('point 14 : Vision.qml refuse un point vide (garde de finitude dans reprojeterPoint, sans isEmpty)', () => {
+  const qml = readFileSync(resolve(ICI, '../plugin/Vision.qml'), 'utf8');
   const corps = /function reprojeterPoint\([\s\S]*?\n  \}\n/.exec(qml);
-  assert.ok(corps, 'reprojeterPoint présent dans Cerf.qml');
+  assert.ok(corps, 'reprojeterPoint présent dans Vision.qml');
   const code = corps[0].split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   assert.match(code, /if \(!isFinite\(px\) \|\| !isFinite\(py\)\) throw new Error\("reprojection : point vide"\)/);
   assert.match(code, /return \{ x: px, y: py \}/, 'le point rendu est celui qui a passé la garde');

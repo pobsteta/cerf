@@ -9,11 +9,11 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as S from '../plugin/cerf-styles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as S from '../plugin/vision-styles.mjs';
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
 const GJ = '{"type":"FeatureCollection","features":[]}';
 const LIGNE = (chemin) => `${chemin} : pas une couche GeoJSON, ignoré`;
@@ -27,7 +27,7 @@ function monde({ ouvrables, textes = {}, sansLireTexte = false } = {}) {
   const controles = [];
   const disque = new Set();
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip',
+    visionId: ID, dossierProjet: PROJET, nomZip: 'x.zip',
     reglages: { value: (k, d) => (m.has(k) ? m.get(k) : d), setValue: (k, v) => m.set(k, v) },
     maintenant: () => new Date('2026-11-05T10:00:00Z'),
     ouvrirCouche: (source, nom) => {
@@ -188,13 +188,13 @@ test('réimport : un .json écarté n\'empêche pas l\'import des autres couches
   assert.equal(L.lireRegistre(ctx.reglages, ID).length, 1);
 });
 
-test('retours « vides » (projet non Cerf) portent aussi ecartees: []', () => {
-  const r = L.importerZip({ cerfId: 'x' });
+test('retours « vides » (projet non Vision) portent aussi ecartees: []', () => {
+  const r = L.importerZip({ visionId: 'x' });
   assert.deepEqual(r.ecartees, []);
 });
 
-test('version 0.4.4 et préversion : branche de la mission 044 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.4\.4$/m);
-  assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/044-json-ignore'/);
+test('version 0.5.0 et préversion : branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.5\.0$/m);
+  assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/050-vision'/);
 });

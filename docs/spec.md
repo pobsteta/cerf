@@ -1,4 +1,6 @@
-# Cerf — spécification, tranche 1
+# Vision — spécification, tranche 1
+
+> **Note du 5 novembre 2026** : le projet s'appelle Vision depuis cette date (`docs/adr/` n° 0009). Les décisions datées d'avant ce jour ont été prises sous son nom d'origine ; seul le nom a changé, pas le sens.
 
 > Rédigée par Claude (orchestrateur) le 2 novembre 2026 à partir de `docs/brief.md`
 > (arbitrages de Pascal du même jour). Critiquée par le `contradicteur` le même jour ;
@@ -8,31 +10,31 @@
 
 ## 1. Parcours de l'agent sur le terrain
 
-Un seul projet `cerf.qgz` par appareil, pour toutes les forêts de l'agent (§ 9, n° 3).
+Un seul projet `vision.qgz` par appareil, pour toutes les forêts de l'agent (§ 9, n° 3).
 
-| # | Geste | Ce que fait Cerf | Réseau |
+| # | Geste | Ce que fait Vision | Réseau |
 |---|---|---|---|
-| 0 | Une fois par appareil : installer le plugin par son URL et copier `cerf.qgz`. | QField installe le plugin d'application (ADR 0001). | oui |
+| 0 | Une fois par appareil : installer le plugin par son URL et copier `vision.qgz`. | QField installe le plugin d'application (ADR 0001). | oui |
 | 1 | Au bureau ou la veille : copier le zip sur l'appareil ; ouvrir le projet sur la zone du jour. | Les tuiles XYZ consultées sont mises en cache (ADR 0002). | oui |
-| 2 | Sur le terrain : ouvrir `cerf.qgz`. | Le plugin reconnaît un projet Cerf (`cerf_id`, § 3.3) et recharge les couches de son registre. | non |
-| 3 | Toucher le bouton Cerf (barre d'outils des plugins), puis « Ajouter un zip » dans le panneau Cerf qui s'ouvre. | Ouvre le sélecteur de fichiers Android. | non |
+| 2 | Sur le terrain : ouvrir `vision.qgz`. | Le plugin reconnaît un projet Vision (`vision_id`, § 3.3) et recharge les couches de son registre. | non |
+| 3 | Toucher le bouton Vision (barre d'outils des plugins), puis « Ajouter un zip » dans le panneau Vision qui s'ouvre. | Ouvre le sélecteur de fichiers Android. | non |
 | 4 | Choisir le zip. | Copie le zip (§ 3.3), en liste le contenu (prototype n° 1). | non |
-| 5 | Rien à cocher (Pascal, 4 novembre 2026) : toutes les couches du zip sont chargées ; une couche se retire ensuite dans le panneau Cerf (étape 7). | Pour chaque couche du zip : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
+| 5 | Rien à cocher (Pascal, 4 novembre 2026) : toutes les couches du zip sont chargées ; une couche se retire ensuite dans le panneau Vision (étape 7). | Pour chaque couche du zip : contrôles (§ 4), chargement en lecture seule, style (§ 5), inscription au registre **après chaque couche**. Un message par couche refusée. | non |
 | 6 | Regarder la carte. | Couches aux couleurs du manuel, étiquettes essence/diamètre sur ProdBois. | non |
 | 7 | Retirer une couche, depuis le panneau du plugin (ou le menu de la couche, si QField le permet à un plugin). | Retire la couche de la carte et du registre. La copie du zip est effacée quand plus aucune couche ne s'en sert **si QField le permet** ; sinon elle reste et son nom est affiché (§ 9, n° 2). | non |
 | 8 | Fermer, rouvrir le projet, ou redémarrer l'appareil. | Étape 2 : tout revient. | non |
 
 Contraintes de geste : gants et soleil. Boutons d'au moins 9 mm de côté, textes
 contrastés, pas de geste fin (valeur à confirmer sur l'appareil par l'`afficheur`).
-Le plugin n'affiche pas son bouton hors d'un projet Cerf.
+Le plugin n'affiche pas son bouton hors d'un projet Vision.
 
 ## 2. Livrables
 
-1. `cerf.qgz` : projet modèle vide de données métier, en Lambert 93 (EPSG:2154), avec
-   les cinq fonds XYZ (ADR 0002, § 3.4), la variable de projet `cerf_id` (§ 3.3) et la couche
+1. `vision.qgz` : projet modèle vide de données métier, en Lambert 93 (EPSG:2154), avec
+   les cinq fonds XYZ (ADR 0002, § 3.4), la variable de projet `vision_id` (§ 3.3) et la couche
    de saisie « Saisie terrain » (§ 3.5), avec son GeoPackage vide `saisie.gpkg`.
 2. Le plugin QField d'application, en zip installable par URL (ADR 0001), sous
-   GPL-3.0-or-later (ADR 0006), code entièrement écrit pour Cerf.
+   GPL-3.0-or-later (ADR 0006), code entièrement écrit pour Vision.
 3. `docs/convention-zip.md` : une page, plus l'annexe des styles (§ 5).
 4. `docs/notice-jfc.md` : trois pages ; préparer le zip depuis QGIS (ProdBois, Relevés,
    Canopée), le copier sur l'appareil ; récupérer `saisie.gpkg` au retour du terrain.
@@ -49,10 +51,10 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
 - Formats, extensions sans tenir compte de la casse :
   - GeoJSON (`.geojson`, `.json`) ; **mission 044 (plugin 0.4.1, Pascal, 5 novembre 2026)** : un
     `.json` qui n'est pas du GeoJSON est **écarté**, pas refusé, avec la ligne
-    « `<chemin dans le zip>` : pas une couche GeoJSON, ignoré » (`plugin/cerf-logique.mjs`,
+    « `<chemin dans le zip>` : pas une couche GeoJSON, ignoré » (`plugin/vision-logique.mjs`,
     `importerZip`). Si le contenu est lisible (version de développement), il est jugé par
     `estGeoJson` ; sur l'appareil, le contenu d'un `.json` du zip n'est pas lisible
-    (`FileUtils.readFileContent` ne lit pas en `/vsizip/`, § 5, `plugin/Cerf.qml`) : le plugin
+    (`FileUtils.readFileContent` ne lit pas en `/vsizip/`, § 5, `plugin/Vision.qml`) : le plugin
     tente de l'ouvrir et, si QField ne l'ouvre pas, l'écarte de la même façon. Un `.json` qui
     s'ouvre est une couche normale (contrôles § 4, réécriture, style) ; un `.geojson` illisible
     reste **refusé** « illisible ». Un zip qui ne contient que des `.json` écartés donne le
@@ -68,7 +70,7 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
   `.sbx`, `.qix`) sont lus avec leur couche, sans message. Tout autre fichier est ignoré
   en silence.
 - Les vecteurs sont ouverts dans le zip par `/vsizip/`, contrôlés, puis réécrits en
-  GeoPackage dans `cerf-imports/` (§ 3.3, ADR 0003 amendée par l'ADR 0008, 4 novembre 2026) ;
+  GeoPackage dans `vision-imports/` (§ 3.3, ADR 0003 amendée par l'ADR 0008, 4 novembre 2026) ;
   les GeoTIFF restent lus dans le zip. Une couche illisible ne fait pas échouer les autres.
   **Format affiché** : quel que soit le format d'entrée (GeoJSON, Shapefile, GeoPackage), la
   couche chargée est un **GeoPackage** en lecture seule, une table par fichier ; seul le
@@ -89,24 +91,24 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 
 ### 3.3 Registre et copies (ADR 0003)
 
-- **Identifiant de projet** : une variable de projet `cerf_id` (UUID) écrite dans
-  `cerf.qgz` par QGIS ; le plugin la lit, ne l'écrit jamais. Le plugin n'agit que si elle
-  existe. **Un seul `cerf.qgz` par appareil** : pas de consigne de changer `cerf_id`.
-- **Registre** : dans les réglages de QField (`Settings`), clé `cerf/<cerf_id>`, valeur
+- **Identifiant de projet** : une variable de projet `vision_id` (UUID) écrite dans
+  `vision.qgz` par QGIS ; le plugin la lit, ne l'écrit jamais. Le plugin n'agit que si elle
+  existe. **Un seul `vision.qgz` par appareil** : pas de consigne de changer `vision_id`.
+- **Registre** : dans les réglages de QField (`Settings`), clé `vision/<vision_id>`, valeur
   JSON : liste de `{ zip, couche, chemin: "<zip sans .zip>/<couche>.gpkg", style, ajoutee_le, qml? }` pour un vecteur ; un GeoTIFF et les anciennes entrées gardent `chemin_vsi` (GeoTIFF : lu dans le zip), **chemins relatifs** au dossier des
   copies. Écrit après chaque couche chargée. Le registre s'accumule d'une forêt
   à l'autre ; l'agent retire ce qui ne sert plus.
-- **Copies** : dans **`<dossier du projet>/cerf-imports/`** (repli § 9 n° 1, appliqué par
+- **Copies** : dans **`<dossier du projet>/vision-imports/`** (repli § 9 n° 1, appliqué par
   Pascal le 3 novembre 2026 : QField 4.3.7 refuse à un plugin de lire un fichier hors du
-  dossier projet, vu à l'essai du squelette). Cerf n'est pas utilisé avec QFieldCloud ;
+  dossier projet, vu à l'essai du squelette). Vision n'est pas utilisé avec QFieldCloud ;
   les copies disparaissent si le projet est supprimé de QField.
 - **Nom de zip au registre** : un nom simple, sans `/` ni `..` ; une entrée qui ne
   l'est pas (registre trafiqué) est retirée du registre sans qu'aucun fichier soit effacé ;
-  un `cerf_id` qui n'est pas un UUID fait refuser le projet, et rien n'est écrit ni effacé
+  un `vision_id` qui n'est pas un UUID fait refuser le projet, et rien n'est écrit ni effacé
   (Pascal, 3 novembre 2026, sur proposition des tests de la mission 007).
 - **Zip réimporté sous le même nom** : la nouvelle copie remplace l'ancienne ; les couches
   vecteur sont **réécrites** (ADR 0008) ; les GeoTIFF du registre qui en viennent sont
-  rechargés. Le sort du dossier `cerf-imports/<nom du zip>/` au réimport reste une question
+  rechargés. Le sort du dossier `vision-imports/<nom du zip>/` au réimport reste une question
   ouverte (mission 014, ADR 0007 amendée). **Ancien `.qml`** : effacé avant l'écriture de la
   nouvelle copie, voir § 5.
 - **Zip absent à l'ouverture** (carte SD retirée, copie effacée) : ne vaut plus que pour les
@@ -116,7 +118,7 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
 - **Amendement du 4 novembre 2026 (ADR 0008, décision de Pascal)** :
   - **Vecteurs réécrits** : à l'import, chaque couche vecteur est ouverte en `/vsizip/`,
     contrôlée (§ 4), réécrite par `saveVectorLayerAs` en GeoPackage dans
-    `cerf-imports/<nom du zip>/` (une table par fichier), son `.qml` écrit à côté (§ 5), puis
+    `vision-imports/<nom du zip>/` (une table par fichier), son `.qml` écrit à côté (§ 5), puis
     chargée. **Pour l'agent** : un Shapefile (ou un GeoJSON) apparaît comme un GeoPackage, en
     lecture seule ; les couleurs et étiquettes du manuel sont posées par ce `.qml`. Un
     GeoPackage à plusieurs tables donne un fichier par table.
@@ -124,7 +126,7 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
     plus celle des couches (à peu près le double pour les vecteurs). Le zip réimporté remplace
     la couche réécrite. Les GeoTIFF restent lus dans le zip, style par défaut.
   - **Retrait** : efface aussi les `.gpkg`, `.qml` et annexes (`-wal`, `-shm`, `.aux.xml`) de
-    la couche, toujours et seulement dans `cerf-imports/` (ADR 0007 amendée).
+    la couche, toujours et seulement dans `vision-imports/` (ADR 0007 amendée).
 - **QField désinstallé ou appareil perdu** : registre et copies disparaissent. Accepté :
   les couches sont en lecture seule, le zip d'origine reste chez JFC.
 
@@ -167,17 +169,17 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
 - Fond embarqué de repli : **pas en tranche 1**, sauf si l'essai à J+2 (critère 5) échoue
   (§ 9, n° 5). **Mission 046 (Pascal, 5 novembre 2026) : lancée sans attendre cet essai, voie B.**
   Un fichier `basemap.mbtiles` (MBTiles, pas GeoPackage) est fabriqué sur PC par QFieldSync à partir du thème de carte
-  « Fond embarqué » de `cerf.qgz` (Plan IGN v2 + Cadastre ; ni OpenStreetMap ni OpenTopoMap), **zoom 13 à 17**, tuiles de
-  256 px, puis **seul ce fichier** est copié à côté de `cerf.qgz` sur l'appareil (pas de projet empaqueté : `cerf_id`,
-  `saisie.gpkg`, `cerf-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
-  `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `cerf.qgz` ne déclare
+  « Fond embarqué » de `vision.qgz` (Plan IGN v2 + Cadastre ; ni OpenStreetMap ni OpenTopoMap), **zoom 13 à 17**, tuiles de
+  256 px, puis **seul ce fichier** est copié à côté de `vision.qgz` sur l'appareil (pas de projet empaqueté : `vision_id`,
+  `saisie.gpkg`, `vision-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
+  `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `vision.qgz` ne déclare
   pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture tant que le fichier
-  manque) ; le **plugin Cerf** l'ajoute s'il le trouve à côté du projet (**mission 048**, puce suivante). Licence de la rastérisation : non tranchée (CGU non lues).
+  manque) ; le **plugin Vision** l'ajoute s'il le trouve à côté du projet (**mission 048**, puce suivante). Licence de la rastérisation : non tranchée (CGU non lues).
 - **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
-  À l'ouverture de `cerf.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
-  que le projet ne porte pas déjà une couche marquée `cerf/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
+  À l'ouverture de `vision.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
+  que le projet ne porte pas déjà une couche marquée `vision/fond=embarque` (la source d'une couche n'est pas lisible en QML : seule la marque compte), le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
   couche raster « Fond embarqué (hors ligne) », cochée, sans entrée au registre des imports. Absent : rien, aucun
-  message (pas de couche déclarée dans `cerf.qgz`, donc pas de page « Unable to load some layers »). Présent mais
+  message (pas de couche déclarée dans `vision.qgz`, donc pas de page « Unable to load some layers »). Présent mais
   illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » Place : celle de
   `insertLayerAtOptimalPlacement` (QGIS `qgslayertreeutils.cpp` l. 534-720), sous les vecteurs et **au-dessus** des
   fonds XYZ, sans déplacement (QML ne voit aucune API de l'arbre) : il recouvre les fonds en ligne sur son emprise ;
@@ -186,7 +188,7 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
 
 ### 3.5 Couche de saisie (amendement du 3 novembre 2026)
 
-- **Fichier** : `saisie.gpkg`, à côté de `cerf.qgz` (même dossier), chemin relatif dans le
+- **Fichier** : `saisie.gpkg`, à côté de `vision.qgz` (même dossier), chemin relatif dans le
   projet. Une table `saisie_terrain`, géométrie **Point**, **EPSG:2154**, vide à la
   livraison.
 - **Couche** : nommée « Saisie terrain », **modifiable**, au-dessus du groupe « Fonds de
@@ -205,19 +207,19 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
   NOT NULL) : avec des gants, l'agent pose d'abord le point et remplit ensuite (Pascal,
   3 novembre 2026).
 - **Contrainte** : `"diametre" IS NULL OR "diametre" >= 0`, posée comme contrainte QGIS
-  **bloquante** (force forte) sur le champ dans `cerf.qgz` : QField refuse un diamètre
+  **bloquante** (force forte) sur le champ dans `vision.qgz` : QField refuse un diamètre
   négatif mais laisse poser un point sans diamètre (Pascal, 3 novembre 2026 ; dans QGIS,
   `"diametre" >= 0` seul juge un diamètre vide faux).
 - **Style** : celui de la règle ProdBois / Relevés (§ 5), puisque la couche a `essence`
-  et `diametre` ; enregistré dans `cerf.qgz`, pas appliqué par le plugin.
+  et `diametre` ; enregistré dans `vision.qgz`, pas appliqué par le plugin.
 - **Retour au bureau** : copie de `saisie.gpkg` (câble USB ou partage de QField) ; pas de
   QFieldCloud, pas d'export par le plugin.
-- **Mise à jour du projet modèle** : une nouvelle version de `cerf.qgz` ne doit **pas**
+- **Mise à jour du projet modèle** : une nouvelle version de `vision.qgz` ne doit **pas**
   écraser un `saisie.gpkg` déjà rempli sur l'appareil ; le zip du projet modèle et la
   notice le disent (à préciser par la mission qui livre la couche).
   **Décision de Pascal du 4 novembre 2026** (mission 028, `pilotage/journal.md`) : la mise à
-  jour du projet se fait par **copie de `cerf.qgz` à la main** (câble USB), à partir de
-  `projet-cerf-mise-a-jour.zip`, sans flashcode.
+  jour du projet se fait par **copie de `vision.qgz` à la main** (câble USB), à partir de
+  `projet-vision-mise-a-jour.zip`, sans flashcode.
 
 ## 4. Contrôles à l'import (ADR 0004)
 
@@ -268,21 +270,21 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
   illisibles ».
 
 **Zip sans aucune couche** : le message est « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans
-`<nom du zip>`. » (Pascal, 4 novembre 2026 ; texte du code, `plugin/cerf-logique.mjs`).
+`<nom du zip>`. » (Pascal, 4 novembre 2026 ; texte du code, `plugin/vision-logique.mjs`).
 Un zip déjà importé qui n'a plus aucune couche lisible n'est pas vidé : « aucune couche lisible dans
 `<nom du zip>`, rien changé ».
 
 **Deux couches de même nom dans deux dossiers du zip** (`a/UG.geojson`, `b/UG.geojson`) : elles
-donneraient la même copie `cerf-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
+donneraient la même copie `vision-imports/<zip sans .zip>/UG.gpkg` et le même `UG.qml`. C'est le refus
 de la seconde (décision n° 4 du plan de la mission 008, validée par Pascal le 3 novembre 2026) qui
 empêche cette collision : « `<chemin de la seconde>` : nom de couche en double dans le zip (déjà
-pris par `<chemin de la première>`) ». Texte : `plugin/cerf-logique.mjs`, fonction `importerZip` ; test : `tests/controles-branchement.test.mjs`.
+pris par `<chemin de la première>`) ». Texte : `plugin/vision-logique.mjs`, fonction `importerZip` ; test : `tests/controles-branchement.test.mjs`.
 
-**Refus à la copie dans `cerf-imports/`** (après les contrôles ci-dessus, avant le `.qml`, § 5).
-Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pas la spec) ; le nom en tête suit la règle ci-dessus :
-- « `<chemin>` : nom non écrivable dans cerf-imports/, couche refusée » ;
+**Refus à la copie dans `vision-imports/`** (après les contrôles ci-dessus, avant le `.qml`, § 5).
+Textes de `plugin/vision-logique.mjs`, fonction `copierEtStyler` (ils font foi, pas la spec) ; le nom en tête suit la règle ci-dessus :
+- « `<chemin>` : nom non écrivable dans vision-imports/, couche refusée » ;
 - « `<chemin>` : copie impossible (écriture refusée par QField), couche refusée » ;
-- « `<chemin>` : copie écrite hors de cerf-imports/, couche refusée » ;
+- « `<chemin>` : copie écrite hors de vision-imports/, couche refusée » ;
 - « `<chemin>` : copie illisible après réécriture, couche refusée ».
 
 ## 5. Styles (annexe de la convention du zip)
@@ -340,7 +342,7 @@ silence), **puis vérifie qu'il a disparu**, qu'il y ait ou non un style à pose
 - Le `.qml` mal écrit ne s'efface pas non plus → couche **refusée** : « `<chemin>` : style (.qml)
   mal écrit et impossible à effacer, couche refusée ».
 Le nom de ces messages suit la règle du § 4 (chemin complet dans le zip). Les textes sont ceux du
-code de la mission 010 (`plugin/cerf-logique.mjs`, `copierEtStyler`, commit d7f9f2e).
+code de la mission 010 (`plugin/vision-logique.mjs`, `copierEtStyler`, commit d7f9f2e).
 
 Le motif s'applique au nom de la couche sans extension, sans tenir compte de la casse ni
 des accents.
@@ -382,7 +384,7 @@ Protocole retenu par Pascal (brief, arbitrage 7). Chacun est un test de recette 
 marqués « (auto, logique seule) » ont aussi un test automatique sur la logique du plugin
 (ADR 0005), l'appel à QField restant vérifié en recette.
 
-1. Mode avion, `cerf.qgz` déjà ouvert, zip `Serre_EA2026` déjà copié : **du toucher sur le
+1. Mode avion, `vision.qgz` déjà ouvert, zip `Serre_EA2026` déjà copié : **du toucher sur le
    bouton du plugin** à l'affichage des 4 couches stylées, **≤ 2 min, médiane de 3
    essais**, copie du zip par Android comprise, sur **smartphone Samsung** (Pascal,
    2 novembre 2026 ; modèle et version de QField notés le jour de la recette).
@@ -399,9 +401,9 @@ marqués « (auto, logique seule) » ont aussi un test automatique sur la logiqu
 7. Zip `lourd` : un GeoTIFF de 200 Mo rangé sans compression et un GeoPackage de deux
    couches ; temps d'affichage mesuré et noté (§ 9, n° 6).
 8. Retirer une couche : elle ne revient pas à la réouverture. (auto, logique seule)
-9. Projet sans `cerf_id` : le plugin n'affiche pas son bouton et ne fait rien. (auto,
+9. Projet sans `vision_id` : le plugin n'affiche pas son bouton et ne fait rien. (auto,
    logique seule)
-10. Mode avion, `cerf.qgz` ouvert : ajouter trois points dans « Saisie terrain » avec
+10. Mode avion, `vision.qgz` ouvert : ajouter trois points dans « Saisie terrain » avec
     essence et diamètre ; ils s'affichent au style ProdBois, `date` est remplie seule ;
     après redémarrage de l'appareil ils sont toujours là ; `saisie.gpkg` copié sur un PC
     s'ouvre dans QGIS avec les trois points en Lambert 93. (§ 3.5 ; amendement du
@@ -433,7 +435,7 @@ embarqué (sauf échec à J+2).
 
 1. Si le plugin ne peut pas lister le zip hors du dossier projet : le zip est posé
    **dans** le dossier projet (retour sur l'arbitrage 6 du brief ; pas de QFieldCloud avec
-   Cerf), et l'on demande à QField d'exposer le listage d'un zip aux plugins.
+   Vision), et l'on demande à QField d'exposer le listage d'un zip aux plugins.
 2. Si l'effacement d'un `.zip` est impossible : la copie reste sur l'appareil, son nom
    est affiché (valeur sacrifiée : la place).
    Au retrait d'une couche, si un fichier réécrit de la couche (`.gpkg`, `.qml`, `-wal`, `-shm`,
@@ -443,7 +445,7 @@ embarqué (sauf échec à J+2).
    `existe` est absent (retrait comme réimport), aucun fichier de couche n'est effacé et le message
    dit : « Effacement non vérifiable : fichiers peut-être restés. » (la copie du zip garde sa règle :
    effacée à la dernière couche).
-3. **Un seul `cerf.qgz` par appareil** pour toutes les forêts.
+3. **Un seul `vision.qgz` par appareil** pour toutes les forêts.
 4. Licence **GPL-3.0-or-later** ; aucune ligne recopiée de `qfield-layer-loader` ni de
    `qfield_addLayer` ; **le code est à Pascal**.
 5. Pas de fond embarqué en tranche 1 ; essai à J+2 dans la recette ; s'il échoue, on le
@@ -468,12 +470,12 @@ Essai de la mission 004 suivant `tests/recette/prototype-1.md` (branche
   l'efface, « zip absent ». → le repli § 9 n° 2 **ne s'applique pas**, mais l'effacement
   dépend de `rmFile`, fonction sans contrôle que QField annonce vouloir déplacer : ADR à
   trancher par Pascal.
-- **Q4 module `.mjs`** : chargé dans QField (5 et `cerf-prototype-1`). → ADR 0005
+- **Q4 module `.mjs`** : chargé dans QField (5 et `vision-prototype-1`). → ADR 0005
   confirmée.
 
 ### Correction du 3 novembre 2026 (essai du squelette, mission 008)
 
-Le résultat Q1 ci-dessus est **faux** : à l'essai du squelette (Cerf 0.1.0, QField v4.3.7,
+Le résultat Q1 ci-dessus est **faux** : à l'essai du squelette (plugin 0.1.0, QField v4.3.7,
 Samsung de Pascal), la lecture d'une copie hors du dossier projet est **refusée** (0 octet),
 comme le prévoyait le code de QField (`readFileContent`, `qffileutils.cpp` L620-628). La
 copie listée à l'essai du prototype était vraisemblablement celle du bouton B, dans le

@@ -3,7 +3,7 @@
 // Rouge attendu jusqu'à la mission 024.
 //
 // Interface PROPOSÉE (à confirmer par l'orchestrateur ; la 1re est une extension de la signature
-// publique de plugin/cerf-logique.mjs, seule partie du plugin lue) :
+// publique de plugin/vision-logique.mjs, seule partie du plugin lue) :
 //   couchesDuZip(noms, tables?) -> [{ couche, entree, nom, format, ... }], dans l'ordre des noms
 //     - nom : nom d'AFFICHAGE pour les messages du § 4 = CHEMIN COMPLET DANS LE ZIP, avec extension
 //       (« FRT.shp », « Serre EA/réf/Parcelles.shp », « d/Serre.gpkg/Releves ») ; arbitrage de Pascal
@@ -40,7 +40,7 @@
 //   sourceDeLaCouche(copie, c) -> source /vsizip/ :
 //     Shapefile : '/vsizip/<copie>/<entrée .shp>' ; GeoTIFF, GeoJSON : '/vsizip/<copie>/<entrée>' ;
 //     GeoPackage : '/vsizip/<copie>/<fichier.gpkg>|layername=<table>'
-// Pour essayer ces tests sur un module jetable : CERF_LOGIQUE_ESSAI=/chemin/module.mjs
+// Pour essayer ces tests sur un module jetable : VISION_LOGIQUE_ESSAI=/chemin/module.mjs
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
@@ -51,7 +51,7 @@ import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 import { fabriquerPiege, fabriquerLourd, COUCHES_GPKG, NOM_GPKG } from '../outils/zips-recette.mjs';
 
 const ici = dirname(fileURLToPath(import.meta.url));
-const MODULE = process.env.CERF_LOGIQUE_ESSAI || join(ici, '..', 'plugin', 'cerf-logique.mjs');
+const MODULE = process.env.VISION_LOGIQUE_ESSAI || join(ici, '..', 'plugin', 'vision-logique.mjs');
 const ROUGE = "rouge attendu jusqu'à la mission 024";
 
 let m;
@@ -216,7 +216,7 @@ test('nom d\'affichage d\'une couche rangée dans un dossier : le chemin complet
 });
 
 test('nom d\'affichage : jamais vide ni sans extension, y compris dans le zip piege et le zip lourd', async () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t024-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t024-'));
   const piege = lire('couchesDuZip', await nomsZip(fabriquerPiege(dossier)));
   egal(piege.map((c) => c.nom).sort(), ['FRT_sans_georef.tif', 'Parcelles_sans_prj.shp', 'UG_sans_crs.geojson', 'UG_vide.geojson', 'Zone_inconnue.geojson'],
     'noms du zip piege');
@@ -266,7 +266,7 @@ function contexteGpkg(noms, extra = {}) {
   const stock = {}; const ouvertes = []; const controlees = []; const ajoutees = [];
   const ok = { charge: true, controle: null, message: null, avertissements: [] };
   const ctx = {
-    cerfId: '123e4567-e89b-42d3-a456-426614174000', dossierProjet: '/storage/emulated/0/Projet', nomZip: 'essai.zip',
+    visionId: '123e4567-e89b-42d3-a456-426614174000', dossierProjet: '/storage/emulated/0/Projet', nomZip: 'essai.zip',
     octets: zipDe(noms),
     reglages: { value: (k, d) => (k in stock ? stock[k] : d), setValue: (k, v) => { stock[k] = v; } },
     ouvrirCouche: (src, nom) => { ouvertes.push(String(src)); return { isValid: true, nom }; },
@@ -293,7 +293,7 @@ test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fic
   assert.ok(ouvertes.every((s) => !/\.gpkg/i.test(s) || /layername=/.test(s)), `${ROUGE} : aucune source .gpkg sans layername : ${ouvertes}`);
   assert.deepEqual(ajoutees, ['b'], `${ROUGE} : seul b est chargé`);
   assert.deepEqual(r.chargees.map((c) => c.couche), ['b'], `${ROUGE} : seul b est chargé (retour)`);
-  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.visionId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
 });
 
 // 2026-11-04 : cas `[]` d'importerZip NON testé ici. La ligne exacte attendue est
@@ -304,7 +304,7 @@ test('importerZip : GeoPackage aux tables inconnues -> refusé en nommant le fic
 // ligne exacte, rien ouvert pour Serre.gpkg, voisin chargé. D'ici là, la marque `vide: true` de couchesDuZip est le seul garde.
 // 2026-11-04, dev de la mission 024 : le service de tables existe (voie 1 du prototype n° 4). Son nom dans le contexte
 // d'importerZip est `tablesGpkg(source, entree)` ; il rend la liste des tables vecteur, [] si aucune, null si illisibles
-// (plugin/Cerf.qml, sur Logique.tablesDuGpkg). Le test annoncé ci-dessus suit, tel qu'il était décrit.
+// (plugin/Vision.qml, sur Logique.tablesDuGpkg). Le test annoncé ci-dessus suit, tel qu'il était décrit.
 test('importerZip : GeoPackage sans table vecteur (service de tables : []) -> ligne exacte « aucune table vecteur », rien ouvert pour lui, voisin chargé', () => {
   const lus = [];
   const { ctx, ouvertes, ajoutees } = contexteGpkg(['Serre.gpkg', 'b.geojson'], {
@@ -316,7 +316,7 @@ test('importerZip : GeoPackage sans table vecteur (service de tables : []) -> li
   assert.ok(!r.message.includes('tables illisibles'), `${ROUGE} : distinct de « tables illisibles » : ${r.message}`);
   assert.deepEqual(ouvertes.filter((s) => /Serre\.gpkg/i.test(s)), [], `${ROUGE} : Serre.gpkg jamais ouvert`);
   assert.deepEqual(ajoutees, ['b'], `${ROUGE} : le voisin est chargé`);
-  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.visionId).map((e) => e.couche), ['b'], `${ROUGE} : seul b est inscrit`);
 });
 
 test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouvert, rien chargé, rien inscrit, message nommant le fichier', () => {
@@ -325,15 +325,15 @@ test('importerZip : zip avec seul un GeoPackage aux tables inconnues -> rien ouv
   assert.deepEqual(ouvertes, [], `${ROUGE} : rien ouvert`);
   assert.deepEqual(ajoutees, [], `${ROUGE} : rien ajouté à la carte`);
   assert.deepEqual(r.chargees, [], `${ROUGE} : rien chargé`);
-  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId), [], `${ROUGE} : registre vide`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.visionId), [], `${ROUGE} : registre vide`);
   assert.ok(r.message.split('\n').includes('dossier/a.gpkg : tables illisibles, couche non chargée'),
     `${ROUGE} : ligne exacte du refus, nom tel que dans le zip : ${r.message}`);
 });
 
 test('importerZip : Shapefile sans .prj rangé dans un dossier -> ligne exacte du contrôle 1 avec le chemin complet, rien chargé ni inscrit', async () => {
-  // Contrôle 1 réel (cerf-controles.mjs, boîte noire) derrière le service : decrireEntree lui passe le nom COURT et les fichiers ;
+  // Contrôle 1 réel (vision-controles.mjs, boîte noire) derrière le service : decrireEntree lui passe le nom COURT et les fichiers ;
   // le message d'importerZip doit, lui, porter le chemin complet dans le zip (arbitrage de Pascal du 4 novembre 2026).
-  const C = await import(pathToFileURL(join(ici, '..', 'plugin', 'cerf-controles.mjs')).href);
+  const C = await import(pathToFileURL(join(ici, '..', 'plugin', 'vision-controles.mjs')).href);
   const zone = { xmin: 600000, ymin: 6500000, xmax: 600100, ymax: 6500100 };
   const { ctx, ajoutees } = contexteGpkg(['Serre EA/réf/Parcelles.shp', 'Serre EA/réf/Parcelles.shx', 'Serre EA/réf/Parcelles.dbf'], {
     controlerCouche: (d) => C.controlerCouche({ lisible: true, systeme: { valide: true, epsg: 2154 }, nbEntites: 3, emprise: zone, ...d }, { reprojeter: (e) => ({ ...e }) }),
@@ -343,11 +343,11 @@ test('importerZip : Shapefile sans .prj rangé dans un dossier -> ligne exacte d
     `${ROUGE} : ligne exacte du contrôle 1 (spec § 4), chemin complet : ${r.message}`);
   assert.deepEqual(ajoutees, [], `${ROUGE} : rien ajouté à la carte`);
   assert.deepEqual(r.chargees, [], `${ROUGE} : rien chargé`);
-  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.cerfId), [], `${ROUGE} : registre vide`);
+  assert.deepEqual(lire('lireRegistre', ctx.reglages, ctx.visionId), [], `${ROUGE} : registre vide`);
 });
 
 // ============================================================================ sources /vsizip/
-const COPIE = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre/cerf-imports/Serre_EA2026.zip';
+const COPIE = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre/vision-imports/Serre_EA2026.zip';
 const source = (liste, tables, i = 0) => {
   const c = lire('couchesDuZip', liste, tables)[i];
   assert.ok(c, `${ROUGE} : couche ${i} absente`);
@@ -378,7 +378,7 @@ test('source GeoJSON : inchangée (/vsizip/<copie>/<entrée>)', () => {
 const nomsZip = async (f) => [...await m.nomsDuZip(readFileSync(f))];
 
 test('zip piege (016) : 5 couches (3 GeoJSON, 1 GeoTIFF sans géoréférencement, 1 Shapefile sans .prj)', async () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t024-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t024-'));
   const liste = await nomsZip(fabriquerPiege(dossier));
   const brut = lire('couchesDuZip', liste);
   const r = vue(brut);
@@ -396,7 +396,7 @@ test('zip piege (016) : 5 couches (3 GeoJSON, 1 GeoTIFF sans géoréférencement
 });
 
 test('zip lourd (016, fabriqué à 1 Mo) : lourd.tif et les deux tables de Serre_lourd.gpkg', async () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t024-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t024-'));
   await fabriquerLourd(dossier, 1);
   const liste = await nomsZip(join(dossier, 'lourd.zip'));
   const brut = lire('couchesDuZip', liste, { [NOM_GPKG]: COUCHES_GPKG });

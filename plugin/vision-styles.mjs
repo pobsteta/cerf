@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application : les styles du manuel (mission 010, spec § 5).
-// Écrit pour Cerf (ADR 0006). Module ECMAScript pur, sans import, comme cerf-logique.mjs :
-// chargé à la fois par QML (Cerf.qml) et par Node (tests/styles.test.mjs, tests/plugin.test.mjs).
+// Vision, plugin QField d'application : les styles du manuel (mission 010, spec § 5).
+// Écrit pour Vision (ADR 0006). Module ECMAScript pur, sans import, comme vision-logique.mjs :
+// chargé à la fois par QML (Vision.qml) et par Node (tests/styles.test.mjs, tests/plugin.test.mjs).
 // Prudence de syntaxe pour le moteur JavaScript de QML : ni chaînage optionnel, ni coalescence
 // des nuls, ni séparateur de chiffres, ni TextDecoder.
 //
 // Ici, rien ne touche QGIS ni QField : on décide quelle règle s'applique et on décrit le
-// style en données ; c'est Cerf.qml qui le pose sur la couche (plugin/PLAN.md).
+// style en données ; c'est Vision.qml qui le pose sur la couche (plugin/PLAN.md).
 // Couleurs et tailles de police : celles du mail de JFC (spec § 5), à respecter telles quelles.
 // Champs de code : provisoires (CODE_UG, CODE_PARC, CODE_FRT), à lire dans les fichiers de JFC.
 

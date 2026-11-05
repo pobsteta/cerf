@@ -1,8 +1,10 @@
 # Référentiel des fonds OpenStreetMap, OSM topo (OpenTopoMap) et cadastre (Géoplateforme)
 
+> **Note du 5 novembre 2026** : le projet s'appelle Vision depuis cette date (`docs/adr/` n° 0009). Les décisions datées d'avant ce jour ont été prises sous son nom d'origine ; seul le nom a changé, pas le sens.
+
 - **Propriétaire :** Pascal Obstétar. Rédigé par l'`acquereur` (mission 045, étape 1).
 - **Date de lecture :** 5 novembre 2026.
-- **Décision éclairée :** quels fonds XYZ (URL, zoom, attribution) mettre dans `cerf.qgz` en plus du
+- **Décision éclairée :** quels fonds XYZ (URL, zoom, attribution) mettre dans `vision.qgz` en plus du
   Plan IGN v2 et de la BD ORTHO, et l'usage prévu (quelques agents ONF, QField, cache de tuiles hors
   ligne) est-il permis par chaque fournisseur (ADR 0002, spec § 3.4, mission 045).
 - **Aucune clé, aucune donnée de l'ONF dans ce fichier.**

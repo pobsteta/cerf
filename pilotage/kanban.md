@@ -50,6 +50,11 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [044-json-ignore](missions/044-json-ignore.md) · depuis le cycle 6 · en cours
+  - Homme : `dev` (sonnet)
+  - Mission : `.json` du zip qui ne s'ouvre pas écarté avec « pas une couche GeoJSON, ignoré » (plugin 0.4.1)
+  - Moyens : `plugin/cerf-logique.mjs`, `plugin/Cerf.qml`, spec § 3.1, README
+
 ## Terminé
 
 - [043-flashcodes-readme](missions/043-flashcodes-readme.md) · depuis le cycle 6 · fusionnée (PR #44)

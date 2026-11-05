@@ -9,7 +9,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { ecrireGpkg } from '../outils/projet-modele.mjs';
 
-const tmp = mkdtempSync(join(tmpdir(), 'cerf-gpkg-021-'));
+const tmp = mkdtempSync(join(tmpdir(), 'vision-gpkg-021-'));
 test.after(() => rmSync(tmp, { recursive: true, force: true }));
 const DEPOT = fileURLToPath(new URL('../saisie.gpkg', import.meta.url));
 

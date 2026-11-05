@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application (mission 008) : le panneau, minimal. Gros boutons et
+// Vision, plugin QField d'application (mission 008) : le panneau, minimal. Gros boutons et
 // textes noirs sur blanc ; l'interface soignée pour gants et soleil est la mission 015.
-// Écrit pour Cerf (ADR 0006). Aucun appel à QField ici : tout passe par Cerf.qml.
+// Écrit pour Vision (ADR 0006). Aucun appel à QField ici : tout passe par Vision.qml.
 // (Aucun composant n'est créé par Qt.createComponent depuis ce fichier.)
 import QtQuick
 import QtQuick.Controls
@@ -11,18 +11,18 @@ Item {
   id: panneau
   anchors.fill: parent
 
-  property var cerf: null      // objet de Cerf.qml
+  property var vision: null      // objet de Vision.qml
   property var hote: null      // main.qml (dernierMessage)
   property var couches: []
 
   function relire() {
-    couches = cerf ? cerf.couchesInscrites() : [];
+    couches = vision ? vision.couchesInscrites() : [];
   }
 
   Component.onCompleted: relire()
 
   Connections {
-    target: panneau.cerf
+    target: panneau.vision
     function onRegistreChange() {
       panneau.relire();
     }
@@ -45,7 +45,7 @@ Item {
         Layout.preferredHeight: 72
         font.pointSize: 18
         text: "Ajouter un zip"
-        onClicked: panneau.cerf.ajouterZip()
+        onClicked: panneau.vision.ajouterZip()
       }
 
       Rectangle {
@@ -100,7 +100,7 @@ Item {
             Layout.preferredWidth: 160
             font.pointSize: 16
             text: "Retirer"
-            onClicked: panneau.cerf.retirer(modelData.zip, modelData.couche)
+            onClicked: panneau.vision.retirer(modelData.zip, modelData.couche)
           }
         }
       }
@@ -111,8 +111,8 @@ Item {
         wrapMode: Text.WordWrap
         color: "#333333"
         font.pointSize: 12
-        text: "Cerf " + (panneau.cerf ? panneau.cerf.versionPlugin : "?")
-          + " — QField " + ((panneau.cerf && panneau.cerf.versionQField()) || "version inconnue")
+        text: "Vision " + (panneau.vision ? panneau.vision.versionPlugin : "?")
+          + " — QField " + ((panneau.vision && panneau.vision.versionQField()) || "version inconnue")
       }
 
       Item { Layout.preferredHeight: 48 }

@@ -13,8 +13,8 @@ import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { fabriquerGpkgStyle, fabriquerGpkg, NOM_ZIP, NOM_GPKG, QML_VERT, QML_ROUGE } from '../outils/zip-essai-gpkg-style.mjs';
 import { flashcodes, generer, verifier, notes } from '../outils/flashcodes.mjs';
-import { nomsDuZip, requeteStyleGpkg, couchesDuZip } from '../plugin/cerf-logique.mjs';
-import { qmlValide } from '../plugin/cerf-styles.mjs';
+import { nomsDuZip, requeteStyleGpkg, couchesDuZip } from '../plugin/vision-logique.mjs';
+import { qmlValide } from '../plugin/vision-styles.mjs';
 
 const sha = (f) => createHash('sha256').update(readFileSync(f)).digest('hex');
 const racine = new URL('..', import.meta.url).pathname;
@@ -24,7 +24,7 @@ const tmp = (p) => mkdtempSync(join(tmpdir(), p));
 
 test('noms : essai-gpkg-style.zip contient un seul GeoPackage', () => {
   assert.equal(NOM_ZIP, 'essai-gpkg-style.zip');
-  const d = tmp('cerf-t047a-');
+  const d = tmp('vision-t047a-');
   try {
     const zip = fabriquerGpkgStyle(d);
     assert.equal(zip, join(d, NOM_ZIP));
@@ -35,7 +35,7 @@ test('noms : essai-gpkg-style.zip contient un seul GeoPackage', () => {
 });
 
 test('reproductible : deux fabrications donnent les mêmes octets (zip et GeoPackage)', () => {
-  const a = tmp('cerf-t047b-'); const b = tmp('cerf-t047c-');
+  const a = tmp('vision-t047b-'); const b = tmp('vision-t047c-');
   try {
     assert.equal(sha(fabriquerGpkgStyle(a)), sha(fabriquerGpkgStyle(b)));
     fabriquerGpkg(join(a, 'x.gpkg')); fabriquerGpkg(join(b, 'x.gpkg'));
@@ -44,7 +44,7 @@ test('reproductible : deux fabrications donnent les mêmes octets (zip et GeoPac
 });
 
 test('les deux tables sont des tables vecteur (features) de gpkg_contents, en EPSG:2154 ; layer_styles est « attributes » (comme QGIS)', () => {
-  const d = tmp('cerf-t047d-');
+  const d = tmp('vision-t047d-');
   try {
     const f = join(d, 'x.gpkg'); fabriquerGpkg(f);
     const db = new DatabaseSync(f, { readOnly: true });
@@ -66,7 +66,7 @@ test('les deux tables sont des tables vecteur (features) de gpkg_contents, en EP
 });
 
 test('la requête du plugin, jouée sur ce fichier : Parcelles rend le style vert épais (la ligne par défaut, pas la plus récente), UG ne rend rien', () => {
-  const d = tmp('cerf-t047e-');
+  const d = tmp('vision-t047e-');
   try {
     const f = join(d, 'x.gpkg'); fabriquerGpkg(f);
     const db = new DatabaseSync(f, { readOnly: true });
@@ -99,16 +99,16 @@ test('le plugin voit deux couches : les tables UG et Parcelles du GeoPackage (co
 });
 
 test('flashcode : l\'adresse de essai-gpkg-style.zip dans la préversion essai-manuel (jamais latest), les autres inchangés', () => {
-  assert.deepEqual(flashcodes('gpkg-style', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-gpkg-style.zip']);
+  assert.deepEqual(flashcodes('gpkg-style', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-gpkg-style.zip']);
   assert.deepEqual(flashcodes('gpkg-style', 'stable').map((f) => f.url), flashcodes('gpkg-style', 'essai').map((f) => f.url));
   assert.equal(flashcodes('gpkg-style', 'essai')[0].nom, 'flashcode-gpkg-style');
-  assert.deepEqual(flashcodes('piege', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/piege.zip']);
+  assert.deepEqual(flashcodes('piege', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/piege.zip']);
   assert.match(notes('gpkg-style', 'essai', 'essai-manuel'), /essai-manuel\/flashcode-gpkg-style\.png/);
 });
 
 const OUTILS = !spawnSync('qrencode', ['--version'], { stdio: 'ignore' }).error && !spawnSync('zbarimg', ['--version'], { stdio: 'ignore' }).error;
 test('flashcode : PNG et SVG décodés donnent exactement l\'adresse de essai-gpkg-style.zip', { skip: OUTILS ? false : 'qrencode ou zbarimg absent' }, () => {
-  const d = tmp('cerf-t047f-');
+  const d = tmp('vision-t047f-');
   try {
     assert.equal(generer(d, 'gpkg-style', 'essai').length, 2);
     assert.deepEqual(verifier(d, 'gpkg-style', 'essai'), []);
@@ -116,7 +116,7 @@ test('flashcode : PNG et SVG décodés donnent exactement l\'adresse de essai-gp
 });
 
 test('workflow release-essai-manuel : fabrique le zip, flashcode contrôlé, publié dans essai-manuel, branche de la mission 047, les lignes existantes gardées', () => {
-  assert.match(wfCode, /branches: \[[^\]]*'mission\/047-styles-gpkg'\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/050-vision'\]/);
   assert.match(wfCode, /paths: \[[^\]]*'outils\/zip-essai-gpkg-style\.mjs'/);
   assert.match(wfCode, /node --no-warnings outils\/zip-essai-gpkg-style\.mjs dist/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-gpkg-style gpkg-style essai/);

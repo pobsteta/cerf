@@ -19,20 +19,20 @@ import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 const ici = dirname(fileURLToPath(import.meta.url));
 const RACINE = join(ici, '..');
 const PLUGIN = join(RACINE, 'plugin');
-const MODULE = join(PLUGIN, 'cerf-logique.mjs');
+const MODULE = join(PLUGIN, 'vision-logique.mjs');
 
 let charge;
 async function M() {
-  if (!existsSync(MODULE)) throw new Error('plugin/cerf-logique.mjs absent : rouge attendu avant le code de la mission 008');
+  if (!existsSync(MODULE)) throw new Error('plugin/vision-logique.mjs absent : rouge attendu avant le code de la mission 008');
   charge ??= await import(MODULE);
   return charge;
 }
 
-// cerf_id de cerf.qgz (le même que tests/squelette.test.mjs).
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+// vision_id de vision.qgz (le même que tests/squelette.test.mjs).
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 // Dossier de projet FICTIF d'Android, sans valeur métier.
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
-const COPIES = `${PROJET}/cerf-imports`; // repli du 3 novembre 2026 (spec § 3.3)
+const COPIES = `${PROJET}/vision-imports`; // repli du 3 novembre 2026 (spec § 3.3)
 const GJ = '{"type":"FeatureCollection","features":[]}';
 
 const ent = (nom, { utf8 = true, txt = GJ } = {}) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.from(txt, 'utf8'), stocke: false, utf8 });
@@ -63,7 +63,7 @@ function ctxImport(extra = {}) {
   return {
     couches, reglages,
     ctx: {
-      cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe('a.geojson'),
+      visionId: ID, dossierProjet: PROJET, nomZip: 'x.zip', octets: zipDe('a.geojson'),
       reglages,
       // Mission 012 : quatre services obligatoires à la place de chargerCouche (le contrôle accepte).
       ouvrirCouche: (s, n) => couches.charger(s, n),
@@ -153,7 +153,7 @@ test('repli du 3 novembre : le message de lecture refusée rapporte l\'avis de Q
 
 test('repli du 3 novembre : dossier du projet avec barre finale toléré ; cheminCopie vide si le projet est inconnu', async () => {
   const m = await M();
-  assert.equal(m.NOM_DOSSIER_COPIES, 'cerf-imports');
+  assert.equal(m.NOM_DOSSIER_COPIES, 'vision-imports');
   assert.equal(m.dossierCopies(PROJET + '/'), COPIES);
   assert.equal(m.cheminCopie('', 'essai.zip'), '');
   assert.equal(m.cheminCopie('relatif', 'essai.zip'), '');
@@ -167,12 +167,12 @@ test('repli du 3 novembre : importerZip, demarrerProjet et retirerCouche sans do
     assert.deepEqual(r.chargees, []);
     assert.deepEqual(couches.appels, []);
     assert.deepEqual(reglages.ecritures, []);
-    const reg2 = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
-    const d = m.demarrerProjet({ variables: { cerf_id: ID }, reglages: reg2, dossierProjet: p, existe: () => true, chargerCouche: (s, n) => couches.charger(s, n) });
+    const reg2 = faussesReglages({ [`vision/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
+    const d = m.demarrerProjet({ variables: { vision_id: ID }, reglages: reg2, dossierProjet: p, existe: () => true, chargerCouche: (s, n) => couches.charger(s, n) });
     assert.match(d.message, /Dossier du projet inconnu/);
     assert.deepEqual(couches.appels, []);
     const tel = { appels: [], rmFile(c) { this.appels.push(c); return true; } };
-    const rc = m.retirerCouche({ cerfId: ID, dossierProjet: p, zip: 'z.zip', couche: 'a', reglages: reg2, retirerDeLaCarte: () => {}, platformUtilities: tel });
+    const rc = m.retirerCouche({ visionId: ID, dossierProjet: p, zip: 'z.zip', couche: 'a', reglages: reg2, retirerDeLaCarte: () => {}, platformUtilities: tel });
     assert.equal(rc.efface, false);
     assert.deepEqual(tel.appels, []);
   }
@@ -228,9 +228,9 @@ test('inscrire : une entrée remplacée garde sa place (ordre d\'affichage stabl
 test('registre illisible (texte non JSON, ou JSON qui n\'est pas une liste) : lireRegistre rend [] ; le démarrage le dit sans écrire', async () => {
   const m = await M();
   for (const brut of ['{pas du json', '{"a":1}', '"texte"']) {
-    const reglages = faussesReglages({ [`cerf/${ID}`]: brut });
+    const reglages = faussesReglages({ [`vision/${ID}`]: brut });
     assert.deepEqual(m.lireRegistre(reglages, ID), []);
-    const r = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true, chargerCouche: () => null });
+    const r = m.demarrerProjet({ variables: { vision_id: ID }, reglages, dossierProjet: PROJET, existe: () => true, chargerCouche: () => null });
     assert.match(r.message, /registre illisible/);
     assert.deepEqual(reglages.ecritures, []);
   }
@@ -249,10 +249,10 @@ test('décision 5 : entrées douteuses vues à l\'ouverture retirées aussitôt,
     null,
     'texte',
   ];
-  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([saine, ...douteuses]) });
+  const reglages = faussesReglages({ [`vision/${ID}`]: JSON.stringify([saine, ...douteuses]) });
   const couches = faussesCouches();
   const r = m.demarrerProjet({
-    variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
+    variables: { vision_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => couches.charger(s, n),
   });
   assert.deepEqual(couches.appels, [{ source: `/vsizip/${COPIES}/bon.zip/a.geojson`, nom: 'a' }]);
@@ -265,28 +265,28 @@ test('décision 5 : entrées douteuses vues à l\'ouverture retirées aussitôt,
 
 test('démarrage : couche illisible -> message au singulier et au pluriel', async () => {
   const m = await M();
-  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
-  const un = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
+  const reglages = faussesReglages({ [`vision/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
+  const un = m.demarrerProjet({ variables: { vision_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => faussesCouches({ echecs: [`/vsizip/${COPIES}/z.zip/a.geojson`] }).charger(s, n) });
   assert.equal(un.message, "1 couche n'a pas pu être rechargée : illisible (a)");
-  const deux = m.demarrerProjet({ variables: { cerf_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
+  const deux = m.demarrerProjet({ variables: { vision_id: ID }, reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: () => { throw new Error('simulé'); } });
   assert.equal(deux.message, "2 couches n'ont pas pu être rechargées : illisibles (a, b)");
 });
 
 test('retirerCouche : message quand la copie sert encore', async () => {
   const m = await M();
-  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
-  const r = m.retirerCouche({ cerfId: ID, dossierProjet: PROJET, zip: 'z.zip', couche: 'a', reglages,
+  const reglages = faussesReglages({ [`vision/${ID}`]: JSON.stringify([entree('z.zip', 'a'), entree('z.zip', 'b')]) });
+  const r = m.retirerCouche({ visionId: ID, dossierProjet: PROJET, zip: 'z.zip', couche: 'a', reglages,
     retirerDeLaCarte: () => {}, platformUtilities: { rmFile: () => true } });
   assert.equal(r.message, 'Couche retirée : a. La copie z.zip sert encore à 1 couche.');
 });
 
 // ============================================================================ forme du plugin
-// Liste explicite (mission 012 : cerf-controles.mjs ; mission 010 : cerf-styles.mjs).
+// Liste explicite (mission 012 : vision-controles.mjs ; mission 010 : vision-styles.mjs).
 const FICHIERS = [
-  'main.qml', 'Cerf.qml', 'Panneau.qml',
-  'cerf-logique.mjs', 'cerf-controles.mjs', 'cerf-styles.mjs',
+  'main.qml', 'Vision.qml', 'Panneau.qml',
+  'vision-logique.mjs', 'vision-controles.mjs', 'vision-styles.mjs',
   'metadata.txt', 'icon.svg',
 ];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
@@ -295,36 +295,36 @@ test('forme : les huit fichiers du plugin existent ; metadata.txt porte name, ve
   for (const f of FICHIERS) assert.ok(existsSync(join(PLUGIN, f)), `absent : plugin/${f}`);
   const meta = lire('metadata.txt');
   assert.match(meta, /^\[general\]$/m);
-  assert.match(meta, /^name=Cerf$/m);
+  assert.match(meta, /^name=Vision$/m);
   assert.match(meta, /^version=\d+\.\d+\.\d+$/m);
   assert.match(meta, /^icon=icon\.svg$/m);
-  assert.match(meta, /^homepage=https:\/\/github\.com\/pobsteta\/cerf$/m);
+  assert.match(meta, /^homepage=https:\/\/github\.com\/pobsteta\/vision$/m);
 });
 
 test('forme : SPDX GPL-3.0-or-later dans chaque QML et module (ADR 0006)', async () => {
-  for (const f of ['main.qml', 'Cerf.qml', 'Panneau.qml', 'cerf-logique.mjs', 'empaqueter.mjs']) {
+  for (const f of ['main.qml', 'Vision.qml', 'Panneau.qml', 'vision-logique.mjs', 'empaqueter.mjs']) {
     assert.match(lire(f), /SPDX-License-Identifier: GPL-3\.0-or-later/, f);
   }
 });
 
-test('forme : main.qml n\'importe aucun .mjs ; Cerf.qml importe cerf-logique.mjs ; les composants créés existent', async () => {
+test('forme : main.qml n\'importe aucun .mjs ; Vision.qml importe vision-logique.mjs ; les composants créés existent', async () => {
   const main = lire('main.qml');
   assert.ok(!/import\s+"[^"]+\.mjs"/.test(main), 'main.qml ne doit importer aucun .mjs (motif du prototype)');
-  assert.match(lire('Cerf.qml'), /^import "cerf-logique\.mjs" as Logique$/m);
+  assert.match(lire('Vision.qml'), /^import "vision-logique\.mjs" as Logique$/m);
   const crees = [...(main + lire('Panneau.qml')).matchAll(/Qt\.createComponent\("([^"]+)"\)/g)].map((x) => x[1]);
-  assert.ok(crees.includes('Cerf.qml') && crees.includes('Panneau.qml'), `créés : ${crees}`);
+  assert.ok(crees.includes('Vision.qml') && crees.includes('Panneau.qml'), `créés : ${crees}`);
   for (const c of crees) assert.ok(FICHIERS.includes(c), `composant inconnu : ${c}`);
 });
 
-test('forme : cerf-logique.mjs sans import, sans ?. ni ?? ni TextDecoder (moteur QML, ADR 0005)', async () => {
-  const src = lire('cerf-logique.mjs').replace(/\/\/.*$/gm, '');
+test('forme : vision-logique.mjs sans import, sans ?. ni ?? ni TextDecoder (moteur QML, ADR 0005)', async () => {
+  const src = lire('vision-logique.mjs').replace(/\/\/.*$/gm, '');
   assert.ok(!/^\s*import\b/m.test(src), 'aucun import');
   assert.ok(!/\?\.|\?\?/.test(src), 'ni ?. ni ??');
   assert.ok(!/TextDecoder/.test(src), 'pas de TextDecoder');
 });
 
 test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile passe par platformUtilities, donné à la logique', async () => {
-  const qml = lire('main.qml') + lire('Cerf.qml') + lire('Panneau.qml');
+  const qml = lire('main.qml') + lire('Vision.qml') + lire('Panneau.qml');
   for (const appel of ['iface.addItemToPluginsToolbar', 'onLoadProjectEnded', 'ExpressionContextUtils.projectVariables',
     'settings.setValue', 'settings.sync', 'platformUtilities.getFile', 'FileUtils.readFileContent', 'FileUtils.fileExists',
     'LayerUtils.loadVectorLayer', 'ProjectUtils.addMapLayer', 'ProjectUtils.removeMapLayer', 'setCustomProperty',
@@ -334,17 +334,17 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : plugin-cerf.zip a main.qml à sa racine et exactement les huit fichiers du plugin (dont cerf-controles.mjs et cerf-styles.mjs)', async () => {
+test('empaquetage : plugin-vision.zip a main.qml à sa racine et exactement les huit fichiers du plugin (dont vision-controles.mjs et vision-styles.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
-  const sortie = mkdtempSync(join(tmpdir(), 'cerf-plugin-'));
+  const sortie = mkdtempSync(join(tmpdir(), 'vision-plugin-'));
   try {
     const r = empaqueter(sortie);
-    assert.equal(r.chemin, join(sortie, 'plugin-cerf.zip'));
+    assert.equal(r.chemin, join(sortie, 'plugin-vision.zip'));
     const noms = m.nomsDuZip(readFileSync(r.chemin));
     assert.deepEqual([...noms].sort(), [...FICHIERS].sort());
     assert.ok(noms.includes('main.qml'));
-    assert.ok(noms.includes('cerf-controles.mjs'));
+    assert.ok(noms.includes('vision-controles.mjs'));
   } finally {
     rmSync(sortie, { recursive: true, force: true });
   }
@@ -356,8 +356,7 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   assert.match(wf, /node plugin\/empaqueter\.mjs dist/);
   assert.match(wf, /plugin-essai/);
   assert.match(wf, /plugin-v\$version/);
-  assert.match(wf, /mission\/008-squelette-plugin/);
-  assert.match(wf, /mission\/010-styles/);
+  assert.match(wf, /mission\/050-vision/);
   // Toute branche autre que main = préversion : jamais « latest », flashcode d'essai.
   assert.match(wf, /gh release edit plugin-essai --notes-file notes\.md --latest=false/);
   assert.match(wf, /--prerelease --latest=false/);
@@ -367,7 +366,7 @@ test('mise en ligne : le workflow publie plugin-essai sur la branche, plugin-v<v
   assert.match(wf, /\[ "\$GITHUB_REF_NAME" = "main" \]; then mode=stable; else mode=essai/);
 });
 
-// ============================================================================ aides du pont QML (Cerf.qml)
+// ============================================================================ aides du pont QML (Vision.qml)
 test('zipDeLaSource : retrouve le nom du zip d\'une source /vsizip/ du dossier des copies, sinon chaîne vide', async () => {
   const m = await M();
   assert.equal(m.zipDeLaSource(`/vsizip/${COPIES}/essai.zip/sous/a.geojson`, COPIES), 'essai.zip');
@@ -379,7 +378,7 @@ test('zipDeLaSource : retrouve le nom du zip d\'une source /vsizip/ du dossier d
 
 test('zipUtilise : vrai tant qu\'une entrée du registre vient de ce zip (la copie ne doit pas être effacée)', async () => {
   const m = await M();
-  const reglages = faussesReglages({ [`cerf/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
+  const reglages = faussesReglages({ [`vision/${ID}`]: JSON.stringify([entree('z.zip', 'a')]) });
   assert.equal(m.zipUtilise(reglages, ID, 'z.zip'), true);
   assert.equal(m.zipUtilise(reglages, ID, 'y.zip'), false);
 });
@@ -389,9 +388,9 @@ test('version : la constante VERSION du module est celle de metadata.txt', async
   assert.match(lire('metadata.txt'), new RegExp(`^version=${m.VERSION.replace(/\./g, '\\.')}$`, 'm'));
 });
 
-test('repli du 3 novembre : Cerf.qml ne vise plus le dossier de l\'application (ni applicationDirectory, ni Imported Datasets)', async () => {
-  const qml = lire('Cerf.qml');
+test('repli du 3 novembre : Vision.qml ne vise plus le dossier de l\'application (ni applicationDirectory, ni Imported Datasets)', async () => {
+  const qml = lire('Vision.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.4\.4$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.5\.0$/m);
 });

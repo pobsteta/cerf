@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application (mission 008) : le pont entre la logique
-// (cerf-logique.mjs, testée sous Node) et l'API de QField. Seul fichier qui importe le module.
-// Écrit pour Cerf (ADR 0006). Appels de QField lus dans QField v4.3.7 (commit 3fb1281) : voir
+// Vision, plugin QField d'application (mission 008) : le pont entre la logique
+// (vision-logique.mjs, testée sous Node) et l'API de QField. Seul fichier qui importe le module.
+// Écrit pour Vision (ADR 0006). Appels de QField lus dans QField v4.3.7 (commit 3fb1281) : voir
 // plugin/PLAN.md § 5, qui dit pour chacun s'il est prouvé sur le Samsung ou non.
 import QtQuick
 import org.qfield
-import "cerf-logique.mjs" as Logique
-import "cerf-controles.mjs" as Controles
-import "cerf-styles.mjs" as Styles
+import "vision-logique.mjs" as Logique
+import "vision-controles.mjs" as Controles
+import "vision-styles.mjs" as Styles
 
 Item {
-  id: cerf
+  id: vision
   visible: false
 
   // Un message à montrer à l'agent (toast et zone de messages du panneau).
@@ -37,13 +37,13 @@ Item {
     return ExpressionContextUtils.projectVariables(qgisProject);
   }
 
-  function cerfId() {
-    return Logique.lireCerfId(variables());
+  function visionId() {
+    return Logique.lireVisionId(variables());
   }
 
   // Dossier du projet : qgisProject.homePath (QGIS qgsproject.h L119) ; à défaut (chaîne
   // vide), le dossier du fichier projet, celui que FileUtils.isWithinProjectDirectory prend
-  // pour référence (qffileutils.cpp L541-556). Les copies vont dans <ce dossier>/cerf-imports
+  // pour référence (qffileutils.cpp L541-556). Les copies vont dans <ce dossier>/vision-imports
   // (repli de la spec § 9 n° 1, appliqué par Pascal le 3 novembre 2026).
   function dossierProjet() {
     if (!qgisProject) return "";
@@ -61,14 +61,14 @@ Item {
 
   // -------------------------------------------------------------- couches sur la carte
 
-  // Couche du projet marquée (zip, couche) par Cerf, ou null.
+  // Couche du projet marquée (zip, couche) par Vision, ou null.
   function coucheMarquee(zip, nom) {
     if (!qgisProject) return null;
     const couches = ProjectUtils.mapLayers(qgisProject);
     for (const id in couches) {
       const l = couches[id];
       if (!l || typeof l.customProperty !== "function") continue;
-      if (String(l.customProperty("cerf/zip", "")) === zip && String(l.customProperty("cerf/couche", "")) === nom) return l;
+      if (String(l.customProperty("vision/zip", "")) === zip && String(l.customProperty("vision/couche", "")) === nom) return l;
     }
     return null;
   }
@@ -83,7 +83,7 @@ Item {
       if (Logique.estSourceFondEmbarque(source)) {
         const fond = LayerUtils.loadRasterLayer(source, nom);
         if (fond && fond.isValid) {
-          fond.setCustomProperty("cerf/fond", "embarque");
+          fond.setCustomProperty("vision/fond", "embarque");
           ProjectUtils.addMapLayer(qgisProject, fond);
           return fond;
         }
@@ -100,15 +100,15 @@ Item {
       // Mission 024 : un GeoTIFF (chemin_vsi en .tif ou .tiff) se recharge en raster.
       const couche = Logique.estSourceRaster(source) ? LayerUtils.loadRasterLayer(source, nom) : LayerUtils.loadVectorLayer(source, nom);
       if (couche && couche.isValid) {
-        couche.setCustomProperty("cerf/zip", zip);
-        couche.setCustomProperty("cerf/couche", nom);
+        couche.setCustomProperty("vision/zip", zip);
+        couche.setCustomProperty("vision/couche", nom);
         ProjectUtils.addMapLayer(qgisProject, couche);
       }
       return couche;
     };
   }
 
-  // Mission 048 : une couche du projet porte déjà la marque cerf/fond=embarque. Seule la marque compte sur l'appareil :
+  // Mission 048 : une couche du projet porte déjà la marque vision/fond=embarque. Seule la marque compte sur l'appareil :
   // source() n'est ni Q_PROPERTY ni Q_INVOKABLE (QGIS 3a92eb3 qgsmaplayer.h l. 606), « l.source » vaut undefined en QML.
   function fondDejaPresent() {
     if (!qgisProject) return false;
@@ -117,13 +117,13 @@ Item {
       const l = couches[id];
       if (!l) continue;
       try {
-        if (typeof l.customProperty === "function" && String(l.customProperty("cerf/fond", "")) === "embarque") return true;
+        if (typeof l.customProperty === "function" && String(l.customProperty("vision/fond", "")) === "embarque") return true;
       } catch (e) { /* couche sans source lisible */ }
     }
     return false;
   }
 
-  // Styles du manuel (mission 010). Ce que Cerf.qml sait dire à la logique : la géométrie et les
+  // Styles du manuel (mission 010). Ce que Vision.qml sait dire à la logique : la géométrie et les
   // champs d'une couche (QgsVectorLayer.geometryType() est Q_INVOKABLE, QgsFields expose « names »)
   // et la lecture d'un fichier du zip (null si impossible). La POSE du style passe par un .qml écrit
   // à côté de la copie, avant son chargement (ADR 0008) : voir reecrireCouche et ecrireFichier.
@@ -187,9 +187,9 @@ Item {
   // Mission 049 : libère une couche ouverte par LayerUtils.loadVectorLayer / loadRasterLayer et non ajoutée à la carte.
   // QField v4.3.7 (qflayerutils.cpp l. 618 et 624) la rend en CppOwnership : sans deleteLater, personne ne la détruit.
   // La logique ne l'appelle jamais sur une couche ajoutée au projet, ni deux fois sur la même.
-  // Mission 049 : vrai si la couche porte la marque Cerf, donc appartient au projet (ajoutée par le chargeur) : jamais libérée.
+  // Mission 049 : vrai si la couche porte la marque Vision, donc appartient au projet (ajoutée par le chargeur) : jamais libérée.
   function coucheDuProjet(couche) {
-    return !!couche && typeof couche.customProperty === "function" && String(couche.customProperty("cerf/zip", "")) !== "";
+    return !!couche && typeof couche.customProperty === "function" && String(couche.customProperty("vision/zip", "")) !== "";
   }
 
   function libererCouche(couche) {
@@ -230,8 +230,8 @@ Item {
   // GeoPackage (ADR 0008) ; à défaut il se lit dans une source /vsizip/.
   function ajouterALaCarte(couche, nom, source, zipDonne) {
     const zip = zipDonne ? String(zipDonne) : Logique.zipDeLaSource(source, Logique.dossierCopies(dossierProjet()));
-    couche.setCustomProperty("cerf/zip", zip);
-    couche.setCustomProperty("cerf/couche", nom);
+    couche.setCustomProperty("vision/zip", zip);
+    couche.setCustomProperty("vision/couche", nom);
     ProjectUtils.addMapLayer(qgisProject, couche);
   }
 
@@ -298,7 +298,7 @@ Item {
     const ids = [];
     for (const id in couches) {
       const l = couches[id];
-      if (l && typeof l.customProperty === "function" && String(l.customProperty("cerf/zip", "")) === zip) ids.push(String(l.id));
+      if (l && typeof l.customProperty === "function" && String(l.customProperty("vision/zip", "")) === zip) ids.push(String(l.id));
     }
     for (let i = 0; i < ids.length; i++) ProjectUtils.removeMapLayer(qgisProject, ids[i]);
   }
@@ -329,7 +329,7 @@ Item {
 
   // Geste 2 : ouverture du projet. Rend le résultat de demarrerProjet.
   function demarrer() {
-    const id = cerfId();
+    const id = visionId();
     const r = Logique.demarrerProjet({
       variables: variables(),
       reglages: reglages,
@@ -344,11 +344,11 @@ Item {
     return r;
   }
 
-  // Gestes 3 et 4 : sélecteur Android, copie dans <dossier du projet>/cerf-imports/.
+  // Gestes 3 et 4 : sélecteur Android, copie dans <dossier du projet>/vision-imports/.
   function ajouterZip() {
-    const id = cerfId();
+    const id = visionId();
     if (!id) {
-      message("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
+      message("Projet non Vision (vision_id absent ou invalide) : rien n'est importé.");
       return;
     }
     const dossier = Logique.dossierCopies(dossierProjet());
@@ -365,12 +365,12 @@ Item {
     }
     prefixeEnCours = dossier + "/";
     platformUtilities.requestStoragePermission();
-    source = platformUtilities.getFile(prefixeEnCours, "{filename}", "*/*", cerf);
+    source = platformUtilities.getFile(prefixeEnCours, "{filename}", "*/*", vision);
   }
 
   // Geste 5 : la copie est arrivée (QField l'annonce même si elle a échoué : on vérifie).
   function zipRecu(recu) {
-    const id = cerfId();
+    const id = visionId();
     if (!id) return;
     // Le dossier où la copie a été demandée (et non celui d'un projet ouvert entre-temps).
     const dossier = Logique.dossierDe(prefixeEnCours + "x");
@@ -408,7 +408,7 @@ Item {
     // Zip réimporté sous le même nom : ses couches sont retirées de la carte (par importerZip,
     // une fois sûr qu'au moins une couche est lisible) puis rechargées.
     const r = Logique.importerZip({
-      cerfId: id,
+      visionId: id,
       dossierProjet: dossierProjet(),
       nomZip: nom,
       octets: octets,
@@ -425,7 +425,7 @@ Item {
       coucheDuProjet: coucheDuProjet,
       tablesGpkg: tablesGpkg,
       styleGpkg: styleGpkg,
-      retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
+      retirerLeZipDeLaCarte: function (zip) { vision.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,
       controlerCouche: controlerCouche,
       ajouterALaCarte: ajouterALaCarte,
@@ -440,22 +440,22 @@ Item {
   }
 
   Connections {
-    target: cerf.source
+    target: vision.source
     ignoreUnknownSignals: true
     function onResourceReceived(path) {
-      cerf.zipRecu(path);
+      vision.zipRecu(path);
     }
   }
 
   // Geste 7 : retirer une couche (carte, registre, copie si plus aucune couche ne s'en sert).
   function retirer(zip, couche) {
     const r = Logique.retirerCouche({
-      cerfId: cerfId(),
+      visionId: visionId(),
       dossierProjet: dossierProjet(),
       zip: zip,
       couche: couche,
       reglages: reglages,
-      retirerDeLaCarte: function (nom) { cerf.retirerDeLaCarte(zip, nom); },
+      retirerDeLaCarte: function (nom) { vision.retirerDeLaCarte(zip, nom); },
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       effacerFichier: effacerFichier,
       platformUtilities: platformUtilities
@@ -466,7 +466,7 @@ Item {
 
   // Couches du registre, pour le panneau.
   function couchesInscrites() {
-    const id = cerfId();
+    const id = visionId();
     return id ? Logique.lireRegistre(reglages, id) : [];
   }
 }

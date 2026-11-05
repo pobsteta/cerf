@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-<!-- Icône du prototype n° 1 de Cerf, dessinée pour Cerf : un fichier zip sur fond vert. -->
+<!-- Icône du prototype n° 1 de Vision, dessinée pour Vision : un fichier zip sur fond vert. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
   <rect x="2" y="2" width="44" height="44" rx="10" fill="#1b5e20"/>
   <path d="M14 10 h14 l8 8 v20 h-22 z" fill="#ffffff"/>

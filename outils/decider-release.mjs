@@ -1,7 +1,7 @@
 // Mission 008 : décide si le workflow release-plugin.yml publie (plugin/PLAN.md § 12 point 10).
 // Décision de Pascal du 3 novembre 2026 : sur main, la release « plugin-v<version> » n'est
 // publiée que si un fichier sous plugin/ a changé dans le push ; sinon sortie verte.
-// Écrit pour Cerf, sans dépendance.
+// Écrit pour Vision, sans dépendance.
 //
 // Usage (dans le workflow) : node outils/decider-release.mjs <evenement> <branche> <avant> <sha>
 //   écrit « publier » ou « ignorer » sur la sortie standard, puis une raison sur la sortie

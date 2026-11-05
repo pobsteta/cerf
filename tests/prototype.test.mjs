@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Mission 004 : tests du prototype n° 1 (plugin QField jetable, dossier prototype/).
-// Ils prouvent la logique du module prototype/cerf-zip.mjs et la forme du plugin, sous
+// Ils prouvent la logique du module prototype/vision-zip.mjs et la forme du plugin, sous
 // Node. Ils ne prouvent RIEN sur QField : l'API de QField (copie, lecture, effacement,
 // chargement des couches, import du .mjs) n'est prouvée que par le protocole
 // tests/recette/prototype-1.md, rempli par Pascal sur le Samsung.
@@ -22,7 +22,7 @@ const RACINE = join(ici, '..');
 const PROTO = join(RACINE, 'prototype');
 const ESSAI = join(ici, 'recette', 'essai');
 
-const Zip = await import(join(PROTO, 'cerf-zip.mjs'));
+const Zip = await import(join(PROTO, 'vision-zip.mjs'));
 const Essai = await import(join(PROTO, 'module-essai.mjs'));
 
 const octetsEssai = readFileSync(join(ESSAI, 'essai.zip'));
@@ -51,13 +51,13 @@ test('Q4 : prototype/module-essai.mjs est identique, octet pour octet, au module
   assert.ok(a.equals(b), 'le module embarqué doit être la copie exacte de tests/recette/essai/module-essai.mjs');
 });
 
-test('Q4 : le module embarqué donne somme(2, 3) = 5 et SIGNATURE = cerf-prototype-1', () => {
+test('Q4 : le module embarqué donne somme(2, 3) = 5 et SIGNATURE = vision-prototype-1', () => {
   assert.equal(Essai.somme(2, 3), 5);
-  assert.equal(Essai.SIGNATURE, 'cerf-prototype-1');
+  assert.equal(Essai.SIGNATURE, 'vision-prototype-1');
 });
 
 test('ADR 0005 : aucun .pragma ni .import dans les modules du prototype', () => {
-  for (const f of ['cerf-zip.mjs', 'module-essai.mjs']) {
+  for (const f of ['vision-zip.mjs', 'module-essai.mjs']) {
     const texte = readFileSync(join(PROTO, f), 'utf8');
     assert.doesNotMatch(texte, /^\s*\.pragma/m, `${f} : .pragma interdit`);
     assert.doesNotMatch(texte, /^\s*\.import/m, `${f} : .import interdit`);
@@ -168,50 +168,50 @@ test('Q6 : une entrée rangée sans compression est lue : 635 octets, <!DOCTYPE 
 
 // ---------------------------------------------------------------- Questions 2 et 3 : chemins
 
-test('Q2 : le préfixe et le chemin de la copie hors projet suivent Imported Datasets/cerf/<cerf_id>/', () => {
+test('Q2 : le préfixe et le chemin de la copie hors projet suivent Imported Datasets/vision/<vision_id>/', () => {
   const app = '/storage/emulated/0/Android/data/ch.opengis.qfield/files';
   const id = '4b0e7c1a-1f5e-4d1b-9a77-2f3a8c6e9d01';
-  assert.equal(Zip.prefixeHorsProjet(app, id), `${app}/Imported Datasets/cerf/${id}/`);
-  assert.equal(Zip.prefixeHorsProjet(app + '/', id), `${app}/Imported Datasets/cerf/${id}/`);
-  assert.equal(Zip.cheminRecu(Zip.prefixeHorsProjet(app, id), 'essai.zip'), `${app}/Imported Datasets/cerf/${id}/essai.zip`);
+  assert.equal(Zip.prefixeHorsProjet(app, id), `${app}/Imported Datasets/vision/${id}/`);
+  assert.equal(Zip.prefixeHorsProjet(app + '/', id), `${app}/Imported Datasets/vision/${id}/`);
+  assert.equal(Zip.cheminRecu(Zip.prefixeHorsProjet(app, id), 'essai.zip'), `${app}/Imported Datasets/vision/${id}/essai.zip`);
   // Un chemin déjà absolu, rendu tel quel.
   assert.equal(Zip.cheminRecu('/a/b/', '/x/essai.zip'), '/x/essai.zip');
 });
 
-test('Q2 : sans cerf_id, ou avec un cerf_id qui sort du dossier, la copie hors projet est refusée', () => {
-  assert.throws(() => Zip.prefixeHorsProjet('/app', ''), (e) => /cerf_id absent/.test(e.message));
-  assert.throws(() => Zip.prefixeHorsProjet('/app', undefined), (e) => /cerf_id absent/.test(e.message));
-  assert.throws(() => Zip.prefixeHorsProjet('/app', '../x'), (e) => /cerf_id/.test(e.message));
-  assert.throws(() => Zip.prefixeHorsProjet('/app', 'a/b'), (e) => /cerf_id/.test(e.message));
+test('Q2 : sans vision_id, ou avec un vision_id qui sort du dossier, la copie hors projet est refusée', () => {
+  assert.throws(() => Zip.prefixeHorsProjet('/app', ''), (e) => /vision_id absent/.test(e.message));
+  assert.throws(() => Zip.prefixeHorsProjet('/app', undefined), (e) => /vision_id absent/.test(e.message));
+  assert.throws(() => Zip.prefixeHorsProjet('/app', '../x'), (e) => /vision_id/.test(e.message));
+  assert.throws(() => Zip.prefixeHorsProjet('/app', 'a/b'), (e) => /vision_id/.test(e.message));
   assert.throws(() => Zip.prefixeHorsProjet('', 'abc'), (e) => /dossier de l'application/.test(e.message));
 });
 
-test('Q1 (repli spec § 9 n° 1) : le préfixe de la copie dans le projet est <projet>/cerf-essai/', () => {
-  assert.equal(Zip.prefixeDansProjet('/p/Imported Projects/cerf-essai'), '/p/Imported Projects/cerf-essai/cerf-essai/');
+test('Q1 (repli spec § 9 n° 1) : le préfixe de la copie dans le projet est <projet>/vision-essai/', () => {
+  assert.equal(Zip.prefixeDansProjet('/p/Imported Projects/vision-essai'), '/p/Imported Projects/vision-essai/vision-essai/');
   assert.throws(() => Zip.prefixeDansProjet(''), (e) => /aucun projet/.test(e.message));
 });
 
 test('Q2 : « hors du dossier projet » vrai et faux, dont le piège du dossier voisin au nom préfixe', () => {
-  const projet = '/d/Imported Projects/cerf-essai';
-  assert.equal(Zip.estHorsDossier('/d/Imported Datasets/cerf/x/essai.zip', projet), true);
-  assert.equal(Zip.estHorsDossier(`${projet}/cerf-essai/essai.zip`, projet), false);
+  const projet = '/d/Imported Projects/vision-essai';
+  assert.equal(Zip.estHorsDossier('/d/Imported Datasets/vision/x/essai.zip', projet), true);
+  assert.equal(Zip.estHorsDossier(`${projet}/vision-essai/essai.zip`, projet), false);
   assert.equal(Zip.estHorsDossier(`${projet}/essai.zip`, projet + '/'), false);
-  assert.equal(Zip.estHorsDossier('/d/Imported Projects/cerf-essai-2/essai.zip', projet), true, 'dossier voisin au nom préfixe');
+  assert.equal(Zip.estHorsDossier('/d/Imported Projects/vision-essai-2/essai.zip', projet), true, 'dossier voisin au nom préfixe');
   assert.equal(Zip.estHorsDossier(`${projet}/../autre/essai.zip`, projet), true, 'remontée par ..');
-  assert.equal(Zip.estHorsDossier(`${projet}//./cerf-essai/essai.zip`, projet), false, 'chemin non normalisé');
+  assert.equal(Zip.estHorsDossier(`${projet}//./vision-essai/essai.zip`, projet), false, 'chemin non normalisé');
   assert.equal(Zip.estHorsDossier('/x/essai.zip', ''), true, 'aucun projet ouvert');
 });
 
 test('Q2 : le prototype dit s’il lit la copie hors projet ou la copie dans le projet', () => {
-  const projet = '/d/Imported Projects/cerf-essai';
-  assert.equal(Zip.lieuDeLecture('/d/Imported Datasets/cerf/x/essai.zip', projet), 'copie hors du dossier projet');
-  assert.equal(Zip.lieuDeLecture(`${projet}/cerf-essai/essai.zip`, projet), 'copie dans le dossier projet');
+  const projet = '/d/Imported Projects/vision-essai';
+  assert.equal(Zip.lieuDeLecture('/d/Imported Datasets/vision/x/essai.zip', projet), 'copie hors du dossier projet');
+  assert.equal(Zip.lieuDeLecture(`${projet}/vision-essai/essai.zip`, projet), 'copie dans le dossier projet');
 });
 
 test('Q5 et Q7 : chemins /vsizip/ de la copie', () => {
-  const copie = '/d/Imported Datasets/cerf/x/essai.zip';
-  assert.equal(Zip.cheminVsizip(copie, 'sous-dossier/shape_essai.shp'), '/vsizip//d/Imported Datasets/cerf/x/essai.zip/sous-dossier/shape_essai.shp');
-  assert.equal(Zip.cheminVsizip(copie, '/points_essai.geojson'), '/vsizip//d/Imported Datasets/cerf/x/essai.zip/points_essai.geojson');
+  const copie = '/d/Imported Datasets/vision/x/essai.zip';
+  assert.equal(Zip.cheminVsizip(copie, 'sous-dossier/shape_essai.shp'), '/vsizip//d/Imported Datasets/vision/x/essai.zip/sous-dossier/shape_essai.shp');
+  assert.equal(Zip.cheminVsizip(copie, '/points_essai.geojson'), '/vsizip//d/Imported Datasets/vision/x/essai.zip/points_essai.geojson');
   assert.deepEqual(Zip.ENTREES_VECTEUR, ['points_essai.geojson', 'sous-dossier/shape_essai.shp']);
   assert.equal(Zip.ENTREE_GEOTIFF, 'lourd.tif');
 });
@@ -244,8 +244,8 @@ test('Q7 : le refus de C dit pourquoi (taille inconnue ou trop grosse) et renvoi
   assert.match(grosse, /199996542 octets/);
   assert.match(grosse, /10000000 octets/);
   assert.match(grosse, /I\. Essai à risque/);
-  const cerf = readFileSync(join(PROTO, 'Cerf.qml'), 'utf8');
-  assert.ok(cerf.includes('Zip.messageLectureRefusee(taille)'), 'Cerf.qml affiche le message du module');
+  const vision = readFileSync(join(PROTO, 'Vision.qml'), 'utf8');
+  assert.ok(vision.includes('Zip.messageLectureRefusee(taille)'), 'Vision.qml affiche le message du module');
 });
 
 // ---------------------------------------------------------------- Question 5 : point du terrain
@@ -310,24 +310,24 @@ test('Plugin : main.qml existe, ajoute un bouton à la barre des plugins et n’
   // Un échec d'import d'un .mjs doit rester visible : main.qml charge les écrans qui
   // importent les modules par Qt.createComponent et affiche l'erreur.
   assert.doesNotMatch(main, /^import\s+"[^"]+\.mjs"/m);
-  assert.match(main, /Qt\.createComponent\("Cerf\.qml"\)/);
+  assert.match(main, /Qt\.createComponent\("Vision\.qml"\)/);
   assert.match(main, /errorString\(\)/);
 });
 
-test('Plugin : Cerf.qml importe cerf-zip.mjs, EssaiModule.qml importe module-essai.mjs, et les deux existent', () => {
-  const cerf = readFileSync(join(PROTO, 'Cerf.qml'), 'utf8');
+test('Plugin : Vision.qml importe vision-zip.mjs, EssaiModule.qml importe module-essai.mjs, et les deux existent', () => {
+  const vision = readFileSync(join(PROTO, 'Vision.qml'), 'utf8');
   const essai = readFileSync(join(PROTO, 'EssaiModule.qml'), 'utf8');
-  assert.match(cerf, /^import "cerf-zip\.mjs" as Zip$/m);
+  assert.match(vision, /^import "vision-zip\.mjs" as Zip$/m);
   assert.match(essai, /^import "module-essai\.mjs" as Essai$/m);
-  assert.ok(existsSync(join(PROTO, 'cerf-zip.mjs')));
+  assert.ok(existsSync(join(PROTO, 'vision-zip.mjs')));
   assert.ok(existsSync(join(PROTO, 'module-essai.mjs')));
 });
 
 test('Plugin : les noms des boutons A à I figurent dans les écrans, I marqué comme essai à risque', () => {
   const main = readFileSync(join(PROTO, 'main.qml'), 'utf8');
-  const cerf = readFileSync(join(PROTO, 'Cerf.qml'), 'utf8');
-  for (const lettre of Object.keys(Zip.BOUTONS)) assert.ok(cerf.includes(`Zip.BOUTONS.${lettre}`), `bouton ${lettre} dans Cerf.qml`);
-  // Si cerf-zip.mjs ne se charge pas, main.qml garde son propre bouton E, au même nom.
+  const vision = readFileSync(join(PROTO, 'Vision.qml'), 'utf8');
+  for (const lettre of Object.keys(Zip.BOUTONS)) assert.ok(vision.includes(`Zip.BOUTONS.${lettre}`), `bouton ${lettre} dans Vision.qml`);
+  // Si vision-zip.mjs ne se charge pas, main.qml garde son propre bouton E, au même nom.
   assert.ok(main.includes(`"${Zip.BOUTONS.E}"`), 'bouton E de secours dans main.qml');
   assert.deepEqual(Object.keys(Zip.BOUTONS), ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']);
   assert.match(Zip.BOUTONS.I, /risque/);
@@ -335,14 +335,14 @@ test('Plugin : les noms des boutons A à I figurent dans les écrans, I marqué 
 });
 
 test('Plugin : l’API QField appelée est celle lue dans le code de QField (plan § 4)', () => {
-  const cerf = readFileSync(join(PROTO, 'Cerf.qml'), 'utf8');
+  const vision = readFileSync(join(PROTO, 'Vision.qml'), 'utf8');
   for (const appel of ['platformUtilities.getFile(', 'onResourceReceived', 'FileUtils.readFileContent(', 'FileUtils.deleteFiles(',
     'platformUtilities.rmFile(', 'FileUtils.fileExists(', 'LayerUtils.loadVectorLayer(', 'LayerUtils.loadRasterLayer(',
     'LayerUtils.createFeatureIterator(', 'ExpressionContextUtils.projectVariables(qgisProject)', 'platformUtilities.applicationDirectory()']) {
-    assert.ok(cerf.includes(appel), `Cerf.qml doit appeler ${appel}`);
+    assert.ok(vision.includes(appel), `Vision.qml doit appeler ${appel}`);
   }
   // Pas de ruse (décision de Pascal n° 2) : aucune écriture de projet à la racine de l'application.
-  assert.doesNotMatch(cerf, /writeFileContent|renameFile|\.qgz/);
+  assert.doesNotMatch(vision, /writeFileContent|renameFile|\.qgz/);
 });
 
 test('Plugin : metadata.txt porte name, version, author, icon ; la version est celle du module', () => {
@@ -353,27 +353,27 @@ test('Plugin : metadata.txt porte name, version, author, icon ; la version est c
   assert.ok(existsSync(join(PROTO, 'icon.svg')));
 });
 
-test('Projet d’essai : cerf-essai.qgs en EPSG:2154 porte une variable de projet cerf_id (UUID)', () => {
-  const qgs = readFileSync(join(PROTO, 'essai-projet', 'cerf-essai.qgs'), 'utf8');
+test('Projet d’essai : vision-essai.qgs en EPSG:2154 porte une variable de projet vision_id (UUID)', () => {
+  const qgs = readFileSync(join(PROTO, 'essai-projet', 'vision-essai.qgs'), 'utf8');
   assert.match(qgs, /<authid>EPSG:2154<\/authid>/);
   const noms = qgs.match(/<variableNames[^>]*>([\s\S]*?)<\/variableNames>/)[1];
   const valeurs = qgs.match(/<variableValues[^>]*>([\s\S]*?)<\/variableValues>/)[1];
   const n = [...noms.matchAll(/<value>([^<]*)<\/value>/g)].map((m) => m[1]);
   const v = [...valeurs.matchAll(/<value>([^<]*)<\/value>/g)].map((m) => m[1]);
-  const i = n.indexOf('cerf_id');
-  assert.ok(i >= 0, 'variable cerf_id présente');
+  const i = n.indexOf('vision_id');
+  assert.ok(i >= 0, 'variable vision_id présente');
   assert.match(v[i], /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
 
-test('Empaquetage : cerf-prototype.zip a main.qml à sa racine et tous les fichiers du plugin ; cerf-essai.zip porte le .qgs', () => {
-  const sortie = mkdtempSync(join(tmpdir(), 'cerf-proto-'));
+test('Empaquetage : vision-prototype.zip a main.qml à sa racine et tous les fichiers du plugin ; vision-essai.zip porte le .qgs', () => {
+  const sortie = mkdtempSync(join(tmpdir(), 'vision-proto-'));
   try {
     execFileSync(process.execPath, [join(PROTO, 'empaqueter.mjs'), sortie], { stdio: 'pipe' });
-    const plugin = Zip.listerZip(new Uint8Array(readFileSync(join(sortie, 'cerf-prototype.zip'))));
+    const plugin = Zip.listerZip(new Uint8Array(readFileSync(join(sortie, 'vision-prototype.zip'))));
     const noms = plugin.entrees.map((e) => e.nom).sort();
-    assert.deepEqual(noms, ['Cerf.qml', 'EssaiModule.qml', 'cerf-zip.mjs', 'icon.svg', 'main.qml', 'metadata.txt', 'module-essai.mjs']);
-    const projet = Zip.listerZip(new Uint8Array(readFileSync(join(sortie, 'cerf-essai.zip'))));
-    assert.deepEqual(projet.entrees.map((e) => e.nom), ['cerf-essai.qgs']);
+    assert.deepEqual(noms, ['EssaiModule.qml', 'Vision.qml', 'icon.svg', 'main.qml', 'metadata.txt', 'module-essai.mjs', 'vision-zip.mjs']);
+    const projet = Zip.listerZip(new Uint8Array(readFileSync(join(sortie, 'vision-essai.zip'))));
+    assert.deepEqual(projet.entrees.map((e) => e.nom), ['vision-essai.qgs']);
   } finally {
     rmSync(sortie, { recursive: true, force: true });
   }

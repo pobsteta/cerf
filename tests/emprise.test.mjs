@@ -62,7 +62,7 @@ test('le script se relance sans argument (contour versé) et redonne les mêmes 
 });
 
 test("le script sort en erreur si l'empreinte du contour diffère", () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-contour-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-contour-'));
   try {
     const faux = join(dossier, 'metropole.geojson');
     writeFileSync(faux, Buffer.concat([readFileSync(contourVerse), Buffer.from('\n')]));

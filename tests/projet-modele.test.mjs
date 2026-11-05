@@ -1,24 +1,24 @@
-// Mission 005 : tests du projet modèle cerf.qgz (écrits avant le projet, mission 006).
+// Mission 005 : tests du projet modèle vision.qgz (écrits avant le projet, mission 006).
 // Sources des valeurs (aucune n'est inventée) :
-//   - docs/spec.md § 2 point 1 : Lambert 93 (EPSG:2154), deux fonds XYZ, variable de projet cerf_id ;
-//   - docs/spec.md § 3.3 : cerf_id est un UUID, écrit par QGIS dans le projet ; § 3.4 : zoom max, « © IGN », aucune clé ;
+//   - docs/spec.md § 2 point 1 : Lambert 93 (EPSG:2154), deux fonds XYZ, variable de projet vision_id ;
+//   - docs/spec.md § 3.3 : vision_id est un UUID, écrit par QGIS dans le projet ; § 3.4 : zoom max, « © IGN », aucune clé ;
 //   - mission 045 (5 novembre 2026, arbitrages de Pascal) : cinq fonds XYZ dans le groupe, du dessus au dessous : Cadastre (visible),
 //     Plan IGN v2 (visible), OpenStreetMap, OpenTopoMap, BD ORTHO (décochés) ; zoom et attribution par fond ; docs/referentiels/fonds-osm-cadastre.md ;
 //   - docs/referentiels/fonds-ign.md § 1 (gabarits XYZ, mesurés le 2 novembre 2026) et § 2 (zoom 0 à 19) ;
 //   - docs/adr/0002-fonds-ign-xyz.md et son amendement du 2 novembre 2026 (PM gardé, zoom 19, « © IGN »).
 // Amendement du 3 novembre 2026 (Pascal) : les contrôles « deux fonds XYZ, zoom 0 à 19, © IGN » portent sur les couches du groupe
 // « Fonds de carte », non sur toutes les couches du projet (la couche « Saisie terrain » de la mission 021 est hors du groupe).
-// Emplacement : cerf.qgz à la racine du dépôt. La fiche 006 ne donne pas de chemin : CHEMIN ci-dessous
+// Emplacement : vision.qgz à la racine du dépôt. La fiche 006 ne donne pas de chemin : CHEMIN ci-dessous
 // est une hypothèse du testeur, à confirmer par l'orchestrateur.
-// ROUGE ATTENDU tant que cerf.qgz n'existe pas (mission 006) : chaque test « cerf.qgz » échoue avec le message
-// « cerf.qgz absent ». Les tests « garde-fou » (fixtures en mémoire) sont verts : ils prouvent que la
+// ROUGE ATTENDU tant que vision.qgz n'existe pas (mission 006) : chaque test « vision.qgz » échoue avec le message
+// « vision.qgz absent ». Les tests « garde-fou » (fixtures en mémoire) sont verts : ils prouvent que la
 // vérification accepte un projet juste et refuse chaque projet fautif.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { inflateRawSync } from 'node:zlib';
 
-const CHEMIN = new URL('../cerf.qgz', import.meta.url);
+const CHEMIN = new URL('../vision.qgz', import.meta.url);
 
 // --- Valeurs attendues (voir sources en tête de fichier) -------------------------------------------
 const GABARIT = (couche, format) =>
@@ -40,7 +40,7 @@ const UUID_NUL = '00000000-0000-0000-0000-000000000000';
 function lireZip(buf) {
   let e = buf.length - 22;
   while (e >= 0 && buf.readUInt32LE(e) !== 0x06054b50) e--;
-  if (e < 0) throw new Error("cerf.qgz n'est pas un zip (fin de répertoire introuvable)");
+  if (e < 0) throw new Error("vision.qgz n'est pas un zip (fin de répertoire introuvable)");
   const n = buf.readUInt16LE(e + 10);
   let p = buf.readUInt32LE(e + 16);
   const entrees = {};
@@ -139,11 +139,11 @@ const lireSource = (s) => {
 const verifs = {
   'CRS du projet EPSG:2154': (p) => (p.crsProjet.authid === 'EPSG:2154' && p.crsProjet.srid === '2154' ? [] : [`projectCrs = ${p.crsProjet.authid}/${p.crsProjet.srid}, attendu EPSG:2154/2154`]),
   'CRS de la carte (destinationsrs) EPSG:2154': (p) => (p.crsCarte === 'EPSG:2154' ? [] : [`destinationsrs = ${p.crsCarte}, attendu EPSG:2154`]),
-  'variable de projet cerf_id : une seule, UUID non nul': (p) => {
-    const v = p.variables.filter(([n]) => n === 'cerf_id');
-    if (v.length !== 1) return [`${v.length} variable(s) cerf_id au niveau du projet, attendu 1`];
-    if (!UUID.test(v[0][1] ?? '')) return [`cerf_id = « ${v[0][1]} », pas un UUID`];
-    return v[0][1] === UUID_NUL ? ["cerf_id est l'UUID nul : à générer par QGIS"] : [];
+  'variable de projet vision_id : une seule, UUID non nul': (p) => {
+    const v = p.variables.filter(([n]) => n === 'vision_id');
+    if (v.length !== 1) return [`${v.length} variable(s) vision_id au niveau du projet, attendu 1`];
+    if (!UUID.test(v[0][1] ?? '')) return [`vision_id = « ${v[0][1]} », pas un UUID`];
+    return v[0][1] === UUID_NUL ? ["vision_id est l'UUID nul : à générer par QGIS"] : [];
   },
   'exactement cinq fonds XYZ dans le groupe « Fonds de carte »': (p) => {
     const d = [];
@@ -200,7 +200,7 @@ const COUCHE_SAISIE = '<maplayer type="vector" geometry="Point"><id>saisie_0</id
   '<datasource>./saisie.gpkg|layername=saisie_terrain</datasource><srs><spatialrefsys><authid>EPSG:2154</authid></spatialrefsys></srs></maplayer>';
 function projet(o = {}) {
   const fonds = o.fonds ?? FONDS;
-  const noms = o.sansId ? '' : `<value>${o.nomVar ?? 'cerf_id'}</value>`;
+  const noms = o.sansId ? '' : `<value>${o.nomVar ?? 'vision_id'}</value>`;
   const vals = o.sansId ? '' : `<value>${o.valeur ?? UUID_ESSAI}</value>`;
   return `<!DOCTYPE qgis><qgis version="3.34"><projectCrs><spatialrefsys><srid>${o.srid ?? 2154}</srid><authid>${o.authid ?? 'EPSG:2154'}</authid></spatialrefsys></projectCrs>` +
     `<layer-tree-group>${o.horsGroupe ? '<layer-tree-layer id="hors_0" name="Fond égaré"/>' : ''}${o.saisie ? '<layer-tree-layer id="saisie_0" name="Saisie terrain"/>' : ''}<layer-tree-group name="${o.nomGroupe ?? 'Fonds de carte'}">${fonds.map((f, i) => `<layer-tree-layer id="fond_${i}" name="${f.nom}" checked="${(o.cochees ?? FONDS.map((g) => g.visible))[i] ? 'Qt::Checked' : 'Qt::Unchecked'}"/>`).join('')}</layer-tree-group></layer-tree-group>` +
@@ -208,7 +208,7 @@ function projet(o = {}) {
     `<projectlayers>${fonds.map((f, i) => couche(i, f, i === 0 ? o.c0 : undefined)).join('')}${o.saisie ? COUCHE_SAISIE : ''}${o.horsGroupe ? couche('hors', { nom: 'Fond égaré', url: FONDS[0].url }).replace('<id>fond_hors</id>', '<id>hors_0</id>') : ''}</projectlayers>` +
     `<properties><Variables><variableNames type="QStringList">${noms}</variableNames><variableValues type="QStringList">${vals}</variableValues></Variables></properties></qgis>`;
 }
-const qgz = (xml) => ecrireZip({ 'cerf.qgs': xml });
+const qgz = (xml) => ecrireZip({ 'vision.qgs': xml });
 
 // --- Garde-fous : la vérification accepte le juste, refuse chaque faute -------------------------------------
 test('garde-fou : un projet conforme (fixture) ne donne aucun défaut', () => {
@@ -252,10 +252,10 @@ test('garde-fou : projet conforme, ordre alphabétique de QGIS (interpretation, 
 const fautes = {
   'CRS projet EPSG:4326': [{ authid: 'EPSG:4326', srid: 4326 }, 'CRS du projet'],
   'CRS carte EPSG:3857': [{ canvas: 'EPSG:3857' }, 'CRS de la carte'],
-  'cerf_id absent': [{ sansId: true }, 'variable de projet cerf_id'],
-  'variable mal nommée (cerf-id)': [{ nomVar: 'cerf-id' }, 'variable de projet cerf_id'],
-  'cerf_id pas un UUID': [{ valeur: 'ma-foret' }, 'variable de projet cerf_id'],
-  'cerf_id UUID nul': [{ valeur: UUID_NUL }, 'UUID nul'],
+  'vision_id absent': [{ sansId: true }, 'variable de projet vision_id'],
+  'variable mal nommée (vision-id)': [{ nomVar: 'vision-id' }, 'variable de projet vision_id'],
+  'vision_id pas un UUID': [{ valeur: 'ma-foret' }, 'variable de projet vision_id'],
+  'vision_id UUID nul': [{ valeur: UUID_NUL }, 'UUID nul'],
   'zoom max 20 (404 au-delà de 19)': [{ c0: { zmax: 20 } }, 'zoom de chaque fond'],
   'jeu PM_0_19 au lieu de PM': [{ c0: { url: FONDS[0].url.replace('TILEMATRIXSET=PM&', 'TILEMATRIXSET=PM_0_19&') } }, 'gabarit XYZ exact'],
   'lignes et colonnes inversées': [{ c0: { url: FONDS[0].url.replace('TILEROW={y}&TILECOL={x}', 'TILEROW={x}&TILECOL={y}') } }, 'gabarit XYZ exact'],
@@ -293,14 +293,14 @@ test("garde-fou : un fichier qui n'est pas un zip est refusé", () => {
   assert.throws(() => defauts(Buffer.from('pas un zip, juste du texte, assez long pour passer 22 octets')), /pas un zip/);
 });
 
-// --- Le vrai cerf.qgz : rouge tant que la mission 006 n'est pas faite ----------------------------------------
+// --- Le vrai vision.qgz : rouge tant que la mission 006 n'est pas faite ----------------------------------------
 function reel() {
-  assert.ok(existsSync(CHEMIN), "cerf.qgz absent à la racine du dépôt : le projet modèle n'est pas encore produit (mission 006)");
+  assert.ok(existsSync(CHEMIN), "vision.qgz absent à la racine du dépôt : le projet modèle n'est pas encore produit (mission 006)");
   return analyser(readFileSync(CHEMIN));
 }
-test('cerf.qgz existe et contient un seul .qgs', () => { reel(); });
+test('vision.qgz existe et contient un seul .qgs', () => { reel(); });
 for (const [nom, f] of Object.entries(verifs)) {
-  test(`cerf.qgz : ${nom}`, () => {
+  test(`vision.qgz : ${nom}`, () => {
     assert.deepEqual(f(reel()), []);
   });
 }

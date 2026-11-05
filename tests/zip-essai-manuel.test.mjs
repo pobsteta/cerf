@@ -1,6 +1,6 @@
 // Mission 033 : le zip de démonstration essai-manuel.zip (outils/zip-essai-manuel.mjs).
-// Contenu, reproductibilité à l'octet, reconnaissance par les règles du plugin (cerf-styles.mjs) et contrôles
-// d'import (cerf-controles.mjs), appelés en boîte noire. Les lectures du zip, du Shapefile et du GeoJSON sont
+// Contenu, reproductibilité à l'octet, reconnaissance par les règles du plugin (vision-styles.mjs) et contrôles
+// d'import (vision-controles.mjs), appelés en boîte noire. Les lectures du zip, du Shapefile et du GeoJSON sont
 // refaites ici, à part de l'outil. Données fictives.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,8 +12,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { inflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { fabriquerManuel, NOM_ZIP, NOM_PRODBOIS } from '../outils/zip-essai-manuel.mjs';
-import { reconnaitre, styleDe, champCodeDe } from '../plugin/cerf-styles.mjs';
-import { controlerCouche, EMPRISE_VRAISEMBLANCE } from '../plugin/cerf-controles.mjs';
+import { reconnaitre, styleDe, champCodeDe } from '../plugin/vision-styles.mjs';
+import { controlerCouche, EMPRISE_VRAISEMBLANCE } from '../plugin/vision-controles.mjs';
 import { flashcodes, generer, verifier, notes } from '../outils/flashcodes.mjs';
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -84,7 +84,7 @@ function versLambert93(lon, lat) {
 
 let dossierA; let dossierB; let zip; let chemin;
 before(() => {
-  dossierA = mkdtempSync(join(tmpdir(), 'cerf-t033a-')); dossierB = mkdtempSync(join(tmpdir(), 'cerf-t033b-'));
+  dossierA = mkdtempSync(join(tmpdir(), 'vision-t033a-')); dossierB = mkdtempSync(join(tmpdir(), 'vision-t033b-'));
   chemin = fabriquerManuel(dossierA); fabriquerManuel(dossierB);
   zip = lireZip(chemin);
 });
@@ -242,7 +242,7 @@ test('contrôle de contrepartie : sans son .prj, le même Shapefile serait refus
 });
 
 test('si pyproj est là : le .prj est reconnu comme EPSG:2154 et les points GeoJSON retombent sur les tiges', { skip: spawnSync('python3', ['-I', '-c', 'import pyproj']).status !== 0 && 'pyproj absent' }, () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t033p-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t033p-'));
   try {
     const prj = join(dossier, 'UG.prj'); const gj = join(dossier, 'p.geojson');
     writeFileSync(prj, zip['UG.prj'].donnees); writeFileSync(gj, zip[NOM_PRODBOIS].donnees);
@@ -263,7 +263,7 @@ print(json.dumps({"epsg": crs.to_epsg(), "pts": [t.transform(*f["geometry"]["coo
 const OUTILS = !spawnSync('qrencode', ['--version'], { stdio: 'ignore' }).error && !spawnSync('zbarimg', ['--version'], { stdio: 'ignore' }).error;
 
 test('flashcode : une seule adresse, celle de l\'étiquette fixe essai-manuel (jamais latest), identique en mode stable et essai', () => {
-  const url = 'https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip';
+  const url = 'https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel.zip';
   assert.deepEqual(flashcodes('manuel', 'essai').map((f) => f.url), [url]);
   assert.deepEqual(flashcodes('manuel', 'stable').map((f) => f.url), [url]);
   assert.ok(!url.includes('latest'));
@@ -271,7 +271,7 @@ test('flashcode : une seule adresse, celle de l\'étiquette fixe essai-manuel (j
 });
 
 test('flashcode : PNG et SVG décodés donnent exactement l\'adresse du zip', { skip: OUTILS ? false : 'qrencode ou zbarimg absent' }, () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t033f-'));
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t033f-'));
   try {
     assert.equal(generer(dossier, 'manuel', 'essai').length, 2);
     assert.deepEqual(verifier(dossier, 'manuel', 'essai'), []);
@@ -283,7 +283,7 @@ const wf = readFileSync(join(RACINE, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché sur la branche de la mission et sur main, étiquette fixe essai-manuel, jamais latest', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?(, 'mission\/040-publier-piege')?(, 'mission\/047-styles-gpkg')?\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/050-vision'\]/);
   assert.match(wfCode, /concurrency:\n\s+group: release-essai-manuel\n\s+cancel-in-progress: false/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\*/);
   assert.match(wfCode, /--prerelease --latest=false/);
@@ -295,11 +295,11 @@ test('workflow : déclenché sur la branche de la mission et sur main, étiquett
 });
 
 test('workflow : les notes disent données fictives, plugin 0.3.2 ou plus, et les couleurs de la spec § 5', () => {
-  for (const motif of [/fictives/, /plugin Cerf 0\.3\.2 ou plus/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /cerf\.qgz/]) assert.match(wf, motif);
+  for (const motif of [/fictives/, /plugin Vision 0\.3\.2 ou plus/, /#0000FF/, /#FF8C00/, /#008B8B/, /15 pt/, /liseré blanc/, /vision\.qgz/]) assert.match(wf, motif);
 });
 
 test('mission 036 : notes « 0.3.2 ou plus » avec sa raison, jamais 0.3.0 ; un seul titre de flashcodes, aucun flashcode perdu', () => {
-  assert.match(wf, /plugin Cerf 0\.3\.2 ou plus/);
+  assert.match(wf, /plugin Vision 0\.3\.2 ou plus/);
   assert.match(wf, /Avant la 0\.3\.2, toute couche était refusée/);
   assert.doesNotMatch(wf, /0\.3\.0 ou plus/);
   // Le workflow assemble les deux blocs de notes ; on rejoue l'assemblage.

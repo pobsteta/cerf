@@ -1,7 +1,7 @@
 [general]
-name=Cerf, prototype n° 1
+name=Vision, prototype n° 1
 description=Plugin jetable de la mission 004 : lister, copier, effacer un zip et charger un module .mjs, pour le protocole tests/recette/prototype-1.md. Sans valeur métier.
 author=Pascal Obstétar
 version=0.1.0
 icon=icon.svg
-homepage=https://github.com/pobsteta/cerf
+homepage=https://github.com/pobsteta/vision

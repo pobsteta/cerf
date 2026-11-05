@@ -50,22 +50,22 @@ test('zoom min <= zoom max, tous deux dans 0 à 19 (limite de la Géoplateforme)
   const [mn, mx] = [+prop('baseMapTilesMinZoomLevel')[2], +prop('baseMapTilesMaxZoomLevel')[2]];
   assert.ok(0 <= mn && mn <= mx && mx <= 19);
 });
-test('le thème et les propriétés ne changent ni les fonds XYZ ni la variable cerf_id', () => {
+test('le thème et les propriétés ne changent ni les fonds XYZ ni la variable vision_id', () => {
   assert.equal(FONDS.map((f) => f.nom).join(','), 'Cadastre,Plan IGN v2,OpenStreetMap,OpenTopoMap,BD ORTHO');
-  assert.match(qgs, /<value>ebad8ff8-577e-48bc-9489-6bab871230c2<\/value>/);
+  assert.match(qgs, /<value>d98bf4b8-0fac-4dac-85cf-58e6701aceeb<\/value>/);
   assert.match(qgs, /<layer-tree-layer id="[^"]+" name="Saisie terrain"/);
 });
 test('aucune clé d\'API dans le projet (ni apikey, ni key=, ni token)', () => {
   assert.doesNotMatch(qgs, /apikey|[?&;]key=|token|secret/i);
 });
-test('cerf.qgz est déterministe et celui du dépôt est à jour (thème et propriétés compris)', () => {
+test('vision.qgz est déterministe et celui du dépôt est à jour (thème et propriétés compris)', () => {
   assert.ok(ecrireQgz(ecrireQgs()).equals(ecrireQgz(ecrireQgs())));
-  assert.ok(readFileSync(new URL('../cerf.qgz', import.meta.url)).equals(ecrireQgz(ecrireQgs())));
-  const dansDepot = readFileSync(new URL('../cerf.qgz', import.meta.url));
+  assert.ok(readFileSync(new URL('../vision.qgz', import.meta.url)).equals(ecrireQgz(ecrireQgs())));
+  const dansDepot = readFileSync(new URL('../vision.qgz', import.meta.url));
   const n = dansDepot.readUInt16LE(26 ) + 30;
   assert.match(inflateRawSync(dansDepot.subarray(n, n + dansDepot.readUInt32LE(18))).toString('utf8'), /<visibility-preset name="Fond embarqué" has-checked-group-info="1">/);
 });
-test('D1 (Pascal, 5 novembre 2026) : cerf.qgz ne déclare pas basemap.mbtiles (c\'est le plugin, mission 048)', () => {
+test('D1 (Pascal, 5 novembre 2026) : vision.qgz ne déclare pas basemap.mbtiles (c\'est le plugin, mission 048)', () => {
   assert.ok(!qgs.includes('basemap.mbtiles'));
   assert.ok(!qgs.includes('basemap'.concat('.mbtiles')));
 });

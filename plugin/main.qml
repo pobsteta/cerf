@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, plugin QField d'application (mission 008) : point d'entrée.
-// Écrit pour Cerf (ADR 0006). Ce fichier n'importe aucun .mjs : il crée Cerf.qml (qui importe
-// cerf-logique.mjs) et Panneau.qml par Qt.createComponent, pour qu'un échec de chargement
+// Vision, plugin QField d'application (mission 008) : point d'entrée.
+// Écrit pour Vision (ADR 0006). Ce fichier n'importe aucun .mjs : il crée Vision.qml (qui importe
+// vision-logique.mjs) et Panneau.qml par Qt.createComponent, pour qu'un échec de chargement
 // s'affiche au lieu d'empêcher le plugin de démarrer (motif du prototype n° 1, prouvé).
 // API de QField lue dans le code de QField v4.3.7 : plugin/PLAN.md § 5.
 import QtQuick
@@ -12,8 +12,8 @@ import org.qfield
 Item {
   id: plugin
 
-  property var cerf: null              // objet de Cerf.qml
-  property string erreurModule: ""     // erreur de chargement de Cerf.qml ou du module
+  property var vision: null              // objet de Vision.qml
+  property string erreurModule: ""     // erreur de chargement de Vision.qml ou du module
   property string dernierMessage: ""
 
   // Montre un message : toast de QField (non prouvé) et zone de messages du panneau.
@@ -27,33 +27,33 @@ Item {
     }
   }
 
-  // cerf_id lu sans le module, pour le seul cas où le module ne se charge pas.
-  function cerfIdPresent() {
+  // vision_id lu sans le module, pour le seul cas où le module ne se charge pas.
+  function visionIdPresent() {
     if (!qgisProject) return false;
     const v = ExpressionContextUtils.projectVariables(qgisProject);
-    return !!v && v["cerf_id"] !== undefined && v["cerf_id"] !== null && String(v["cerf_id"]) !== "";
+    return !!v && v["vision_id"] !== undefined && v["vision_id"] !== null && String(v["vision_id"]) !== "";
   }
 
-  // Geste 2 : à chaque ouverture de projet. Le bouton n'apparaît que dans un projet Cerf
+  // Geste 2 : à chaque ouverture de projet. Le bouton n'apparaît que dans un projet Vision
   // (critère 9).
   function demarrer() {
-    if (!cerf) {
-      boutonCerf.visible = cerfIdPresent();
-      if (boutonCerf.visible) afficher("Cerf : module non chargé\n" + erreurModule);
+    if (!vision) {
+      boutonVision.visible = visionIdPresent();
+      if (boutonVision.visible) afficher("Vision : module non chargé\n" + erreurModule);
       return;
     }
-    const r = cerf.demarrer();
-    boutonCerf.visible = r.boutonVisible;
+    const r = vision.demarrer();
+    boutonVision.visible = r.boutonVisible;
     if (!r.boutonVisible) fenetre.close();
     if (r.message) afficher(r.message);
   }
 
   Component.onCompleted: {
-    iface.addItemToPluginsToolbar(boutonCerf);
-    const composant = Qt.createComponent("Cerf.qml");
+    iface.addItemToPluginsToolbar(boutonVision);
+    const composant = Qt.createComponent("Vision.qml");
     if (composant.status === Component.Ready) {
-      cerf = composant.createObject(plugin);
-      if (!cerf) erreurModule = composant.errorString();
+      vision = composant.createObject(plugin);
+      if (!vision) erreurModule = composant.errorString();
     } else {
       erreurModule = composant.errorString();
     }
@@ -62,7 +62,7 @@ Item {
   }
 
   Connections {
-    target: plugin.cerf
+    target: plugin.vision
     ignoreUnknownSignals: true
     function onMessage(texte) {
       plugin.afficher(texte);
@@ -77,7 +77,7 @@ Item {
   }
 
   RoundButton {
-    id: boutonCerf
+    id: boutonVision
     visible: false
     width: 48
     height: 48
@@ -104,10 +104,10 @@ Item {
     property string erreurPanneau: ""
 
     onOpened: {
-      if (panneau === null && erreurPanneau === "" && plugin.cerf) {
+      if (panneau === null && erreurPanneau === "" && plugin.vision) {
         const composant = Qt.createComponent("Panneau.qml");
         if (composant.status === Component.Ready) {
-          panneau = composant.createObject(zonePanneau, { cerf: plugin.cerf, hote: plugin });
+          panneau = composant.createObject(zonePanneau, { vision: plugin.vision, hote: plugin });
           if (!panneau) erreurPanneau = composant.errorString();
         } else {
           erreurPanneau = composant.errorString();
@@ -133,7 +133,7 @@ Item {
         wrapMode: Text.WrapAnywhere
         color: "black"
         font.pointSize: 16
-        text: "Cerf : écran non chargé\n" + plugin.erreurModule + fenetre.erreurPanneau
+        text: "Vision : écran non chargé\n" + plugin.erreurModule + fenetre.erreurPanneau
       }
 
       Item {

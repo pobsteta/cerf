@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Mission 006 : écrit le projet modèle cerf.qgz (QGIS n'est pas dans le conteneur, d'où ce script).
+// Mission 006 : écrit le projet modèle vision.qgz (QGIS n'est pas dans le conteneur, d'où ce script).
 //
-// Mission 021 : écrit aussi saisie.gpkg (couche « Saisie terrain », vide) et déclare la couche dans cerf.qgz.
+// Mission 021 : écrit aussi saisie.gpkg (couche « Saisie terrain », vide) et déclare la couche dans vision.qgz.
 //
-// Usage :  node outils/projet-modele.mjs [--cerf-id <UUID>] [--sortie <chemin.qgz>] [--gpkg <chemin.gpkg>]
-//   --cerf-id  UUID de la variable de projet cerf_id (spec § 3.3). Par défaut : CERF_ID_PAR_DEFAUT ci-dessous,
-//              tiré une fois le 2 novembre 2026 puis figé : un seul cerf.qgz par appareil, pas de
-//              consigne de changer cerf_id (spec § 3.3). Seul cet UUID peut varier d'une exécution à l'autre.
-//   --sortie   chemin du .qgz (par défaut : cerf.qgz à la racine du dépôt).
+// Usage :  node outils/projet-modele.mjs [--vision-id <UUID>] [--sortie <chemin.qgz>] [--gpkg <chemin.gpkg>]
+//   --vision-id  UUID de la variable de projet vision_id (spec § 3.3). Par défaut : VISION_ID_PAR_DEFAUT ci-dessous,
+//              tiré une fois le 2 novembre 2026 puis figé : un seul vision.qgz par appareil, pas de
+//              consigne de changer vision_id (spec § 3.3). Seul cet UUID peut varier d'une exécution à l'autre.
+//   --sortie   chemin du .qgz (par défaut : vision.qgz à la racine du dépôt).
 //   --gpkg     chemin du saisie.gpkg (par défaut : saisie.gpkg à la racine du dépôt). Le script n'écrit que dans
 //              le dépôt : il ne touche jamais un saisie.gpkg d'appareil (voir outils/zips-projet-modele.mjs).
 // Le script est déterministe : même UUID => mêmes octets (horodatage du zip fixé, identifiants de couche dérivés du nom).
@@ -22,7 +22,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { deflateRawSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
-export const CERF_ID_PAR_DEFAUT = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+export const VISION_ID_PAR_DEFAUT = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 export const VERSION_QGIS = '3.34.0-Prizren'; // version d'écriture déclarée (LTR) ; QGIS la met à jour à l'enregistrement
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -71,7 +71,7 @@ const encoderUrl = (u) => u.replace(/[%&=+#{}]/g, (c) => '%' + c.charCodeAt(0).t
 const source = (f) => `type=xyz&url=${encoderUrl(f.url)}&zmax=${f.zmax}&zmin=${f.zmin}`;
 // Identifiant de couche à la manière de QGIS (nom + UUID, tirets en « _ »), mais dérivé du nom : déterministe.
 const idCouche = (f) => {
-  const h = createHash('sha1').update('cerf:' + f.nom).digest('hex');
+  const h = createHash('sha1').update('vision:' + f.nom).digest('hex');
   return `${f.nom.replace(/[^A-Za-z0-9]/g, '_')}_${h.slice(0, 8)}_${h.slice(8, 12)}_${h.slice(12, 16)}_${h.slice(16, 20)}_${h.slice(20, 32)}`;
 };
 
@@ -258,8 +258,8 @@ CREATE TABLE ${TABLE_SAISIE} (fid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ge
   } finally { db.close(); }
 }
 
-export function ecrireQgs(cerfId = CERF_ID_PAR_DEFAUT) {
-  if (!UUID.test(cerfId) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(cerfId)) throw new Error(`cerf_id « ${cerfId} » : UUID valide et non nul attendu`);
+export function ecrireQgs(visionId = VISION_ID_PAR_DEFAUT) {
+  if (!UUID.test(visionId) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(visionId)) throw new Error(`vision_id « ${visionId} » : UUID valide et non nul attendu`);
   const e = EXTENT;
   const feuilles = FONDS.map((f) => `      <layer-tree-layer id="${idCouche(f)}" name="${xml(f.nom)}" source="${xml(source(f))}" providerKey="wms" expanded="1" checked="${f.visible ? 'Qt::Checked' : 'Qt::Unchecked'}" legend_exp="" patch_size="-1,-1" legend_split_behavior="0">
         <customproperties><Option/></customproperties>
@@ -290,9 +290,9 @@ ${FONDS_DU_THEME.map((n) => `      <layer id="${idCouche({ nom: n })}" visible="
 `;
   const proprietesFond = PROPRIETES_QFIELDSYNC.map((p) => `      <${p.cle} type="${p.type}">${xml(p.valeur)}</${p.cle}>`).join('\n');
   return `<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis projectname="Cerf" version="${VERSION_QGIS}" saveUser="cerf" saveUserFull="Cerf">
+<qgis projectname="Vision" version="${VERSION_QGIS}" saveUser="vision" saveUserFull="Vision">
   <homePath path=""/>
-  <title>Cerf</title>
+  <title>Vision</title>
   <transaction mode="Disabled"/>
   <projectFlags set=""/>
   <projectCrs>${SRS_2154}</projectCrs>
@@ -322,10 +322,10 @@ ${FONDS.map((f) => `    <layer id="${idCouche(f)}"/>`).join('\n')}
   <properties>
     <Variables>
       <variableNames type="QStringList">
-        <value>cerf_id</value>
+        <value>vision_id</value>
       </variableNames>
       <variableValues type="QStringList">
-        <value>${cerfId}</value>
+        <value>${visionId}</value>
       </variableValues>
     </Variables>
     <SpatialRefSys>
@@ -343,7 +343,7 @@ ${themeFond}</qgis>
 // --- zip déterministe (un seul membre, deflate, horodatage MS-DOS fixe : 2026-11-02 00:00) ---
 const TABLE = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
 const crc32 = (b) => { let c = 0xffffffff; for (const x of b) c = TABLE[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
-export function ecrireQgz(texte, nom = 'cerf.qgs') {
+export function ecrireQgz(texte, nom = 'vision.qgs') {
   const brut = Buffer.from(texte, 'utf8'), pk = deflateRawSync(brut, { level: 9 }), n = Buffer.from(nom, 'utf8'), crc = crc32(brut);
   const heure = 0, date = ((2026 - 1980) << 9) | (11 << 5) | 2;
   const l = Buffer.alloc(30);
@@ -359,11 +359,11 @@ export function ecrireQgz(texte, nom = 'cerf.qgs') {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = process.argv.slice(2), val = (opt) => { const i = a.indexOf(opt); return i >= 0 ? a[i + 1] : undefined; };
-  const sortie = val('--sortie') ?? fileURLToPath(new URL('../cerf.qgz', import.meta.url));
-  const cerfId = val('--cerf-id') ?? CERF_ID_PAR_DEFAUT;
+  const sortie = val('--sortie') ?? fileURLToPath(new URL('../vision.qgz', import.meta.url));
+  const visionId = val('--vision-id') ?? VISION_ID_PAR_DEFAUT;
   const gpkg = val('--gpkg') ?? fileURLToPath(new URL('../saisie.gpkg', import.meta.url));
-  writeFileSync(sortie, ecrireQgz(ecrireQgs(cerfId)));
-  console.log(`${sortie} écrit (cerf_id = ${cerfId})`);
+  writeFileSync(sortie, ecrireQgz(ecrireQgs(visionId)));
+  console.log(`${sortie} écrit (vision_id = ${visionId})`);
   ecrireGpkg(gpkg);
   console.log(`${gpkg} écrit (vide, table ${TABLE_SAISIE})`);
 }

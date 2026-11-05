@@ -11,7 +11,7 @@ import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 import { fabriquerZips, nomsDuZip, verifierMiseAJour, verifierPremiereInstallation, ZIP_MISE_A_JOUR, ZIP_PREMIERE_INSTALLATION } from '../outils/zips-projet-modele.mjs';
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
-const tmp = mkdtempSync(join(tmpdir(), 'cerf-zips-021-'));
+const tmp = mkdtempSync(join(tmpdir(), 'vision-zips-021-'));
 test.after(() => rmSync(tmp, { recursive: true, force: true }));
 const e = (nom, d = 'x') => ({ nom: Buffer.from(nom), donnees: Buffer.from(d), stocke: false, utf8: true });
 function contenu(buf, nom) { // lit un membre
@@ -27,22 +27,22 @@ function contenu(buf, nom) { // lit un membre
   return null;
 }
 
-test('le zip de mise à jour contient cerf.qgz seul, sans saisie.gpkg', () => {
+test('le zip de mise à jour contient vision.qgz seul, sans saisie.gpkg', () => {
   const r = fabriquerZips(join(tmp, 'a'), RACINE), buf = readFileSync(r.miseAJour);
-  assert.deepEqual(nomsDuZip(buf), ['cerf.qgz']);
-  assert.ok(contenu(buf, 'cerf.qgz').equals(contenu(readFileSync(r.premiereInstallation), 'cerf.qgz')));
+  assert.deepEqual(nomsDuZip(buf), ['vision.qgz']);
+  assert.ok(contenu(buf, 'vision.qgz').equals(contenu(readFileSync(r.premiereInstallation), 'vision.qgz')));
 });
-test('le zip de première installation contient cerf.qgz et saisie.gpkg (vide, identique à celui du dépôt)', () => {
+test('le zip de première installation contient vision.qgz et saisie.gpkg (vide, identique à celui du dépôt)', () => {
   const r = fabriquerZips(join(tmp, 'b'), RACINE), buf = readFileSync(r.premiereInstallation);
-  assert.deepEqual(nomsDuZip(buf).sort(), ['cerf.qgz', 'saisie.gpkg']);
+  assert.deepEqual(nomsDuZip(buf).sort(), ['saisie.gpkg', 'vision.qgz']);
   assert.ok(contenu(buf, 'saisie.gpkg').equals(readFileSync(join(RACINE, 'saisie.gpkg'))));
-  assert.ok(contenu(buf, 'cerf.qgz').equals(readFileSync(join(RACINE, 'cerf.qgz'))));
+  assert.ok(contenu(buf, 'vision.qgz').equals(readFileSync(join(RACINE, 'vision.qgz'))));
 });
 test('noms des fichiers : ceux de la décision de Pascal (fiche 028)', () => {
-  assert.equal(ZIP_MISE_A_JOUR, 'projet-cerf-mise-a-jour.zip');
-  assert.equal(ZIP_PREMIERE_INSTALLATION, 'projet-cerf.zip');
+  assert.equal(ZIP_MISE_A_JOUR, 'projet-vision-mise-a-jour.zip');
+  assert.equal(ZIP_PREMIERE_INSTALLATION, 'projet-vision.zip');
   const r = fabriquerZips(join(tmp, 'n'), RACINE);
-  assert.ok(r.miseAJour.endsWith('/projet-cerf-mise-a-jour.zip') && r.premiereInstallation.endsWith('/projet-cerf.zip'));
+  assert.ok(r.miseAJour.endsWith('/projet-vision-mise-a-jour.zip') && r.premiereInstallation.endsWith('/projet-vision.zip'));
 });
 test('déterministe : deux fabrications donnent les mêmes octets', () => {
   const a = fabriquerZips(join(tmp, 'c1'), RACINE), b = fabriquerZips(join(tmp, 'c2'), RACINE);
@@ -51,18 +51,18 @@ test('déterministe : deux fabrications donnent les mêmes octets', () => {
 });
 test('garde-fou : un zip de mise à jour avec saisie.gpkg (racine ou sous-dossier, casse libre) est refusé', () => {
   for (const nom of ['saisie.gpkg', 'SAISIE.GPKG', 'projet/saisie.gpkg']) {
-    assert.throws(() => verifierMiseAJour(ecrireZip([e('cerf.qgz'), e(nom)])), /écraserait/, nom);
+    assert.throws(() => verifierMiseAJour(ecrireZip([e('vision.qgz'), e(nom)])), /écraserait/, nom);
   }
 });
-test('garde-fou : un zip de mise à jour avec autre chose que cerf.qgz seul est refusé ; cerf.qgz seul est accepté', () => {
-  assert.throws(() => verifierMiseAJour(ecrireZip([e('cerf.qgz'), e('notes.txt')])), /seul/);
+test('garde-fou : un zip de mise à jour avec autre chose que vision.qgz seul est refusé ; vision.qgz seul est accepté', () => {
+  assert.throws(() => verifierMiseAJour(ecrireZip([e('vision.qgz'), e('notes.txt')])), /seul/);
   assert.throws(() => verifierMiseAJour(ecrireZip([e('autre.qgz')])), /seul/);
-  assert.doesNotThrow(() => verifierMiseAJour(ecrireZip([e('cerf.qgz')])));
+  assert.doesNotThrow(() => verifierMiseAJour(ecrireZip([e('vision.qgz')])));
 });
 test('garde-fou : la première installation sans saisie.gpkg ou avec un intrus est refusée', () => {
-  assert.throws(() => verifierPremiereInstallation(ecrireZip([e('cerf.qgz')])), /cerf\.qgz et saisie\.gpkg/);
-  assert.throws(() => verifierPremiereInstallation(ecrireZip([e('cerf.qgz'), e('saisie.gpkg'), e('x')])), /cerf\.qgz et saisie\.gpkg/);
-  assert.doesNotThrow(() => verifierPremiereInstallation(ecrireZip([e('cerf.qgz'), e('saisie.gpkg')])));
+  assert.throws(() => verifierPremiereInstallation(ecrireZip([e('vision.qgz')])), /vision\.qgz et saisie\.gpkg/);
+  assert.throws(() => verifierPremiereInstallation(ecrireZip([e('vision.qgz'), e('saisie.gpkg'), e('x')])), /vision\.qgz et saisie\.gpkg/);
+  assert.doesNotThrow(() => verifierPremiereInstallation(ecrireZip([e('vision.qgz'), e('saisie.gpkg')])));
 });
 test('fabriquerZips échoue si une source manque', () => {
   const vide = join(tmp, 'vide'); writeFileSync(join(tmp, 'seul.qgz'), 'x');

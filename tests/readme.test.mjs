@@ -21,7 +21,7 @@ test('les adresses des flashcodes stables et de la mise à jour figurent dans le
   }
   assert.ok(readme.includes(flashcodes('plugin', 'essai')[0].url));
   assert.ok(readme.includes(flashcodes('manuel-geojson', 'stable')[0].url));
-  assert.ok(readme.includes('https://github.com/pobsteta/cerf/releases/download/projet-modele/projet-cerf-mise-a-jour.zip'));
+  assert.ok(readme.includes('https://github.com/pobsteta/vision/releases/download/projet-modele/projet-vision-mise-a-jour.zip'));
 });
 
 test('le README ne contient ni clé ni jeton', () => {
@@ -35,25 +35,25 @@ test('la version du plugin annoncée est celle de plugin/metadata.txt', () => {
 });
 
 test('le plafond cité est PLAFOND_LISTAGE_OCTETS', async () => {
-  const { PLAFOND_LISTAGE_OCTETS } = await import('../plugin/cerf-logique.mjs');
+  const { PLAFOND_LISTAGE_OCTETS } = await import('../plugin/vision-logique.mjs');
   assert.equal(PLAFOND_LISTAGE_OCTETS, 10000000);
   assert.ok(readme.includes('10 Mo'));
   assert.ok(readme.includes(PLAFOND_LISTAGE_OCTETS.toLocaleString('fr-FR').replace(/\s/g, ' ')) || readme.includes('10 000 000'));
 });
 
 test('les champs de code et les messages de retrait cités existent dans le code', async () => {
-  const { CHAMPS_CODE } = await import('../plugin/cerf-styles.mjs');
+  const { CHAMPS_CODE } = await import('../plugin/vision-styles.mjs');
   for (const c of Object.values(CHAMPS_CODE)) assert.ok(readme.includes('`' + c + '`'), c);
-  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const src = readFileSync(join(RACINE, 'plugin', 'vision-logique.mjs'), 'utf8');
   for (const m of ["Fichiers restés sur l'appareil", "Copie conservée sur l'appareil"]) {
     assert.ok(readme.includes(m) && src.includes(m), m);
   }
 });
 
 test('mission 041 : .qml du zip non pris en charge, message sans couche, Shapefile confirmé', async () => {
-  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const src = readFileSync(join(RACINE, 'plugin', 'vision-logique.mjs'), 'utf8');
   const spec = readFileSync(join(RACINE, 'docs', 'spec.md'), 'utf8');
-  const { AVERTISSEMENT_QML_ILLISIBLE } = await import('../plugin/cerf-styles.mjs');
+  const { AVERTISSEMENT_QML_ILLISIBLE } = await import('../plugin/vision-styles.mjs');
   const msg = 'Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans';
   assert.ok(src.includes(msg), 'le code ne contient plus le message « Aucune couche … dans »');
   assert.ok(readme.includes(msg), 'le README ne cite pas le message « Aucune couche … dans » du code');
@@ -71,7 +71,7 @@ test('mission 041 : .qml du zip non pris en charge, message sans couche, Shapefi
 });
 
 test('mission 042 puis 044 : .json non GeoJSON, comportement réel, cité comme le code', () => {
-  const src = readFileSync(join(RACINE, 'plugin', 'cerf-logique.mjs'), 'utf8');
+  const src = readFileSync(join(RACINE, 'plugin', 'vision-logique.mjs'), 'utf8');
   const spec = readFileSync(join(RACINE, 'docs', 'spec.md'), 'utf8');
   // Mission 044 : le filtre par contenu reste (estGeoJson) mais écarte avec une ligne au lieu du silence.
   assert.ok(src.includes("if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) { ecarter(c); continue; }"), 'le code n\'écarte plus un .json par son contenu comme la doc le décrit : relire README et spec § 3.1');
@@ -90,7 +90,7 @@ test('mission 042 puis 044 : .json non GeoJSON, comportement réel, cité comme 
 });
 
 // Mission 043 : les flashcodes affichés dans le README sont décodables et collés à leur adresse.
-// Même règle que tests/flashcodes.test.mjs : sans zbarimg, décodage sauté, sauf CERF_FLASHCODES_EXIGER=1.
+// Même règle que tests/flashcodes.test.mjs : sans zbarimg, décodage sauté, sauf VISION_FLASHCODES_EXIGER=1.
 import { readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { decoder } from '../outils/flashcodes.mjs';
@@ -127,7 +127,7 @@ test('mission 043 : plus de flashcode « joint à la release » seul dans le REA
 });
 
 test('mission 043 : les décodages ne sont pas sautés quand on les exige', () => {
-  if (process.env.CERF_FLASHCODES_EXIGER === '1') assert.ok(ZBAR, 'zbarimg doit être installé');
+  if (process.env.VISION_FLASHCODES_EXIGER === '1') assert.ok(ZBAR, 'zbarimg doit être installé');
 });
 
 // Mission 045 : tant que le critère n° 5 (J+2) n'est pas prouvé, le README ne promet pas le hors ligne d'un fond.

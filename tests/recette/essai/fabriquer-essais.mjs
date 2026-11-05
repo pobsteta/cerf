@@ -49,7 +49,7 @@ const e = (nom, donnees) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.is
 
 export const ESSAI = [
   e('points_essai.geojson', geojson),
-  e('sous-dossier/notes.txt', "Fichier d'essai Cerf, sans valeur.\n"),
+  e('sous-dossier/notes.txt', "Fichier d'essai Vision, sans valeur.\n"),
   e('sous-dossier/shape_essai.cpg', 'UTF-8'),
   e('sous-dossier/shape_essai.dbf', dbf()),
   e('sous-dossier/shape_essai.prj', PRJ_L93),
@@ -65,7 +65,7 @@ export const NOM_CP437_OCTETS = Buffer.from([
   0x66, 0x6f, 0x72, 0x88, 0x74, 0x2f, 0x70, 0x61, 0x72, 0x63, 0x65, 0x6c, 0x6c, 0x65, 0x5f, 0x82, 0x2e, 0x74, 0x78, 0x74,
 ]);
 export const CP437 = [
-  { nom: NOM_CP437_OCTETS, donnees: Buffer.from("Nom accentué d'essai Cerf, sans valeur.\n", 'utf8'), stocke: false, utf8: false },
+  { nom: NOM_CP437_OCTETS, donnees: Buffer.from("Nom accentué d'essai Vision, sans valeur.\n", 'utf8'), stocke: false, utf8: false },
 ];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

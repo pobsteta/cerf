@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, prototype n° 1 (mission 004) : l'écran aux gros boutons (gants, soleil).
-// Écrit pour Cerf (ADR 0006). La logique est dans cerf-zip.mjs (testé sous Node) ; ce
+// Vision, prototype n° 1 (mission 004) : l'écran aux gros boutons (gants, soleil).
+// Écrit pour Vision (ADR 0006). La logique est dans vision-zip.mjs (testé sous Node) ; ce
 // fichier n'appelle que l'API de QField lue dans son code (prototype/PLAN.md § 4).
 // Il ne prouve rien par lui-même : seul le protocole tests/recette/prototype-1.md, rempli
 // par Pascal sur le Samsung, dit ce que QField permet.
@@ -8,10 +8,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.qfield
-import "cerf-zip.mjs" as Zip
+import "vision-zip.mjs" as Zip
 
 Item {
-  id: cerf
+  id: vision
   anchors.fill: parent
 
   // Fourni par main.qml : essayerModule().
@@ -48,17 +48,17 @@ Item {
     return String(platformUtilities.applicationDirectory());
   }
 
-  function lireCerfId() {
+  function lireVisionId() {
     if (!qgisProject) return "";
     const variables = ExpressionContextUtils.projectVariables(qgisProject);
-    if (!variables || variables["cerf_id"] === undefined || variables["cerf_id"] === null) return "";
-    return String(variables["cerf_id"]);
+    if (!variables || variables["vision_id"] === undefined || variables["vision_id"] === null) return "";
+    return String(variables["vision_id"]);
   }
 
   function entete() {
-    const id = lireCerfId();
-    return "Cerf, prototype n° 1, version " + Zip.VERSION + "\n"
-      + "cerf_id lu : " + (id !== "" ? id : "cerf_id absent") + "\n"
+    const id = lireVisionId();
+    return "Vision, prototype n° 1, version " + Zip.VERSION + "\n"
+      + "vision_id lu : " + (id !== "" ? id : "vision_id absent") + "\n"
       + "Dossier du projet : " + (dossierProjet() || "aucun projet ouvert") + "\n"
       + "Dossier de l'application : " + dossierApplication() + "\n"
       + "Copie en cours : " + (copie || "aucune");
@@ -97,7 +97,7 @@ Item {
     let prefixe = "";
     try {
       prefixe = lettre === "A"
-        ? Zip.prefixeHorsProjet(dossierApplication(), lireCerfId())
+        ? Zip.prefixeHorsProjet(dossierApplication(), lireVisionId())
         : Zip.prefixeDansProjet(dossierProjet());
     } catch (e) {
       afficher(titre, ["REFUSÉ : " + e.message]);
@@ -107,7 +107,7 @@ Item {
     lettreEnCours = lettre;
     afficher(titre, ["Sélecteur de fichiers ouvert : choisir un .zip.", "La copie ira dans : " + prefixe]);
     platformUtilities.requestStoragePermission();
-    source = platformUtilities.getFile(prefixe, "{filename}", "*/*", cerf);
+    source = platformUtilities.getFile(prefixe, "{filename}", "*/*", vision);
   }
 
   function copieRecue(recu) {
@@ -125,7 +125,7 @@ Item {
     const lignes = [
       presente ? "Copie faite." : "Copie NON trouvée après le choix.",
       "Chemin de la copie : " + chemin,
-      "cerf_id lu : " + (lireCerfId() || "cerf_id absent"),
+      "vision_id lu : " + (lireVisionId() || "vision_id absent"),
       "Taille de la copie : " + texteTaille(tailleFichier(chemin)),
       "Copie hors du dossier projet (calcul du module) : " + (Zip.estHorsDossier(chemin, dossierProjet()) ? "oui" : "non"),
       "Dans le dossier projet selon QField (isWithinProjectDirectory) : " + (FileUtils.isWithinProjectDirectory(chemin) ? "oui" : "non"),
@@ -136,10 +136,10 @@ Item {
   }
 
   Connections {
-    target: cerf.source
+    target: vision.source
     ignoreUnknownSignals: true
     function onResourceReceived(path) {
-      cerf.copieRecue(path);
+      vision.copieRecue(path);
     }
   }
 
@@ -352,7 +352,7 @@ Item {
         Layout.fillWidth: true
         wrapMode: Text.WrapAnywhere
         color: "black"
-        font.pointSize: cerf.taillePolice - 4
+        font.pointSize: vision.taillePolice - 4
       }
 
       Rectangle {
@@ -369,33 +369,33 @@ Item {
           width: parent.width - 16
           wrapMode: Text.WrapAnywhere
           color: "black"
-          font.pointSize: cerf.taillePolice
+          font.pointSize: vision.taillePolice
           font.bold: true
           text: "Prêt. Mode avion, puis suivre le protocole."
         }
       }
 
-      GrosBouton { text: Zip.BOUTONS.A; onClicked: { cerf.risqueArme = false; cerf.copier("A"); } }
-      GrosBouton { text: Zip.BOUTONS.B; onClicked: { cerf.risqueArme = false; cerf.copier("B"); } }
-      GrosBouton { text: Zip.BOUTONS.C; onClicked: { cerf.risqueArme = false; cerf.lister(false); } }
-      GrosBouton { text: Zip.BOUTONS.D; onClicked: { cerf.risqueArme = false; cerf.effacer(); } }
+      GrosBouton { text: Zip.BOUTONS.A; onClicked: { vision.risqueArme = false; vision.copier("A"); } }
+      GrosBouton { text: Zip.BOUTONS.B; onClicked: { vision.risqueArme = false; vision.copier("B"); } }
+      GrosBouton { text: Zip.BOUTONS.C; onClicked: { vision.risqueArme = false; vision.lister(false); } }
+      GrosBouton { text: Zip.BOUTONS.D; onClicked: { vision.risqueArme = false; vision.effacer(); } }
       GrosBouton {
         text: Zip.BOUTONS.E
         onClicked: {
-          cerf.risqueArme = false;
-          cerf.afficher(Zip.BOUTONS.E, [cerf.hote ? cerf.hote.essayerModule() : "hôte absent"]);
+          vision.risqueArme = false;
+          vision.afficher(Zip.BOUTONS.E, [vision.hote ? vision.hote.essayerModule() : "hôte absent"]);
         }
       }
-      GrosBouton { text: Zip.BOUTONS.F; onClicked: { cerf.risqueArme = false; cerf.ouvrirCouches(); } }
-      GrosBouton { text: Zip.BOUTONS.G; onClicked: { cerf.risqueArme = false; cerf.trouverQml(); } }
-      GrosBouton { text: Zip.BOUTONS.H; onClicked: { cerf.risqueArme = false; cerf.ouvrirGeotiff(); } }
+      GrosBouton { text: Zip.BOUTONS.F; onClicked: { vision.risqueArme = false; vision.ouvrirCouches(); } }
+      GrosBouton { text: Zip.BOUTONS.G; onClicked: { vision.risqueArme = false; vision.trouverQml(); } }
+      GrosBouton { text: Zip.BOUTONS.H; onClicked: { vision.risqueArme = false; vision.ouvrirGeotiff(); } }
 
       Label {
         Layout.fillWidth: true
         Layout.topMargin: 24
         wrapMode: Text.WordWrap
         color: "#b71c1c"
-        font.pointSize: cerf.taillePolice
+        font.pointSize: vision.taillePolice
         font.bold: true
         text: "En dernier, essai à risque (QField peut se fermer) :"
       }
@@ -404,7 +404,7 @@ Item {
         text: Zip.BOUTONS.I
         palette.button: "#b71c1c"
         palette.buttonText: "white"
-        onClicked: cerf.essaiARisque()
+        onClicked: vision.essaiARisque()
       }
 
       Item { Layout.preferredHeight: 48 }

@@ -34,7 +34,7 @@ function lireZip(chemin) {
 
 let dossierA; let dossierB; let piege; let lourd;
 before(async () => {
-  dossierA = mkdtempSync(join(tmpdir(), 'cerf-t016a-')); dossierB = mkdtempSync(join(tmpdir(), 'cerf-t016b-'));
+  dossierA = mkdtempSync(join(tmpdir(), 'vision-t016a-')); dossierB = mkdtempSync(join(tmpdir(), 'vision-t016b-'));
   fabriquerPiege(dossierA); await fabriquerLourd(dossierA, 1);
   fabriquerPiege(dossierB); await fabriquerLourd(dossierB, 1);
   piege = lireZip(join(dossierA, 'piege.zip')); lourd = lireZip(join(dossierA, 'lourd.zip'));

@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as C from '../plugin/cerf-controles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as C from '../plugin/vision-controles.mjs';
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), '../plugin');
 const lire = (f) => readFileSync(resolve(PLUGIN, f), 'utf8');
@@ -82,8 +82,8 @@ function lecturesInterdites(src) {
   for (const m of code.matchAll(/\.crs\s*(?:\(\s*\))?\s*(?:\?\.|\.)\s*(\w+)/g)) if (!EXPOSEES.includes(m[1])) trouves.push(m[0]);
   return [...new Set(trouves)];
 }
-test('forme : Cerf.qml, cerf-logique.mjs et cerf-controles.mjs ne lisent du crs que mapUnits, isGeographic, authid, description', () => {
-  for (const f of ['Cerf.qml', 'cerf-logique.mjs', 'cerf-controles.mjs']) {
+test('forme : Vision.qml, vision-logique.mjs et vision-controles.mjs ne lisent du crs que mapUnits, isGeographic, authid, description', () => {
+  for (const f of ['Vision.qml', 'vision-logique.mjs', 'vision-controles.mjs']) {
     assert.deepEqual(lecturesInterdites(lire(f)), [], `${f} lit une propriété du système absente de QML`);
   }
 });
@@ -98,15 +98,15 @@ test('forme : le détecteur attrape isValid, isValid(), les variantes .crs() et 
   assert.deepEqual(lecturesInterdites('crs.authid + crs.description + crs.mapUnits + crs.isGeographic'), []);
   assert.deepEqual(lecturesInterdites('// crs.isValid en commentaire'), []);
 });
-test('forme : Cerf.qml passe par decrireSysteme', () => {
-  assert.match(lire('Cerf.qml'), /Logique\.decrireSysteme\(couche\.crs\)/);
+test('forme : Vision.qml passe par decrireSysteme', () => {
+  assert.match(lire('Vision.qml'), /Logique\.decrireSysteme\(couche\.crs\)/);
 });
-test('forme : cerf-logique.mjs sans ?., ?? ni import', () => {
-  const code = sansCommentaires(lire('cerf-logique.mjs'));
+test('forme : vision-logique.mjs sans ?., ?? ni import', () => {
+  const code = sansCommentaires(lire('vision-logique.mjs'));
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.4.4, branche de la mission dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(lire('metadata.txt'), /^version=0\.4\.4$/m);
-  assert.match(readFileSync(resolve(PLUGIN, '../.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/034-crs-valide'/);
+test('version et préversion : 0.5.0, branche de la mission dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(lire('metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(readFileSync(resolve(PLUGIN, '../.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/050-vision'/);
 });

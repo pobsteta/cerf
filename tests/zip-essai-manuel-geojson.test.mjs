@@ -1,6 +1,6 @@
 // Mission 035 : la variante tout en GeoJSON, essai-manuel-geojson.zip (outils/zip-essai-manuel.mjs).
-// Contenu, reproductibilité, essai-manuel.zip inchangé d'un octet, règles du plugin (cerf-styles.mjs) et contrôles
-// d'import (cerf-controles.mjs) en boîte noire, géométries égales à celles des Shapefile à 1 cm près, points ProdBois
+// Contenu, reproductibilité, essai-manuel.zip inchangé d'un octet, règles du plugin (vision-styles.mjs) et contrôles
+// d'import (vision-controles.mjs) en boîte noire, géométries égales à celles des Shapefile à 1 cm près, points ProdBois
 // dans les parcelles 12 et 14. Lectures du zip, du Shapefile et projection refaites ici, à part de l'outil.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,8 +11,8 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { inflateRawSync } from 'node:zlib';
 import { fabriquerManuel, fabriquerManuelGeojson, NOM_ZIP, NOM_ZIP_GEOJSON, NOM_PRODBOIS } from '../outils/zip-essai-manuel.mjs';
-import { reconnaitre, styleDe, champCodeDe } from '../plugin/cerf-styles.mjs';
-import { controlerCouche } from '../plugin/cerf-controles.mjs';
+import { reconnaitre, styleDe, champCodeDe } from '../plugin/vision-styles.mjs';
+import { controlerCouche } from '../plugin/vision-controles.mjs';
 import { flashcodes, generer, verifier } from '../outils/flashcodes.mjs';
 
 const sha = (f) => createHash('sha256').update(readFileSync(f)).digest('hex');
@@ -71,7 +71,7 @@ function versLambert93(lon, lat) {
 
 let dA; let dB; let dM; let chemin; let zg; let zs; let cheminSource;
 before(() => {
-  dA = mkdtempSync(join(tmpdir(), 'cerf-t035a-')); dB = mkdtempSync(join(tmpdir(), 'cerf-t035b-')); dM = mkdtempSync(join(tmpdir(), 'cerf-t035m-'));
+  dA = mkdtempSync(join(tmpdir(), 'vision-t035a-')); dB = mkdtempSync(join(tmpdir(), 'vision-t035b-')); dM = mkdtempSync(join(tmpdir(), 'vision-t035m-'));
   chemin = fabriquerManuelGeojson(dA); fabriquerManuelGeojson(dB);
   cheminSource = fabriquerManuel(dM);
   zg = lireZip(chemin); zs = lireZip(cheminSource);
@@ -203,13 +203,13 @@ const OUTILS = !spawnSync('qrencode', ['--version'], { stdio: 'ignore' }).error 
 const racine = new URL('..', import.meta.url).pathname;
 
 test('flashcode : une adresse, celle d\'essai-manuel-geojson.zip dans la préversion essai-manuel (jamais latest) ; l\'autre inchangé', () => {
-  assert.deepEqual(flashcodes('manuel-geojson', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel-geojson.zip']);
-  assert.deepEqual(flashcodes('manuel', 'essai').map((f) => f.url), ['https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip']);
+  assert.deepEqual(flashcodes('manuel-geojson', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel-geojson.zip']);
+  assert.deepEqual(flashcodes('manuel', 'essai').map((f) => f.url), ['https://github.com/pobsteta/vision/releases/download/essai-manuel/essai-manuel.zip']);
   assert.notEqual(flashcodes('manuel', 'essai')[0].nom, flashcodes('manuel-geojson', 'essai')[0].nom);
 });
 
 test('flashcode : PNG et SVG décodés donnent exactement l\'adresse du zip GeoJSON', { skip: OUTILS ? false : 'qrencode ou zbarimg absent' }, () => {
-  const d = mkdtempSync(join(tmpdir(), 'cerf-t035f-'));
+  const d = mkdtempSync(join(tmpdir(), 'vision-t035f-'));
   try {
     assert.equal(generer(d, 'manuel-geojson', 'essai').length, 2);
     assert.deepEqual(verifier(d, 'manuel-geojson', 'essai'), []);
@@ -220,7 +220,7 @@ const wf = readFileSync(join(racine, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché aussi sur mission/035, publie les deux zips et leurs flashcodes, notes : quel zip prendre', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel', 'mission\/035-essai-manuel-geojson', 'mission\/036-notes-essai-manuel', 'mission\/040-publier-piege', 'mission\/047-styles-gpkg'\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/050-vision'\]/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\* dist\/essai-manuel-geojson\.zip dist\/flashcodes-geojson\/\*/);

@@ -1,4 +1,4 @@
-# Publie le plugin QField Cerf (mission 008 et suivantes) en release GitHub
+# Publie le plugin QField Vision (mission 008 et suivantes) en release GitHub
 # (décision de Pascal n° 2, 3 novembre 2026 ; plugin/PLAN.md § 6) :
 #  - push sur la branche d'une mission du plugin : préversion « plugin-essai », écrasée à
 #    chaque push, pour l'essai de Pascal sur le Samsung avant fusion ;
@@ -6,19 +6,19 @@
 #    publiée seulement si plugin/ a changé dans le push (décision de Pascal, 3 novembre 2026 ;
 #    outils/decider-release.mjs), sinon sortie verte ; refusée si l'étiquette existe déjà
 #    (oblige à monter la version). Lancement manuel sur main : publiée. URL stable :
-#    https://github.com/pobsteta/cerf/releases/latest/download/plugin-cerf.zip
-#  - Mission 022 : cette release ne porte QUE le plugin (plugin-cerf.zip) et l'essai de recette (essai.zip) ;
-#    le projet modèle (projet-cerf.zip) n'a qu'une adresse, celle de release-projet-modele.yml
+#    https://github.com/pobsteta/vision/releases/latest/download/plugin-vision.zip
+#  - Mission 022 : cette release ne porte QUE le plugin (plugin-vision.zip) et l'essai de recette (essai.zip) ;
+#    le projet modèle (projet-vision.zip) n'a qu'une adresse, celle de release-projet-modele.yml
 #    (.../releases/download/projet-modele/...). Seule « plugin-v<version> » devient « latest ».
 #  - Mission 025 : le flashcode (PNG et SVG) de l'adresse du plugin est joint à la release et affiché dans
 #    ses notes (outils/flashcodes.mjs ; qrencode pour générer, zbarimg pour décoder et contrôler l'URL).
-#    Sur main : adresse stable (latest/download/plugin-cerf.zip) ; préversion d'essai : adresse de « plugin-essai ».
+#    Sur main : adresse stable (latest/download/plugin-vision.zip) ; préversion d'essai : adresse de « plugin-essai ».
 # Les zips sont fabriqués ici (ils ne sont pas versés au dépôt) ; leur sha256 est écrit dans
 # les notes de la release. L'étiquette est créée par la release elle-même.
 name: Release du plugin
 on:
   push:
-    branches: ['main', 'mission/008-squelette-plugin', 'mission/010-styles', 'mission/031-nettoyage-retrait', 'mission/034-crs-valide', 'mission/037-reprojection', 'mission/038-compter-entites', 'mission/024-lecture-formats', 'mission/044-json-ignore', 'mission/047-styles-gpkg', 'mission/048-fond-embarque-plugin', 'mission/049-fuite-couches']
+    branches: ['main', 'mission/050-vision']
     paths: ['plugin/**', 'tests/**', '.github/workflows/release-plugin.yml']
   workflow_dispatch:
 permissions:
@@ -60,7 +60,7 @@ jobs:
       - name: Tests
         if: steps.decision.outputs.action == 'publier'
         env:
-          CERF_FLASHCODES_EXIGER: '1'
+          VISION_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: Zips
         if: steps.decision.outputs.action == 'publier'
@@ -80,10 +80,10 @@ jobs:
         run: |
           version=$(sed -n 's/^version=//p' plugin/metadata.txt)
           {
-            echo "Plugin QField Cerf $version, à installer par URL (Paramètres, Plugins, « Install plugin from URL »)."
+            echo "Plugin QField Vision $version, à installer par URL (Paramètres, Plugins, « Install plugin from URL »)."
             echo
-            echo "Ne pas renommer plugin-cerf.zip : QField nomme le dossier du plugin d'après le nom du zip."
-            echo "Si l'ancien plugin « Cerf » (dossier cerf) est installé, le désinstaller une fois : plugin-cerf.zip s'installe à côté."
+            echo "Ne pas renommer plugin-vision.zip : QField nomme le dossier du plugin d'après le nom du zip."
+            echo "Si l'ancien plugin « Vision » (dossier vision) est installé, le désinstaller une fois : plugin-vision.zip s'installe à côté."
             echo "Essai sur le Samsung : plugin/PLAN.md § 9."
             echo
             echo '```'
@@ -97,15 +97,15 @@ jobs:
             node outils/flashcodes.mjs notes plugin essai plugin-essai >> notes.md
           fi
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            gh release create "plugin-v$version" dist/plugin-cerf.zip dist/flashcodes/* \
-              --target "$GITHUB_SHA" --title "Cerf $version" --notes-file notes.md --latest
+            gh release create "plugin-v$version" dist/plugin-vision.zip dist/flashcodes/* \
+              --target "$GITHUB_SHA" --title "Vision $version" --notes-file notes.md --latest
           elif gh release view plugin-essai >/dev/null 2>&1; then
             # `gh release edit --target` ne déplace pas une étiquette existante (l'API ignore target_commitish
             # quand l'étiquette existe) : on la déplace par l'API Git, sur ce commit. Jamais une étiquette plugin-v*.
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/plugin-essai" -f sha="$GITHUB_SHA" -F force=true
-            gh release upload plugin-essai dist/plugin-cerf.zip dist/essai.zip dist/flashcodes/* --clobber
+            gh release upload plugin-essai dist/plugin-vision.zip dist/essai.zip dist/flashcodes/* --clobber
             gh release edit plugin-essai --notes-file notes.md --latest=false
           else
-            gh release create plugin-essai dist/plugin-cerf.zip dist/essai.zip dist/flashcodes/* \
-              --target "$GITHUB_SHA" --title "Cerf, essai avant fusion" --notes-file notes.md --prerelease --latest=false
+            gh release create plugin-essai dist/plugin-vision.zip dist/essai.zip dist/flashcodes/* \
+              --target "$GITHUB_SHA" --title "Vision, essai avant fusion" --notes-file notes.md --prerelease --latest=false
           fi

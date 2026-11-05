@@ -9,7 +9,7 @@
 ## 1. La mission en une phrase
 
 Construire un plugin QField jetable qui essaie, sur le Samsung de Pascal et hors réseau, de
-lister un zip, de le copier dans `Imported Datasets/cerf/<cerf_id>/`, de l'effacer et de
+lister un zip, de le copier dans `Imported Datasets/vision/<vision_id>/`, de l'effacer et de
 charger un module `.mjs` aussi testé sous Node, pour que les « oui » ou « non » vus sur
 l'appareil décident des replis de la spec § 9 (n° 1 et 2) et confirment ou non l'ADR 0005.
 
@@ -54,7 +54,7 @@ l'appareil décident des replis de la spec § 9 (n° 1 et 2) et confirment ou no
    (`src/gui/qml/QfCamera.qml` L950, `QfCodeReader.qml` L75). Prévision : question 3 → oui.
    Un détail de plus : `deleteFiles` accepte aussi un **dossier** dont le parent direct est
    `Imported Datasets` (`qffileutils.cpp` L940-966) ; le prototype ne l'essaie pas (il
-   effacerait `Imported Datasets/cerf/` en entier, toutes forêts comprises).
+   effacerait `Imported Datasets/vision/` en entier, toutes forêts comprises).
 4. **Copier hors du dossier projet : `platformUtilities.getFile` fait le choix et la copie
    d'un seul geste.** Sous Android, il ouvre le sélecteur du système
    (`ACTION_OPEN_DOCUMENT`) puis copie le fichier choisi vers `préfixe + chemin`, le préfixe
@@ -76,7 +76,7 @@ org.qfield ») et L326-337 ; module `org.qfield` déclaré dans `src/app/qfapp.c
 | Usage dans le prototype | Fonction | Source | Prouvé ? |
 |---|---|---|---|
 | Bouton dans la barre des plugins | `iface.addItemToPluginsToolbar(item)` | `src/core/qfappinterface.h` L181 ; `iface` posé en contexte : `src/app/qgismobileapp.cpp` L423 ; plugin créé dans ce contexte : `src/app/qfpluginmanager.cpp` L103-113 | lu |
-| Lire `cerf_id` | `ExpressionContextUtils.projectVariables(qgisProject)["cerf_id"]` | `src/core/utils/qfexpressioncontextutils.h` L92, `.cpp` L180-188 (rend `customVariables()`) ; `qgisProject` : `qgismobileapp.cpp` L422 | lu |
+| Lire `vision_id` | `ExpressionContextUtils.projectVariables(qgisProject)["vision_id"]` | `src/core/utils/qfexpressioncontextutils.h` L92, `.cpp` L180-188 (rend `customVariables()`) ; `qgisProject` : `qgismobileapp.cpp` L422 | lu |
 | Dossier du projet | `qgisProject.homePath`, `qgisProject.fileName` | QGIS `src/core/project/qgsproject.h` L118-119 ; déjà employé par QField : `src/gui/qml/editorwidgets/relationeditors/gallery_relation_editor.qml` L33 | lu |
 | Dossier de l'application | `platformUtilities.applicationDirectory()` | `qfplatformutilities.h` L138 ; Android : `qfandroidplatformutilities.cpp` L171-182, `QFieldActivity.java` L573-580 | lu |
 | Choisir et copier un zip | `platformUtilities.getFile(préfixe, "{filename}", "*/*", parent)` puis `onResourceReceived` | voir § 3 n° 4 ; balise `{filename}` : `platform/android/src/ch/opengis/qfield/QFieldUtils.java` L52-67 ; usage QField : `src/gui/qml/editorwidgets/QfEditorWidgetExternalResource.qml` L798 | lu |
@@ -88,7 +88,7 @@ org.qfield ») et L326-337 ; module `org.qfield` déclaré dans `src/app/qfapp.c
 | Position du point, emprise | `couche.extent()` → `xMinimum`, `yMinimum`, `width`, `height` | QGIS `qgsmaplayer.h` L564 (`Q_INVOKABLE`) ; `src/core/geometry/qgsrectangle.h` L50-55 | lu |
 | Nombre d'objets | `LayerUtils.createFeatureIterator(couche)`, `hasNext()`, `next()`, `close()` | `qflayerutils.h` L52-75 et L234 ; `featureCount()` de QGIS **n'est pas invocable** (`src/core/vector/qgsvectorlayer.h` L1701) | lu |
 | Ajouter la couche à la carte (facultatif, pour la voir) | `ProjectUtils.addMapLayer(qgisProject, couche)` | `src/core/utils/qfprojectutils.h` L45 | lu |
-| Module `.mjs` | `import "module-essai.mjs" as Essai` et `import "cerf-zip.mjs" as Zip` dans `main.qml` | **non lu** : la doc Qt (`doc.qt.io`) a renvoyé 403 dans cette session, et aucun QML de QField n'importe de `.mjs`. Seul point sans source lue : c'est l'objet même de la question 4 | **non prouvé** |
+| Module `.mjs` | `import "module-essai.mjs" as Essai` et `import "vision-zip.mjs" as Zip` dans `main.qml` | **non lu** : la doc Qt (`doc.qt.io`) a renvoyé 403 dans cette session, et aucun QML de QField n'importe de `.mjs`. Seul point sans source lue : c'est l'objet même de la question 4 | **non prouvé** |
 
 **Ce qui reste non prouvé, même après lecture :**
 
@@ -96,7 +96,7 @@ org.qfield ») et L326-337 ; module `org.qfield` déclaré dans `src/app/qfapp.c
 - la conversion du `QByteArray` rendu par `readFileContent` en `ArrayBuffer` côté
   JavaScript (comportement de Qt 6 attendu, non lu ; le module accepte `ArrayBuffer` et
   `Uint8Array`) ;
-- l'écriture par `getFile` dans `Imported Datasets/cerf/<cerf_id>/` (le Java écrit dans le
+- l'écriture par `getFile` dans `Imported Datasets/vision/<vision_id>/` (le Java écrit dans le
   dossier de l'application, où QField a le droit d'écrire ; le dossier est créé par
   `mkpath`, `qfandroidplatformutilities.cpp` L537 — non essayé) ;
 - l'ouverture par GDAL d'un Shapefile, d'un GeoJSON et d'un GeoTIFF de 200 Mo dans un zip
@@ -116,8 +116,8 @@ dans le protocole à la fin de la mission (exigence de la fiche).
 
 | Bouton proposé | Ce qu'il fait |
 |---|---|
-| **A. Copier hors projet** | `getFile` → copie dans `<application>/Imported Datasets/cerf/<cerf_id>/<nom du zip>` ; refusé avec message si `cerf_id` est absent |
-| **B. Copier dans le projet** | `getFile` → copie dans `<dossier du projet>/cerf-essai/<nom du zip>` (repli de la spec § 9, n° 1) |
+| **A. Copier hors projet** | `getFile` → copie dans `<application>/Imported Datasets/vision/<vision_id>/<nom du zip>` ; refusé avec message si `vision_id` est absent |
+| **B. Copier dans le projet** | `getFile` → copie dans `<dossier du projet>/vision-essai/<nom du zip>` (repli de la spec § 9, n° 1) |
 | **C. Lister la copie** | lit la dernière copie faite (A ou B) avec `readFileContent` et le module ; affiche le nombre d'entrées, leurs noms, et « lu dans : copie hors projet » ou « copie dans le projet » ; si la lecture est refusée, l'écrit : « lecture refusée par QField : hors du dossier projet » |
 | **D. Effacer la copie** | `deleteFiles` puis `rmFile` ; affiche le résultat de chacun ; puis « zip absent » si `fileExists` le confirme |
 | **E. Module .mjs** | affiche `somme(2, 3)` et `SIGNATURE` du module embarqué, ou l'erreur de chargement |
@@ -125,7 +125,7 @@ dans le protocole à la fin de la mission (exigence de la fiche).
 | **G. Lire le .qml du zip** | extrait `sous-dossier/shape_essai.qml` par le module (copie dans le projet seulement) : taille, début du texte, couleur trouvée |
 | **H. Ouvrir le GeoTIFF du zip** | `/vsizip/<copie de lourd.zip>/lourd.tif` : valide, système, emprise, temps d'ouverture en millisecondes |
 
-En tête de l'écran, toujours : `cerf_id` lu (ou « cerf_id absent »), dossier du projet,
+En tête de l'écran, toujours : `vision_id` lu (ou « vision_id absent »), dossier du projet,
 dossier de l'application, version du prototype.
 
 - **Q1 — Lister.** Geste 1 : bouton A, sélecteur Android, choix dans Téléchargements.
@@ -135,7 +135,7 @@ dossier de l'application, version du prototype.
   ne lit jamais l'original, seulement une copie (§ 3 n° 4). Le geste 3 du protocole
   (« copie posée dans le dossier du projet ») est fait par le bouton B, sans passer par le
   gestionnaire de fichiers.
-- **Q2 — Copier.** Bouton A ; affichage du chemin complet de la copie, de `cerf_id`, de la
+- **Q2 — Copier.** Bouton A ; affichage du chemin complet de la copie, de `vision_id`, de la
   taille (par `LocalFilesModel`, sans contrôle de dossier ; attendu 2108 octets), et
   « copie hors du dossier projet : oui/non » (comparaison de chemins faite par le module,
   testée sous Node). Geste 4 (lister la copie hors projet) : prévision **non**, comme Q1
@@ -143,7 +143,7 @@ dossier de l'application, version du prototype.
 - **Q3 — Effacer.** Bouton D sur la copie hors projet : « deleteFiles : refusé » (prévu),
   « rmFile : fait » (prévu), puis « zip absent ». Un nouveau C affiche « zip absent ».
   L'original n'est jamais touché : le plugin ne connaît pas son chemin.
-- **Q4 — Module.** Bouton E : `5` et `cerf-prototype-1`. Le fichier
+- **Q4 — Module.** Bouton E : `5` et `vision-prototype-1`. Le fichier
   `prototype/module-essai.mjs` est une copie **octet pour octet** de
   `tests/recette/essai/module-essai.mjs` (le plugin ne peut pas aller le chercher hors de
   son dossier) ; un test Node vérifie l'identité des deux fichiers.
@@ -156,7 +156,7 @@ dossier de l'application, version du prototype.
   lue, non devinée) et position « longitude 2,35 ; latitude 48,85 ».
 - **Q6 — `.qml` dans le zip.** Bouton G. Il faut les octets du zip, donc une copie dans le
   projet ; et les entrées de `essai.zip` sont compressées : le module contient un
-  décompresseur « deflate » écrit pour Cerf (RFC 1951), testé sous Node contre
+  décompresseur « deflate » écrit pour Vision (RFC 1951), testé sous Node contre
   `node:zlib`. Attendu : 635 octets, `<!DOCTYPE qgis>`, `255,0,0,255`. Sur la copie hors
   projet, le bouton dira « lecture refusée par QField ».
 - **Q7 — GeoTIFF de 200 Mo.** Bouton A sur `lourd.zip`, puis H : système, emprise, temps
@@ -181,19 +181,19 @@ prototype/
   metadata.txt       name, description, author, version, icon, homepage (lu par QField :
                      src/app/qfpluginmodel.cpp L368-392)
   main.qml           bouton dans la barre des plugins + fenêtre aux gros boutons (gants)
-  cerf-zip.mjs       le module de Cerf : lire le répertoire central d'un zip, décoder CP437,
+  vision-zip.mjs       le module de Vision : lire le répertoire central d'un zip, décoder CP437,
                      décompresser une entrée, bâtir les chemins (copie, /vsizip/), dire si un
                      chemin est hors du dossier projet, écrire une position avec ordre et
                      système, écart au point attendu. ECMAScript pur, sans .pragma ni
                      .import (ADR 0005)
   module-essai.mjs   copie octet pour octet du module du testeur (question 4)
-  icon.svg           icône dessinée pour Cerf
-  empaqueter.mjs     fabrique cerf-prototype.zip (main.qml à la racine du zip, exigence de
+  icon.svg           icône dessinée pour Vision
+  empaqueter.mjs     fabrique vision-prototype.zip (main.qml à la racine du zip, exigence de
                      src/app/qfpluginmanager.cpp L443-448) avec l'écrivain de zip du dépôt
                      (tests/recette/essai/zip-ecrire.mjs)
   essai-projet/
-    cerf-essai.qgs   projet d'essai minimal, EPSG:2154, sans couche, portant la variable
-                     de projet cerf_id (UUID tiré une fois, écrit en clair dans le fichier)
+    vision-essai.qgs   projet d'essai minimal, EPSG:2154, sans couche, portant la variable
+                     de projet vision_id (UUID tiré une fois, écrit en clair dans le fichier)
 tests/
   prototype.test.mjs
 ```
@@ -201,13 +201,13 @@ tests/
 **Tests (`node --test`, aucune dépendance) — écrits avant le code :**
 
 - `module-essai.mjs` du prototype identique à celui de `tests/recette/essai/` ;
-  `somme(2, 3) === 5`, `SIGNATURE === 'cerf-prototype-1'` ;
+  `somme(2, 3) === 5`, `SIGNATURE === 'vision-prototype-1'` ;
 - liste de `essai.zip` : exactement les 9 noms du protocole, depuis un `ArrayBuffer` et
   depuis un `Uint8Array` ; `essai-cp437.zip` : `forêt/parcelle_é.txt` ; octets qui ne sont
   pas un zip ou zip tronqué → erreur au message clair ;
 - extraction de `sous-dossier/shape_essai.qml` : 635 octets, `<!DOCTYPE qgis>`,
   `255,0,0,255` ; décompresseur comparé à `node:zlib` sur des données variées ;
-- chemins : copie = `<application>/Imported Datasets/cerf/<cerf_id>/essai.zip` ;
+- chemins : copie = `<application>/Imported Datasets/vision/<vision_id>/essai.zip` ;
   `/vsizip/<copie>/sous-dossier/shape_essai.shp` ; « hors du dossier projet » vrai et faux
   (dont le piège d'un dossier voisin au nom préfixe) ;
 - **point du terrain au bon endroit** (règle du projet) : position du point d'essai écrite
@@ -223,16 +223,16 @@ protocole.
 
 ## 7. Installation par URL sur le Samsung de Pascal
 
-1. Le zip du plugin, `cerf-prototype.zip`, est fabriqué par `node prototype/empaqueter.mjs`.
+1. Le zip du plugin, `vision-prototype.zip`, est fabriqué par `node prototype/empaqueter.mjs`.
 2. Il est mis en ligne à une adresse **finissant par `.zip`** (QField exige ce suffixe :
    `qfpluginmanager.cpp` L427-429). Deux options, à trancher (§ 9, question n° 1) : une
-   « release » GitHub de `pobsteta/cerf`, ou le fichier versé dans la branche et servi par
+   « release » GitHub de `pobsteta/vision`, ou le fichier versé dans la branche et servi par
    `raw.githubusercontent.com` (dépôt public seulement).
 3. **Avec réseau**, dans QField : Paramètres → Plugins → « Install plugin from URL »
    (libellé lu dans `src/app/qml/QfPluginManagerSettings.qml` L187), coller l'URL.
 4. QField demande « Do you grant permission to activate … ? » (`QgisMobileapp.qml`
    L5772) : accepter.
-5. Importer le projet d'essai : `cerf-essai.zip` (contenant `cerf-essai.qgs`), copié sur le
+5. Importer le projet d'essai : `vision-essai.zip` (contenant `vision-essai.qgs`), copié sur le
    téléphone, ouvert par l'import d'archive de projet de QField ; il arrive sous
    `Imported Projects/`, donc hors de `Imported Datasets/` : la copie du bouton A sera bien
    hors du dossier projet.
@@ -246,10 +246,10 @@ protocole.
 | Lister hors du dossier projet est impossible (prévu par le code, § 3 n° 1) | Rien à contourner : le prototype affiche le refus ; on applique la **spec § 9, n° 1** (zip posé dans le dossier projet, pas de QFieldCloud) et l'on demande à QField d'exposer le listage d'un zip. Je n'essaie pas de ruse (voir § 9, question n° 2) |
 | `rmFile` refusé sur l'appareil, ou retiré dans une version future (un commentaire du code annonce son déplacement : `qfplatformutilities.h` L129) | Le prototype affiche l'échec ; on applique la **spec § 9, n° 2** (la copie reste, son nom est affiché) |
 | Le `.mjs` ne se charge pas dans QField | Le bouton E affiche l'erreur ; la pile de tests de l'ADR 0005 est à reprendre avec Pascal. Je ne passe pas en `.js` avec `.pragma library` de moi-même : c'est une décision d'ADR |
-| `getFile` n'écrit pas dans `Imported Datasets/cerf/<cerf_id>/` | Affiché ; même repli que la première ligne (§ 9, n° 1) |
+| `getFile` n'écrit pas dans `Imported Datasets/vision/<vision_id>/` | Affiché ; même repli que la première ligne (§ 9, n° 1) |
 | Version de QField de Pascal antérieure à 4.3.7 | Les numéros de ligne changent ; les anciens noms restent valables. Le prototype affiche ce qu'il trouve ; Pascal note sa version dans le protocole |
 | Lecture de 200 Mo en mémoire (si `lourd.zip` était copié dans le projet) | Non tentée sans accord (§ 9, question n° 3) |
-| `cerf-essai.qgs` écrit à la main mal relu par QGIS | Pascal l'ouvre d'abord dans QGIS (onglet Variables, comme le dit le protocole) ; à défaut il crée un projet vide et ajoute la variable `cerf_id` lui-même |
+| `vision-essai.qgs` écrit à la main mal relu par QGIS | Pascal l'ouvre d'abord dans QGIS (onglet Variables, comme le dit le protocole) ; à défaut il crée un projet vide et ajoute la variable `vision_id` lui-même |
 | Zip de plus de 4 Go (ZIP64) | Hors du prototype : le module le refuse avec un message ; à reprendre si le vrai plugin en a besoin |
 
 ## 9. Questions qui relèvent de Pascal
@@ -258,7 +258,7 @@ protocole.
    versé dans le dépôt et servi par `raw.githubusercontent.com` (le dépôt est-il public) ?
    La mise en ligne n'est pas dans mon périmètre (je ne pousse pas).
 2. **Pas de ruse pour lister hors du dossier projet.** Une seule existe à ma connaissance :
-   poser `cerf.qgz` à la racine du dossier de l'application, ce qui mettrait
+   poser `vision.qgz` à la racine du dossier de l'application, ce qui mettrait
    `Imported Datasets/` « dans » le dossier projet aux yeux de QField. Elle contourne une
    barrière de sécurité voulue par QField ; je ne la prends pas sans votre décision, et je
    la déconseille.
@@ -287,13 +287,13 @@ Les décisions de Pascal sont dans `pilotage/missions/004-prototype-1.md`, rubri
    une valeur du produit ; taille inconnue refusée depuis la relecture 1/3). Si C affiche
    « taille de la copie inconnue » sur `essai.zip` (2108 octets), Pascal peut lister par I
    sans risque réel, et le note dans « Vu autrement ».
-3. **`main.qml` n'importe pas les `.mjs` lui-même.** Il crée `Cerf.qml` (qui importe
-   `cerf-zip.mjs`) et `EssaiModule.qml` (qui importe `module-essai.mjs`) par
+3. **`main.qml` n'importe pas les `.mjs` lui-même.** Il crée `Vision.qml` (qui importe
+   `vision-zip.mjs`) et `EssaiModule.qml` (qui importe `module-essai.mjs`) par
    `Qt.createComponent` et affiche `errorString()` en cas d'échec : un `.mjs` refusé par
    QField donne un message lisible (question 4) au lieu d'un plugin absent. `main.qml`
    garde un bouton « E. Module .mjs » de secours.
 4. **`empaqueter.mjs`** écrit dans `prototype/dist/` (ignoré par `.gitignore`, décision
-   n° 1) `cerf-prototype.zip` et `cerf-essai.zip`.
+   n° 1) `vision-prototype.zip` et `vision-essai.zip`.
 5. **Table CP437** : la page de l'Unicode Consortium a été refusée par le réseau (403) ;
    source : codec `cp437` de Python 3.13.18, généré depuis `CP437.TXT`, contrôlé identique
    à `iconv` de la glibc 2.39.

@@ -1,7 +1,7 @@
 // Mission 003, report demandé par Pascal et la relecture de la mission 004 (2 novembre 2026) :
 // noms des boutons, question 1 reformulée, chemin de secours, « Avant de commencer ».
-// Les noms de boutons sont comparés à ceux de prototype/cerf-zip.mjs (BOUTONS, source de
-// Cerf.qml) : référence de noms seulement ; aucune logique du prototype n'est lue ni essayée.
+// Les noms de boutons sont comparés à ceux de prototype/vision-zip.mjs (BOUTONS, source de
+// Vision.qml) : référence de noms seulement ; aucune logique du prototype n'est lue ni essayée.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -21,8 +21,8 @@ const gestes = (c) => c.split('\n').filter((l) => /^\|\s*\d+\s*\|/.test(l)).map(
 const geste = (q, n) => gestes(questions()[q - 1]).find((g) => g[0] === String(n))[1];
 const avec = (q, n, L) => assert.ok(geste(q, n).includes(`« ${BOUTONS[L]} »`), `Q${q} geste ${n} : « ${BOUTONS[L]} » attendu, trouvé : ${geste(q, n)}`);
 
-test('les noms de boutons du protocole sont ceux de prototype/cerf-zip.mjs (Cerf.qml)', () => {
-  const src = readFileSync(join(ici, '..', 'prototype', 'cerf-zip.mjs'), 'utf8');
+test('les noms de boutons du protocole sont ceux de prototype/vision-zip.mjs (Vision.qml)', () => {
+  const src = readFileSync(join(ici, '..', 'prototype', 'vision-zip.mjs'), 'utf8');
   for (const nom of Object.values(BOUTONS)) assert.ok(src.includes(`'${nom}'`), nom);
 });
 
@@ -120,17 +120,17 @@ test('chemin de secours : C « taille de la copie inconnue » -> I pour les ques
 });
 
 test('avant de commencer : URLs de la release prototype-1, avant le mode avion', () => {
-  const base = 'https://github.com/pobsteta/cerf/releases/download/prototype-1/';
-  for (const f of ['essai.zip', 'essai-cp437.zip', 'cerf-projet-modele.zip', 'cerf-prototype.zip', 'cerf-essai.zip']) assert.ok(t.includes(base + f), f);
+  const base = 'https://github.com/pobsteta/vision/releases/download/prototype-1/';
+  for (const f of ['essai.zip', 'essai-cp437.zip', 'vision-projet-modele.zip', 'vision-prototype.zip', 'vision-essai.zip']) assert.ok(t.includes(base + f), f);
   assert.ok(t.indexOf(base + 'essai.zip') < t.indexOf('Passer le téléphone en **mode avion**'));
   assert.match(t, /Avant le mode avion/);
 });
 
-test("avant de commencer : projet d'essai et cerf_id exacts (cerf-essai ou cerf.qgz)", () => {
-  assert.match(t, /`cerf-essai` \(`cerf_id` 936eb144-5447-4094-a579-fac12a9f0595\)/);
-  assert.match(t, /`cerf\.qgz`[\s\S]{0,200}`cerf_id` ebad8ff8-577e-48bc-9489-6bab871230c2/);
+test("avant de commencer : projet d'essai et vision_id exacts (vision-essai ou vision.qgz)", () => {
+  assert.match(t, /`vision-essai` \(`vision_id` 936eb144-5447-4094-a579-fac12a9f0595\)/);
+  assert.match(t, /`vision\.qgz`[\s\S]{0,200}`vision_id` d98bf4b8-0fac-4dac-85cf-58e6701aceeb/);
   assert.match(t, /au choix de Pascal/);
-  const qgs = readFileSync(join(ici, '..', 'prototype', 'essai-projet', 'cerf-essai.qgs'), 'utf8');
+  const qgs = readFileSync(join(ici, '..', 'prototype', 'essai-projet', 'vision-essai.qgs'), 'utf8');
   assert.ok(qgs.includes('936eb144-5447-4094-a579-fac12a9f0595'));
 });
 

@@ -7,10 +7,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as S from '../plugin/cerf-styles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as S from '../plugin/vision-styles.mjs';
 
-const ID = 'ebad8ff8-577e-48bc-9489-6bab871230c2';
+const ID = 'd98bf4b8-0fac-4dac-85cf-58e6701aceeb';
 const PROJET = '/storage/emulated/0/Android/data/ch.opengis.qfield/files/Imported Projects/Serre';
 const GJ = '{"type":"FeatureCollection","features":[]}';
 const zipDe = (...noms) => ecrireZip(noms.map((nom) => ({ nom: Buffer.from(nom, 'utf8'), donnees: Buffer.from(GJ), stocke: false, utf8: true })));
@@ -22,7 +22,7 @@ function reglages() {
 
 // L'API de QField est simulée : `journal` garde l'ordre des appels. La couche ouverte en /vsizip/ et
 // sa copie portent le même nom ; la géométrie et les champs viennent d'une table par nom de couche.
-const COPIES = `${PROJET}/cerf-imports`;
+const COPIES = `${PROJET}/vision-imports`;
 function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants = [], effacementRate = false, ecritureInterrompue = false } = {}) {
   const journal = [];
   const sur_disque = new Set(existants);
@@ -30,7 +30,7 @@ function monde({ infos = {}, textes = {}, rendu = null, ecrit = true, existants 
   const effaces = [];
   const reecrites = [];
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'x.zip', reglages: reglages(),
+    visionId: ID, dossierProjet: PROJET, nomZip: 'x.zip', reglages: reglages(),
     maintenant: () => new Date('2026-11-04T10:00:00Z'),
     ouvrirCouche: (source, nom) => { journal.push('ouvrir ' + source); return { source, name: nom, isValid: true, readOnly: false }; },
     decrireCouche: () => ({ lisible: true }),
@@ -254,7 +254,7 @@ test('saveVectorLayerAs rend une chaîne vide : couche refusée, message préfix
   assert.deepEqual(L.lireRegistre(w.ctx.reglages, ID), []);
 });
 
-test('saveVectorLayerAs qui lève ou rend un chemin hors de cerf-imports/ : refus, copie non chargée', () => {
+test('saveVectorLayerAs qui lève ou rend un chemin hors de vision-imports/ : refus, copie non chargée', () => {
   const w1 = monde();
   w1.ctx.octets = zipDe('UG.geojson');
   w1.ctx.reecrireCouche = () => { throw new Error('GDAL'); };
@@ -264,7 +264,7 @@ test('saveVectorLayerAs qui lève ou rend un chemin hors de cerf-imports/ : refu
     w.ctx.octets = zipDe('UG.geojson');
     const r = L.importerZip(w.ctx);
     assert.deepEqual(r.chargees, [], dehors);
-    assert.match(r.refusees[0].message, /^UG\.geojson : copie écrite hors de cerf-imports\//, dehors);
+    assert.match(r.refusees[0].message, /^UG\.geojson : copie écrite hors de vision-imports\//, dehors);
     assert.deepEqual(w.ecrits, [], dehors);
     assert.deepEqual(L.lireRegistre(w.ctx.reglages, ID), [], dehors);
   }
@@ -282,7 +282,7 @@ test('garde d\'écriture : ni saveVectorLayerAs ni le .qml pour un nom de couche
   }
 });
 
-test('peutEcrireCopie : seul un .gpkg ou un .qml directement dans cerf-imports/<dossier du zip>/', () => {
+test('peutEcrireCopie : seul un .gpkg ou un .qml directement dans vision-imports/<dossier du zip>/', () => {
   const D = COPIES;
   for (const ok of [`${D}/x/UG.gpkg`, `${D}/x/UG.qml`, `${D}/x/Étang du Nord.gpkg`]) assert.equal(L.peutEcrireCopie(ok, D), true, ok);
   for (const non of [
@@ -290,8 +290,8 @@ test('peutEcrireCopie : seul un .gpkg ou un .qml directement dans cerf-imports/<
     `${D}/../UG.gpkg`, `${D}/x/../UG.gpkg`, `${D}//UG.gpkg`, `${D}/x/.gpkg`, `${D}/x/a|b.gpkg`, `${D}/x\\UG.gpkg`,
     '/sdcard/UG.gpkg', `${PROJET}/UG.gpkg`, '', null, undefined, 3,
   ]) assert.equal(L.peutEcrireCopie(non, D), false, String(non));
-  assert.equal(L.peutEcrireCopie(`${D}/x/UG.gpkg`, '/cerf-imports'), false, 'dossier des copies sous la racine');
-  assert.equal(L.peutEcrireCopie(`${D}/x/UG.gpkg`, `${PROJET}`), false, 'dossier qui n\'est pas cerf-imports');
+  assert.equal(L.peutEcrireCopie(`${D}/x/UG.gpkg`, '/vision-imports'), false, 'dossier des copies sous la racine');
+  assert.equal(L.peutEcrireCopie(`${D}/x/UG.gpkg`, `${PROJET}`), false, 'dossier qui n\'est pas vision-imports');
   assert.equal(L.peutEcrireCopie(`${D}/x/UG.gpkg`, ''), false);
 });
 
@@ -449,7 +449,7 @@ test('demarrerProjet : la copie est rechargée en lecture seule ; aucun style n\
   const lues = [];
   let zipLu = false;
   const d = L.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: w.ctx.reglages, dossierProjet: PROJET,
+    variables: { vision_id: ID }, reglages: w.ctx.reglages, dossierProjet: PROJET,
     existe: (c) => { if (c.endsWith('.zip')) zipLu = true; return true; },
     chargerCouche: (source, nom, zip) => { lues.push({ source, nom, zip }); return { isValid: true, readOnly: false }; },
   });
@@ -466,19 +466,19 @@ test('demarrerProjet : entrée à chemin douteux (autre dossier, sous-dossier, �
   const sains = { zip: 'x.zip', couche: 'UG', chemin: 'x/UG.gpkg', style: 'UG', ajoutee_le: 'd' };
   const chemins = ['y/UG.gpkg', 'x/sous/UG.gpkg', '../UG.gpkg', 'x/../UG.gpkg', 'x/UG|.gpkg', 'x/UG.shp', '/x/UG.gpkg', 'UG.gpkg'];
   const reg = reglages();
-  reg.setValue(`cerf/${ID}`, JSON.stringify([sains].concat(chemins.map((c) => ({ ...sains, chemin: c })))));
+  reg.setValue(`vision/${ID}`, JSON.stringify([sains].concat(chemins.map((c) => ({ ...sains, chemin: c })))));
   const lues = [];
   const d = L.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: reg, dossierProjet: PROJET, existe: () => true,
+    variables: { vision_id: ID }, reglages: reg, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (s, n) => { lues.push(s); return { isValid: true, readOnly: false }; },
   });
   assert.equal(d.douteuses, chemins.length);
   assert.deepEqual(lues, [`${COPIES}/x/UG.gpkg|layername=UG`]);
 });
 
-test('Cerf.qml : branche saveVectorLayerAs (GPKG) et writeFileContent ; plus aucune pose directe de style', async () => {
+test('Vision.qml : branche saveVectorLayerAs (GPKG) et writeFileContent ; plus aucune pose directe de style', async () => {
   const { readFileSync } = await import('node:fs');
-  const qml = readFileSync(new URL('../plugin/Cerf.qml', import.meta.url), 'utf8');
+  const qml = readFileSync(new URL('../plugin/Vision.qml', import.meta.url), 'utf8');
   assert.match(qml, /LayerUtils\.saveVectorLayerAs\(couche, cible, "GPKG"\)/);
   assert.match(qml, /FileUtils\.writeFileContent\(chemin, Logique\.arrayBufferExact\(octets\)\)/);
   assert.match(qml, /reecrireCouche: reecrireCouche/);

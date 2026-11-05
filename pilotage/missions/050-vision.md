@@ -53,4 +53,4 @@ couleurs du manuel, panneau « Vision », dossier `vision-imports/`.
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** l'étape 1 renomme Cerf en Vision dans le code, les outils, les workflows, les tests et le projet modèle (nouveaux noms, nouvel identifiant, version 0.5.0, sans migration), et pose un test de garde qui interdit l'ancien nom hors historique, pour que seul le passé daté le garde.

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 // Mission 021 : fabrique les deux zips du projet modèle (décision de Pascal n° 1, 3 novembre 2026).
-//   projet-cerf-mise-a-jour.zip = cerf.qgz seul : MISE À JOUR, par copie de cerf.qgz à la main (câble USB)
+//   projet-vision-mise-a-jour.zip = vision.qgz seul : MISE À JOUR, par copie de vision.qgz à la main (câble USB)
 //                                 dans le dossier du projet (mission 028 : QField importe un zip dans un dossier
 //                                 neuf, sans les points saisis). Sans saisie.gpkg : ne peut rien écraser.
-//   projet-cerf.zip             = cerf.qgz + saisie.gpkg vide : PREMIÈRE INSTALLATION, une seule fois par
+//   projet-vision.zip             = vision.qgz + saisie.gpkg vide : PREMIÈRE INSTALLATION, une seule fois par
 //                                 appareil (un saisie.gpkg rempli recopié serait perdu).
-// Déterministe (dates MS-DOS fixes, ordre fixe). Écrit pour Cerf, sans dépendance.
+// Déterministe (dates MS-DOS fixes, ordre fixe). Écrit pour Vision, sans dépendance.
 // Usage : node outils/zips-projet-modele.mjs <dossier-de-sortie> [dossier-des-sources (défaut : racine du dépôt)]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ecrireZip } from '../tests/recette/essai/zip-ecrire.mjs';
 
-export const ZIP_MISE_A_JOUR = 'projet-cerf-mise-a-jour.zip';
-export const ZIP_PREMIERE_INSTALLATION = 'projet-cerf.zip';
-export const NOM_QGZ = 'cerf.qgz', NOM_GPKG = 'saisie.gpkg';
+export const ZIP_MISE_A_JOUR = 'projet-vision-mise-a-jour.zip';
+export const ZIP_PREMIERE_INSTALLATION = 'projet-vision.zip';
+export const NOM_QGZ = 'vision.qgz', NOM_GPKG = 'saisie.gpkg';
 
 const entree = (nom, donnees) => ({ nom: Buffer.from(nom, 'utf8'), donnees, stocke: false, utf8: true });
 
@@ -35,11 +35,11 @@ export function nomsDuZip(buf) {
 export function verifierMiseAJour(buf) {
   const noms = nomsDuZip(buf);
   if (noms.some((n) => /(^|\/)saisie\.gpkg$/i.test(n))) throw new Error(`${ZIP_MISE_A_JOUR} contient saisie.gpkg : il écraserait les points saisis sur l'appareil`);
-  if (noms.length !== 1 || noms[0] !== NOM_QGZ) throw new Error(`${ZIP_MISE_A_JOUR} doit contenir cerf.qgz seul, trouvé : ${JSON.stringify(noms)}`);
+  if (noms.length !== 1 || noms[0] !== NOM_QGZ) throw new Error(`${ZIP_MISE_A_JOUR} doit contenir vision.qgz seul, trouvé : ${JSON.stringify(noms)}`);
 }
 export function verifierPremiereInstallation(buf) {
   const noms = nomsDuZip(buf).sort();
-  if (noms.length !== 2 || noms[0] !== NOM_QGZ || noms[1] !== NOM_GPKG) throw new Error(`${ZIP_PREMIERE_INSTALLATION} doit contenir cerf.qgz et saisie.gpkg, trouvé : ${JSON.stringify(noms)}`);
+  if (noms.length !== 2 || !noms.includes(NOM_QGZ) || !noms.includes(NOM_GPKG)) throw new Error(`${ZIP_PREMIERE_INSTALLATION} doit contenir vision.qgz et saisie.gpkg, trouvé : ${JSON.stringify(noms)}`);
 }
 
 export function fabriquerZips(sortie, sources) {

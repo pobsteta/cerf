@@ -1,7 +1,7 @@
 // Mission 024 : tests unitaires du dev, à côté des tests d'acceptation du testeur (tests/lecture-formats.test.mjs).
 // Service de lecture des tables d'un GeoPackage (tablesDuGpkg, voie 1 du prototype n° 4), GeoTIFF lus en /vsizip/
 // (loadRasterLayer, registre chemin_vsi), tables de GeoPackage dans importerZip, chemin complet dans le zip pour
-// les messages du § 4, zip piege de bout en bout avec le vrai cerf-controles.mjs, forme de Cerf.qml, version 0.4.4.
+// les messages du § 4, zip piege de bout en bout avec le vrai vision-controles.mjs, forme de Vision.qml, version 0.5.0.
 // Coordonnées : EPSG:2154 (x = Est, y = Nord, mètres) sauf mention ; EPSG:4326 / CRS84 : x = longitude, y = latitude.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,9 +9,9 @@ import { readFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as L from '../plugin/cerf-logique.mjs';
-import * as C from '../plugin/cerf-controles.mjs';
-import * as S from '../plugin/cerf-styles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
+import * as C from '../plugin/vision-controles.mjs';
+import * as S from '../plugin/vision-styles.mjs';
 import { ecrireZip } from './recette/essai/zip-ecrire.mjs';
 import { fabriquerPiege } from '../outils/zips-recette.mjs';
 
@@ -19,7 +19,7 @@ const ICI = dirname(fileURLToPath(import.meta.url));
 const lire = (f) => readFileSync(join(ICI, '..', f), 'utf8');
 const ID = '123e4567-e89b-42d3-a456-426614174000';
 const PROJET = '/storage/emulated/0/Projet';
-const COPIES = `${PROJET}/cerf-imports`;
+const COPIES = `${PROJET}/vision-imports`;
 const zipDe = (noms) => ecrireZip(noms.map((n) => ({ nom: Buffer.from(n), donnees: Buffer.from('x'), stocke: true, utf8: true })));
 
 // ============================================================================ service des tables (tablesDuGpkg)
@@ -138,7 +138,7 @@ test('tablesDuGpkg : nom de table non sûr dans « |layername= » (« | », reto
 // ============================================================================ importerZip : monde simulé
 
 // Faux QField pour importerZip : `descriptions` par nom de couche (ce que decrireCouche rendrait) ; `tables` : réponse
-// du service tablesGpkg par entrée .gpkg (absent = service non fourni) ; vrai contrôle (cerf-controles.mjs) avec une
+// du service tablesGpkg par entrée .gpkg (absent = service non fourni) ; vrai contrôle (vision-controles.mjs) avec une
 // reprojection simulée : identité en EPSG:2154, conversion approchée en EPSG:4326 (lon, lat -> L93) près de Paris.
 const vers2154 = (x, y, epsg) => {
   if (epsg === 2154) return { x, y };
@@ -153,7 +153,7 @@ const DANS = { xmin: 668000, ymin: 6826000, xmax: 668500, ymax: 6826500 };
 function monde({ noms, descriptions = {}, tables, textes = {}, extra = {} }) {
   const stock = {}; const j = { ouvertes: [], decrites: [], ajoutees: [], reecrites: [], ecrits: [], tablesLues: [] };
   const ctx = {
-    cerfId: ID, dossierProjet: PROJET, nomZip: 'essai.zip', octets: zipDe(noms),
+    visionId: ID, dossierProjet: PROJET, nomZip: 'essai.zip', octets: zipDe(noms),
     reglages: { value: (k, d) => (k in stock ? stock[k] : d), setValue: (k, v) => { stock[k] = v; } },
     ouvrirCouche: (source, nom, format) => { j.ouvertes.push({ source, nom, format }); return { source, nom, isValid: true, readOnly: false }; },
     decrireCouche: (c, format) => {
@@ -183,7 +183,7 @@ test('GeoTIFF : ouvert en /vsizip/ avec le format « tif » (loadRasterLayer), c
   const r = L.importerZip(ctx);
   const source = `/vsizip/${COPIES}/essai.zip/o/ortho.tif`;
   assert.deepEqual(j.ouvertes, [{ source, nom: 'ortho', format: 'tif' }], 'une seule ouverture, en raster, dans le zip');
-  assert.deepEqual(j.decrites, [{ nom: 'ortho', format: 'tif' }], 'decrireCouche reçoit le format (pas de comptage pour un raster, Cerf.qml)');
+  assert.deepEqual(j.decrites, [{ nom: 'ortho', format: 'tif' }], 'decrireCouche reçoit le format (pas de comptage pour un raster, Vision.qml)');
   assert.deepEqual(j.reecrites, [], 'pas de saveVectorLayerAs pour un raster (ADR 0008)');
   assert.deepEqual(j.ecrits, [], 'pas de .qml : style par défaut');
   assert.deepEqual(j.ajoutees, [{ nom: 'ortho', source, zip: 'essai.zip', readOnly: false }], 'readOnly non posé : QgsRasterLayer n\'a pas cette propriété');
@@ -212,7 +212,7 @@ test('GeoTIFF réimporté : rechargé dans le zip à la réouverture (chargerCou
   L.importerZip(ctx);
   const lues = [];
   const r = L.demarrerProjet({
-    variables: { cerf_id: ID }, reglages: ctx.reglages, dossierProjet: PROJET, existe: () => true,
+    variables: { vision_id: ID }, reglages: ctx.reglages, dossierProjet: PROJET, existe: () => true,
     chargerCouche: (source, nom) => { const c = { source, nom, isValid: true }; lues.push(c); return c; },
   });
   assert.deepEqual(lues.map((c) => c.source), [`/vsizip/${COPIES}/essai.zip/o/ortho.tif`]);
@@ -293,7 +293,7 @@ test('messages du § 4 : chemin complet pour « couche illisible » (verdict d\'
   assert.ok(lignes(rt).includes('o/t.tif : ajout à la carte impossible'), rt.message);
   assert.deepEqual(carteTif.registre(), []);
   const horsCopie = monde({ noms: ['d/UG.geojson'], extra: { reecrireCouche: () => '/ailleurs/UG.gpkg' } });
-  assert.ok(lignes(L.importerZip(horsCopie.ctx)).includes('d/UG.geojson : copie écrite hors de cerf-imports/, couche refusée'));
+  assert.ok(lignes(L.importerZip(horsCopie.ctx)).includes('d/UG.geojson : copie écrite hors de vision-imports/, couche refusée'));
 });
 
 test('Shapefile complet dans un dossier : ouvert par son .shp, le contrôle 1 reçoit ses cinq fichiers (decrireEntree), chargé sans avertissement', () => {
@@ -317,8 +317,8 @@ test('zip sans aucun format lu : message qui nomme les quatre formats', () => {
 
 // ============================================================================ zip piege de bout en bout (016, critère 6)
 
-test('zip piege : 5 pièges, un message clair chacun (vrai cerf-controles.mjs), seules Zone_inconnue et UG_vide chargées', () => {
-  const dossier = mkdtempSync(join(tmpdir(), 'cerf-t024d-'));
+test('zip piege : 5 pièges, un message clair chacun (vrai vision-controles.mjs), seules Zone_inconnue et UG_vide chargées', () => {
+  const dossier = mkdtempSync(join(tmpdir(), 'vision-t024d-'));
   const octets = readFileSync(fabriquerPiege(dossier));
   const { ctx, j, registre } = monde({
     noms: [],
@@ -344,17 +344,17 @@ test('zip piege : 5 pièges, un message clair chacun (vrai cerf-controles.mjs), 
   assert.equal(j.ouvertes.find((o) => o.nom === 'FRT_sans_georef').format, 'tif', 'le GeoTIFF est ouvert en raster');
 });
 
-// ============================================================================ forme de Cerf.qml
+// ============================================================================ forme de Vision.qml
 
-const qml = lire('plugin/Cerf.qml');
+const qml = lire('plugin/Vision.qml');
 const code = qml.split('\n').filter((x) => !/^\s*\/\//.test(x)).join('\n');
 const fonction = (nom) => {
   const m = new RegExp(`function ${nom}\\([\\s\\S]*?\\n  \\}\\n`).exec(code);
-  assert.ok(m, `${nom} présent dans Cerf.qml`);
+  assert.ok(m, `${nom} présent dans Vision.qml`);
   return m[0];
 };
 
-test('Cerf.qml : ouvrirCouche ouvre un « tif » par LayerUtils.loadRasterLayer, le reste par loadVectorLayer ; le chargeur suit estSourceRaster', () => {
+test('Vision.qml : ouvrirCouche ouvre un « tif » par LayerUtils.loadRasterLayer, le reste par loadVectorLayer ; le chargeur suit estSourceRaster', () => {
   const o = fonction('ouvrirCouche');
   assert.match(o, /function ouvrirCouche\(source, nom, format\)/);
   assert.match(o, /if \(format === "tif"\) return LayerUtils\.loadRasterLayer\(source, nom\);/);
@@ -362,7 +362,7 @@ test('Cerf.qml : ouvrirCouche ouvre un « tif » par LayerUtils.loadRasterLayer,
   assert.match(fonction('chargeur'), /Logique\.estSourceRaster\(source\) \? LayerUtils\.loadRasterLayer\(source, nom\) : LayerUtils\.loadVectorLayer\(source, nom\)/);
 });
 
-test('Cerf.qml : tablesGpkg passe par Logique.tablesDuGpkg (loadVectorLayer, createFeatureIterator, deleteLater) et est branché dans importerZip', () => {
+test('Vision.qml : tablesGpkg passe par Logique.tablesDuGpkg (loadVectorLayer, createFeatureIterator, deleteLater) et est branché dans importerZip', () => {
   const t = fonction('tablesGpkg');
   assert.match(t, /Logique\.tablesDuGpkg\(source, \{/);
   assert.match(t, /LayerUtils\.loadVectorLayer\(uri, nom\)/);
@@ -372,7 +372,7 @@ test('Cerf.qml : tablesGpkg passe par Logique.tablesDuGpkg (loadVectorLayer, cre
   assert.match(fonction('zipRecu'), /tablesGpkg: tablesGpkg,/);
 });
 
-test('Cerf.qml : aucune lecture de featureCount, isEmpty ni isValid() appelé comme méthode (seuls les membres exposés à QML)', () => {
+test('Vision.qml : aucune lecture de featureCount, isEmpty ni isValid() appelé comme méthode (seuls les membres exposés à QML)', () => {
   assert.doesNotMatch(code, /featureCount/);
   assert.doesNotMatch(code, /isEmpty/);
   assert.doesNotMatch(code, /isValid\(\)/);
@@ -380,8 +380,8 @@ test('Cerf.qml : aucune lecture de featureCount, isEmpty ni isValid() appelé co
 
 // ============================================================================ version
 
-test('version et préversion : 0.4.4, branche de la mission 024 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
-  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/024-lecture-formats'/);
+test('version et préversion : 0.5.0, branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/050-vision'/);
 });

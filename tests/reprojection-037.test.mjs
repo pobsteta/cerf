@@ -11,8 +11,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as C from '../plugin/cerf-controles.mjs';
-import * as L from '../plugin/cerf-logique.mjs';
+import * as C from '../plugin/vision-controles.mjs';
+import * as L from '../plugin/vision-logique.mjs';
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const lire = (f) => readFileSync(resolve(RACINE, f), 'utf8');
@@ -50,7 +50,7 @@ function qfield(journal) {
     },
   };
 }
-// Ce que fait Cerf.qml : construireSource, puis reprojeterEmprise avec reprojeterPoint.
+// Ce que fait Vision.qml : construireSource, puis reprojeterEmprise avec reprojeterPoint.
 function service(qf) {
   const reprojeterPoint = (x, y, epsg, crs) => {
     const p = qf.reprojectPoint({ x, y }, crs, qf.fromDescription('EPSG:2154'));
@@ -208,19 +208,19 @@ test('lireEmprise : extent() méthode (cas de QGIS), extent propriété, et rien
 });
 
 // ---------- branchement ----------
-test('branchement : Cerf.qml passe par construireSource, controlerAvecDetail et lireEmprise, pas par couche.extent sans parenthèses', () => {
-  const qml = lire('plugin/Cerf.qml');
+test('branchement : Vision.qml passe par construireSource, controlerAvecDetail et lireEmprise, pas par couche.extent sans parenthèses', () => {
+  const qml = lire('plugin/Vision.qml');
   assert.match(qml, /Controles\.construireSource\(authid, crs, function \(d\) \{ return CoordinateReferenceSystemUtils\.fromDescription\(d\); \}\)/);
   assert.match(qml, /Controles\.controlerAvecDetail\(description/);
   assert.match(qml, /Logique\.lireEmprise\(couche\)/);
   assert.doesNotMatch(qml, /couche\.extent\b(?!\()/);
 });
-test('forme : cerf-controles.mjs sans ?., ?? ni import', () => {
-  const code = lire('plugin/cerf-controles.mjs').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+test('forme : vision-controles.mjs sans ?., ?? ni import', () => {
+  const code = lire('plugin/vision-controles.mjs').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.4.4, branche de la mission 037 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.4');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.4$/m);
-  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/037-reprojection'/);
+test('version et préversion : 0.5.0, branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.5.0');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/050-vision'/);
 });

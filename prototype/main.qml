@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Cerf, prototype n° 1 (mission 004) : point d'entrée du plugin QField.
-// Écrit pour Cerf (ADR 0006). Ce fichier n'importe aucun .mjs : il crée les écrans qui en
-// importent (Cerf.qml, EssaiModule.qml) par Qt.createComponent, pour que l'échec du
+// Vision, prototype n° 1 (mission 004) : point d'entrée du plugin QField.
+// Écrit pour Vision (ADR 0006). Ce fichier n'importe aucun .mjs : il crée les écrans qui en
+// importent (Vision.qml, EssaiModule.qml) par Qt.createComponent, pour que l'échec du
 // chargement d'un module s'affiche au lieu d'empêcher le plugin de démarrer
 // (question 4 du protocole tests/recette/prototype-1.md).
 // API de QField lue dans le code de QField v4.3.7 : voir prototype/PLAN.md § 4.
@@ -34,11 +34,11 @@ Item {
   }
 
   Component.onCompleted: {
-    iface.addItemToPluginsToolbar(boutonCerf);
+    iface.addItemToPluginsToolbar(boutonVision);
   }
 
   RoundButton {
-    id: boutonCerf
+    id: boutonVision
     width: 48
     height: 48
     icon.source: Qt.resolvedUrl("icon.svg")
@@ -65,7 +65,7 @@ Item {
 
     onOpened: {
       if (ecran === null && erreurEcran === "") {
-        const composant = Qt.createComponent("Cerf.qml");
+        const composant = Qt.createComponent("Vision.qml");
         if (composant.status === Component.Ready) {
           ecran = composant.createObject(zoneEcran, { hote: plugin });
           if (!ecran) erreurEcran = composant.errorString();
@@ -87,7 +87,7 @@ Item {
         onClicked: fenetre.close()
       }
 
-      // Écran de secours : cerf-zip.mjs n'a pas pu être chargé.
+      // Écran de secours : vision-zip.mjs n'a pas pu être chargé.
       ColumnLayout {
         visible: fenetre.erreurEcran !== ""
         Layout.fillWidth: true
@@ -98,7 +98,7 @@ Item {
           wrapMode: Text.WrapAnywhere
           color: "black"
           font.pointSize: plugin.taillePolice
-          text: "Écran du prototype NON chargé (cerf-zip.mjs ou Cerf.qml) :\n" + fenetre.erreurEcran
+          text: "Écran du prototype NON chargé (vision-zip.mjs ou Vision.qml) :\n" + fenetre.erreurEcran
         }
 
         Button {

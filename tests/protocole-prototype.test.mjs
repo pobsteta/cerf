@@ -104,7 +104,7 @@ test('chaque question dit « Si non » et renvoie à la bonne ligne de la spec �
 
 test('copie : le dossier cible est celui de la spec § 3.3, hors du dossier projet', () => {
   const corps = questions()[1].corps;
-  assert.ok(corps.includes('Imported Datasets/cerf/<cerf_id>/'));
+  assert.ok(corps.includes('Imported Datasets/vision/<vision_id>/'));
   assert.match(corps, /hors du dossier projet/);
 });
 
@@ -169,7 +169,7 @@ test('module d\'essai .mjs : ni .pragma ni .import (ADR 0005), importable par No
   assert.doesNotMatch(src, /\.pragma|\.import/);
   const m = await import(MODULE);
   assert.equal(m.somme(2, 3), 5);
-  assert.equal(m.SIGNATURE, 'cerf-prototype-1');
-  assert.match(texte(), /cerf-prototype-1/);
+  assert.equal(m.SIGNATURE, 'vision-prototype-1');
+  assert.match(texte(), /vision-prototype-1/);
   assert.match(texte(), /module-essai\.mjs/);
 });

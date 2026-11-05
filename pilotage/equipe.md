@@ -50,3 +50,18 @@
 | [018 Notice de JFC](missions/018-notice-jfc.md) | `archiviste` | sonnet | tenir | oui/non/non | en attente |
 
 Cycle = cycle de `/boucle` prévu, sous le plafond de 3 PR ouvertes. Agents mobilisés : `acquereur`, `testeur`, `dev`, `afficheur`, `archiviste`, `relecteur` (chaque PR). Ni `analyste` (pas encore d'échecs à compter) ni `contradicteur` (déjà passé sur brief, spec et ADR ; rappelé pour toute nouvelle ADR).
+
+## Bilan du 5 novembre 2026 (validé par Pascal)
+
+- Missions 019 à 050 : agent et cycle de chaque mission dans `pilotage/kanban.md` et les fiches
+  `pilotage/missions/` ; ce tableau garde l'équipe de la porte n° 2 (2 novembre 2026).
+- `analyste` : appelé au bilan n° 1 ; **appelé à chaque bilan** désormais.
+- `contradicteur` : gardé pour toute nouvelle ADR.
+- `afficheur` : jamais servi (mission 015 jamais lancée) ; son sort suit celui de la 015, à
+  trancher par Pascal.
+- `testeur` : passe désormais la liste de contrôle des faux rouges et faux « oui » avant relecture.
+- Règle ajoutée : **preuve avant code** — tout appel QField/QGIS d'une fiche est appuyé par une
+  ligne de source citée ou un essai sur le Samsung ; toute préversion qui touche QField est
+  essayée sur l'appareil avant fusion.
+- Règle ajoutée : les droits et domaines réseau nécessaires sont demandés à Pascal **avant** le
+  lancement d'une mission.

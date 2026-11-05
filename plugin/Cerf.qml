@@ -94,7 +94,9 @@ Item {
       // Copie GeoPackage (ADR 0008) : le zip est donné ; couche en /vsizip/ : il se lit dans la source.
       const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
-      if (deja) return deja;
+      // Mission 049 : une couche déjà au projet n'est rendue que valide ; invalide -> null (même résultat visible : « illisible »),
+      // et la logique ne libère jamais une couche du projet (coucheDuProjet).
+      if (deja) return deja.isValid ? deja : null;
       // Mission 024 : un GeoTIFF (chemin_vsi en .tif ou .tiff) se recharge en raster.
       const couche = Logique.estSourceRaster(source) ? LayerUtils.loadRasterLayer(source, nom) : LayerUtils.loadVectorLayer(source, nom);
       if (couche && couche.isValid) {
@@ -185,6 +187,11 @@ Item {
   // Mission 049 : libère une couche ouverte par LayerUtils.loadVectorLayer / loadRasterLayer et non ajoutée à la carte.
   // QField v4.3.7 (qflayerutils.cpp l. 618 et 624) la rend en CppOwnership : sans deleteLater, personne ne la détruit.
   // La logique ne l'appelle jamais sur une couche ajoutée au projet, ni deux fois sur la même.
+  // Mission 049 : vrai si la couche porte la marque Cerf, donc appartient au projet (ajoutée par le chargeur) : jamais libérée.
+  function coucheDuProjet(couche) {
+    return !!couche && typeof couche.customProperty === "function" && String(couche.customProperty("cerf/zip", "")) !== "";
+  }
+
   function libererCouche(couche) {
     couche.deleteLater();
   }
@@ -330,6 +337,7 @@ Item {
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       fondDejaPresent: fondDejaPresent,
       libererCouche: libererCouche,
+      coucheDuProjet: coucheDuProjet,
       chargerCouche: id ? chargeur() : function () { return null; }
     });
     registreChange();
@@ -414,6 +422,7 @@ Item {
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
       libererCouche: libererCouche,
+      coucheDuProjet: coucheDuProjet,
       tablesGpkg: tablesGpkg,
       styleGpkg: styleGpkg,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },

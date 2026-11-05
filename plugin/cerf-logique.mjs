@@ -730,6 +730,8 @@ function creerSuivi(ctx) {
     garder: function (c) { if (c && gardees.indexOf(c) < 0) gardees.push(c); },
     liberer: function (c) {
       if (!c || gardees.indexOf(c) >= 0 || liberees.indexOf(c) >= 0) return;
+      // Une couche déjà au projet (rendue telle quelle par le chargeur) appartient au QgsProject : jamais libérée ici.
+      try { if (ctx && typeof ctx.coucheDuProjet === 'function' && ctx.coucheDuProjet(c)) return; } catch (e) { return; }
       liberees.push(c);
       try { if (ctx && typeof ctx.libererCouche === 'function') ctx.libererCouche(c); } catch (e) { /* sans effet */ }
     },
@@ -1288,6 +1290,8 @@ function chargerFondEmbarque(ctx, dossierProjet) {
   let deja = false;
   try { deja = !!ctx.fondDejaPresent(chemin); } catch (e) { deja = false; }
   if (deja) return 'deja';
+  // Pas de `liberer` ici, volontairement : le chargeur de Cerf.qml libère seul un fond invalide (CppOwnership) ;
+  // en passer un autre donnerait une double libération.
   const r = chargerSansPlanter(ctx.chargerCouche, chemin, NOM_FOND_EMBARQUE);
   return r.couche ? 'ajoute' : 'illisible';
 }

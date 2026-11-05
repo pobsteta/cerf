@@ -261,6 +261,33 @@ test('ouverture : copie rechargée valide (ajoutée par le chargeur) -> jamais l
   assert.equal(liberees.length, 0);
 });
 
+// Couche déjà au projet : le faux chargeur la rend telle quelle (comme Cerf.qml), marquée par coucheDuProjet.
+function mondeDeja(valide) {
+  const w = mondeOuverture({ valide: true });
+  const deja = { source: 'projet', isValid: valide, readOnly: false, auProjet: true };
+  let appels = 0;
+  w.ctx.chargerCouche = () => { appels++; return deja; };
+  w.ctx.coucheDuProjet = (l) => l.auProjet === true;
+  return { ...w, deja, appels: () => appels };
+}
+
+test('ouverture : couche déjà au projet et invalide -> jamais libérée, message « illisible » inchangé', () => {
+  const w = mondeDeja(false);
+  const r = L.demarrerProjet(w.ctx);
+  assert.equal(r.illisibles.length, 1);
+  assert.match(r.message, /illisible \(p\)/);
+  assert.equal(w.liberees.length, 0);
+});
+
+test('ouverture : couche déjà au projet et valide -> jamais libérée, pas rechargée en double', () => {
+  const w = mondeDeja(true);
+  const r = L.demarrerProjet(w.ctx);
+  assert.equal(r.rechargees.length, 1);
+  assert.equal(w.liberees.length, 0);
+  assert.equal(w.appels(), 1);
+  assert.equal(w.chargees.length, 0);
+});
+
 // ------------------------------------------------------------------ forme de Cerf.qml, version
 
 test('Cerf.qml : libererCouche (deleteLater) est passé à importerZip et à demarrerProjet', () => {

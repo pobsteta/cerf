@@ -50,6 +50,11 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [051-memoire](missions/051-memoire.md) · depuis le bilan n° 1 · en cours
+  - Homme : `archiviste`
+  - Mission : remise en ordre de la mémoire après le test du successeur
+  - Moyens : kanban, spec, README, PLAN, index des ADR, notes de release
+
 ## Terminé
 
 - [050-vision](missions/050-vision.md) · depuis le cycle 6 · fusionnée (PR #51)

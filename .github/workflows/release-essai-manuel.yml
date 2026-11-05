@@ -13,13 +13,16 @@
 # Mission 035 : la même préversion contient aussi essai-manuel-geojson.zip (mêmes quatre couches, tout en
 # GeoJSON) et son flashcode, contrôlé par décodage ; à prendre tant que le plugin ne lit pas les Shapefile
 # (mission 024).
+# Mission 040 : la même préversion contient aussi piege.zip (zip de recette de la mission 016, données
+# fictives, cinq pièges, fabriqué par outils/zips-recette.mjs <dossier> piege) et son flashcode, contrôlé par
+# décodage ; les notes disent les lignes attendues avec le plugin 0.4.0.
 # Ce workflow ne touche ni au plugin (release-plugin.yml, « plugin-essai ») ni au projet modèle.
 # Aucune clé, aucun secret : le jeton du dépôt suffit.
 name: Release de l'essai du manuel
 on:
   push:
-    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson', 'mission/036-notes-essai-manuel']
-    paths: ['outils/zip-essai-manuel.mjs', 'outils/flashcodes.mjs', 'tests/recette/essai/zip-ecrire.mjs', '.github/workflows/release-essai-manuel.yml']
+    branches: ['main', 'mission/033-essai-manuel', 'mission/035-essai-manuel-geojson', 'mission/036-notes-essai-manuel', 'mission/040-publier-piege']
+    paths: ['outils/zip-essai-manuel.mjs', 'outils/zips-recette.mjs', 'outils/flashcodes.mjs', 'tests/recette/essai/zip-ecrire.mjs', '.github/workflows/release-essai-manuel.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -48,22 +51,27 @@ jobs:
           CERF_FLASHCODES_EXIGER: '1'
         run: node --test
       - name: Zip
-        run: node outils/zip-essai-manuel.mjs dist
+        run: |
+          node outils/zip-essai-manuel.mjs dist
+          node --no-warnings outils/zips-recette.mjs dist piege
       - name: Flashcode (génération et contrôle par décodage)
         run: |
           node outils/flashcodes.mjs generer dist/flashcodes manuel essai
           node outils/flashcodes.mjs verifier dist/flashcodes manuel essai
           node outils/flashcodes.mjs generer dist/flashcodes-geojson manuel-geojson essai
           node outils/flashcodes.mjs verifier dist/flashcodes-geojson manuel-geojson essai
+          node outils/flashcodes.mjs generer dist/flashcodes-piege piege essai
+          node outils/flashcodes.mjs verifier dist/flashcodes-piege piege essai
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "Deux zips de démonstration aux noms du manuel, mêmes quatre couches, mêmes données :"
+            echo "Trois zips : deux zips de démonstration aux noms du manuel (mêmes quatre couches, mêmes données) et le zip piégé de la recette :"
             echo
             echo "- **essai-manuel-geojson.zip** : UG, Parcelles, FRT et l'export ProdBois, tout en **GeoJSON**. **À prendre tant que le plugin ne lit pas les Shapefile (mission 024)** : le plugin actuel ne lit que le GeoJSON."
             echo "- **essai-manuel.zip** : UG, Parcelles, FRT en Shapefile et l'export ProdBois en GeoJSON. À prendre quand le plugin lira les Shapefile (mission 024)."
+            echo "- **piege.zip** : zip de **recette**, données **fictives**, huit fichiers, cinq pièges (mission 016). Il doit donner **un message clair par piège** ; ce n'est pas un zip à utiliser sur le terrain."
             echo
             echo "**Données fictives**, en Lambert 93 (EPSG:2154), près de Fontainebleau : aucune donnée de l'ONF. À importer dans cerf.qgz avec le plugin Cerf 0.3.2 ou plus (bouton d'import du plugin, sans réseau). Avant la 0.3.2, toute couche était refusée (« système de coordonnées inconnu »)."
             echo
@@ -77,8 +85,21 @@ jobs:
             echo "- **Essai_p5_13_30_Res** (10 points ProdBois) : cercle noir plein de 2 mm ; étiquette sur deux lignes, essence puis diamètre (8 pt, noire, liseré blanc)."
             echo "- Les accents (Chêne, Réservée) s'affichent sans caractères abîmés ; aucun message de refus ; les 4 couches sont en lecture seule et reviennent à la réouverture du projet."
             echo
+            echo
+            echo "### Ce que Pascal doit voir avec piege.zip (plugin 0.4.0, préversion « plugin-essai », PR #38)"
+            echo
+            echo "Importer piege.zip dans cerf.qgz : le panneau doit afficher ces lignes, et seulement elles."
+            echo
+            echo "- « 2 couches chargées : UG_vide, Zone_inconnue » (Zone_inconnue : style QGIS par défaut, nom non reconnu) ;"
+            echo "- « UG_vide.geojson : couche vide » (avertissement, la couche est chargée) ;"
+            echo "- « Parcelles_sans_prj.shp : fichier .prj manquant, système de coordonnées inconnu » (refus) ;"
+            echo "- « UG_sans_crs.geojson : Coordonnées incohérentes : système mal déclaré ? » (refus) ;"
+            echo "- « FRT_sans_georef.tif : système de coordonnées inconnu » (refus)."
+            echo
+            echo "Le plugin stable 0.3.4 ne lit que le GeoJSON : avec lui, les pièges Shapefile et GeoTIFF sont ignorés sans message. Les lignes ci-dessus ne valent que pour le plugin 0.4.0 ou plus."
+            echo
             echo '```'
-            sha256sum dist/essai-manuel.zip dist/essai-manuel-geojson.zip
+            sha256sum dist/essai-manuel.zip dist/essai-manuel-geojson.zip dist/piege.zip
             echo '```'
           } > notes.md
           echo >> notes.md
@@ -86,6 +107,8 @@ jobs:
           echo >> notes.md
           # Le titre « Flashcodes de l'essai (préversion) » n'est écrit qu'une fois (mission 036) : on retire celui du second bloc.
           node outils/flashcodes.mjs notes manuel essai essai-manuel | tail -n +3 >> notes.md
+          echo >> notes.md
+          node outils/flashcodes.mjs notes piege essai essai-manuel | tail -n +3 >> notes.md
           # Étiquette fixe : on supprime la release et son étiquette, puis on recrée sur le commit courant.
           if gh release view essai-manuel >/dev/null 2>&1; then
             gh release delete essai-manuel --cleanup-tag --yes
@@ -94,5 +117,5 @@ jobs:
           if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/essai-manuel" >/dev/null 2>&1; then
             gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/essai-manuel"
           fi
-          gh release create essai-manuel dist/essai-manuel.zip dist/flashcodes/* dist/essai-manuel-geojson.zip dist/flashcodes-geojson/* \
+          gh release create essai-manuel dist/essai-manuel.zip dist/flashcodes/* dist/essai-manuel-geojson.zip dist/flashcodes-geojson/* dist/piege.zip dist/flashcodes-piege/* \
             --target "$GITHUB_SHA" --title "Essai du manuel (données fictives)" --notes-file notes.md --prerelease --latest=false

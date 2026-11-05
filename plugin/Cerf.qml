@@ -79,6 +79,15 @@ Item {
   function chargeur() {
     const dossier = Logique.dossierCopies(dossierProjet());
     return function (source, nom, zipDeLaCopie) {
+      // Mission 048 : le fond embarqué n'est pas une couche du zip (ni zip ni registre) ; marque propre, lecture seule par nature.
+      if (Logique.estSourceFondEmbarque(source)) {
+        const fond = LayerUtils.loadRasterLayer(source, nom);
+        if (fond && fond.isValid) {
+          fond.setCustomProperty("cerf/fond", "embarque");
+          ProjectUtils.addMapLayer(qgisProject, fond);
+        }
+        return fond;
+      }
       // Copie GeoPackage (ADR 0008) : le zip est donné ; couche en /vsizip/ : il se lit dans la source.
       const zip = zipDeLaCopie ? String(zipDeLaCopie) : Logique.zipDeLaSource(source, dossier);
       const deja = coucheMarquee(zip, nom);
@@ -92,6 +101,21 @@ Item {
       }
       return couche;
     };
+  }
+
+  // Mission 048 : une couche du projet lit déjà le fond embarqué (marque cerf/fond, ou source finissant par basemap.mbtiles).
+  function fondDejaPresent() {
+    if (!qgisProject) return false;
+    const couches = ProjectUtils.mapLayers(qgisProject);
+    for (const id in couches) {
+      const l = couches[id];
+      if (!l) continue;
+      try {
+        if (typeof l.customProperty === "function" && String(l.customProperty("cerf/fond", "")) === "embarque") return true;
+        if (Logique.estSourceFondEmbarque(String(l.source))) return true;
+      } catch (e) { /* couche sans source lisible */ }
+    }
+    return false;
   }
 
   // Styles du manuel (mission 010). Ce que Cerf.qml sait dire à la logique : la géométrie et les
@@ -294,6 +318,7 @@ Item {
       reglages: reglages,
       dossierProjet: dossierProjet(),
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
+      fondDejaPresent: fondDejaPresent,
       chargerCouche: id ? chargeur() : function () { return null; }
     });
     registreChange();

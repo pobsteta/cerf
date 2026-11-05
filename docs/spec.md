@@ -144,6 +144,16 @@ Ces référentiels sont à rassembler par l'`acquereur` (§ 8).
   mécanisme est à décrire dans une ADR ; **aucune clé dans le dépôt**.
 - Fond embarqué de repli : **pas en tranche 1**, sauf si l'essai à J+2 (critère 5) échoue
   (§ 9, n° 5).
+- **Fond embarqué `basemap.mbtiles`** (mission 048, plugin 0.4.3, 5 novembre 2026 ; arbitrage de Pascal : variante A).
+  À l'ouverture de `cerf.qgz` (même moment que la recharge du registre), si `basemap.mbtiles` est à côté du projet et
+  qu'aucune couche ne le lit déjà, le plugin le charge par GDAL (`LayerUtils.loadRasterLayer`, QField v4.3.7) comme
+  couche raster « Fond embarqué (hors ligne) », cochée, sans entrée au registre des imports. Absent : rien, aucun
+  message (pas de couche déclarée dans `cerf.qgz`, donc pas de page « Unable to load some layers »). Présent mais
+  illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » Place : celle de
+  `insertLayerAtOptimalPlacement` (QGIS `qgslayertreeutils.cpp` l. 534-720), sous les vecteurs et **au-dessus** des
+  fonds XYZ, sans déplacement (QML ne voit aucune API de l'arbre) : il recouvre les fonds en ligne sur son emprise ;
+  pour voir la BD ORTHO, le décocher. QField ne réécrit pas le projet ouvert dans les sources lues (la couche n'est
+  pas gardée au `.qgz`). Ordre réel et affichage en mode avion : **non prouvés**, à voir à l'essai sur le Samsung.
 
 ### 3.5 Couche de saisie (amendement du 3 novembre 2026)
 

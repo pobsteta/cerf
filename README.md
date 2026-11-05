@@ -56,7 +56,7 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.4.2 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.4.3 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 
@@ -113,6 +113,7 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 - **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
 - **Style enregistré dans un GeoPackage** (*plugin 0.4.2, mission 047, 5 novembre 2026*). Quand tu enregistres le style d'une couche dans QGIS avec « Enregistrer le style dans la base de données » (« Enregistrer comme style par défaut »), il est écrit dans la table `layer_styles` du `.gpkg`. Pour chaque table d'un GeoPackage du zip, le plugin lit ce style, sans réseau, et le garde **à la place** de la règle du manuel : la table `UG` d'un `Serre.gpkg` stylée par toi n'est plus bleue, elle garde ton style. S'il y a plusieurs styles pour la table, le plugin prend celui « par défaut », sinon le plus récent. Sans `layer_styles`, ou sans ligne pour la table, la règle du manuel s'applique comme avant, sans message. Si le style est vide ou n'est pas du XML QGIS, la règle du manuel s'applique avec l'avertissement « `<chemin>` : .qml illisible, style du manuel appliqué ». **Cette lecture n'est pas encore prouvée sur le téléphone** (même voie que la liste des tables : requête `SELECT` sur le GeoPackage) ; zip d'essai `essai-gpkg-style.zip`, plus bas.
+- **Fond embarqué `basemap.mbtiles`** (*plugin 0.4.3, mission 048, 5 novembre 2026 ; pas encore prouvé sur le téléphone*). Si un fichier `basemap.mbtiles` (produit par QFieldSync pour ton UT, mission 046) est **à côté de `cerf.qgz`**, le plugin l'ajoute à l'ouverture du projet, cochée, sous le nom « Fond embarqué (hors ligne) », en lecture seule. Étapes : 1. copier `basemap.mbtiles` à côté de `cerf.qgz` ; 2. rouvrir le projet ; 3. vérifier en mode avion que le fond s'affiche. Sans fichier : rien ne se passe, aucun message. Fichier présent mais illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible, il n'est pas affiché. » **Le fond embarqué recouvre les fonds en ligne sur son emprise** : pour voir la BD ORTHO, décoche-le. QField le place sous les couches vecteur et au-dessus des fonds en ligne ; cet ordre réel sera vu à l'essai sur le Samsung. Il n'apparaît pas dans la liste des couches importées, et il revient à chaque réouverture tant que le fichier est là.
 
 ### Systèmes de coordonnées
 

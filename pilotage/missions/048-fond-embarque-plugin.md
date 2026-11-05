@@ -47,7 +47,7 @@ rouvrir le projet : une seule couche.
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** à l'ouverture d'un projet Cerf, si `basemap.mbtiles` est à côté de `cerf.qgz` et pas déjà lu par une couche, le plugin l'ajoute en raster « Fond embarqué (hors ligne) », cochée, là où QField la place ; absent, rien ; illisible, le texte validé ; pour donner à l'agent un fond hors ligne sans page d'erreur.
 
 ## Arbitrages de Pascal (5 novembre 2026, après l'arrêt du dev)
 

@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.4.1';
+export const VERSION = '0.4.2';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -84,6 +84,8 @@ export const PLAFOND_LISTAGE_OCTETS = 10000000;
 // Parcelles, FRT, ProdBois) ou 'qml' (mission 010, plugin/cerf-styles.mjs).
 export const STYLE_DEFAUT = 'defaut';
 export const STYLE_QML = 'qml';
+// Mission 047 : style enregistré dans le GeoPackage du zip (table layer_styles).
+export const STYLE_GPKG = 'gpkg';
 
 // --------------------------------------------------------------------------- octets
 
@@ -556,6 +558,54 @@ export function tablesDuGpkg(source, services) {
   return ouverte ? illisible : { etat: 'aucune', tables: [] };
 }
 
+// --------------------------------------------------------------------------- style d'une table de GeoPackage (mission 047)
+
+// Style enregistré par QGIS dans la table `layer_styles` du GeoPackage (« Enregistrer le style dans la base de
+// données »). Même voie que gpkg_contents : une couche OGR dont le filtre est une requête SELECT, exécutée par
+// GDALDatasetExecuteSQL sur le jeu de données (QGIS 3a92eb3, qgsogrprovider.cpp l. 2600-2630 et
+// qgsogrproviderutils.cpp l. 1390-1395), sans réseau ; la couche 0 du fichier doit exister (analyzeURI,
+// qgsogrproviderutils.cpp l. 82 : layerIndex = 0 par défaut). Ordre des lignes : celui de QGIS
+// (qgsogrutils.cpp l. 3044-3048, loadStoredStyle) : style par défaut d'abord, puis le plus récent ; seule la
+// première ligne est lue. NON PROUVÉE sur le Samsung (comme gpkg_contents).
+export function requeteStyleGpkg(table) {
+  const nom = String(table).replace(/'/g, "''");
+  return "SELECT styleQML FROM layer_styles WHERE f_table_name = '" + nom
+    + "' ORDER BY CASE WHEN useAsDefault THEN 1 ELSE 2 END, update_time DESC LIMIT 1";
+}
+
+// Style enregistré pour la table `table` du GeoPackage `source` (« /vsizip/<copie>/<entrée .gpkg> »).
+// services = { ouvrir(uri, nom) -> couche, creerIterateur(couche) -> itérateur, liberer(couche) } (comme tablesDuGpkg).
+// Rend { etat, texte } :
+//   - 'lu' : une ligne existe ; `texte` = son styleQML ('' si vide ou NULL) ; le contrôle du .qml vient après ;
+//   - 'illisible' : la requête s'est ouverte, une ligne existe, mais elle ne se lit pas ;
+//   - 'absent' : tout le reste : pas de table layer_styles (la requête ne s'ouvre pas : on ne peut pas le
+//     distinguer d'un échec d'ouverture), aucune ligne pour la table, nom de table non sûr (jamais interpolé),
+//     services absents. Ne lève jamais.
+// Le nom de table sans « \ » : cleanSubsetString (qgsogrproviderutils.cpp l. 1340-1365) suit les chaînes entre
+// apostrophes et traite « \ » comme un échappement, ce que le doublement d'apostrophe de SQL ne suit pas.
+export function styleDuGpkg(source, table, services) {
+  const absent = { etat: 'absent' };
+  if (!services || typeof services.ouvrir !== 'function' || typeof services.creerIterateur !== 'function') return absent;
+  if (!nomDeTableSur(table) || String(table).indexOf('\\') >= 0) return absent;
+  const requete = ouvrirSansPlanter(services, source + '|subset=' + requeteStyleGpkg(table), 'cerf_style');
+  if (!requete || requete.invalide) { liberer(services, requete); return absent; }
+  let it = null;
+  let etat = absent;
+  try {
+    it = services.creerIterateur(requete);
+    if (!it) throw new Error('itérateur absent');
+    if (it.hasNext()) {
+      const f = it.next();
+      etat = { etat: 'lu', texte: valeurTexte(f.attribute('styleQML')) };
+    }
+  } catch (e) {
+    etat = { etat: 'illisible' };
+  }
+  if (it) { try { it.close(); } catch (e) { /* fermeture sans effet sur le résultat */ } }
+  liberer(services, requete);
+  return etat;
+}
+
 // --------------------------------------------------------------------------- registre
 
 // { liste, illisible } : illisible quand la valeur n'est ni absente, ni une liste JSON.
@@ -748,8 +798,22 @@ export function peutEcrireCopie(chemin, dossier) {
   return true;
 }
 
-// Choisit le .qml à écrire à côté de la copie : celui du zip s'il est valide (XML, racine <qgis>,
-// <renderer-v2>), sinon celui de la règle du manuel (styleDe puis qmlDe). Rend
+// Mission 047 : style enregistré dans le GeoPackage pour la table de `c`, par le service facultatif
+// `ctx.styleGpkg(source, table)` (Cerf.qml : styleGpkg). Rend { etat: 'lu', texte } ou { etat: 'illisible' } quand une
+// ligne existe ; null dans tous les autres cas (service absent, qui lève, réponse inattendue, « absent ») : la
+// règle du manuel s'applique alors comme avant, sans avertissement.
+function styleEnregistre(ctx, nomZip, c) {
+  if (typeof ctx.styleGpkg !== 'function' || typeof c.table !== 'string') return null;
+  let r = null;
+  try { r = ctx.styleGpkg('/vsizip/' + cheminCopie(ctx.dossierProjet, nomZip) + '/' + c.entree, c.table); } catch (e) { r = null; }
+  if (!r || typeof r !== 'object') return null;
+  if (r.etat === 'illisible') return { etat: 'illisible' };
+  if (r.etat === 'lu' && typeof r.texte === 'string') return { etat: 'lu', texte: r.texte };
+  return null;
+}
+
+// Choisit le .qml à écrire à côté de la copie : le style enregistré dans le GeoPackage (mission 047), puis celui du zip
+// s'il est valide (XML, racine <qgis>, <renderer-v2>), sinon celui de la règle du manuel (styleDe puis qmlDe). Rend
 // { style, qml, contenu, avertissements } ; contenu null = rien à écrire (style par défaut).
 // Les avertissements sont des phrases seules (l'appelant ajoute « <fichier> : », spec § 4).
 function choisirStyle(ctx, couche, nomZip, c, noms) {
@@ -760,17 +824,28 @@ function choisirStyle(ctx, couche, nomZip, c, noms) {
   try {
     const infos = ctx.infosCouche(couche) || {};
     const champs = infos.champs || [];
-    // Une table de GeoPackage : son .qml porte le nom de la table, à côté du .gpkg (spec § 5).
     let cheminQml = null;
-    if (c.format === 'gpkg') cheminQml = typeof S.trouverQmlDeTable === 'function' ? S.trouverQmlDeTable(c.entree, c.table, noms) : null;
-    else cheminQml = typeof S.trouverQml === 'function' ? S.trouverQml(c.entree, noms) : null;
     let texte = null;
-    if (cheminQml) {
-      try { texte = typeof ctx.lireTexte === 'function' ? ctx.lireTexte(nomZip, cheminQml) : null; } catch (e) { texte = null; }
-      texte = typeof texte === 'string' && S.qmlValide(texte) ? texte : '';
+    // Mission 047 : le style enregistré dans le GeoPackage (layer_styles) passe avant la règle du manuel.
+    const gpkg = c.format === 'gpkg' ? styleEnregistre(ctx, nomZip, c) : null;
+    if (gpkg !== null) {
+      // Une ligne existe : mêmes garde-fous qu'un .qml (non vide, XML <qgis>) ; sinon règle du manuel et l'avertissement
+      // existant (reconnaitre) ; une ligne illisible vaut un texte vide.
+      texte = gpkg.etat === 'lu' && S.qmlValide(gpkg.texte) ? gpkg.texte : '';
+    } else {
+      // Une table de GeoPackage : son .qml porte le nom de la table, à côté du .gpkg (spec § 5).
+      if (c.format === 'gpkg') cheminQml = typeof S.trouverQmlDeTable === 'function' ? S.trouverQmlDeTable(c.entree, c.table, noms) : null;
+      else cheminQml = typeof S.trouverQml === 'function' ? S.trouverQml(c.entree, noms) : null;
+      if (cheminQml) {
+        try { texte = typeof ctx.lireTexte === 'function' ? ctx.lireTexte(nomZip, cheminQml) : null; } catch (e) { texte = null; }
+        texte = typeof texte === 'string' && S.qmlValide(texte) ? texte : '';
+      }
     }
     const r = S.reconnaitre({ nom: nomCouche, geometrie: infos.geometrie, champs, qml: texte });
-    if (r.source === 'qml') return { style: STYLE_QML, qml: cheminQml, contenu: texte, avertissements: [] };
+    if (r.source === 'qml') {
+      if (gpkg !== null) return { style: STYLE_GPKG, qml: '', contenu: texte, avertissements: [] };
+      return { style: STYLE_QML, qml: cheminQml, contenu: texte, avertissements: [] };
+    }
     const avertissements = r.avertissement ? [r.avertissement] : [];
     const attendu = S.champCodeDe(r.regle);
     const style = S.styleDe(r.regle, {

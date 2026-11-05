@@ -65,4 +65,8 @@ Non prouvé tant que ce n'est pas vu : la voie `SELECT` sur l'appareil (déjà e
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** Pour chaque table vecteur d'un GeoPackage du zip, lire (avant la réécriture, par une couche
+OGR filtrée `|subset=SELECT styleQML FROM layer_styles WHERE f_table_name = '<table>' ORDER BY …`, comme la liste des
+tables de la mission 024) le style par défaut, sinon le plus récent, et l'écrire comme `.qml` à côté de la copie
+réécrite à la place de celui de la règle du manuel, pour que l'agent garde sur le terrain le style qu'il a choisi dans
+QGIS ; sans `layer_styles`, sans ligne, ou si la lecture échoue, la règle du manuel s'applique comme aujourd'hui.

@@ -56,7 +56,7 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.4.1 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.4.2 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 
@@ -97,7 +97,7 @@ Les limites réelles :
 
 ### Les styles du manuel
 
-Le plugin choisit le style dans cet ordre : la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS. Un `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** (voir plus bas).
+Le plugin choisit le style dans cet ordre : le **style enregistré dans le GeoPackage** du zip (table `layer_styles`, voir plus bas), puis la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS. Un `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** (voir plus bas).
 
 | Couche | Nom reconnu (exemples) | Géométrie | Champ de l'étiquette |
 |---|---|---|---|
@@ -112,6 +112,7 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 - Un nom reconnu mais en point ou en ligne (sans les champs `essence` et `diametre`) garde le style par défaut, avec un avertissement.
 - **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
+- **Style enregistré dans un GeoPackage** (*plugin 0.4.2, mission 047, 5 novembre 2026*). Quand tu enregistres le style d'une couche dans QGIS avec « Enregistrer le style dans la base de données » (« Enregistrer comme style par défaut »), il est écrit dans la table `layer_styles` du `.gpkg`. Pour chaque table d'un GeoPackage du zip, le plugin lit ce style, sans réseau, et le garde **à la place** de la règle du manuel : la table `UG` d'un `Serre.gpkg` stylée par toi n'est plus bleue, elle garde ton style. S'il y a plusieurs styles pour la table, le plugin prend celui « par défaut », sinon le plus récent. Sans `layer_styles`, ou sans ligne pour la table, la règle du manuel s'applique comme avant, sans message. Si le style est vide ou n'est pas du XML QGIS, la règle du manuel s'applique avec l'avertissement « `<chemin>` : .qml illisible, style du manuel appliqué ». **Cette lecture n'est pas encore prouvée sur le téléphone** (même voie que la liste des tables : requête `SELECT` sur le GeoPackage) ; zip d'essai `essai-gpkg-style.zip`, plus bas.
 
 ### Systèmes de coordonnées
 
@@ -136,6 +137,12 @@ Un zip de démonstration (données fictives, aux noms du manuel : UG, Parcelles,
 `https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-manuel.zip`
 
 <img src="docs/flashcodes/flashcode-essai-manuel.svg" width="200" alt="Flashcode de l'adresse de essai-manuel.zip">
+
+`essai-gpkg-style.zip`, de la même préversion (données fictives, mission 047), contient un GeoPackage de deux tables : `Parcelles`, avec un style enregistré (contour vert épais), doit le garder ; `UG`, sans style enregistré, prend le bleu du manuel :
+
+`https://github.com/pobsteta/cerf/releases/download/essai-manuel/essai-gpkg-style.zip`
+
+(adresse d'essai : son flashcode est dans les notes de la préversion `essai-manuel`.)
 
 ## 4. Pour les développeurs
 

@@ -129,3 +129,17 @@ test('mission 043 : plus de flashcode « joint à la release » seul dans le REA
 test('mission 043 : les décodages ne sont pas sautés quand on les exige', () => {
   if (process.env.CERF_FLASHCODES_EXIGER === '1') assert.ok(ZBAR, 'zbarimg doit être installé');
 });
+
+// Mission 045 : tant que le critère n° 5 (J+2) n'est pas prouvé, le README ne promet pas le hors ligne d'un fond.
+test('mission 045 : le README ne promet pas « Hors ligne : oui » pour un fond, il renvoie au critère n° 5', () => {
+  const lignes = readme.split('\n').filter((l) => /^\| \*\*(Cadastre|Plan IGN v2|OpenStreetMap|OpenTopoMap|BD ORTHO)\*\*/.test(l));
+  assert.equal(lignes.length, 5);
+  for (const l of lignes) {
+    const horsLigne = l.split('|')[3].trim();
+    assert.doesNotMatch(horsLigne, /^oui/i, l);
+    assert.match(horsLigne, /à vérifier \(critère n° 5|non/, l);
+  }
+  assert.ok(!/cache des tuiles\)/.test(readme), 'promesse de cache dans le README');
+  assert.ok(readme.includes('non vérifié, à mesurer sur le Samsung'), 'zoom OSM non étiqueté');
+  assert.ok(readme.includes('User-Agent'), 'refus de tuiles OSM non signalé');
+});

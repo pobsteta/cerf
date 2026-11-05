@@ -4,7 +4,7 @@
 //     couche « Saisie terrain » modifiable, au-dessus du groupe « Fonds de carte » ; champs fid, essence (texte),
 //     diametre (entier), remarque (texte), date (date et heure, défaut now(), modifiable) ;
 //   - docs/spec.md § 5 (règle ProdBois / Relevés) : cercle noir plein 2 mm ; étiquette "essence" || '\n' || "diametre",
-//     8 pt, noire, liseré blanc ; § 2 point 1 et § 3.4 : deux fonds XYZ, groupe « Fonds de carte » ;
+//     8 pt, noire, liseré blanc ; § 2 point 1 et § 3.4 : cinq fonds XYZ depuis la mission 045 (deux avant), groupe « Fonds de carte » ;
 //   - docs/spec.md § 6 n° 10 et docs/brief.md (amendement du 3 novembre 2026).
 // Emplacement : saisie.gpkg et cerf.qgz à la racine du dépôt (comme tests/projet-modele.test.mjs).
 //   La variable d'environnement CERF_RACINE (facultative) remplace cette racine : elle sert à prouver que les tests
@@ -256,12 +256,12 @@ const verifsQgs = {
     }
     return d;
   },
-  'le groupe « Fonds de carte » contient toujours exactement les deux fonds XYZ (non-régression de la 005)': (p) => {
+  'le groupe « Fonds de carte » contient toujours exactement les cinq fonds XYZ (non-régression de la 005 ; cinq depuis la mission 045)': (p) => {
     const g = p.racine?.enfants.find((e) => e.genre === 'groupe' && e.nom === NOM_GROUPE);
     if (!g) return [`groupe « ${NOM_GROUPE} » absent`];
     const d = [];
     const cs = g.enfants.filter((e) => e.genre === 'couche');
-    if (cs.length !== 2 || g.enfants.length !== 2) d.push(`${g.enfants.length} élément(s) dans le groupe, attendu 2 couches`);
+    if (cs.length !== 5 || g.enfants.length !== 5) d.push(`${g.enfants.length} élément(s) dans le groupe, attendu 5 couches`);
     for (const e of cs) { const c = p.couches.find((x) => x.id === e.id); if (!c || c.fournisseur !== 'wms' || !/(^|&)type=xyz(&|$)/.test(c.source)) d.push(`« ${e.nom} » n'est pas une couche XYZ (fournisseur wms)`); }
     return d;
   },
@@ -377,6 +377,10 @@ const ID = 'Saisie_terrain_6f1c2a90_3b7d_4c1e_8a55_0d9e7b1c2f34';
 const FONDS_FIXTURE = [
   ['Plan_IGN_v2_1', 'Plan IGN v2', 'type=xyz&amp;url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26LAYER%3DX&amp;zmax=19&amp;zmin=0'],
   ['BD_ORTHO_2', 'BD ORTHO', 'type=xyz&amp;url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26LAYER%3DY&amp;zmax=19&amp;zmin=0'],
+  // mission 045 : cinq fonds dans le groupe
+  ['Cadastre_3', 'Cadastre', 'type=xyz&amp;url=https://data.geopf.fr/wmts?SERVICE%3DWMTS%26LAYER%3DZ&amp;zmax=19&amp;zmin=0'],
+  ['OpenStreetMap_4', 'OpenStreetMap', 'type=xyz&amp;url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=19&amp;zmin=0'],
+  ['OpenTopoMap_5', 'OpenTopoMap', 'type=xyz&amp;url=https://tile.opentopomap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&amp;zmax=13&amp;zmin=0'],
 ];
 const symbole = (o) => `<renderer-v2 type="singleSymbol" symbollevels="0" forceraster="0" enableorderby="0"><symbols>` +
   `<symbol type="marker" name="0" alpha="${o.alphaSymbole ?? 1}" clip_to_extent="1" force_rhr="0"><data_defined_properties><Option type="Map"><Option name="name" value="" type="QString"/><Option name="properties"/><Option name="type" value="collection" type="QString"/></Option></data_defined_properties>` +
@@ -510,8 +514,9 @@ const fautesQgs = {
   'couche dans le groupe « Fonds de carte »': [{ saisieDansGroupe: true }, 'DANS le groupe'],
   'couche sous le groupe « Fonds de carte »': [{ saisieDessous: true }, 'SOUS le groupe'],
   'ordre de dessin personnalisé, saisie après les fonds': [{ ordrePerso: `<custom-order enabled="1"><item>Plan_IGN_v2_1</item><item>BD_ORTHO_2</item><item>${ID}</item></custom-order>` }, 'custom-order'],
-  'un seul fond dans le groupe': [{ fonds: [FONDS_FIXTURE[0]] }, 'attendu 2'],
-  'trois fonds dans le groupe': [{ fonds: [...FONDS_FIXTURE, ['SCAN_3', 'SCAN 25', 'type=xyz&amp;url=x']] }, 'attendu 2'],
+  'un seul fond dans le groupe': [{ fonds: [FONDS_FIXTURE[0]] }, 'attendu 5'],
+  "deux fonds dans le groupe (état d'avant la 045)": [{ fonds: FONDS_FIXTURE.slice(0, 2) }, 'attendu 5'],
+  'six fonds dans le groupe': [{ fonds: [...FONDS_FIXTURE, ['SCAN_6', 'SCAN 25', 'type=xyz&amp;url=x']] }, 'attendu 5'],
   'fond WMTS au lieu de XYZ': [{ fonds: [['Plan_IGN_v2_1', 'Plan IGN v2', 'contextualWMSLegend=0&amp;url=x'], FONDS_FIXTURE[1]] }, "n'est pas une couche XYZ"],
   'défaut de date absent': [{ sansDefaut: true }, '0 défaut(s)'],
   'défaut de date = today()': [{ defaut: 'today()' }, 'attendu now()'],

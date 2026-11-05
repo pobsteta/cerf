@@ -220,7 +220,7 @@ const wf = readFileSync(join(racine, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché aussi sur mission/035, publie les deux zips et leurs flashcodes, notes : quel zip prendre', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel', 'mission\/035-essai-manuel-geojson', 'mission\/036-notes-essai-manuel', 'mission\/040-publier-piege'\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel', 'mission\/035-essai-manuel-geojson', 'mission\/036-notes-essai-manuel', 'mission\/040-publier-piege', 'mission\/047-styles-gpkg'\]/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-geojson manuel-geojson essai/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\* dist\/essai-manuel-geojson\.zip dist\/flashcodes-geojson\/\*/);

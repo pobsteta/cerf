@@ -6,9 +6,9 @@
 // releases d'essai (pour que Pascal installe l'essai avant fusion), jamais les adresses stables.
 //
 // Usage :
-//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet|manuel|manuel-geojson|piege> <stable|essai>   PNG + SVG dans <dossier>
-//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet|manuel|manuel-geojson|piege> <stable|essai>   décode et compare
-//   node outils/flashcodes.mjs notes    <plugin|projet|manuel|manuel-geojson|piege> <stable|essai> <étiquette> bloc Markdown des notes
+//   node outils/flashcodes.mjs generer  <dossier> <plugin|projet|manuel|manuel-geojson|piege|gpkg-style> <stable|essai>   PNG + SVG dans <dossier>
+//   node outils/flashcodes.mjs verifier <dossier> <plugin|projet|manuel|manuel-geojson|piege|gpkg-style> <stable|essai>   décode et compare
+//   node outils/flashcodes.mjs notes    <plugin|projet|manuel|manuel-geojson|piege|gpkg-style> <stable|essai> <étiquette> bloc Markdown des notes
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -76,6 +76,17 @@ export function flashcodes(type, mode) {
         url: `${DEPOT}/download/essai-manuel/piege.zip`,
         titre: 'Zip de recette piege.zip (cinq pièges, données fictives)',
         phrase: 'Télécharge le zip piégé de la recette (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf : chaque piège doit donner un message clair.',
+      },
+    ];
+  }
+  if (type === 'gpkg-style') {
+    // Mission 047 : zip d'essai du style enregistré dans un GeoPackage (données fictives), dans la même préversion « essai-manuel ».
+    return [
+      {
+        nom: 'flashcode-gpkg-style',
+        url: `${DEPOT}/download/essai-manuel/essai-gpkg-style.zip`,
+        titre: 'Zip d\'essai essai-gpkg-style.zip (style enregistré dans un GeoPackage)',
+        phrase: 'Télécharge le zip d\'essai du style enregistré dans un GeoPackage (données fictives) en visant cet écran avec l\'appareil photo du Samsung, puis importe-le dans cerf.qgz avec le plugin Cerf : Parcelles doit garder son contour vert épais, UG prend le bleu du manuel.',
       },
     ];
   }

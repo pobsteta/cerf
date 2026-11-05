@@ -59,7 +59,7 @@ test('flashcode : PNG et SVG décodés donnent exactement l\'adresse de piege.zi
 });
 
 test('workflow : fabrique piege.zip avec zips-recette.mjs, flashcode contrôlé, tout publié dans essai-manuel', () => {
-  assert.match(wfCode, /branches: \[[^\]]*'mission\/040-publier-piege'\]/);
+  assert.match(wfCode, /branches: \[[^\]]*'mission\/040-publier-piege'(, 'mission\/047-styles-gpkg')?\]/);
   assert.match(wfCode, /node --no-warnings outils\/zips-recette\.mjs dist piege/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs generer dist\/flashcodes-piege piege essai/);
   assert.match(wfCode, /node outils\/flashcodes\.mjs verifier dist\/flashcodes-piege piege essai/);

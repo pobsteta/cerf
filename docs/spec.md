@@ -277,7 +277,31 @@ Textes de `plugin/cerf-logique.mjs`, fonction `copierEtStyler` (ils font foi, pa
 
 ## 5. Styles (annexe de la convention du zip)
 
-Ordre de priorité (en vigueur) : règle par nom → règle par champs → style par défaut de QGIS.
+Ordre de priorité (en vigueur depuis le plugin 0.4.2, mission 047, 5 novembre 2026) : **style enregistré dans le
+GeoPackage** → règle par nom → règle par champs → style par défaut de QGIS. *Avant la 0.4.2 (gardé pour mémoire) :
+règle par nom → règle par champs → style par défaut.* L'ordre visé, une fois le `.qml` du zip lisible, est : style du
+GeoPackage → `.qml` du zip → règle par nom → règle par champs → défaut (le style du GeoPackage est un style que
+l'agent a choisi dans QGIS, comme un `.qml` ; **priorité sur la règle du manuel proposée par l'orchestrateur,
+confirmée par Pascal le 5 novembre 2026**).
+
+**Style enregistré dans un GeoPackage du zip** (mission 047, plugin 0.4.2, 5 novembre 2026). QGIS écrit le style
+d'une couche dans la table `layer_styles` du GeoPackage (« Enregistrer le style dans la base de données »). Pour chaque
+table vecteur d'un GeoPackage du zip, **avant** la réécriture, le plugin lit `styleQML` de la ligne où
+`f_table_name` = la table, celle dont `useAsDefault` est vrai, sinon la plus récente (ordre de QGIS,
+`qgsogrutils.cpp` `loadStoredStyle` : `ORDER BY CASE WHEN useAsDefault THEN 1 ELSE 2 END, update_time DESC` ; seule la
+première ligne est lue). La lecture passe par une couche OGR filtrée `|subset=SELECT styleQML FROM layer_styles WHERE …`,
+la même voie que la liste des tables (§ 4, mission 024), sans réseau ; **elle n'est pas prouvée sur l'appareil**
+(Samsung : `essai-gpkg-style.zip`). Le style lu est écrit comme `<table>.qml` à côté de la copie réécrite, à la place
+de celui de la règle du manuel (même mécanisme que l'amendement du 4 novembre ci-dessous : effacement de l'ancien
+`.qml`, écriture avant le chargement, mêmes refus et avertissements). Le registre garde `style: "gpkg"`.
+- **Aucune table `layer_styles`, ou aucune ligne pour la table** : règle du manuel comme avant, **sans message**.
+  Limite : l'absence de la table ne se distingue pas d'une requête qui ne s'ouvre pas ; dans les deux cas, règle du manuel sans message.
+- **Une ligne existe mais ne se lit pas** : règle du manuel, avec l'avertissement existant « .qml illisible, style du
+  manuel appliqué » (aucun nouveau texte).
+- **`styleQML` vide, ou qui n'est pas du XML QGIS** (mêmes garde-fous qu'un `.qml` : non vide, racine `<qgis>`,
+  `<renderer-v2>`) : règle du manuel et le même avertissement.
+- Un nom de table avec « `|` », retour à la ligne, nul ou « `\` » n'est pas interrogé : règle du manuel.
+- Un `.qml` du zip (non lisible pour l'instant, voir ci-dessous) n'est plus consulté pour une table qui a une ligne dans `layer_styles`.
 
 **`.qml` posé dans le zip : non pris en charge pour l'instant** (Pascal, 5 novembre 2026).
 `FileUtils.readFileContent` de QField (4.3.7, `qffileutils.cpp` l. 620-636), la fonction qui lit un

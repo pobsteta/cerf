@@ -283,7 +283,7 @@ const wf = readFileSync(join(RACINE, '.github', 'workflows', 'release-essai-manu
 const wfCode = wf.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 
 test('workflow : déclenché sur la branche de la mission et sur main, étiquette fixe essai-manuel, jamais latest', () => {
-  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?(, 'mission\/040-publier-piege')?\]/);
+  assert.match(wfCode, /branches: \['main', 'mission\/033-essai-manuel'(, 'mission\/035-essai-manuel-geojson')?(, 'mission\/036-notes-essai-manuel')?(, 'mission\/040-publier-piege')?(, 'mission\/047-styles-gpkg')?\]/);
   assert.match(wfCode, /concurrency:\n\s+group: release-essai-manuel\n\s+cancel-in-progress: false/);
   assert.match(wfCode, /gh release create essai-manuel dist\/essai-manuel\.zip dist\/flashcodes\/\*/);
   assert.match(wfCode, /--prerelease --latest=false/);

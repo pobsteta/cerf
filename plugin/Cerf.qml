@@ -172,6 +172,19 @@ Item {
     return null;
   }
 
+  // Mission 047 : style enregistré dans la table layer_styles d'un GeoPackage du zip, pour une table (voie 1 du
+  // prototype n° 4 : même mécanique que tablesGpkg, NON PROUVÉE sur le Samsung). Rend { etat, texte } de
+  // Logique.styleDuGpkg : « lu », « illisible » ou « absent » (la règle du manuel s'applique alors). Mêmes appels que
+  // tablesGpkg ; le champ styleQML est une chaîne sans limite de largeur (QGIS 3a92eb3, src/core/qgsogrutils.cpp
+  // l. 3141-3143 : OFTString sans OGR_Fld_SetWidth) lue par QgsFeature::attribute(QString).
+  function styleGpkg(source, table) {
+    return Logique.styleDuGpkg(source, table, {
+      ouvrir: function (uri, nom) { return LayerUtils.loadVectorLayer(uri, nom); },
+      creerIterateur: function (l) { return LayerUtils.createFeatureIterator(l); },
+      liberer: function (l) { l.deleteLater(); }
+    });
+  }
+
   // Ajoute à la carte une couche acceptée, marquée (zip, couche). `zipDonne` : le zip de la copie
   // GeoPackage (ADR 0008) ; à défaut il se lit dans une source /vsizip/.
   function ajouterALaCarte(couche, nom, source, zipDonne) {
@@ -365,6 +378,7 @@ Item {
       existe: function (chemin) { return FileUtils.fileExists(chemin); },
       ouvrirCouche: ouvrirCouche,
       tablesGpkg: tablesGpkg,
+      styleGpkg: styleGpkg,
       retirerLeZipDeLaCarte: function (zip) { cerf.retirerLeZipDeLaCarte(zip); },
       decrireCouche: decrireCouche,
       controlerCouche: controlerCouche,

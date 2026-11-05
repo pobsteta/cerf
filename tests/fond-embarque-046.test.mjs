@@ -6,10 +6,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { inflateRawSync } from 'node:zlib';
-import { ecrireQgs, ecrireQgz, FONDS, THEME_FOND, PROPRIETES_QFIELDSYNC } from '../outils/projet-modele.mjs';
+import { ecrireQgs, ecrireQgz, GROUPE_FONDS, FONDS, THEME_FOND, PROPRIETES_QFIELDSYNC } from '../outils/projet-modele.mjs';
 
 const qgs = ecrireQgs();
-const theme = /<visibility-preset name="([^"]*)">([\s\S]*?)<\/visibility-preset>/.exec(qgs);
+const theme = /<visibility-preset name="([^"]*)"[^>]*>([\s\S]*?)<\/visibility-preset>/.exec(qgs);
 const idDe = (nom) => new RegExp(`<layer-tree-layer id="([^"]+)" name="${nom}"`).exec(qgs)[1];
 const prop = (cle) => new RegExp(`<qfieldsync>[\\s\\S]*<${cle} type="(\\w+)">([^<]*)</${cle}>[\\s\\S]*</qfieldsync>`).exec(qgs);
 
@@ -63,5 +63,14 @@ test('cerf.qgz est déterministe et celui du dépôt est à jour (thème et prop
   assert.ok(readFileSync(new URL('../cerf.qgz', import.meta.url)).equals(ecrireQgz(ecrireQgs())));
   const dansDepot = readFileSync(new URL('../cerf.qgz', import.meta.url));
   const n = dansDepot.readUInt16LE(26 ) + 30;
-  assert.match(inflateRawSync(dansDepot.subarray(n, n + dansDepot.readUInt32LE(18))).toString('utf8'), /<visibility-preset name="Fond embarqué">/);
+  assert.match(inflateRawSync(dansDepot.subarray(n, n + dansDepot.readUInt32LE(18))).toString('utf8'), /<visibility-preset name="Fond embarqué" has-checked-group-info="1">/);
+});
+test('D1 (Pascal, 5 novembre 2026) : cerf.qgz ne déclare pas basemap.mbtiles (c\'est le plugin, mission 048)', () => {
+  assert.ok(!qgs.includes('basemap.mbtiles'));
+  assert.ok(!qgs.includes('basemap'.concat('.mbtiles')));
+});
+test('le thème recoche le groupe « Fonds de carte » (has-checked-group-info, QGIS 3a92eb3)', () => {
+  assert.match(qgs, /<visibility-preset name="Fond embarqué" has-checked-group-info="1">/);
+  assert.match(theme[2], new RegExp(`<checked-group-nodes>\\s*<checked-group-node id="${GROUPE_FONDS}"/>\\s*</checked-group-nodes>`));
+  assert.match(qgs, new RegExp(`<layer-tree-group name="${GROUPE_FONDS}" `));
 });

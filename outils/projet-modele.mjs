@@ -277,9 +277,14 @@ ${feuilles}
       <item>${idSaisie()}</item>
 ${FONDS.map((f) => `      <item>${idCouche(f)}</item>`).join('\n')}
     </custom-order>`;
+  // has-checked-group-info="1" + checked-group-nodes : appliquer le thème recoche le groupe « Fonds de carte » (QGIS 3a92eb3,
+  // qgsmapthemecollection.cpp l. 575-576 et 661-667 lecture, l. 196-197 application ; id de groupe = chemin des noms sous la racine).
   const themeFond = `  <visibility-presets>
-    <visibility-preset name="${xml(THEME_FOND)}">
+    <visibility-preset name="${xml(THEME_FOND)}" has-checked-group-info="1">
 ${FONDS_DU_THEME.map((n) => `      <layer id="${idCouche({ nom: n })}" visible="1" style="default"/>`).join('\n')}
+      <checked-group-nodes>
+        <checked-group-node id="${xml(GROUPE_FONDS)}"/>
+      </checked-group-nodes>
     </visibility-preset>
   </visibility-presets>
 `;

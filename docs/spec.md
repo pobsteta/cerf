@@ -170,9 +170,9 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
   « Fond embarqué » de `cerf.qgz` (Plan IGN v2 + Cadastre ; ni OpenStreetMap ni OpenTopoMap), **zoom 13 à 17**, tuiles de
   256 px, puis **seul ce fichier** est copié à côté de `cerf.qgz` sur l'appareil (pas de projet empaqueté : `cerf_id`,
   `saisie.gpkg`, `cerf-imports/` intacts). Réglages : `outils/projet-modele.mjs` ; mode d'emploi : README ; étude :
-  `docs/referentiels/fond-embarque-qfieldsync.md`. **Reste à décider par Pascal : la déclaration d'avance de la couche
-  « Fond embarqué (hors ligne) » sur `./basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque
-  ouverture tant que le fichier manque). Licence de la rastérisation : non tranchée (CGU non lues).
+  `docs/referentiels/fond-embarque-qfieldsync.md`. **Décision D1 (Pascal, 5 novembre 2026) : `cerf.qgz` ne déclare
+  pas la couche `basemap.mbtiles`** (QField affiche « Unable to load some layers » à chaque ouverture tant que le fichier
+  manque) ; le **plugin Cerf** l'ajoutera s'il le trouve à côté du projet (**mission 048**). Licence de la rastérisation : non tranchée (CGU non lues).
 
 ### 3.5 Couche de saisie (amendement du 3 novembre 2026)
 

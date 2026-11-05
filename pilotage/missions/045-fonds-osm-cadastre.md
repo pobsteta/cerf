@@ -54,3 +54,12 @@ Sur le Samsung, avec réseau : les cinq fonds s'affichent, le cadastre se superp
 - **Relecteur :** `relecteur` après chaque étape, puis Pascal (PR vers `main`).
 
 **Redite par l'agent :** à remplir.
+
+## Arbitrages de Pascal (5 novembre 2026, après l'étape 1)
+
+1. **OSM et OpenTopoMap : en ligne seulement** (la politique de l'OSMF interdit l'usage hors ligne
+   sur `tile.openstreetmap.org`) ; le README le dit ; ils sortent du critère J+2.
+2. **Cadastre : attribution « © IGN ».**
+3. **Cadastre visible par défaut**, au-dessus de tous les fonds.
+4. Domaines OSM et OpenTopoMap refusés par la politique réseau de l'environnement : le dev
+   n'en mesure pas les tuiles ; vérification sur le Samsung par Pascal.

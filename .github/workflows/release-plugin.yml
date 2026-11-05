@@ -18,7 +18,7 @@
 name: Release du plugin
 on:
   push:
-    branches: ['main', 'mission/008-squelette-plugin', 'mission/010-styles', 'mission/031-nettoyage-retrait', 'mission/034-crs-valide', 'mission/037-reprojection', 'mission/038-compter-entites', 'mission/024-lecture-formats']
+    branches: ['main', 'mission/008-squelette-plugin', 'mission/010-styles', 'mission/031-nettoyage-retrait', 'mission/034-crs-valide', 'mission/037-reprojection', 'mission/038-compter-entites', 'mission/024-lecture-formats', 'mission/044-json-ignore']
     paths: ['plugin/**', 'tests/**', '.github/workflows/release-plugin.yml']
   workflow_dispatch:
 permissions:

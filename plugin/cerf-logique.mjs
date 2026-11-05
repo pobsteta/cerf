@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Cerf.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.4.0';
+export const VERSION = '0.4.1';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -690,6 +690,9 @@ function nomAffiche(c) {
   return typeof c.nom === 'string' && c.nom !== '' ? c.nom : String(c.entree);
 }
 
+// Mission 044 : fin de la ligne d'un .json écarté (« <chemin> : pas une couche GeoJSON, ignoré »).
+const PHRASE_JSON_ECARTE = 'pas une couche GeoJSON, ignoré';
+
 // Décrit puis contrôle une couche ; toute exception vaut refus (spec § 4). Si l'ouverture a
 // échoué (`couche` nulle), on contrôle quand même avec `lisible: false` : le contrôle 1
 // (Shapefile incomplet) passe avant le 2 (« illisible »), et le message porte le chemin complet
@@ -947,7 +950,7 @@ function ouvrirDuZip(ctx, copie, c) {
 }
 
 export function importerZip(ctx) {
-  const vide = (message) => ({ chargees: [], refusees: [], message });
+  const vide = (message) => ({ chargees: [], refusees: [], ecartees: [], message });
   if (!ctx || !estUuid(ctx.cerfId)) return vide("Projet non Cerf (cerf_id absent ou invalide) : rien n'est importé.");
   const nomZip = ctx.nomZip;
   if (!estNomDeZip(nomZip)) return vide(`Fichier refusé : « ${nomZip} » n'est pas un nom de zip simple (.zip).`);
@@ -961,27 +964,36 @@ export function importerZip(ctx) {
     return vide(`${nomZip} : ${e.message}`);
   }
   const copie = cheminCopie(ctx.dossierProjet, nomZip);
-  // Un .json n'est une couche que s'il est du GeoJSON (spec § 3.1) : contenu lu, et ignoré en
-  // silence s'il n'en est pas. Contenu illisible (lecture impossible) : on tente le chargement,
-  // un échec sera alors dit (jamais de GeoJSON perdu en silence).
+  // Un .json n'est une couche que s'il est du GeoJSON (spec § 3.1). Mission 044 : un .json écarté (contenu
+  // lisible qui n'est pas du GeoJSON, ou, plus bas, ouverture ratée) n'est PAS un refus : il est dit par la
+  // ligne « <chemin> : pas une couche GeoJSON, ignoré » (Pascal, 5 novembre 2026), jamais perdu en silence.
+  // Contenu illisible (cas de l'appareil, lireTexte rend null) : on tente le chargement.
   const couches = [];
+  const ecartees = [];
+  const ecarter = (c) => ecartees.push({ couche: c.couche, entree: c.entree, message: `${nomAffiche(c)} : ${PHRASE_JSON_ECARTE}` });
   const candidates = couchesDuZip(noms, tablesDesGpkg(ctx, copie, noms));
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     if (c.json && ctx.styles && typeof ctx.styles.estGeoJson === 'function' && typeof ctx.lireTexte === 'function') {
       let texte = null;
       try { texte = ctx.lireTexte(nomZip, c.entree); } catch (e) { texte = null; }
-      if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) continue;
+      if (typeof texte === 'string' && !ctx.styles.estGeoJson(texte)) { ecarter(c); continue; }
     }
     couches.push(c);
   }
-  if (couches.length === 0) {
+  // Zip sans couche à traiter : message existant, puis les lignes d'écart.
+  const sansCouche = () => {
     // Décision n° 11 : zip réimporté sans aucune couche lisible = import avorté (registre et carte
     // intacts : ce retour précède le retrait de la décision n° 8).
     const dejaImporte = lireRegistre(ctx.reglages, ctx.cerfId).some((e) => e && typeof e === 'object' && e.zip === nomZip);
-    if (dejaImporte) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
-    return vide(`Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans ${nomZip}.`);
-  }
+    const base = dejaImporte
+      ? `aucune couche lisible dans ${nomZip}, rien changé`
+      : `Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans ${nomZip}.`;
+    const r = vide([base].concat(ecartees.map((e) => e.message)).join('\n'));
+    r.ecartees = ecartees;
+    return r;
+  };
+  if (couches.length === 0) return sansCouche();
   // Mission 012 : le contrôle est obligatoire. Un service absent refuse tout (jamais « pas de
   // contrôle = tout passe »). Mission 010 (ADR 0008) : sans de quoi réécrire et écrire le .qml,
   // aucune couche n'est chargée non plus.
@@ -990,6 +1002,20 @@ export function importerZip(ctx) {
       return vide(`Contrôles d'import indisponibles (${service} absent) : rien n'est importé.`);
     }
   }
+  // Mission 044 : un .json dont le contenu n'a pas pu être lu est ouvert d'abord ; s'il ne s'ouvre pas, il est
+  // écarté (ligne d'écart, ni refus ni compté lisible). Un .geojson illisible, lui, reste refusé « illisible ».
+  const ouvertesJson = {};
+  for (let i = couches.length - 1; i >= 0; i--) {
+    const c = couches[i];
+    if (!c.json) continue;
+    const o = ouvrirDuZip(ctx, copie, c);
+    if (o.couche) { ouvertesJson[c.entree] = o; continue; }
+    couches.splice(i, 1);
+    ecarter(c);
+  }
+  // splice à rebours : remettre les lignes d'écart dans l'ordre du zip.
+  ecartees.sort((a, b) => noms.indexOf(a.entree) - noms.indexOf(b.entree));
+  if (couches.length === 0) return sansCouche();
   const maintenant = typeof ctx.maintenant === 'function' ? ctx.maintenant : () => new Date();
   // Un GeoPackage sans table à charger (table: null) n'est jamais ouvert ni compté comme présent.
   const aCharger = (c) => !(c.format === 'gpkg' && c.table === null);
@@ -1002,12 +1028,13 @@ export function importerZip(ctx) {
     for (let i = 0; i < couches.length; i++) {
       const c = couches[i];
       if (!aCharger(c)) continue;
+      if (c.json) { nbLisibles++; continue; } // déjà ouvert plus haut
       if (Object.prototype.hasOwnProperty.call(ouvertes, c.couche)) continue; // doublon : refusé plus bas
       const o = ouvrirDuZip(ctx, copie, c);
       ouvertes[c.couche] = o;
       if (o.couche) nbLisibles++;
     }
-    if (nbLisibles === 0) return vide(`aucune couche lisible dans ${nomZip}, rien changé`);
+    if (nbLisibles === 0) return sansCouche();
   }
   // Retrait de la carte des couches de ce zip (réimport), seulement maintenant.
   if (typeof ctx.retirerLeZipDeLaCarte === 'function') ctx.retirerLeZipDeLaCarte(nomZip);
@@ -1050,7 +1077,7 @@ export function importerZip(ctx) {
     const source = sourceDeLaCouche(copie, c);
     // Ouvrir (en /vsizip/, sans ajouter à la carte), contrôler, réécrire, styler, charger la copie,
     // puis seulement ajouter à la carte et inscrire.
-    const r = ouvertes[c.couche] || ouvrirDuZip(ctx, copie, c);
+    const r = (c.json && ouvertesJson[c.entree]) || ouvertes[c.couche] || ouvrirDuZip(ctx, copie, c);
     // Ouverture ratée : le contrôle passe quand même (lisible: false), pour que le contrôle 1
     // précède « illisible » et que le message porte le chemin complet dans le zip.
     const verdict = controlerSansPlanter(ctx, r.couche, c, noms);
@@ -1111,10 +1138,11 @@ export function importerZip(ctx) {
     lignes.push(`Aucune couche chargée depuis ${nomZip}`);
   }
   for (let i = 0; i < refusees.length; i++) lignes.push(refusees[i].message || `${refusees[i].couche} : ${refusees[i].raison}`);
+  for (let i = 0; i < ecartees.length; i++) lignes.push(ecartees[i].message);
   for (let i = 0; i < avertissements.length; i++) lignes.push(avertissements[i]);
   if (bilanEfface.restes.length > 0) lignes.push(`Fichiers restés sur l'appareil : ${bilanEfface.restes.join(', ')}.`);
   if (bilanEfface.nonVerifiable) lignes.push(PHRASE_NON_VERIFIABLE);
-  return { chargees, refusees, avertissements, message: lignes.join('\n') };
+  return { chargees, refusees, ecartees, avertissements, message: lignes.join('\n') };
 }
 
 // --------------------------------------------------------------------------- ouvrir

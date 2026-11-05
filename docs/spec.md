@@ -47,12 +47,18 @@ Le plugin n'affiche pas son bouton hors d'un projet Cerf.
   plus).
 - Contient une ou plusieurs couches, à la racine ou dans des sous-dossiers.
 - Formats, extensions sans tenir compte de la casse :
-  - GeoJSON (`.geojson`, `.json`) ; un `.json` qui n'est pas du GeoJSON devrait être
-    ignoré en silence (intention d'origine) ; **état réel sur l'appareil (5 novembre 2026)** :
-    le contenu d'un `.json` du zip n'est pas lisible (`FileUtils.readFileContent` ne lit pas en
-    `/vsizip/`, § 5), le plugin ne peut pas le reconnaître, le tente comme couche et, si QField
-    ne l'ouvre pas, le **refuse** avec « `<chemin dans le zip>` : illisible » (`plugin/cerf-logique.mjs`
-    l. 964-977, `plugin/Cerf.qml` l. 117-124) ; reporté, pas de mission de code (Pascal) ;
+  - GeoJSON (`.geojson`, `.json`) ; **mission 044 (plugin 0.4.1, Pascal, 5 novembre 2026)** : un
+    `.json` qui n'est pas du GeoJSON est **écarté**, pas refusé, avec la ligne
+    « `<chemin dans le zip>` : pas une couche GeoJSON, ignoré » (`plugin/cerf-logique.mjs`,
+    `importerZip`). Si le contenu est lisible (version de développement), il est jugé par
+    `estGeoJson` ; sur l'appareil, le contenu d'un `.json` du zip n'est pas lisible
+    (`FileUtils.readFileContent` ne lit pas en `/vsizip/`, § 5, `plugin/Cerf.qml`) : le plugin
+    tente de l'ouvrir et, si QField ne l'ouvre pas, l'écarte de la même façon. Un `.json` qui
+    s'ouvre est une couche normale (contrôles § 4, réécriture, style) ; un `.geojson` illisible
+    reste **refusé** « illisible ». Un zip qui ne contient que des `.json` écartés donne le
+    message « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans x.zip. » suivi de ces
+    lignes. *Trace (5 novembre 2026, plugin 0.4.0) : le `.json` qui ne s'ouvrait pas était
+    refusé « `<chemin dans le zip>` : illisible ».*
   - GeoPackage (`.gpkg`, une couche par table) ;
   - Shapefile : **obligatoires** `.shp`, `.shx`, `.dbf`, `.prj` ; **conseillé** `.cpg` ;
   - GeoTIFF (`.tif`, `.tiff`), **rangé dans le zip sans compression** (`zip -0`) ou en

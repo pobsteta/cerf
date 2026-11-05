@@ -111,8 +111,8 @@ test('forme : cerf-logique.mjs sans ?., ?? ni import', () => {
   const code = sansCommentaires(lire('plugin/cerf-logique.mjs'));
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.4.0, branche de la mission 038 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.4.0');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.0$/m);
+test('version et préversion : 0.4.1, branche de la mission 038 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.4.1');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.4\.1$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/038-compter-entites'/);
 });

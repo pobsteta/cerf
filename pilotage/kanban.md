@@ -52,6 +52,8 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [044-json-ignore](missions/044-json-ignore.md) · depuis le cycle 6 · fusionnée (PR #45)
+  - Homme : `dev` (sonnet)
 - [043-flashcodes-readme](missions/043-flashcodes-readme.md) · depuis le cycle 6 · fusionnée (PR #44)
   - Homme : `archiviste`
 - [042-qml-json-docs](missions/042-qml-json-docs.md) · depuis le cycle 6 · fusionnée (PR #43)

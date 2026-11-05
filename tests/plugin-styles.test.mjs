@@ -70,16 +70,17 @@ test('estGeoJson : FeatureCollection, Feature, géométrie nue, BOM acceptés ; 
   assert.equal(S.estGeoJson(null), false);
 });
 
-test('importerZip : un .json GeoJSON est chargé ; un .json qui n\'en est pas est ignoré en silence', () => {
+test('importerZip : un .json GeoJSON est chargé ; un .json qui n\'en est pas est écarté avec sa ligne (plus de silence, mission 044)', () => {
   const { ctx } = monde({ textes: { 'p.json': GJ, 'config.json': '{"a":1}' } });
   ctx.octets = zipDe('p.json', 'config.json');
   const r = L.importerZip(ctx);
   assert.deepEqual(r.chargees.map((c) => c.couche), ['p']);
   assert.deepEqual(r.refusees, []);
-  assert.ok(!r.message.includes('config'), r.message);
+  // Mission 044 : écarté avec la ligne, ni chargé ni refusé.
+  assert.deepEqual(r.message.split('\n').filter((l) => l.includes('config')), ['config.json : pas une couche GeoJSON, ignoré']);
 });
 
-test('importerZip : zip avec seulement un .json non GeoJSON -> « Aucune couche », aucun refus', () => {
+test('importerZip : zip avec seulement un .json non GeoJSON -> « Aucune couche » puis la ligne d\'écart, aucun refus', () => {
   const { ctx } = monde({ textes: { 'config.json': '{"a":1}' } });
   ctx.octets = zipDe('config.json');
   const r = L.importerZip(ctx);

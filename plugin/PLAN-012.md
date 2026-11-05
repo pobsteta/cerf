@@ -1,5 +1,7 @@
 # Plan de la mission 012 — contrôles d'import (étape 1 : plan, aucun code)
 
+> **PÉRIMÉ (bandeau du 5 novembre 2026, mission 051).** Historique, ne plus suivre comme mode d'emploi ; la référence est la spec (`docs/spec.md`) et, pour ce que fait le plugin, le README du dépôt et son code.
+
 > Rédigé par l'agent `dev` le 4 novembre 2026. Fiche : `pilotage/missions/012-controles.md`
 > (en « tenir » : on rend un plan, Pascal valide avant le code). Sources lues : spec § 3.1, § 4,
 > § 9 n° 7, ADR 0004, référentiel d'emprise (002), `plugin/cerf-logique.mjs`, `plugin/Cerf.qml`,

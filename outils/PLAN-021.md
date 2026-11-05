@@ -1,5 +1,7 @@
 # Plan de la mission 021 : couche « Saisie terrain » dans le projet modèle
 
+> **PÉRIMÉ (bandeau du 5 novembre 2026, mission 051).** Historique, ne plus suivre comme mode d'emploi ; la référence est la spec (`docs/spec.md`) et, pour ce que fait le plugin, le README du dépôt et son code.
+
 > Plan rendu avant tout code (fiche 021, « Plan d'abord »), le 3 novembre 2026, par le `dev`.
 > Aucun fichier de code, aucun test, ni `cerf.qgz` n'a été touché. Rien ne démarre sans l'accord de Pascal.
 > Lecteur visé : Jeff Cerf, le successeur : chaque choix dit pourquoi, et ce qui reste à prouver.

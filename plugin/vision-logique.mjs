@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Vision, plugin QField d'application : la logique du squelette (mission 008).
 // Écrit pour Vision (ADR 0006) ; le lecteur de zip, la table CP437 et le décodeur UTF-8 sont
-// repris du prototype n° 1 (prototype/vision-zip.mjs, code de Vision, prouvé sur le Samsung).
+// repris du prototype n° 1 (le module zip du prototype n° 1 dans `prototype/`, nom d'origine, ADR 0009 ; code de Vision, prouvé sur le Samsung).
 // Module ECMAScript pur, sans .pragma, sans .import, sans aucun import : chargé à la fois
 // par QML (Vision.qml) et par Node (tests/squelette.test.mjs, tests/plugin.test.mjs), ADR 0005.
 // Prudence de syntaxe pour le moteur JavaScript de QML : ni chaînage optionnel, ni
@@ -77,7 +77,7 @@ export function decrireSysteme(crs) {
 export const NOM_DOSSIER_COPIES = 'vision-imports';
 
 // Décision de Pascal n° 6 (3 novembre 2026) : plafond de listage d'un zip, 10 Mo, soit la
-// valeur du prototype (prototype/vision-zip.mjs, SEUIL_LECTURE_OCTETS = 10 000 000 octets).
+// valeur du prototype (le module zip du prototype n° 1 dans `prototype/`, nom d'origine, ADR 0009 ; SEUIL_LECTURE_OCTETS = 10 000 000 octets).
 export const PLAFOND_LISTAGE_OCTETS = 10000000;
 
 // Style inscrit au registre quand aucune règle ne s'applique ; sinon le nom de la règle (UG,

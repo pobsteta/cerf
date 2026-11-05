@@ -54,4 +54,4 @@ moins d'une minute et ne lise rien de faux, **sans changer le comportement** du 
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** corriger, sans toucher au comportement du plugin ni à un texte vu par l'agent, les huit trous de mémoire du bilan n° 1 (kanban vérifié carte par carte, spec datée, bandeaux « périmé », README développeurs, index des ADR, renvoi mort, notes de release, questions ouvertes), en ajoutant du daté plutôt qu'en effaçant et sans trancher à la place de Pascal.

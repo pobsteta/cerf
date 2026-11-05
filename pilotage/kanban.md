@@ -5,6 +5,10 @@
 > `pilotage/missions/`. Elle note aussi depuis quel cycle de `/boucle` elle est dans sa
 > colonne ; on change ce numéro chaque fois qu'elle change de colonne.
 > **Une carte qui ne bouge pas est souvent la mauvaise nouvelle à dire tout de suite.**
+>
+> **Vérification du 5 novembre 2026 (mission 051, archiviste)** : les cartes 012 à 015, 017, 020 à 025 et 027 à 030
+> ont été reprises une à une contre le journal et les fiches ; la source qui justifie la colonne est écrite sur
+> chaque carte concernée. Les questions ouvertes sont rangées dans `docs/spec.md` § 11.
 
 **Dernier cycle :** 6 _(augmenté de 1 à la fin de chaque `/boucle`, même quand elle n'a
 rien lancé. Une carte est immobile quand dernier cycle − N ≥ 2.)_
@@ -20,37 +24,37 @@ _Modèle de carte :_
 
 ## Bac à sable
 
-- [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE`
+- [018-notice-jfc](missions/018-notice-jfc.md) · depuis le cycle 0 · en attente : Relevés et Canopée bruts, GeoJSON `_DE` (journal du 2 novembre : moyens manquants ; aucune ligne depuis, vérifié le 5 novembre)
   - Homme : `archiviste` (sonnet)
   - Mission : Notice de JFC — cycle prévu en attente
   - Moyens : convention 017, fichiers bruts de JFC
 
 ## Validé
 
-- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre
+- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre ; prototype n° 4 poussé (cbd1f1f, branche `mission/023-prototype-2`, non fusionnée) et relu (journal du 4 novembre) ; **son essai propre n'a jamais été rapporté** : la voie 1 est reprise par la 024 (plugin 0.4.0), et l'essai global du 5 novembre (« tout est testé et ok ») ne donne pas le détail ; **à trancher par Pascal** : carte close de fait ou essai à rapporter (spec § 4, § 11 n° 7)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
   - Moyens : sources de QField 4.3.7, prototype n° 3, Samsung de Pascal
-- [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0
+- [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0 ; **à trancher par Pascal** (spec § 11 n° 3) ; journal du 4 novembre : « immobile depuis le cycle 0 », aucune PR
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
   - Moyens : `docs/spec.md` § 3.3, § 9 
-- [014-registre](missions/014-registre.md) · depuis le cycle 0
+- [014-registre](missions/014-registre.md) · depuis le cycle 0 ; **à trancher par Pascal** (spec § 11 n° 2) : dossier vide et remplacement au réimport, question ouverte de l'ADR 0007 amendée ; aucune PR
   - Homme : `dev` (sonnet)
   - Mission : Registre complet — cycle prévu 6
   - Moyens : `docs/spec.md` § 3.3, ADR 0003
-- [015-panneau-plugin](missions/015-panneau-plugin.md) · depuis le cycle 0
+- [015-panneau-plugin](missions/015-panneau-plugin.md) · depuis le cycle 0 ; **à trancher par Pascal** (spec § 11 n° 4) ; aucune PR, le panneau existe pourtant (`plugin/Panneau.qml`)
   - Homme : `afficheur` (sonnet)
   - Mission : Panneau du plugin pour gants et soleil — cycle prévu 6
   - Moyens : `docs/spec.md` § 1 et § 4
-- [017-convention-zip](missions/017-convention-zip.md) · depuis le cycle 0
+- [017-convention-zip](missions/017-convention-zip.md) · depuis le cycle 0 ; **à trancher par Pascal** (spec § 11 n° 5) ; aucune PR, contenu réparti dans spec § 3.1, § 4, § 5 et README
   - Homme : `archiviste` (sonnet)
   - Mission : Convention du zip — cycle prévu 5
   - Moyens : `docs/spec.md` § 3.1, § 4, § 5
 
 ## Planifié
 
-- [051-memoire](missions/051-memoire.md) · depuis le bilan n° 1 · en cours
+- [051-memoire](missions/051-memoire.md) · depuis le bilan n° 1 · en cours (branche `mission/051-memoire`, PR à ouvrir)
   - Homme : `archiviste`
   - Mission : remise en ordre de la mémoire après le test du successeur
   - Moyens : kanban, spec, README, PLAN, index des ADR, notes de release
@@ -132,11 +136,11 @@ _Modèle de carte :_
   - Homme : `archiviste` (sonnet)
   - Mission : Amender ADR 0003, ADR 0007 et la spec après l'ADR 0008
   - Moyens : ADR 0008, fiche 010
-- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3)
+- [023-prototype-2](missions/023-prototype-2.md) · depuis le cycle 6 · essai réussi sur le Samsung (prototypes n° 2 et n° 3) ; journal du 4 novembre (réponses de Pascal) ; branche `mission/023-prototype-2` non fusionnée, prototype figé (ADR 0009)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 2 : styles par .qml voisin et reprojection depuis QML
   - Moyens : rapport de l'acquéreur du 4 novembre, Samsung de Pascal
-- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · essai réussi sur le Samsung
+- [027-prototype-3](missions/027-prototype-3.md) · depuis le cycle 6 · essai réussi sur le Samsung (journal du 4 novembre : P3-1 à P3-6, voie `saveVectorLayerAs` retenue par l'ADR 0008)
   - Homme : `dev` (opus)
   - Mission : Prototype n° 3 : saveVectorLayerAs puis .qml voisin
   - Moyens : prototype n° 2, sources QField
@@ -152,7 +156,7 @@ _Modèle de carte :_
   - Homme : `testeur` (sonnet)
   - Mission : Tests des contrôles d'import — cycle prévu 4
   - Moyens : `docs/spec.md` § 4, ADR 0004, référentiel 002
-- [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · PR #20 fusionnée, éprouvée sur le Samsung
+- [025-flashcodes](missions/025-flashcodes.md) · depuis le cycle 6 · PR #20 fusionnée, éprouvée sur le Samsung (journal du 4 novembre ; adresses changées par la 028 puis l'ADR 0009)
   - Homme : `dev` (sonnet)
   - Mission : Flashcodes des adresses stables dans les releases
   - Moyens : qrencode dans le workflow, sources QField

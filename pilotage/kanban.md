@@ -50,13 +50,10 @@ _Modèle de carte :_
 
 ## Planifié
 
-- [049-fuite-couches](missions/049-fuite-couches.md) · depuis le cycle 6 · en cours
-  - Homme : `dev`
-  - Mission : libérer les couches invalides ou refusées ouvertes par le chargeur des zips (plugin 0.4.4)
-  - Moyens : `plugin/Cerf.qml`, `plugin/cerf-logique.mjs`, sources QField 4.3.7
-
 ## Terminé
 
+- [049-fuite-couches](missions/049-fuite-couches.md) · depuis le cycle 6 · PR ouverte
+  - Homme : `dev`
 - [048-fond-embarque-plugin](missions/048-fond-embarque-plugin.md) · depuis le cycle 6 · fusionnée (PR #49)
   - Homme : `dev`
 - [047-styles-gpkg](missions/047-styles-gpkg.md) · depuis le cycle 6 · fusionnée (PR #47)

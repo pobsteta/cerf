@@ -52,6 +52,8 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [042-qml-json-docs](missions/042-qml-json-docs.md) · depuis le cycle 6 · fusionnée (PR #43)
+  - Homme : `archiviste`
 - [041-spec-readme-024](missions/041-spec-readme-024.md) · depuis le cycle 6 · fusionnée (PR #42)
   - Homme : `archiviste`
 - [040-publier-piege](missions/040-publier-piege.md) · depuis le cycle 6 · fusionnée (PR #39)

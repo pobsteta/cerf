@@ -124,3 +124,12 @@ source unique, spec § 4 et § 5.
 « Ce qui change » n° 1 décrit la voie par extraction, non retenue ; pour la voie retenue
 (`saveVectorLayerAs`), le remplacement du dossier au réimport reste ouvert (mission 014, ADR 0007
 amendée).
+
+## Note du 5 novembre 2026 (ajout, rien n'est effacé)
+
+Le `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** : QField ne lit pas dans
+`/vsizip/` avec `FileUtils.readFileContent`, le plugin ne peut donc pas lire ce `.qml`, applique la
+règle du manuel et avertit (reporté, non abandonné, Pascal, 5 novembre 2026 ; état réel : spec § 5).
+Cela précise la phrase de « La décision en une phrase » (« celui du zip s'il existe, sinon celui de la
+règle du manuel ») et la ligne de la critique « `.qml` du zip à contrôler par le plugin avant de
+l'écrire » : l'une et l'autre restent l'intention visée, non l'état actuel. Le texte d'origine est conservé plus haut.

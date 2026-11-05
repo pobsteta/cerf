@@ -50,6 +50,11 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [050-vision](missions/050-vision.md) · depuis le cycle 6 · en cours
+  - Homme : `dev` puis `archiviste`
+  - Mission : Cerf devient Vision, partout sauf l'historique (plugin 0.5.0)
+  - Moyens : tout le dépôt
+
 ## Terminé
 
 - [049-fuite-couches](missions/049-fuite-couches.md) · depuis le cycle 6 · fusionnée (PR #50)

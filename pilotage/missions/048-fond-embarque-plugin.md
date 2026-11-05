@@ -48,3 +48,13 @@ rouvrir le projet : une seule couche.
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
 **Redite par l'agent :** à remplir.
+
+## Arbitrages de Pascal (5 novembre 2026, après l'arrêt du dev)
+
+- **A** : la couche est ajoutée **cochée**, là où QField la place (sous les vecteurs, au-dessus des
+  fonds XYZ) ; elle recouvre les fonds en ligne sur son emprise ; le README le dit (pour voir la
+  BD ORTHO, décocher le fond embarqué). Pas de déplacement dans l'arbre.
+- **Nom de la couche** : « Fond embarqué (hors ligne) ».
+- **Texte validé** pour un fichier illisible : « Fond embarqué (basemap.mbtiles) : fichier illisible,
+  il n'est pas affiché. »
+- L'ordre réel sur le Samsung sera vu à l'essai du fond embarqué.

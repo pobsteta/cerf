@@ -22,6 +22,26 @@ Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et porten
 
 Le zip contient `cerf.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
 
+### Les fonds de carte
+
+`cerf.qgz` contient cinq fonds, dans le groupe « Fonds de carte », du dessus au dessous :
+
+| Fond | Affiché au départ | Hors ligne |
+|---|---|---|
+| **Cadastre** (parcelles, transparent, Géoplateforme IGN) | oui | à vérifier (critère n° 5, la veille puis J+2) |
+| **Plan IGN v2** | oui | à vérifier (critère n° 5, la veille puis J+2) |
+| **OpenStreetMap** | non, à cocher | **non : en ligne seulement** |
+| **OpenTopoMap** (carte topographique) | non, à cocher | **non : en ligne seulement** |
+| **BD ORTHO** (photo aérienne IGN) | non, à cocher | à vérifier (critère n° 5, la veille puis J+2) |
+
+- **OpenStreetMap et OpenTopoMap ne marchent qu'avec du réseau.** La politique de l'OpenStreetMap Foundation interdit l'usage hors ligne de ses tuiles : ne compte pas sur ces deux fonds sans réseau, ni le lendemain. Leurs serveurs peuvent aussi refuser des tuiles (la politique de l'OSMF exige un User-Agent qui identifie l'application ; non vérifié avec QField).
+- **Fonds IGN hors ligne : pas encore prouvé.** Le cache des tuiles de QGIS peut expirer, et l'essai du critère n° 5 (la veille, puis J+2) n'a pas encore été passé sur le Samsung. Ne pars pas sur le terrain en comptant sur ces fonds sans réseau avant d'avoir fait cet essai. Un fond embarqué est à l'étude (mission 046).
+- Le cadastre se superpose au fond affiché. Pour voir la BD ORTHO, coche-la : le cadastre reste au-dessus.
+- Zoom maximal : 19 (cadastre, Plan IGN v2, BD ORTHO ; OpenStreetMap 19, **non vérifié, à mesurer sur le Samsung**), 13 pour OpenTopoMap (valeur la plus prudente des sources, à mesurer). Aucune clé n'est nécessaire. Les attributions (« © IGN », « © les contributeurs d'OpenStreetMap », OpenTopoMap) sont dans les propriétés de chaque couche.
+- Le critère « fond visible hors ligne la veille et à J+2 » ne vaut que pour les fonds IGN.
+
+Voir [`docs/spec.md`](docs/spec.md) § 3.4.
+
 ### Mettre le projet à jour
 
 **N'importe pas le zip de mise à jour avec « Import URL »** : QField le décompresserait dans un dossier neuf, donc dans un autre projet, sans les points déjà saisis.

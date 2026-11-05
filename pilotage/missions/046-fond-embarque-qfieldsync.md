@@ -57,3 +57,14 @@ et cadastre par-dessus ; temps de préparation sur PC et taille du fichier noté
 - **Relecteur :** `relecteur` après chaque étape, puis Pascal (PR vers `main`). **Qui tranche :** Pascal.
 
 **Redite par l'agent :** à remplir.
+
+## Arbitrages de Pascal (5 novembre 2026, après l'étape 1)
+
+- **Voie B** : seul le `basemap.mbtiles` produit par QFieldSync est copié sur l'appareil, à côté
+  de `cerf.qgz` ; le projet modèle le déclare d'avance (chemin relatif). Pas de projet empaqueté
+  sur l'appareil.
+- **Zoom maximal 17** (environ 0,8 m par pixel ; zoom minimal à proposer par le dev).
+- **Contenu** : non précisé par Pascal ; l'orchestrateur propose **Plan IGN v2 + cadastre** (sans
+  BD ORTHO ni OSM / OpenTopoMap), à confirmer avant fusion.
+- Branche fondée sur la mission 045 (fusion de `mission/045-fonds-osm-cadastre`), même fichier
+  `outils/projet-modele.mjs`.

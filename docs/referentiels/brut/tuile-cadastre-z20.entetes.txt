@@ -1,0 +1,18 @@
+HTTP/1.1 200 Connection Established
+
+HTTP/2 404 
+date: Thu, 05 Nov 2026 13:49:35 GMT
+content-type: text/xml; charset=UTF-8
+content-length: 137
+www-authenticate: Key realm="kong"
+cache-control: private, max-age=1814400
+content-disposition: filename="message.xml"
+strict-transport-security: max-age=31536000; includeSubDomains
+access-control-allow-origin: *
+access-control-allow-credentials: true
+access-control-allow-methods: GET, PUT, POST, DELETE, PATCH, OPTIONS
+access-control-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Disposition,Content-Length,X-Community
+access-control-max-age: 1728000
+x-iplb-request-id: A04F6A89:400F_91EFC1E7:01BB_6AEC896E_11ADC741:2C6F24
+x-iplb-instance: 61218
+

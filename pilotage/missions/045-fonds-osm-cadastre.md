@@ -53,7 +53,7 @@ Sur le Samsung, avec réseau : les cinq fonds s'affichent, le cadastre se superp
 
 - **Relecteur :** `relecteur` après chaque étape, puis Pascal (PR vers `main`).
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent (dev, étape 2, 5 novembre 2026) :** porter le groupe « Fonds de carte » de `cerf.qgz` à cinq fonds XYZ sans clé (Cadastre visible au-dessus de tout, Plan IGN v2 visible, OpenStreetMap, OpenTopoMap et BD ORTHO décochés, zoom et attribution par fond), pour que l'agent voie les parcelles sur le Plan IGN ou la BD ORTHO, OpenStreetMap et OpenTopoMap restant en ligne seulement.
 
 ## Arbitrages de Pascal (5 novembre 2026, après l'étape 1)
 

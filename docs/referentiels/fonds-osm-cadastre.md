@@ -145,6 +145,29 @@ Pour chaque fond : une tuile à zoom 15 en France et une au zoom max, avec colon
 
 Ajouter : capturer, par un proxy ou un journal serveur, l'en-tête `User-Agent` et `Referer` réellement envoyés par QField (Android) sur une couche XYZ. Les calculs de colonne et de ligne aux zooms 17 et 19 (×4 et ×16 depuis le zoom 15) sont de ma main : à contrôler. Verser les pièces dans `docs/referentiels/brut/` avec la mention de source et la date.
 
+## 7 bis. Mesures du développeur, 5 novembre 2026 (mission 045, étape 2)
+
+Mesurées depuis le conteneur du développeur, par curl via le proxy de la session. Pièces : `brut/tuile-cadastre-z15.png`,
+`brut/tuile-cadastre-z19.png`, `brut/tuile-cadastre-z20.xml` et leurs `*.entetes.txt` ; dates et URL exactes dans
+`brut/mesure-dates-cadastre.txt` (13:49:33Z à 13:49:34Z). `data.geopf.fr` est joignable (contrairement à la lecture de l'étape 1).
+Gabarit du § 1 avec `TILEMATRIXSET=PM`, tuile du § 7 (z15 : ligne 11336, colonne 16629 ; z19 : ligne 181376, colonne 266064 ; z20 : ligne 362752, colonne 532128).
+
+| Zoom | HTTP | `content-type` | Taille | Image |
+|---|---|---|---|---|
+| 15 | **200** | `image/png` | 6 310 octets | PNG 256 x 256, 8 bits RGBA ; **canal alpha** : 96,3 % des pixels transparents (alpha 0), 2,1 % opaques (1 402 px), 1,5 % semi-transparents |
+| 19 | **200** | `image/png` | 20 376 octets | PNG 256 x 256, RGBA ; 73,4 % transparents, 6,5 % opaques (4 251 px), 20,2 % semi-transparents (traits lissés) |
+| 20 | **404** | `text/xml` | 137 octets | `ExceptionReport` « No data found » : le plafond de 19 est confirmé |
+
+- **Transparence : levée.** Le PNG du cadastre a un canal alpha et est très majoritairement transparent : il se superpose sans voile (calcul sur les pixels décodés, pas à l'oeil).
+  Le rendu lisible au soleil et en gants reste à juger sur le Samsung (§ 8 n° 2).
+- **Cache :** `cache-control: private, max-age=1814400` (21 jours), comme le Plan IGN v2 et la BD ORTHO ; y compris sur le 404.
+- **Clé :** aucune ; `www-authenticate: Key realm="kong"` présent mais 200 sans clé (comme `fonds-ign.md` § 3).
+- **Zoom max du cadastre : 19** (200 à 19, 404 à 20) : une seconde source (HTTP) s'ajoute au GetCapabilities.
+- **Non mesuré :** `PM_0_19` contre `PM` pour le cadastre, tuile en mer, tuile hors métropole.
+- **OpenStreetMap et OpenTopoMap : aucune mesure.** `tile.openstreetmap.org` et `tile.opentopomap.org` sont refusés par la politique réseau
+  du conteneur (curl : « CONNECT tunnel failed, response 403 »). Aucun contournement n'a été tenté et rien n'est inventé : les URL, le zoom
+  (OpenTopoMap : 13, valeur la plus prudente du § 2) et les contrôles `User-Agent` / `Referer` du § 7 sont à vérifier sur le Samsung par Pascal (arbitrage n° 4 du 5 novembre 2026).
+
 ## 8. Trois points au sol
 
 1. **OSM hors ligne au Samsung :** ouvrir la zone la veille avec réseau, couper le réseau, rouvrir le lendemain : le fond OSM revient-il, ou est-il bloqué (403) ? C'est le cas où la politique OSMF et l'usage terrain divergent le plus.

@@ -22,6 +22,25 @@ Adresses vérifiées le 4 novembre 2026 : les quatre releases existent et porten
 
 Le zip contient `cerf.qgz` et `saisie.gpkg` (la couche « Saisie terrain », vide).
 
+### Les fonds de carte
+
+`cerf.qgz` contient cinq fonds, dans le groupe « Fonds de carte », du dessus au dessous :
+
+| Fond | Affiché au départ | Hors ligne |
+|---|---|---|
+| **Cadastre** (parcelles, transparent, Géoplateforme IGN) | oui | oui (cache des tuiles) |
+| **Plan IGN v2** | oui | oui (cache des tuiles) |
+| **OpenStreetMap** | non, à cocher | **non : en ligne seulement** |
+| **OpenTopoMap** (carte topographique) | non, à cocher | **non : en ligne seulement** |
+| **BD ORTHO** (photo aérienne IGN) | non, à cocher | oui (cache des tuiles) |
+
+- **OpenStreetMap et OpenTopoMap ne marchent qu'avec du réseau.** La politique de l'OpenStreetMap Foundation interdit l'usage hors ligne de ses tuiles : ne compte pas sur ces deux fonds sans réseau, ni le lendemain. Pour le terrain, utilise le Plan IGN v2 ou la BD ORTHO.
+- Le cadastre se superpose au fond affiché. Pour voir la BD ORTHO, coche-la : le cadastre reste au-dessus.
+- Zoom maximal : 19 (cadastre, Plan IGN v2, OpenStreetMap, BD ORTHO), 13 pour OpenTopoMap (au-delà, la carte s'agrandit sans gagner en détail). Aucune clé n'est nécessaire. Les attributions (« © IGN », « © les contributeurs d'OpenStreetMap », OpenTopoMap) sont dans les propriétés de chaque couche.
+- Le critère « fond visible hors ligne la veille et à J+2 » ne vaut que pour les fonds IGN.
+
+Voir [`docs/spec.md`](docs/spec.md) § 3.4.
+
 ### Mettre le projet à jour
 
 **N'importe pas le zip de mise à jour avec « Import URL »** : QField le décompresserait dans un dossier neuf, donc dans un autre projet, sans les points déjà saisis.

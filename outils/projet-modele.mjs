@@ -13,7 +13,7 @@
 // Le script est déterministe : même UUID => mêmes octets (horodatage du zip fixé, identifiants de couche dérivés du nom).
 //
 // Valeurs : docs/referentiels/fonds-ign.md § 1 (gabarits XYZ) et § 2 (zoom 0 à 19) ; ADR 0002 amendée
-// (PM gardé, « © IGN ») ; spec § 2 point 1, § 3.3, § 3.4. Aucune clé d'API.
+// (PM gardé, « © IGN ») ; docs/referentiels/fonds-osm-cadastre.md (mission 045 : cadastre, OpenStreetMap, OpenTopoMap) ; spec § 2 point 1, § 3.3, § 3.4. Aucune clé d'API.
 // Le .qgs est écrit comme QGIS 3.x l'écrit, de mémoire du format (le code source de QGIS n'a pas pu être
 // consulté depuis le conteneur) : la vérification de Pascal dans QGIS conditionne la fusion.
 import { createHash } from 'node:crypto';
@@ -29,19 +29,28 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const gabarit = (couche, format) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${couche}` +
   `&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=${format}`;
-// Ordre de l'arbre : premier = dessus. Plan IGN v2 visible ; BD ORTHO dessous, décochée (une orthophoto cochée masquerait le plan).
+const OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OPENTOPOMAP = 'https://tile.opentopomap.org/{z}/{x}/{y}.png';
+const IGN = '© IGN';
+// Ordre de l'arbre : premier = dessus (mission 045). Cadastre (PNG transparent) au-dessus de tous les fonds et visible ;
+// Plan IGN v2 visible ; OpenStreetMap, OpenTopoMap et BD ORTHO décochés (une orthophoto ou un fond plein cochés
+// masqueraient le plan). Zoom et attribution par fond : docs/referentiels/fonds-osm-cadastre.md § 2 et § 3.
+// OpenStreetMap et OpenTopoMap : EN LIGNE SEULEMENT (politique de l'OSMF, arbitrage de Pascal du 5 novembre 2026), hors critère J+2.
+// OpenTopoMap : zoom max 13 = valeur la plus prudente des sources (17 wiki, 15 site, 13 ticket), à mesurer sur l'appareil.
 export const FONDS = [
-  { nom: 'Plan IGN v2', url: gabarit('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'), visible: true },
-  { nom: 'BD ORTHO', url: gabarit('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), visible: false },
+  { nom: 'Cadastre', url: gabarit('CADASTRALPARCELS.PARCELLAIRE_EXPRESS', 'image/png'), visible: true, zmin: 0, zmax: 19, attribution: IGN },
+  { nom: 'Plan IGN v2', url: gabarit('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'), visible: true, zmin: 0, zmax: 19, attribution: IGN },
+  { nom: 'OpenStreetMap', url: OSM, visible: false, zmin: 0, zmax: 19, attribution: "© les contributeurs d'OpenStreetMap" },
+  { nom: 'OpenTopoMap', url: OPENTOPOMAP, visible: false, zmin: 0, zmax: 13, attribution: "© les contributeurs d'OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)" },
+  { nom: 'BD ORTHO', url: gabarit('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), visible: false, zmin: 0, zmax: 19, attribution: IGN },
 ];
 export const GROUPE_FONDS = 'Fonds de carte';
-const ZMIN = 0, ZMAX = 19, ATTRIBUTION = '© IGN';
 
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 // QgsDataSourceUri::encodedUri : paramètres par ordre alphabétique (type, url, zmax, zmin) ; dans la valeur de
 // url, « & », « = », « % », « + », « # », « { » et « } » sont encodés (comme %7Bz%7D dans une source OSM XYZ).
 const encoderUrl = (u) => u.replace(/[%&=+#{}]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
-const source = (f) => `type=xyz&url=${encoderUrl(f.url)}&zmax=${ZMAX}&zmin=${ZMIN}`;
+const source = (f) => `type=xyz&url=${encoderUrl(f.url)}&zmax=${f.zmax}&zmin=${f.zmin}`;
 // Identifiant de couche à la manière de QGIS (nom + UUID, tirets en « _ »), mais dérivé du nom : déterministe.
 const idCouche = (f) => {
   const h = createHash('sha1').update('cerf:' + f.nom).digest('hex');
@@ -76,12 +85,12 @@ function maplayer(f) {
         <encoding></encoding>
         <crs>${SRS_3857}</crs>
         <extent/>
-        <rights>${xml(ATTRIBUTION)}</rights>
+        <rights>${xml(f.attribution)}</rights>
       </resourceMetadata>
       <provider>wms</provider>
       <noData><noDataList bandNo="1" useSrcNoData="0"/></noData>
       <map-layer-style-manager current="default"><map-layer-style name="default"/></map-layer-style-manager>
-      <attribution>${xml(ATTRIBUTION)}</attribution>
+      <attribution>${xml(f.attribution)}</attribution>
       <attributionUrl></attributionUrl>
     </maplayer>`;
 }

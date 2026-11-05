@@ -147,9 +147,12 @@ autres sont décochés. Le **cadastre est au-dessus de tous les fonds** et visib
 - **OpenStreetMap et OpenTopoMap : en ligne seulement** (la politique de l'OSMF interdit l'usage hors ligne
   sur `tile.openstreetmap.org`). Ils **sortent du critère n° 5 (J+2)**, qui ne vaut que pour les fonds IGN
   (Cadastre, Plan IGN v2, BD ORTHO). Le README le dit à l'agent.
-- **Zoom maximal par fond** : 19 pour le cadastre (`PM_0_19`), le Plan IGN v2, la BD ORTHO et OpenStreetMap ;
-  **13 pour OpenTopoMap**, valeur la plus prudente des sources (17 wiki OSM, 15 site, 13 ticket GitHub), à
-  mesurer sur l'appareil par Pascal.
+- **Zoom maximal par fond** : 19 pour le cadastre, le Plan IGN v2 et la BD ORTHO ; **19 pour OpenStreetMap,
+  non vérifié (référentiel : « mémoire »), à mesurer sur le Samsung** ; **13 pour OpenTopoMap**, valeur la plus
+  prudente des sources (17 wiki OSM, 15 site, 13 ticket GitHub), à mesurer sur l'appareil par Pascal.
+- **Cadastre, jeu de matrices** : `PM_0_19` est le jeu annoncé par le GetCapabilities (limites de 0 à 19) ;
+  l'URL utilise `TILEMATRIXSET=PM` (mesuré : 200 aux zooms 15 et 19, 404 au zoom 20). Ne pas « corriger » l'URL
+  en `PM_0_19`.
 - **Attribution par fond** : « © IGN » (cadastre compris, décision de Pascal), « © les contributeurs
   d'OpenStreetMap », « © les contributeurs d'OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA) ».
 - Domaines OSM et OpenTopoMap non mesurables depuis l'environnement de développement (politique réseau) :

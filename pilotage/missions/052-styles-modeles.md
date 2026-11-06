@@ -59,3 +59,12 @@ prend le style de `RDF_UG.qml` ; une couche `UG` garde la règle du manuel ; un 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
 **Redite par l'agent :** à remplir.
+
+## Arbitrage de Pascal (6 novembre 2026, après l'arrêt du dev)
+
+- **Voie 1** : les styles sont embarqués dans un module JavaScript du plugin, **généré** à
+  l'empaquetage depuis `plugin/styles/` (le dossier reste la source, intact). Le plugin ne lit
+  aucun fichier `.qml` sur le disque (`FileUtils.readFileContent` refuse hors du projet,
+  QField v4.3.7 `qffileutils.cpp` l. 620-628).
+- **Les 25 styles** sont embarqués, vecteur et raster ; les 6 raster restent non appliqués
+  (GeoTIFF lu dans le zip, ADR 0008).

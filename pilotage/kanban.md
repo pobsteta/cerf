@@ -50,6 +50,11 @@ _Modèle de carte :_
 
 ## Planifié
 
+- [052-styles-modeles](missions/052-styles-modeles.md) · depuis le bilan n° 1 · en cours
+  - Homme : `dev`
+  - Mission : bibliothèque de styles .qml (nom exact) et plafond du zip à 100 Mo (plugin 0.6.0)
+  - Moyens : `plugin/styles/` (25 styles fournis par Pascal), sources QField 4.3.7
+
 ## Terminé
 
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · **close par Pascal le 6 novembre 2026** ; prototype n° 4 (cbd1f1f, branche `mission/023-prototype-2`, non fusionnée), voie reprise par la 024 ; essai propre non rapporté

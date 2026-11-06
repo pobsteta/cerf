@@ -118,7 +118,7 @@ Un zip peut en contenir **autant qu'on veut** : chaque GeoJSON, chaque Shapefile
 
 Les limites réelles :
 
-- **Le zip entier doit peser 100 Mo au plus** (100 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/vision-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc. *Plugin 0.6.0 (mission 052, décision de Pascal, 6 novembre 2026) : le plafond était de 10 Mo jusqu'à la 0.5.0 ; un zip de 50 Mo se lit désormais (pas encore essayé sur le téléphone).*
+- **Le zip entier doit peser 100 Mo au plus** (100 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/vision-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc. *Plugin 0.6.0 (mission 052, décision de Pascal, 6 novembre 2026) : le plafond était de 10 Mo jusqu'à la 0.5.0 ; un zip de 50 Mo devrait se lire (pas encore essayé sur le téléphone).*
 - **Deux couches de même nom** (`a/UG.geojson` et `b/UG.shp`, ou une table `UG` de GeoPackage) : la seconde est refusée, la première est chargée.
 - **Ignorés sans message** : dossier `__MACOSX`, fichiers `._*` (zips faits sur Mac), `.qmd`, et tout autre fichier. Les fichiers annexes (`.tfw`, `.aux.xml`, `.qix`, `.sbn`, `.sbx`) vont avec leur couche, sans message.
 - Une couche refusée n'empêche pas les autres.

@@ -68,6 +68,10 @@ Le plugin n'affiche pas son bouton hors d'un projet Vision.
 - **Taille du zip : 100 Mo au plus** (100 000 000 octets, `PLAFOND_LISTAGE_OCTETS`), décision de Pascal du
   6 novembre 2026 (mission 052, plugin 0.6.0, § 11 n° 1). *Trace : 10 Mo (10 000 000 octets) jusqu'au plugin 0.5.0,
   décision n° 6 du 3 novembre 2026.* Au-delà, ou si la taille est inconnue, le zip est refusé en bloc (§ 4).
+  *Risque mémoire (6 novembre 2026, voir § 11 n° 1) : le plugin lit le zip entier en mémoire d'un seul appel
+  (`FileUtils.readFileContent` puis conversion en tableau d'octets, `plugin/Vision.qml` l. 404), sur la copie déjà
+  écrite dans `vision-imports/` ; à 100 Mo, environ 200 Mo au pic sur le fil de l'interface, plus 100 Mo sur le disque.
+  Tenue non prouvée.*
 - Les `.qml` servent aux styles (§ 5). Les `.qmd` (métadonnées QGIS, livrées par ProdBois)
   ne sont pas des styles : ignorés en silence. Les fichiers annexes (`.tfw`, `.aux.xml`, `.sbn`,
   `.sbx`, `.qix`) sont lus avec leur couche, sans message. Tout autre fichier est ignoré
@@ -543,6 +547,10 @@ autres résultats (Q2 à Q4) tiennent.
    (mission 052, plugin 0.6.0) : 100 Mo.** *Trace : la question posée le 5 novembre 2026 était « garder 10 Mo (décision
    n° 6 du 3 novembre 2026), relever ou changer de méthode (les zips lourds de la recette, critère 7 et § 9 n° 6) ».*
    Le zip `lourd` de 200 Mo de la recette (critère 7) reste au-delà du plafond ; changer de méthode reste ouvert.
+   *Risque mémoire, 6 novembre 2026 : le plugin lit le zip entier en mémoire d'un seul appel (`FileUtils.readFileContent`
+   puis conversion en tableau d'octets, `plugin/Vision.qml` l. 404), sur la copie déjà écrite dans `vision-imports/` ;
+   à 100 Mo, environ 200 Mo au pic sur le fil de l'interface, plus 100 Mo sur le disque. À prouver sur le Samsung
+   (zips de 50 puis 95 Mo). La piste « lire seulement l'index du zip » reste ouverte. Rien n'est tranché ici.*
 2. **Mission 014 (registre complet)** : sort du dossier `vision-imports/<nom du zip>/` une fois vide (l'effacer ?) et
    remplacement du dossier entier au réimport (ADR 0007 amendée, ADR 0008 note du 4 novembre ; § 3.3). *À trancher par Pascal.*
 3. **Mission 013 (tests du registre complet)** : « Validé » depuis le 2 novembre 2026, jamais lancée ; ses tests portent sur le registre

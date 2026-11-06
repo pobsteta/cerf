@@ -31,10 +31,6 @@ _Modèle de carte :_
 
 ## Validé
 
-- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · validée par Pascal le 4 novembre ; prototype n° 4 poussé (cbd1f1f, branche `mission/023-prototype-2`, non fusionnée) et relu (journal du 4 novembre) ; **son essai propre n'a jamais été rapporté** : la voie 1 est reprise par la 024 (plugin 0.4.0), et l'essai global du 5 novembre (« tout est testé et ok ») ne donne pas le détail ; **à trancher par Pascal** : carte close de fait ou essai à rapporter (spec § 4, § 11 n° 7)
-  - Homme : `dev` (opus)
-  - Mission : Prototype n° 4 : lire hors ligne les tables d'un GeoPackage du zip
-  - Moyens : sources de QField 4.3.7, prototype n° 3, Samsung de Pascal
 - [013-tests-registre](missions/013-tests-registre.md) · depuis le cycle 0 ; **à trancher par Pascal** (spec § 11 n° 3) ; journal du 4 novembre : « immobile depuis le cycle 0 », aucune PR
   - Homme : `testeur` (sonnet)
   - Mission : Tests du registre complet — cycle prévu 5
@@ -56,6 +52,8 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · **close par Pascal le 6 novembre 2026** ; prototype n° 4 (cbd1f1f, branche `mission/023-prototype-2`, non fusionnée), voie reprise par la 024 ; essai propre non rapporté
+  - Homme : `dev` (opus)
 - [051-memoire](missions/051-memoire.md) · depuis le bilan n° 1 · fusionnée (PR #55)
   - Homme : `archiviste`
 - [050-vision](missions/050-vision.md) · depuis le cycle 6 · fusionnée (PR #51)

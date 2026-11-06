@@ -296,8 +296,8 @@ test('Vision.qml : libererCouche (deleteLater) est passé à importerZip et à d
   assert.equal((qml.match(/libererCouche: libererCouche,/g) || []).length, 2);
 });
 
-test('version 0.5.0 (constante, metadata.txt) et préversion : branche de la mission 050', () => {
-  assert.equal(L.VERSION, '0.5.0');
-  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.5\.0$/m);
+test('version 0.6.0 (constante, metadata.txt) et préversion : branche de la mission 050', () => {
+  assert.equal(L.VERSION, '0.6.0');
+  assert.match(readFileSync(resolve(RACINE, 'plugin/metadata.txt'), 'utf8'), /^version=0\.6\.0$/m);
   assert.match(readFileSync(resolve(RACINE, '.github/workflows/release-plugin.yml'), 'utf8'), /'mission\/050-vision'/);
 });

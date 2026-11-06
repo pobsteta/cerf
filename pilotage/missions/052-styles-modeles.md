@@ -58,7 +58,7 @@ prend le style de `RDF_UG.qml` ; une couche `UG` garde la règle du manuel ; un 
 
 - **Relecteur :** `relecteur`, puis Pascal. **Qui tranche :** Pascal.
 
-**Redite par l'agent :** à remplir.
+**Redite par l'agent :** le plugin 0.6.0 embarque les 25 styles de `plugin/styles/` dans un module JavaScript généré à l'empaquetage (le plugin ne peut pas lire son dossier) et pose avant le chargement le style dont le nom égale celui d'une couche vecteur (GeoPackage → bibliothèque → règle du manuel → défaut, rasters jamais posés), avec un plafond de zip à 100 Mo, pour que l'agent retrouve sur le terrain les styles de Pascal.
 
 ## Arbitrage de Pascal (6 novembre 2026, après l'arrêt du dev)
 

@@ -161,6 +161,29 @@ function chercherQml(voulu, cheminsDuZip) {
   return null;
 }
 
+// --------------------------------------------------------------------------- bibliothèque de styles (mission 052)
+// La bibliothèque est le module généré plugin/vision-bibliotheque.mjs : { nom du fichier sans « .qml » : texte }.
+// Un style de raster (<rasterrenderer>, pas de <renderer-v2>) n'est jamais posé sur un vecteur ; un GeoTIFF n'a aucun
+// style (il reste lu dans le zip, ADR 0008).
+export function estStyleRaster(texte) {
+  if (typeof texte !== 'string') return false;
+  return !/<renderer-v2[\s>/]/.test(texte) && /<rasterrenderer[\s>/]/.test(texte);
+}
+
+// L'entrée { nom, qml } dont le nom est égal au nom de la couche (casse et accents ignorés, nom entier), ou null.
+export function styleDeBibliotheque(nomCouche, bibliotheque) {
+  if (typeof nomCouche !== 'string' || nomCouche === '') return null;
+  if (!bibliotheque || typeof bibliotheque !== 'object') return null;
+  const voulu = sansCasseNiAccents(nomCouche);
+  const noms = Object.keys(bibliotheque);
+  for (let i = 0; i < noms.length; i++) {
+    if (sansCasseNiAccents(noms[i]) === voulu && typeof bibliotheque[noms[i]] === 'string') {
+      return { nom: noms[i], qml: bibliotheque[noms[i]] };
+    }
+  }
+  return null;
+}
+
 // Est-ce du GeoJSON ? (spec § 3.1 : un .json qui n'en est pas est ignoré en silence.)
 // Un objet JSON dont « type » est un type GeoJSON (RFC 7946) ; BOM toléré.
 const TYPES_GEOJSON = ['FeatureCollection', 'Feature', 'Point', 'MultiPoint', 'LineString', 'MultiLineString',

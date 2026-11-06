@@ -110,26 +110,26 @@ test('décision 7 : __MACOSX/ et ._* ignorés en silence ; .GEOJSON dans un sous
 });
 
 // ============================================================================ décision 6 : plafond
-test('décision 6 : plafond de listage de 10 Mo (10 000 000 octets, valeur du prototype), taille inconnue refusée', async () => {
+test('décision 6, amendée mission 052 : plafond de listage de 100 Mo (100 000 000 octets), taille inconnue refusée', async () => {
   const m = await M();
-  assert.equal(m.PLAFOND_LISTAGE_OCTETS, 10000000);
-  assert.equal(m.listageSur(10000000), true);
+  assert.equal(m.PLAFOND_LISTAGE_OCTETS, 100000000);
+  assert.equal(m.listageSur(100000000), true);
   assert.equal(m.listageSur(2108), true);
-  assert.equal(m.listageSur(10000001), false);
+  assert.equal(m.listageSur(100000001), false);
   assert.equal(m.listageSur(-1), false, 'taille inconnue');
   assert.equal(m.listageSur(Number.NaN), false);
   const msg = m.messageListageRefuse('lourd.zip', 200045802);
   assert.match(msg, /lourd\.zip/);
-  assert.match(msg, /10 Mo/);
+  assert.match(msg, /100 Mo/);
   assert.match(m.messageListageRefuse('x.zip', -1), /inconnue/);
 });
 
 test('décision 6 : importerZip refuse des octets au-delà du plafond, sans rien charger ni écrire', async () => {
   const m = await M();
-  const { ctx, couches, reglages } = ctxImport({ ctx: { octets: Buffer.alloc(10000001) } });
+  const { ctx, couches, reglages } = ctxImport({ ctx: { octets: Buffer.alloc(100000001) } });
   const r = m.importerZip(ctx);
   assert.deepEqual(r.chargees, []);
-  assert.match(r.message, /10 Mo/);
+  assert.match(r.message, /100 Mo/);
   assert.deepEqual(couches.appels, []);
   assert.deepEqual(reglages.ecritures, []);
 });
@@ -286,7 +286,7 @@ test('retirerCouche : message quand la copie sert encore', async () => {
 // Liste explicite (mission 012 : vision-controles.mjs ; mission 010 : vision-styles.mjs).
 const FICHIERS = [
   'main.qml', 'Vision.qml', 'Panneau.qml',
-  'vision-logique.mjs', 'vision-controles.mjs', 'vision-styles.mjs',
+  'vision-logique.mjs', 'vision-controles.mjs', 'vision-styles.mjs', 'vision-bibliotheque.mjs',
   'metadata.txt', 'icon.svg',
 ];
 const lire = (f) => readFileSync(join(PLUGIN, f), 'utf8');
@@ -334,7 +334,7 @@ test('forme : le QML appelle les fonctions de QField du plan (§ 5) ; rmFile pas
   }
 });
 
-test('empaquetage : plugin-vision.zip a main.qml à sa racine et exactement les huit fichiers du plugin (dont vision-controles.mjs et vision-styles.mjs)', async () => {
+test('empaquetage : plugin-vision.zip a main.qml à sa racine et exactement les neuf fichiers du plugin (dont vision-controles.mjs, vision-styles.mjs et vision-bibliotheque.mjs)', async () => {
   const m = await M();
   const { empaqueter } = await import(join(PLUGIN, 'empaqueter.mjs'));
   const sortie = mkdtempSync(join(tmpdir(), 'vision-plugin-'));
@@ -392,5 +392,5 @@ test('repli du 3 novembre : Vision.qml ne vise plus le dossier de l\'application
   const qml = lire('Vision.qml');
   assert.ok(!qml.includes('applicationDirectory'), 'applicationDirectory encore appelé');
   assert.ok(!qml.includes('Imported Datasets'), 'Imported Datasets encore cité');
-  assert.match(lire('metadata.txt'), /^version=0\.5\.0$/m);
+  assert.match(lire('metadata.txt'), /^version=0\.6\.0$/m);
 });

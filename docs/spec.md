@@ -65,6 +65,9 @@ Le plugin n'affiche pas son bouton hors d'un projet Vision.
   - Shapefile : **obligatoires** `.shp`, `.shx`, `.dbf`, `.prj` ; **conseillé** `.cpg` ;
   - GeoTIFF (`.tif`, `.tiff`), **rangé dans le zip sans compression** (`zip -0`) ou en
     SOZip, pour une lecture rapide (§ 9, n° 6).
+- **Taille du zip : 100 Mo au plus** (100 000 000 octets, `PLAFOND_LISTAGE_OCTETS`), décision de Pascal du
+  6 novembre 2026 (mission 052, plugin 0.6.0, § 11 n° 1). *Trace : 10 Mo (10 000 000 octets) jusqu'au plugin 0.5.0,
+  décision n° 6 du 3 novembre 2026.* Au-delà, ou si la taille est inconnue, le zip est refusé en bloc (§ 4).
 - Les `.qml` servent aux styles (§ 5). Les `.qmd` (métadonnées QGIS, livrées par ProdBois)
   ne sont pas des styles : ignorés en silence. Les fichiers annexes (`.tfw`, `.aux.xml`, `.sbn`,
   `.sbx`, `.qix`) sont lus avec leur couche, sans message. Tout autre fichier est ignoré
@@ -278,6 +281,11 @@ qui précise l'arbitrage du même jour sur le nom avec extension).
   n'a pas été rapporté** (voie `SELECT` réussie ou repli, avertissements vus) : la voie reste donc écrite « pas encore
   prouvée » ici et au § 5, jusqu'à ce que Pascal rapporte le détail.*
 
+**Zip trop lourd** (texte du code, `messageListageRefuse`, `plugin/vision-logique.mjs`) : « `<zip>` : `<n>` Mo,
+au-delà du plafond de 100 Mo pour lister un zip ; zip non lu », ou, la taille étant inconnue, « `<zip>` : taille de la
+copie inconnue, zip non lu (plafond de 100 Mo pour lister un zip) ». Plugin 0.6.0 (mission 052, 6 novembre 2026) :
+seul le nombre change, 10 devient 100 ; *trace : « 10 Mo » jusqu'à la 0.5.0*.
+
 **Zip sans aucune couche** : le message est « Aucune couche GeoJSON, Shapefile, GeoPackage ou GeoTIFF dans
 `<nom du zip>`. » (Pascal, 4 novembre 2026 ; texte du code, `plugin/vision-logique.mjs`).
 Un zip déjà importé qui n'a plus aucune couche lisible n'est pas vidé : « aucune couche lisible dans
@@ -298,12 +306,42 @@ Textes de `plugin/vision-logique.mjs`, fonction `copierEtStyler` (ils font foi, 
 
 ## 5. Styles (annexe de la convention du zip)
 
+**Ordre en vigueur depuis le plugin 0.6.0 (mission 052, 6 novembre 2026)** : style enregistré dans le GeoPackage →
+**bibliothèque de styles** (nom exact, ci-dessous) → règle par nom → règle par champs → style par défaut. *Trace de l'ordre
+du 5 novembre 2026 :*
 Ordre de priorité (en vigueur depuis le plugin 0.4.2, mission 047, 5 novembre 2026) : **style enregistré dans le
 GeoPackage** → règle par nom → règle par champs → style par défaut de QGIS. *Avant la 0.4.2 (gardé pour mémoire) :
 règle par nom → règle par champs → style par défaut.* L'ordre visé, une fois le `.qml` du zip lisible, est : style du
 GeoPackage → `.qml` du zip → règle par nom → règle par champs → défaut (le style du GeoPackage est un style que
 l'agent a choisi dans QGIS, comme un `.qml` ; **priorité sur la règle du manuel proposée par l'orchestrateur,
 confirmée par Pascal le 5 novembre 2026**).
+
+**Bibliothèque de styles modèles** (mission 052, plugin 0.6.0, Pascal, 6 novembre 2026). Le dossier
+`plugin/styles/` du dépôt contient 25 `.qml` **fournis par Pascal** (source, jamais modifiés) :
+`Bornes`, `D50`, `G`, `MNH`, `PPE`, `PPI`, `PPR`, `ParcCad`, `RDF_FRT`, `RDF_Parc`, `RDF_UG`, `VAT`, `arbre_bio`, `captages_eau`, `compoRVB`, `env_bdn_enjeu`, `env_bdn_observation`, `mnh_classe_res10m`, `reserves`, `stag_zonages`, `tiges_2024`, `tiges_2025`, `tiges_2026`, `voie_grumiers`, `voie_non_grumiers`. Ils sont livrés avec le plugin, **embarqués dans un module JavaScript**
+`plugin/vision-bibliotheque.mjs` (`{ nom du fichier sans .qml : texte }`), **généré** par `plugin/empaqueter.mjs`
+(`node plugin/empaqueter.mjs --bibliotheque`), versionné dans le dépôt, et comparé au dossier par
+`tests/bibliotheque-052.test.mjs` (aucune divergence possible). Raison : le plugin ne peut pas lire un fichier de son
+propre dossier, `FileUtils.readFileContent` refusant tout chemin hors du dossier du projet (QField 4.3.7,
+`qffileutils.cpp` l. 620-628) ; l'embarquer dans un module est la voie des autres modules du plugin (`import`).
+- **Correspondance par nom exact** : le nom de la couche (sans extension ; pour une table de GeoPackage, le nom de la
+  table), casse et accents ignorés comme les règles du manuel, doit être égal au nom d'un style. Ni préfixe ni
+  sous-chaîne : `RDF_UG_2026` ne prend pas `RDF_UG`.
+- **Ordre** : style enregistré dans le GeoPackage (047) → **bibliothèque** → règle du manuel (nom, champs) → style par
+  défaut. Une couche qui a une entrée de la bibliothèque ne consulte plus un `.qml` du zip (de toute façon non lisible,
+  ci-dessous). Une ligne `layer_styles` illisible garde son comportement (règle du manuel et avertissement).
+- Le style retenu est contrôlé comme les autres (`qmlValide` : racine `<qgis>`, `<renderer-v2>`), écrit à côté de la
+  copie (ADR 0008), l'ancien `.qml` effacé avant (mission 032). Illisible : règle du manuel et l'avertissement existant
+  « .qml illisible, style du manuel appliqué » (aucun nouveau texte). Registre : `style: "bibliotheque"`.
+- **Six styles de raster** (`D50`, `G`, `MNH`, `VAT`, `compoRVB`, `mnh_classe_res10m`, reconnus à `<rasterrenderer>` sans
+  `<renderer-v2>`) : dans la bibliothèque, **non appliqués pour l'instant**. Jamais posés sur un vecteur (une couche
+  vecteur nommée `MNH` garde sa règle ou le style par défaut), et un GeoTIFF reste lu dans le zip **sans style**
+  (ADR 0008). Mission à part plus tard.
+- **Constat, à trancher avec JFC** (non modifié) : `RDF_UG`, `RDF_Parc` et `RDF_FRT` étiquettent par `CCOD_UG`,
+  `CCOD_PRF` et `CCOD_FRT`, alors que les règles du manuel utilisent les champs provisoires `CODE_UG`, `CODE_PARC` et
+  `CODE_FRT` (question à JFC, § 11 n° 8).
+- Pas encore essayé sur l'appareil : `plugin-essai` 0.6.0 (un zip avec `RDF_UG.geojson` ou `.shp` ; une couche `UG` garde
+  la règle du manuel ; un zip de 50 Mo est lu). Le module pèse environ 0,9 Mo (chargé à chaque démarrage du plugin).
 
 **Style enregistré dans un GeoPackage du zip** (mission 047, plugin 0.4.2, 5 novembre 2026). QGIS écrit le style
 d'une couche dans la table `layer_styles` du GeoPackage (« Enregistrer le style dans la base de données »). Pour chaque
@@ -500,9 +538,11 @@ autres résultats (Q2 à Q4) tiennent.
 > n'est tranchée** : l'archiviste les range pour qu'un successeur les trouve ; la décision est à Pascal, qui la
 > note dans une ligne datée sous la question (ajout, pas d'effacement).
 
-1. **Plafond de 10 Mo du zip** : le plugin refuse en bloc un zip de plus de 10 000 000 octets
-   (`PLAFOND_LISTAGE_OCTETS`, `plugin/vision-logique.mjs`, décision n° 6 de Pascal du 3 novembre 2026, README § 3). Garder, relever ou
-   changer de méthode (les zips lourds de la recette, critère 7 et § 9 n° 6) ? *À trancher par Pascal.*
+1. **Plafond du zip** : le plugin refuse en bloc un zip de plus de 100 000 000 octets
+   (`PLAFOND_LISTAGE_OCTETS`, `plugin/vision-logique.mjs`, README § 3). **Tranché par Pascal le 6 novembre 2026
+   (mission 052, plugin 0.6.0) : 100 Mo.** *Trace : la question posée le 5 novembre 2026 était « garder 10 Mo (décision
+   n° 6 du 3 novembre 2026), relever ou changer de méthode (les zips lourds de la recette, critère 7 et § 9 n° 6) ».*
+   Le zip `lourd` de 200 Mo de la recette (critère 7) reste au-delà du plafond ; changer de méthode reste ouvert.
 2. **Mission 014 (registre complet)** : sort du dossier `vision-imports/<nom du zip>/` une fois vide (l'effacer ?) et
    remplacement du dossier entier au réimport (ADR 0007 amendée, ADR 0008 note du 4 novembre ; § 3.3). *À trancher par Pascal.*
 3. **Mission 013 (tests du registre complet)** : « Validé » depuis le 2 novembre 2026, jamais lancée ; ses tests portent sur le registre

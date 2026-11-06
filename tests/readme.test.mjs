@@ -36,9 +36,9 @@ test('la version du plugin annoncée est celle de plugin/metadata.txt', () => {
 
 test('le plafond cité est PLAFOND_LISTAGE_OCTETS', async () => {
   const { PLAFOND_LISTAGE_OCTETS } = await import('../plugin/vision-logique.mjs');
-  assert.equal(PLAFOND_LISTAGE_OCTETS, 10000000);
-  assert.ok(readme.includes('10 Mo'));
-  assert.ok(readme.includes(PLAFOND_LISTAGE_OCTETS.toLocaleString('fr-FR').replace(/\s/g, ' ')) || readme.includes('10 000 000'));
+  assert.equal(PLAFOND_LISTAGE_OCTETS, 100000000);
+  assert.ok(readme.includes('100 Mo'));
+  assert.ok(readme.includes(PLAFOND_LISTAGE_OCTETS.toLocaleString('fr-FR').replace(/\s/g, ' ')) || readme.includes('100 000 000'));
 });
 
 test('les champs de code et les messages de retrait cités existent dans le code', async () => {

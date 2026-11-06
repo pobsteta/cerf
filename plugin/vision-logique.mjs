@@ -12,7 +12,7 @@
 // Aucune fonction ne touche QField : tout passe par les objets reçus (réglages, chargerCouche,
 // existe, platformUtilities), que Vision.qml branche sur l'API de QField (plugin/PLAN.md § 5).
 
-export const VERSION = '0.5.0';
+export const VERSION = '0.6.0';
 
 // Mission 038 : comptage des entités par itérateur. Dans QGIS 3a92eb3, `featureCount()` (qgsvectorlayer.h l. 1701,
 // `long long featureCount() const final;`) n'est ni Q_PROPERTY ni Q_INVOKABLE : QML ne peut pas l'appeler. QField v4.3.7
@@ -78,7 +78,8 @@ export const NOM_DOSSIER_COPIES = 'vision-imports';
 
 // Décision de Pascal n° 6 (3 novembre 2026) : plafond de listage d'un zip, 10 Mo, soit la
 // valeur du prototype (le module zip du prototype n° 1 dans `prototype/`, nom d'origine, ADR 0009 ; SEUIL_LECTURE_OCTETS = 10 000 000 octets).
-export const PLAFOND_LISTAGE_OCTETS = 10000000;
+// Mission 052 (Pascal, 6 novembre 2026) : le plafond passe à 100 Mo (spec § 11 n° 1).
+export const PLAFOND_LISTAGE_OCTETS = 100000000;
 
 // Style inscrit au registre quand aucune règle ne s'applique ; sinon le nom de la règle (UG,
 // Parcelles, FRT, ProdBois) ou 'qml' (mission 010, plugin/vision-styles.mjs).
@@ -86,6 +87,8 @@ export const STYLE_DEFAUT = 'defaut';
 export const STYLE_QML = 'qml';
 // Mission 047 : style enregistré dans le GeoPackage du zip (table layer_styles).
 export const STYLE_GPKG = 'gpkg';
+// Mission 052 : style de la bibliothèque du plugin (plugin/vision-bibliotheque.mjs, généré depuis plugin/styles/).
+export const STYLE_BIBLIOTHEQUE = 'bibliotheque';
 
 // --------------------------------------------------------------------------- octets
 
@@ -253,10 +256,10 @@ export function listageSur(taille) {
 
 export function messageListageRefuse(nomZip, taille) {
   if (!(typeof taille === 'number' && taille >= 0)) {
-    return `${nomZip} : taille de la copie inconnue, zip non lu (plafond de 10 Mo pour lister un zip)`;
+    return `${nomZip} : taille de la copie inconnue, zip non lu (plafond de 100 Mo pour lister un zip)`;
   }
   const mo = Math.round(taille / 100000) / 10;
-  return `${nomZip} : ${mo} Mo, au-delà du plafond de 10 Mo pour lister un zip ; zip non lu`;
+  return `${nomZip} : ${mo} Mo, au-delà du plafond de 100 Mo pour lister un zip ; zip non lu`;
 }
 
 // Décision n° 3 : lecture refusée par QField : le dire, avec la version de QField et, s'il est
@@ -840,7 +843,8 @@ function styleEnregistre(ctx, nomZip, c) {
   return null;
 }
 
-// Choisit le .qml à écrire à côté de la copie : le style enregistré dans le GeoPackage (mission 047), puis celui du zip
+// Choisit le .qml à écrire à côté de la copie : le style enregistré dans le GeoPackage (mission 047), puis la bibliothèque
+// du plugin par nom exact (mission 052, `ctx.bibliotheque`), puis celui du zip
 // s'il est valide (XML, racine <qgis>, <renderer-v2>), sinon celui de la règle du manuel (styleDe puis qmlDe). Rend
 // { style, qml, contenu, avertissements } ; contenu null = rien à écrire (style par défaut).
 // Les avertissements sont des phrases seules (l'appelant ajoute « <fichier> : », spec § 4).
@@ -856,10 +860,20 @@ function choisirStyle(ctx, couche, nomZip, c, noms) {
     let texte = null;
     // Mission 047 : le style enregistré dans le GeoPackage (layer_styles) passe avant la règle du manuel.
     const gpkg = c.format === 'gpkg' ? styleEnregistre(ctx, nomZip, c) : null;
+    // Mission 052 : puis la bibliothèque du plugin, par nom exact ; un style de raster n'est jamais posé sur un vecteur.
+    let bibliotheque = null;
+    if (gpkg === null && typeof S.styleDeBibliotheque === 'function' && ctx.bibliotheque) {
+      const e = S.styleDeBibliotheque(nomCouche, ctx.bibliotheque);
+      if (e !== null && !(typeof S.estStyleRaster === 'function' && S.estStyleRaster(e.qml))) bibliotheque = e;
+    }
     if (gpkg !== null) {
       // Une ligne existe : mêmes garde-fous qu'un .qml (non vide, XML <qgis>) ; sinon règle du manuel et l'avertissement
       // existant (reconnaitre) ; une ligne illisible vaut un texte vide.
       texte = gpkg.etat === 'lu' && S.qmlValide(gpkg.texte) ? gpkg.texte : '';
+    } else if (bibliotheque !== null) {
+      // Mission 052 : le nom exact de la couche est celui d'un style vecteur de la bibliothèque ; un .qml illisible
+      // vaut un texte vide (règle du manuel et avertissement existant, via reconnaitre).
+      texte = S.qmlValide(bibliotheque.qml) ? bibliotheque.qml : '';
     } else {
       // Une table de GeoPackage : son .qml porte le nom de la table, à côté du .gpkg (spec § 5).
       if (c.format === 'gpkg') cheminQml = typeof S.trouverQmlDeTable === 'function' ? S.trouverQmlDeTable(c.entree, c.table, noms) : null;
@@ -872,6 +886,7 @@ function choisirStyle(ctx, couche, nomZip, c, noms) {
     const r = S.reconnaitre({ nom: nomCouche, geometrie: infos.geometrie, champs, qml: texte });
     if (r.source === 'qml') {
       if (gpkg !== null) return { style: STYLE_GPKG, qml: '', contenu: texte, avertissements: [] };
+      if (bibliotheque !== null) return { style: STYLE_BIBLIOTHEQUE, qml: '', contenu: texte, avertissements: [] };
       return { style: STYLE_QML, qml: cheminQml, contenu: texte, avertissements: [] };
     }
     const avertissements = r.avertissement ? [r.avertissement] : [];

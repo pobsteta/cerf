@@ -99,7 +99,7 @@ Voir [`docs/spec.md`](docs/spec.md) § 3.5.
 
 ## 3. Charger un zip avec plusieurs couches
 
-Le plugin 0.5.0 (sur `main`) fait ce qui suit. Pas plus.
+Le plugin 0.6.0 (sur `main`) fait ce qui suit. Pas plus.
 
 ### Ce que le plugin lit aujourd'hui
 
@@ -118,7 +118,7 @@ Un zip peut en contenir **autant qu'on veut** : chaque GeoJSON, chaque Shapefile
 
 Les limites réelles :
 
-- **Le zip entier doit peser 10 Mo au plus aujourd'hui** (10 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/vision-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc.
+- **Le zip entier doit peser 100 Mo au plus** (100 000 000 octets : `PLAFOND_LISTAGE_OCTETS` dans `plugin/vision-logique.mjs`). C'est la taille du fichier `.zip`, pas du contenu décompressé. Au-delà, le zip est refusé en bloc. *Plugin 0.6.0 (mission 052, décision de Pascal, 6 novembre 2026) : le plafond était de 10 Mo jusqu'à la 0.5.0 ; un zip de 50 Mo se lit désormais (pas encore essayé sur le téléphone).*
 - **Deux couches de même nom** (`a/UG.geojson` et `b/UG.shp`, ou une table `UG` de GeoPackage) : la seconde est refusée, la première est chargée.
 - **Ignorés sans message** : dossier `__MACOSX`, fichiers `._*` (zips faits sur Mac), `.qmd`, et tout autre fichier. Les fichiers annexes (`.tfw`, `.aux.xml`, `.qix`, `.sbn`, `.sbx`) vont avec leur couche, sans message.
 - Une couche refusée n'empêche pas les autres.
@@ -140,7 +140,7 @@ Les limites réelles :
 
 ### Les styles du manuel
 
-Le plugin choisit le style dans cet ordre : le **style enregistré dans le GeoPackage** du zip (table `layer_styles`, voir plus bas), puis la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS. Un `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** (voir plus bas).
+Le plugin choisit le style dans cet ordre : le **style enregistré dans le GeoPackage** du zip (table `layer_styles`, voir plus bas), puis la **bibliothèque de styles** du plugin (voir plus bas), puis la règle par **nom de la couche** (sans extension, sans tenir compte de la casse ni des accents), puis la règle par champs, puis le style par défaut de QGIS. Un `.qml` posé dans le zip n'est **pas pris en charge pour l'instant** (voir plus bas).
 
 | Couche | Nom reconnu (exemples) | Géométrie | Champ de l'étiquette |
 |---|---|---|---|
@@ -155,6 +155,9 @@ Couleurs, épaisseurs et tailles de police : [`docs/spec.md`](docs/spec.md) § 5
 - Un nom reconnu mais en point ou en ligne (sans les champs `essence` et `diametre`) garde le style par défaut, avec un avertissement.
 - **Un `.qml` posé dans le zip (`UG.qml` à côté de `UG.shp`, etc.) n'est pas pris en charge pour l'instant** : la fonction de QField qui lit un fichier texte (`FileUtils.readFileContent`) ne lit pas à l'intérieur d'un zip (les couches du zip, elles, sont bien lues par GDAL en `/vsizip/`), donc le plugin n'obtient jamais le contenu du `.qml`. La règle du manuel s'applique, avec l'avertissement « UG.shp : .qml illisible, style du manuel appliqué » (nom de la **couche**, pas du `.qml`). La surcharge par `.qml` est **reportée**, non abandonnée (décision de Pascal, 5 novembre 2026 ; détail : [`docs/spec.md`](docs/spec.md) § 5).
 - Un GeoTIFF garde le style par défaut de QGIS.
+- **Bibliothèque de styles** (*plugin 0.6.0, mission 052, 6 novembre 2026 ; pas encore essayée sur le téléphone*). Le plugin embarque 25 styles QGIS fournis par Pascal (dossier [`plugin/styles/`](plugin/styles/), embarqués dans le module `plugin/vision-bibliotheque.mjs`, généré à l'empaquetage). **Règle de correspondance : le nom de la couche (sans extension, casse et accents ignorés) doit être égal, en entier, au nom d'un style** : `RDF_UG.geojson`, `rdf_ug.shp` ou la table `RDF_UG` d'un GeoPackage prennent le style `RDF_UG` ; `RDF_UG_2026` ou `UG` ne le prennent pas. Un style de la bibliothèque passe **après** le style enregistré dans le GeoPackage et **avant** la règle du manuel ; il est écrit à côté de la copie (`RDF_UG.qml`) et revient à la réouverture. Si le style de la bibliothèque est illisible, la règle du manuel s'applique avec l'avertissement « `<chemin>` : .qml illisible, style du manuel appliqué ». Les 25 styles : `Bornes`, `D50`, `G`, `MNH`, `PPE`, `PPI`, `PPR`, `ParcCad`, `RDF_FRT`, `RDF_Parc`, `RDF_UG`, `VAT`, `arbre_bio`, `captages_eau`, `compoRVB`, `env_bdn_enjeu`, `env_bdn_observation`, `mnh_classe_res10m`, `reserves`, `stag_zonages`, `tiges_2024`, `tiges_2025`, `tiges_2026`, `voie_grumiers`, `voie_non_grumiers`.
+  - **Six sont des styles de raster** (`D50`, `G`, `MNH`, `VAT`, `compoRVB`, `mnh_classe_res10m`) : ils sont dans la bibliothèque mais **ne sont pas appliqués pour l'instant** (jamais sur une couche vecteur, et un GeoTIFF reste lu dans le zip, sans style : ADR 0008). Une mission à part les traitera plus tard.
+  - Constat, non modifié : les styles `RDF_UG`, `RDF_Parc` et `RDF_FRT` étiquettent par les champs `CCOD_UG`, `CCOD_PRF` et `CCOD_FRT`, alors que les règles du manuel utilisent les champs provisoires `CODE_UG`, `CODE_PARC` et `CODE_FRT` ([`docs/spec.md`](docs/spec.md) § 5, question à JFC).
 - **Style enregistré dans un GeoPackage** (*plugin 0.4.2, mission 047, 5 novembre 2026*). Quand tu enregistres le style d'une couche dans QGIS avec « Enregistrer le style dans la base de données » (« Enregistrer comme style par défaut »), il est écrit dans la table `layer_styles` du `.gpkg`. Pour chaque table d'un GeoPackage du zip, le plugin lit ce style, sans réseau, et le garde **à la place** de la règle du manuel : la table `UG` d'un `Serre.gpkg` stylée par toi n'est plus bleue, elle garde ton style. S'il y a plusieurs styles pour la table, le plugin prend celui « par défaut », sinon le plus récent. Sans `layer_styles`, ou sans ligne pour la table, la règle du manuel s'applique comme avant, sans message. Si le style est vide ou n'est pas du XML QGIS, la règle du manuel s'applique avec l'avertissement « `<chemin>` : .qml illisible, style du manuel appliqué ». **Cette lecture n'est pas encore prouvée sur le téléphone** (même voie que la liste des tables : requête `SELECT` sur le GeoPackage) ; zip d'essai `essai-gpkg-style.zip`, plus bas.
 - **Fond embarqué `basemap.mbtiles`** (*plugin 0.4.3, mission 048, 5 novembre 2026 ; pas encore prouvé sur le téléphone*) : voir les étapes 5 à 7 de « Préparer un fond embarqué de l'UT » plus haut. Détail technique : `docs/spec.md` § 3.4.
 

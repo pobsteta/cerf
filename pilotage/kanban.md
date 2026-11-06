@@ -52,6 +52,8 @@ _Modèle de carte :_
 
 ## Terminé
 
+- [052-styles-modeles](missions/052-styles-modeles.md) · depuis le bilan n° 1 · fusionnée (PR #57)
+  - Homme : `dev`
 - [030-prototype-4-tables](missions/030-prototype-4-tables.md) · depuis le cycle 6 · **close par Pascal le 6 novembre 2026** ; prototype n° 4 (cbd1f1f, branche `mission/023-prototype-2`, non fusionnée), voie reprise par la 024 ; essai propre non rapporté
   - Homme : `dev` (opus)
 - [051-memoire](missions/051-memoire.md) · depuis le bilan n° 1 · fusionnée (PR #55)

@@ -8,6 +8,7 @@ import org.qfield
 import "vision-logique.mjs" as Logique
 import "vision-controles.mjs" as Controles
 import "vision-styles.mjs" as Styles
+import "vision-bibliotheque.mjs" as Bibliotheque
 
 Item {
   id: vision
@@ -414,6 +415,7 @@ Item {
       octets: octets,
       reglages: reglages,
       styles: Styles,
+      bibliotheque: Bibliotheque.BIBLIOTHEQUE,
       infosCouche: infosCouche,
       lireTexte: lireTexte,
       reecrireCouche: reecrireCouche,

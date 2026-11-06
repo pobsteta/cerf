@@ -219,8 +219,8 @@ test('forme : vision-controles.mjs sans ?., ?? ni import', () => {
   const code = lire('plugin/vision-controles.mjs').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   assert.doesNotMatch(code, /\?\./); assert.doesNotMatch(code, /\?\?/); assert.doesNotMatch(code, /^\s*import\s/m);
 });
-test('version et préversion : 0.5.0, branche de la mission 050 dans release-plugin.yml', () => {
-  assert.equal(L.VERSION, '0.5.0');
-  assert.match(lire('plugin/metadata.txt'), /^version=0\.5\.0$/m);
+test('version et préversion : 0.6.0, branche de la mission 050 dans release-plugin.yml', () => {
+  assert.equal(L.VERSION, '0.6.0');
+  assert.match(lire('plugin/metadata.txt'), /^version=0\.6\.0$/m);
   assert.match(lire('.github/workflows/release-plugin.yml'), /'mission\/050-vision'/);
 });
